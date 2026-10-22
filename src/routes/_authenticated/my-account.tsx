@@ -80,10 +80,12 @@ function ProfileForm({ userId }: { userId: string }) {
   const [f, setF] = useState<Record<string, string | boolean>>({ school_type: "Public School", tc_accepted: false });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
-  const field = (k: string, label: string) => (
+  const [files, setFiles] = useState<{ id?: File; photo?: File }>({});
+  void files;
+  const field = (k: string, label: string, placeholder?: string) => (
     <div>
       <Label htmlFor={k}>{label}</Label>
-      <Input id={k} value={(f[k] as string) ?? ""} onChange={(e) => setF({ ...f, [k]: e.target.value })} />
+      <Input id={k} placeholder={placeholder} value={(f[k] as string) ?? ""} onChange={(e) => setF({ ...f, [k]: e.target.value })} />
       {errors[k] && <p className="text-xs text-destructive">{errors[k]}</p>}
     </div>
   );
@@ -104,20 +106,32 @@ function ProfileForm({ userId }: { userId: string }) {
   return (
     <form onSubmit={save} className="space-y-6 rounded-lg border bg-card p-6">
       <div>
-        <h2 className="font-display text-3xl text-primary">Personal Details</h2>
-        <p className="text-sm text-muted-foreground">NOTE: no more than one scholar per registration.</p>
+        <h1 className="font-display text-4xl text-primary">Personal Details</h1>
+        <h5 className="mt-1 font-semibold">NOTE: no more than one scholar per registration.</h5>
+      </div>
+      <h5 className="font-semibold">The Job Shadow-ers Details</h5>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {field("full_name", "Name & Surname", "NAME & SURNAME")}
+        {field("contact_no", "Tel No", "TEL NO")}
+        {field("id_number", "ID / passport number", "ID NO")}
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        {field("full_name", "Name & Surname")}
-        {field("contact_no", "Tel No")}
-        {field("id_number", "ID / passport number")}
-        {field("school", "Current School")}
         <div>
-          <Label>School type</Label>
-          <div className="flex gap-4 pt-2 text-sm">
+          <h5 className="font-semibold">The Job Shadow-ers Scan of ID</h5>
+          <Input type="file" accept="image/*,application/pdf" onChange={(e) => setFiles({ ...files, id: e.target.files?.[0] })} />
+        </div>
+        <div>
+          <h5 className="font-semibold">The Job Shadow-ers Profile Photo</h5>
+          <Input type="file" accept="image/*" onChange={(e) => setFiles({ ...files, photo: e.target.files?.[0] })} />
+        </div>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {field("school", "Current School", "CURRENT SCHOOL")}
+        <div>
+          <div className="flex gap-4 pt-7 text-sm">
             {["Public School", "Private School", "Home School"].map((t) => (
               <label key={t} className="flex items-center gap-1">
-                <input type="radio" checked={f["school_type"] === t} onChange={() => setF({ ...f, school_type: t })} /> {t}
+                <input type="radio" name="school_type" checked={f["school_type"] === t} onChange={() => setF({ ...f, school_type: t })} /> {t}
               </label>
             ))}
           </div>
@@ -125,15 +139,21 @@ function ProfileForm({ userId }: { userId: string }) {
         {field("career_interests", "Career interests")}
         {field("dietary", "Dietary requirements/allergies")}
       </div>
-      <div>
-        <h3 className="font-display text-2xl text-primary">Parent / Guardian Information</h3>
-        <p className="text-sm text-muted-foreground">If you are under the age of 18, please fill in your parent/ guardian information below</p>
-      </div>
+      <h5 className="font-semibold">Parent / Guardian Information</h5>
       <div className="grid gap-4 sm:grid-cols-2">
-        {field("guardian_name", "Parent / Guardian name")}
-        {field("guardian_contact", "Parent / Guardian contact no")}
-        {field("guardian_email", "Parent / Guardian email address")}
-        {field("guardian_id", "Parent / Guardian ID/passport")}
+        {field("guardian_name", "Parent / Guardian name", "PARENT / GUARDIAN NAME")}
+        {field("guardian_contact", "Parent / Guardian contact no", "PARENT / GUARDIAN CONTACT NO")}
+        {field("guardian_email", "Parent / Guardian email address", "PARENT / GUARDIAN EMAIL ADDRESS")}
+        {field("guardian_id", "Parent / Guardian ID/passport", "PARENT / GUARDIAN ID NO")}
+      </div>
+      <div>
+        <h1 className="font-display text-2xl text-primary">T &amp; C's</h1>
+        <details className="mt-2 rounded border p-3 text-xs text-muted-foreground">
+          <summary className="cursor-pointer font-semibold text-foreground">Terms &amp; Conditions</summary>
+          <p className="mt-2">You are reading a legal document, which is an agreement between yourself, the browser or user of the Website or Services described herein, and the owners of the Website, referred to as “Jobshadow”, being a company registered in South Africa situated at 4th on Anslow Office Park, Anslow Lane, Bryanston 2021. By using this Website, you agree that all the terms of this Agreement are reasonable. If you don’t think that they are reasonable, you must not use this Website.</p>
+          <p className="mt-2">SERVICES: Connecting Scholars to host companies through the use of the Website, and thereby providing Scholars the opportunity to learn about a particular industry or occupation and to gain valuable work skills through job shadowing.</p>
+          <p className="mt-2">All payments are done online through PayFast – we do not keep any personal information in this regard.</p>
+        </details>
       </div>
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" checked={!!f["tc_accepted"]} onChange={(e) => setF({ ...f, tc_accepted: e.target.checked })} />
@@ -141,7 +161,7 @@ function ProfileForm({ userId }: { userId: string }) {
       </label>
       {errors["tc_accepted"] && <p className="text-xs text-destructive">{errors["tc_accepted"]}</p>}
       {errors["form"] && <p className="text-sm text-destructive">{errors["form"]}</p>}
-      <Button type="submit" disabled={busy}>Save and continue</Button>
+      <Button type="submit" disabled={busy}>Submit</Button>
     </form>
   );
 }
