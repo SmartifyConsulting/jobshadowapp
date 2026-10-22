@@ -27,6 +27,9 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [whereHear, setWhereHear] = useState("");
   const [busy, setBusy] = useState(false);
 
   async function submit(e: React.FormEvent) {
@@ -43,10 +46,14 @@ function AuthPage() {
         setBusy(false);
         return setMsg("Password must be at least 8 characters.");
       }
+      if (password !== confirm) {
+        setBusy(false);
+        return setMsg("The passwords do not match.");
+      }
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: `${window.location.origin}/my-account` },
+        options: { emailRedirectTo: `${window.location.origin}/my-account`, data: { name, where_hear: whereHear } },
       });
       setBusy(false);
       setMsg(error ? error.message : "Check your email to confirm your account, then log in.");
@@ -55,27 +62,45 @@ function AuthPage() {
 
   return (
     <SiteLayout>
-      <PageHero title={mode === "in" ? "Log in" : "Create account"} />
+      <PageHero title={mode === "in" ? "Login" : "Register"} />
       <section className="mx-auto max-w-md px-5 py-12">
         <form onSubmit={submit} className="space-y-4 rounded-lg border bg-card p-6">
+          {mode === "up" && (
+            <div>
+              <Label htmlFor="name">Name</Label>
+              <Input id="name" required placeholder="NAME" value={name} onChange={(e) => setName(e.target.value)} />
+            </div>
+          )}
           <div>
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+            <Label htmlFor="email">E-Mail Address</Label>
+            <Input id="email" type="email" required placeholder="EMAIL ADDRESS" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div>
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Password</Label>
               {mode === "in" && (
                 <Link to="/forgot-password" tabIndex={-1} className="text-xs underline">
-                  Forgot password?
+                  Forgot Your Password?
                 </Link>
               )}
             </div>
-            <PasswordInput id="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+            <PasswordInput id="password" required placeholder="PASSWORD" value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
+          {mode === "up" && (
+            <>
+              <div>
+                <Label htmlFor="confirm">Confirm Password</Label>
+                <PasswordInput id="confirm" required placeholder="REPEAT PASSWORD" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+              </div>
+              <div>
+                <Label htmlFor="where">Where did you hear about Job Shadow?</Label>
+                <Input id="where" placeholder="WHERE DID YOU HEAR ABOUT JOB SHADOW?" value={whereHear} onChange={(e) => setWhereHear(e.target.value)} />
+              </div>
+            </>
+          )}
           {msg && <p aria-live="polite" className="text-sm text-muted-foreground">{msg}</p>}
           <Button type="submit" disabled={busy} className="w-full">
-            {mode === "in" ? "Log in" : "Create account"}
+            {mode === "in" ? "Login" : "Register"}
           </Button>
           <button type="button" onClick={() => setMode(mode === "in" ? "up" : "in")} className="w-full text-sm underline">
             {mode === "in" ? "No account? Create one" : "Already have an account? Log in"}
