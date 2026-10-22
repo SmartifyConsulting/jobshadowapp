@@ -290,14 +290,14 @@ function NewBooking() {
 
   const careers = [...new Set(options.map((p) => p.career))].sort();
   const hosts = options.filter((p) => p.career === career);
-  const sel = "w-full rounded-md border bg-background p-2";
+  const sel = "w-full max-w-md border-b border-primary-foreground/50 bg-transparent p-2 text-primary-foreground outline-none [&>option]:text-foreground";
   const titles = ["Choose a Sector", "Choose a Career", "Choose a Company", "Placement Details", "Choose a Date & Pay"];
   return (
-    <div className="space-y-4 rounded-lg border bg-card p-6">
-      <h2 className="font-display text-3xl text-primary">Book a Job Shadow</h2>
+    <div className="-mx-6 space-y-4 bg-teal px-6 py-6 text-primary-foreground">
+      <h2 className="font-display text-3xl">Book a Job Shadow</h2>
       <ol className="flex flex-wrap gap-2 text-xs font-semibold">
         {titles.map((t, i) => (
-          <li key={t} className={`rounded-full px-3 py-1 ${i + 1 === step ? "bg-primary text-primary-foreground" : i + 1 < step ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"}`}>
+          <li key={t} className={`rounded-full px-3 py-1 ${i + 1 === step ? "bg-cta text-cta-foreground" : i + 1 < step ? "bg-primary-foreground/80 text-primary" : "bg-primary-foreground/20"}`}>
             Step {i + 1}
           </li>
         ))}
@@ -343,22 +343,22 @@ function NewBooking() {
             ))}
           </div>
           <div>
-            <Label>Voucher code</Label>
-            <div className="flex gap-2">
-              <Input value={code} onChange={(e) => setCode(e.target.value)} />
-              <Button type="button" variant="outline" onClick={applyVoucher} disabled={!code}>Apply</Button>
+            <label className="text-sm font-semibold">Voucher code</label>
+            <div className="mt-1 flex gap-2">
+              <input value={code} onChange={(e) => setCode(e.target.value)} className="w-full max-w-xs border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none" />
+              <button type="button" onClick={applyVoucher} disabled={!code} className="border border-primary-foreground/60 px-4 py-1.5 text-sm font-semibold uppercase disabled:opacity-50">Apply</button>
             </div>
           </div>
           <p className="text-sm">Total: <strong>R{due.toFixed(0)}</strong>{voucher && ` (was R${base.toFixed(0)})`}</p>
         </div>
       )}
-      {msg && <p aria-live="polite" className="text-sm text-muted-foreground">{msg}</p>}
+      {msg && <p aria-live="polite" className="text-sm">{msg}</p>}
       <div className="flex gap-2">
-        {step > 1 && <Button variant="outline" onClick={() => setStep(step - 1)}>Back</Button>}
+        {step > 1 && <button type="button" onClick={() => setStep(step - 1)} className="border border-primary-foreground/60 px-5 py-2.5 text-sm font-semibold uppercase tracking-wide">Back</button>}
         {step < 5 ? (
-          <Button onClick={() => setStep(step + 1)} disabled={(step === 1 && !sector) || (step === 2 && !career) || (step === 3 && !chosen)}>Continue</Button>
+          <button type="button" onClick={() => setStep(step + 1)} disabled={(step === 1 && !sector) || (step === 2 && !career) || (step === 3 && !chosen)} className="bg-cta px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-cta-foreground disabled:opacity-50">Continue</button>
         ) : (
-          <Button onClick={async () => { await book(); setStep(1); setSector(""); setCareer(""); }} disabled={!chosen || !date}>Pay with PayFast</Button>
+          <button type="button" onClick={async () => { await book(); setStep(1); setSector(""); setCareer(""); }} disabled={!chosen || !date} className="bg-primary px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-primary-foreground disabled:opacity-50">Pay with PayFast</button>
         )}
       </div>
     </div>
