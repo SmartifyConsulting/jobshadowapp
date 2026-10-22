@@ -3,7 +3,7 @@ import { useState } from "react";
 import { z } from "zod";
 import { Check, ArrowLeft, ArrowRight, PartyPopper, Users, MonitorSmartphone } from "lucide-react";
 import { SiteLayout } from "@/components/SiteLayout";
-import { PROVINCES, ROLES } from "@/lib/data";
+import { PROVINCES, ROLE_TITLES } from "@/lib/data";
 import { saveApplication, type Application } from "@/lib/applications";
 
 export const Route = createFileRoute("/apply")({
@@ -168,7 +168,7 @@ function Apply() {
               <label className="block"><span className="text-sm font-medium">Career you'd like to shadow</span>
                 <select className={input} value={shadow.role} onChange={(e) => setShadow({ ...shadow, role: e.target.value })}>
                   <option value="">Select…</option>
-                  {ROLES.map((r) => <option key={r.slug} value={r.title}>{r.title} — {r.field}</option>)}
+                  {ROLE_TITLES.map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>{err("role")}</label>
               <div>
                 <span className="text-sm font-medium">Preferred format</span>
