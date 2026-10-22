@@ -20,6 +20,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as HowToRouteImport } from './routes/how-to'
 import { Route as PartnersRouteImport } from './routes/partners'
 import { Route as RealStoriesRouteImport } from './routes/real-stories'
+import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RolesRouteImport } from './routes/roles'
 import { Route as SendToAFriendRouteImport } from './routes/send-to-a-friend'
@@ -80,6 +81,11 @@ const RealStoriesRoute = RealStoriesRouteImport.update({
   path: '/real-stories',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
@@ -117,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/how-to': typeof HowToRoute
   '/partners': typeof PartnersRoute
   '/real-stories': typeof RealStoriesRoute
+  '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/roles': typeof RolesRoute
   '/send-to-a-friend': typeof SendToAFriendRoute
@@ -134,6 +141,7 @@ export interface FileRoutesByTo {
   '/how-to': typeof HowToRoute
   '/partners': typeof PartnersRoute
   '/real-stories': typeof RealStoriesRoute
+  '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/roles': typeof RolesRoute
   '/send-to-a-friend': typeof SendToAFriendRoute
@@ -153,6 +161,7 @@ export interface FileRoutesById {
   '/how-to': typeof HowToRoute
   '/partners': typeof PartnersRoute
   '/real-stories': typeof RealStoriesRoute
+  '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/roles': typeof RolesRoute
   '/send-to-a-friend': typeof SendToAFriendRoute
@@ -172,6 +181,7 @@ export interface FileRouteTypes {
     | '/how-to'
     | '/partners'
     | '/real-stories'
+    | '/register'
     | '/reset-password'
     | '/roles'
     | '/send-to-a-friend'
@@ -189,6 +199,7 @@ export interface FileRouteTypes {
     | '/how-to'
     | '/partners'
     | '/real-stories'
+    | '/register'
     | '/reset-password'
     | '/roles'
     | '/send-to-a-friend'
@@ -207,6 +218,7 @@ export interface FileRouteTypes {
     | '/how-to'
     | '/partners'
     | '/real-stories'
+    | '/register'
     | '/reset-password'
     | '/roles'
     | '/send-to-a-friend'
@@ -226,6 +238,7 @@ export interface RootRouteChildren {
   HowToRoute: typeof HowToRoute
   PartnersRoute: typeof PartnersRoute
   RealStoriesRoute: typeof RealStoriesRoute
+  RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   RolesRoute: typeof RolesRoute
   SendToAFriendRoute: typeof SendToAFriendRoute
@@ -310,6 +323,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RealStoriesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
@@ -373,6 +393,7 @@ const rootRouteChildren: RootRouteChildren = {
   HowToRoute: HowToRoute,
   PartnersRoute: PartnersRoute,
   RealStoriesRoute: RealStoriesRoute,
+  RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   RolesRoute: RolesRoute,
   SendToAFriendRoute: SendToAFriendRoute,
