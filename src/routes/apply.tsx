@@ -7,7 +7,7 @@ import { PROVINCES, ROLES } from "@/lib/data";
 import { saveApplication, type Application } from "@/lib/applications";
 
 export const Route = createFileRoute("/apply")({
-  validateSearch: (s: Record<string, unknown>): { role?: string } => ({ role: typeof s["role"] === "string" ? (s["role"] as string) : undefined }),
+  validateSearch: (s: Record<string, unknown>): { role?: string | undefined } => ({ role: typeof s["role"] === "string" ? (s["role"] as string) : undefined }),
   head: () => ({
     meta: [
       { title: "Apply to job shadow — JobShadow" },

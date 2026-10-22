@@ -8,7 +8,7 @@ const TYPES = { sponsor: "Sponsor a learner", host: "Host inquiry", school: "Sch
 type T = keyof typeof TYPES;
 
 export const Route = createFileRoute("/contact")({
-  validateSearch: (s: Record<string, unknown>): { type?: T } => ({ type: (s["type"] as string) in TYPES ? (s["type"] as T) : undefined }),
+  validateSearch: (s: Record<string, unknown>): { type?: T | undefined } => ({ type: (s["type"] as string) in TYPES ? (s["type"] as T) : undefined }),
   head: () => ({
     meta: [
       { title: "Contact JobShadow — Sponsor, host or partner" },

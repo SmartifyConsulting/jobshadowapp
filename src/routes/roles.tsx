@@ -5,7 +5,7 @@ import { SiteLayout } from "@/components/SiteLayout";
 import { FIELDS, ROLES, type Field } from "@/lib/data";
 
 export const Route = createFileRoute("/roles")({
-  validateSearch: (s: Record<string, unknown>): { q?: string } => ({ q: typeof s["q"] === "string" ? (s["q"] as string) : undefined }),
+  validateSearch: (s: Record<string, unknown>): { q?: string | undefined } => ({ q: typeof s["q"] === "string" ? (s["q"] as string) : undefined }),
   head: () => ({
     meta: [
       { title: "Explore careers — JobShadow job roles library" },
