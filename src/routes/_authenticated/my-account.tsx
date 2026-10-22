@@ -290,75 +290,77 @@ function NewBooking() {
 
   const careers = [...new Set(options.map((p) => p.career))].sort();
   const hosts = options.filter((p) => p.career === career);
-  const sel = "w-full max-w-md border-b border-primary-foreground/50 bg-transparent p-2 text-primary-foreground outline-none [&>option]:text-foreground";
-  const titles = ["Choose a Sector", "Choose a Career", "Choose a Company", "Placement Details", "Choose a Date & Pay"];
+  const sel = "block w-full max-w-md border-b border-primary-foreground/50 bg-transparent p-2 text-primary-foreground outline-none [&>option]:text-foreground";
+  const titles = ["Sector", "Career", "Company", "Placement Details", "Date & Pay"];
+  const STEP_BG = ["bg-teal", "bg-cta", "bg-teal", "bg-cta", "bg-teal"];
+  const canContinue = (step === 1 && !!sector) || (step === 2 && !!career) || (step === 3 && !!chosen) || step === 4;
+
   return (
-    <div className="-mx-6 space-y-4 bg-teal px-6 py-6 text-primary-foreground">
-      <h2 className="font-display text-3xl">Book a Job Shadow</h2>
-      <ol className="flex flex-wrap gap-2 text-xs font-semibold">
-        {titles.map((t, i) => (
-          <li key={t} className={`rounded-full px-3 py-1 ${i + 1 === step ? "bg-cta text-cta-foreground" : i + 1 < step ? "bg-primary-foreground/80 text-primary" : "bg-primary-foreground/20"}`}>
-            Step {i + 1}
-          </li>
-        ))}
-      </ol>
-      <h3 className="text-xl font-semibold">Step {step}: {titles[step - 1]}</h3>
-      {step === 1 && (
-        <select className={sel} value={sector} onChange={(e) => { setSector(e.target.value); setCareer(""); setPid(null); setDate(""); }}>
-          <option value="">Select a sector</option>
-          {sectors.map((s) => <option key={s}>{s}</option>)}
-        </select>
-      )}
-      {step === 2 && (
-        <>
-          <select className={sel} value={career} onChange={(e) => { setCareer(e.target.value); setPid(null); setDate(""); }}>
-            <option value="">Select a career</option>
-            {careers.map((c) => <option key={c}>{c}</option>)}
-          </select>
-          {career && <p className="text-sm text-muted-foreground">{options.find((p) => p.career === career)?.description || ""}</p>}
-        </>
-      )}
-      {step === 3 && (
-        <select className={sel} value={pid ?? ""} onChange={(e) => { setPid(Number(e.target.value) || null); setDate(""); }}>
-          <option value="">Select a company</option>
-          {hosts.map((p) => <option key={p.id} value={p.id}>{p.company} – {p.location}</option>)}
-        </select>
-      )}
-      {step === 4 && chosen && (
-        <dl className="grid grid-cols-2 gap-2 text-sm">
-          <dt className="font-semibold">Company</dt><dd>{chosen.company}</dd>
-          <dt className="font-semibold">Location</dt><dd>{chosen.location}</dd>
-          <dt className="font-semibold">Days per shadow</dt><dd>{chosen.days_per_shadow ?? 1}</dd>
-          <dt className="font-semibold">Arrival time</dt><dd>{chosen.arrival_time || "TBC"}</dd>
-          <dt className="font-semibold">Collection time</dt><dd>{chosen.collection_time || "TBC"}</dd>
-          <dt className="font-semibold">Fee</dt><dd>R{base.toFixed(0)}</dd>
-        </dl>
-      )}
-      {step === 5 && chosen && (
-        <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">{dates.length ? "Please select from the available dates below" : "There are no available dates for this placement."}</p>
-          <div className="flex flex-wrap gap-2">
-            {dates.map((d) => (
-              <button key={d} type="button" onClick={() => setDate(d)} className={`rounded border px-3 py-1 text-sm ${date === d ? "bg-primary text-primary-foreground" : "border-primary text-primary"}`}>{d}</button>
-            ))}
-          </div>
-          <div>
-            <label className="text-sm font-semibold">Voucher code</label>
-            <div className="mt-1 flex gap-2">
-              <input value={code} onChange={(e) => setCode(e.target.value)} className="w-full max-w-xs border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none" />
-              <button type="button" onClick={applyVoucher} disabled={!code} className="border border-primary-foreground/60 px-4 py-1.5 text-sm font-semibold uppercase disabled:opacity-50">Apply</button>
-            </div>
-          </div>
-          <p className="text-sm">Total: <strong>R{due.toFixed(0)}</strong>{voucher && ` (was R${base.toFixed(0)})`}</p>
+    <div className="-mx-6">
+      <div className={`${STEP_BG[step - 1]} px-6 py-5 text-primary-foreground`}>
+        <div className="flex items-center gap-3">
+          <ChevronDown className="h-6 w-6 shrink-0" />
+          <h2 className="font-display text-2xl">Step {step}: {titles[step - 1]}</h2>
         </div>
-      )}
-      {msg && <p aria-live="polite" className="text-sm">{msg}</p>}
-      <div className="flex gap-2">
-        {step > 1 && <button type="button" onClick={() => setStep(step - 1)} className="border border-primary-foreground/60 px-5 py-2.5 text-sm font-semibold uppercase tracking-wide">Back</button>}
+        <div className="mt-5">
+          {step === 1 && (
+            <select className={sel} value={sector} onChange={(e) => { setSector(e.target.value); setCareer(""); setPid(null); setDate(""); }}>
+              <option value="">Select a sector</option>
+              {sectors.map((s) => <option key={s}>{s}</option>)}
+            </select>
+          )}
+          {step === 2 && (
+            <>
+              <select className={sel} value={career} onChange={(e) => { setCareer(e.target.value); setPid(null); setDate(""); }}>
+                <option value="">Select a career</option>
+                {careers.map((c) => <option key={c}>{c}</option>)}
+              </select>
+              {career && <p className="mt-3 text-sm">{options.find((p) => p.career === career)?.description || ""}</p>}
+            </>
+          )}
+          {step === 3 && (
+            <select className={sel} value={pid ?? ""} onChange={(e) => { setPid(Number(e.target.value) || null); setDate(""); }}>
+              <option value="">Select a company</option>
+              {hosts.map((p) => <option key={p.id} value={p.id}>{p.company} – {p.location}</option>)}
+            </select>
+          )}
+          {step === 4 && chosen && (
+            <dl className="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
+              <div><dt className="font-semibold">Company</dt><dd>{chosen.company}</dd></div>
+              <div><dt className="font-semibold">Location</dt><dd>{chosen.location}</dd></div>
+              <div><dt className="font-semibold">Days per shadow</dt><dd>{chosen.days_per_shadow ?? 1}</dd></div>
+              <div><dt className="font-semibold">Arrival time</dt><dd>{chosen.arrival_time || "TBC"}</dd></div>
+              <div><dt className="font-semibold">Collection time</dt><dd>{chosen.collection_time || "TBC"}</dd></div>
+              <div><dt className="font-semibold">Fee</dt><dd>R{base.toFixed(0)}</dd></div>
+            </dl>
+          )}
+          {step === 5 && chosen && (
+            <div className="space-y-3">
+              <p className="text-sm">{dates.length ? "Please select from the available dates below" : "There are no available dates for this placement."}</p>
+              <div className="flex flex-wrap gap-2">
+                {dates.map((d) => (
+                  <button key={d} type="button" onClick={() => setDate(d)} className={`border px-3 py-1 text-sm ${date === d ? "bg-primary text-primary-foreground" : "border-primary-foreground/60"}`}>{d}</button>
+                ))}
+              </div>
+              <div>
+                <label className="text-sm font-semibold">Voucher code</label>
+                <div className="mt-1 flex gap-2">
+                  <input value={code} onChange={(e) => setCode(e.target.value)} className="w-full max-w-xs border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none" />
+                  <button type="button" onClick={applyVoucher} disabled={!code} className="border border-primary-foreground/60 px-4 py-1.5 text-sm font-semibold uppercase disabled:opacity-50">Apply</button>
+                </div>
+              </div>
+              <p className="text-sm">Total: <strong>R{due.toFixed(0)}</strong>{voucher && ` (was R${base.toFixed(0)})`}</p>
+            </div>
+          )}
+          {msg && <p aria-live="polite" className="mt-3 text-sm font-semibold">{msg}</p>}
+        </div>
+      </div>
+      <div className="flex gap-2 bg-primary px-6 py-5">
+        {step > 1 && <button type="button" onClick={() => setStep(step - 1)} className="bg-primary-foreground/20 px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-primary-foreground">Back to Step {step - 1}</button>}
         {step < 5 ? (
-          <button type="button" onClick={() => setStep(step + 1)} disabled={(step === 1 && !sector) || (step === 2 && !career) || (step === 3 && !chosen)} className="bg-cta px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-cta-foreground disabled:opacity-50">Continue</button>
+          <button type="button" onClick={() => setStep(step + 1)} disabled={!canContinue} className="bg-cta px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-cta-foreground disabled:opacity-50">Continue to Step {step + 1}</button>
         ) : (
-          <button type="button" onClick={async () => { await book(); setStep(1); setSector(""); setCareer(""); }} disabled={!chosen || !date} className="bg-primary px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-primary-foreground disabled:opacity-50">Pay with PayFast</button>
+          <button type="button" onClick={async () => { await book(); setStep(1); setSector(""); setCareer(""); }} disabled={!chosen || !date} className="bg-cta px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-cta-foreground disabled:opacity-50">Pay with PayFast</button>
         )}
       </div>
     </div>
