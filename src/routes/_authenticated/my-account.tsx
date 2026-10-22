@@ -97,8 +97,25 @@ function ProfileForm({ userId }: { userId: string }) {
       return;
     }
     setErrors({});
+    if (!files.id) return setErrors({ form: "Please upload a scan of the scholar's ID." });
     setBusy(true);
-    const { error } = await supabase.from("scholar_profiles").insert({ ...r.data, career_interests: r.data.career_interests ?? null, dietary: r.data.dietary ?? null, guardian_id: r.data.guardian_id ?? null, user_id: userId });
+    const upload = async (file: File | undefined, kind: string) => {
+      if (!file) return null;
+      const path = `${userId}/${kind}-${Date.now()}-${file.name}`;
+      const res = await supabase.storage.from("scholar-docs").upload(path, file, { upsert: true });
+      if (res.error) throw new Error(res.error.message);
+      return path;
+    };
+    let id_file_path: string | null = null;
+    let photo_path: string | null = null;
+    try {
+      id_file_path = await upload(files.id, "id");
+      photo_path = await upload(files.photo, "photo");
+    } catch (ex) {
+      setBusy(false);
+      return setErrors({ form: (ex as Error).message });
+    }
+    const { error } = await supabase.from("scholar_profiles").insert({ ...r.data, career_interests: r.data.career_interests ?? null, dietary: r.data.dietary ?? null, guardian_id: r.data.guardian_id ?? null, user_id: userId, id_file_path, photo_path });
     setBusy(false);
     if (error) return setErrors({ form: error.message });
     qc.invalidateQueries({ queryKey: ["profile"] });
@@ -150,9 +167,9 @@ function ProfileForm({ userId }: { userId: string }) {
         <h1 className="font-display text-2xl text-primary">T &amp; C's</h1>
         <details className="mt-2 rounded border p-3 text-xs text-muted-foreground">
           <summary className="cursor-pointer font-semibold text-foreground">Terms &amp; Conditions</summary>
-          <p className="mt-2">You are reading a legal document, which is an agreement between yourself, the browser or user of the Website or Services described herein, and the owners of the Website, referred to as “Jobshadow”, being a company registered in South Africa situated at 4th on Anslow Office Park, Anslow Lane, Bryanston 2021. By using this Website, you agree that all the terms of this Agreement are reasonable. If you don’t think that they are reasonable, you must not use this Website.</p>
-          <p className="mt-2">SERVICES: Connecting Scholars to host companies through the use of the Website, and thereby providing Scholars the opportunity to learn about a particular industry or occupation and to gain valuable work skills through job shadowing.</p>
-          <p className="mt-2">All payments are done online through PayFast – we do not keep any personal information in this regard.</p>
+          <div className="mt-2 max-h-96 space-y-2 overflow-y-auto">
+            {TERMS.map((t, i) => <p key={i}>{t}</p>)}
+          </div>
         </details>
       </div>
       <label className="flex items-center gap-2 text-sm">
@@ -180,6 +197,16 @@ function Bookings() {
     qc.invalidateQueries({ queryKey: ["bookings"] });
     qc.invalidateQueries({ queryKey: ["emails"] });
   }
+  async function uploadIndemnity(id: string, file: File) {
+    setErr(null);
+    const uid = (await supabase.auth.getUser()).data.user?.id;
+    if (!uid) return;
+    const path = `${uid}/indemnity-${id}-${file.name}`;
+    const up = await supabase.storage.from("scholar-docs").upload(path, file, { upsert: true });
+    if (up.error) return setErr(up.error.message);
+    await supabase.rpc("set_indemnity_path", { _booking: id, _path: path });
+    await act("submit_indemnity", id);
+  }
   return (
     <div className="space-y-3">
       <h2 className="font-display text-3xl text-primary">My bookings</h2>
@@ -200,7 +227,10 @@ function Bookings() {
               <Button size="sm" onClick={() => act("confirm_test_payment", b.id)}>Pay R{Number(b.amount_due).toFixed(0)} (test payment)</Button>
             )}
             {b.status === "indemnity_required" && (
-              <Button size="sm" onClick={() => act("submit_indemnity", b.id)}>I've uploaded the signed indemnity</Button>
+              <label className="text-sm">
+                <span className="font-semibold">Upload signed indemnity: </span>
+                <input type="file" accept="image/*,application/pdf,.doc,.docx" onChange={(e) => { const file = e.target.files?.[0]; if (file) void uploadIndemnity(b.id, file); }} />
+              </label>
             )}
           </div>
         </div>
