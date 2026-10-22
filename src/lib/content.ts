@@ -19,6 +19,3 @@ export const VIDEOS = [
 export const CORPORATE_VIDEO = { id: "72zG7HbT_5U", title: "JOB SHADOW corporate video 2020" };
 export const STORIES_VIDEO = { id: "APy164TJ0tI", title: "JOB SHADOW Real Stories 2020" };
 
-export function YouTube({ id, title }: { id: string; title: string }) {
-  return null as unknown as { id: string; title: string } & never;
-}
