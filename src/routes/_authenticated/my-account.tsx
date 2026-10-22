@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { SiteLayout, PageHero } from "@/components/SiteLayout";
+import { SiteLayout } from "@/components/SiteLayout";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TERMS } from "@/lib/terms";
@@ -43,8 +43,8 @@ function MyAccount() {
   });
   return (
     <SiteLayout>
-      <PageHero title="My applications" />
-      <section className="mx-auto max-w-4xl space-y-10 px-5 py-10">
+      <section className="bg-teal space-y-10 px-5 py-10 text-primary-foreground">
+        <div className="mx-auto max-w-4xl space-y-10">
         {profile.isLoading || !user ? (
           <p>Loading…</p>
         ) : !profile.data ? (
@@ -56,6 +56,7 @@ function MyAccount() {
             <Emails />
           </>
         )}
+        </div>
       </section>
     </SiteLayout>
   );
@@ -122,9 +123,9 @@ function ProfileForm({ userId }: { userId: string }) {
     qc.invalidateQueries({ queryKey: ["profile"] });
   }
   return (
-    <form onSubmit={save} className="space-y-6 rounded-lg border bg-card p-6">
+    <form onSubmit={save} className="space-y-6">
       <div>
-        <h1 className="font-display text-4xl text-primary">Personal Details</h1>
+        <h1 className="font-display text-4xl">Personal Details</h1>
         <h5 className="mt-1 font-semibold">NOTE: no more than one scholar per registration.</h5>
       </div>
       <h5 className="font-semibold">The Job Shadow-ers Details</h5>
