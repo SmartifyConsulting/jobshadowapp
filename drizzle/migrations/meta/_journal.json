@@ -22,6 +22,13 @@
       "when": 1792681909599,
       "tag": "0002_scholar_booking_flow",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792682863281,
+      "tag": "0003_scholar_documents",
+      "breakpoints": true
     }
   ]
 }
