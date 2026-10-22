@@ -80,7 +80,7 @@ function ProfileForm({ userId }: { userId: string }) {
   const [f, setF] = useState<Record<string, string | boolean>>({ school_type: "Public School", tc_accepted: false });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
-  const [files, setFiles] = useState<{ id?: File; photo?: File }>({});
+  const [files, setFiles] = useState<{ id?: File | undefined; photo?: File | undefined }>({});
   void files;
   const field = (k: string, label: string, placeholder?: string) => (
     <div>
