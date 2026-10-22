@@ -22,8 +22,8 @@ export const Route = createFileRoute("/_authenticated/admin")({
 
 type Field = "text" | "number" | "date" | "checkbox";
 type Col = { key: string; label: string; field?: Field };
-const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string; singular: string; cols: Col[]; csvUpload?: boolean; dateCompanyFilter?: boolean }[] = [
-  { id: "apps", label: "Applications", icon: UsersIcon, table: "legacy_applications", singular: "Applications", dateCompanyFilter: true, cols: [
+const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string; singular: string; cols: Col[]; csvUpload?: boolean; dateCompanyFilter?: boolean; indemnityEdit?: boolean }[] = [
+  { id: "apps", label: "Applications", icon: UsersIcon, table: "legacy_applications", singular: "Applications", dateCompanyFilter: true, indemnityEdit: true, cols: [
     { key: "id", label: "ID" }, { key: "name", label: "Name" }, { key: "id_number", label: "ID No." },
     { key: "email", label: "Email" }, { key: "contact", label: "Contact" }, { key: "school", label: "School" },
     { key: "company", label: "Company" }, { key: "career", label: "Career" }, { key: "dates", label: "Dates" },
@@ -84,7 +84,7 @@ function AdminPage() {
           ) : !admin.data ? (
             <p className="p-8">Your account doesn't have admin access. Ask JobShadow to grant it.</p>
           ) : (
-            <DataTable key={section.id} title={section.singular} table={section.table} cols={section.cols} csvUpload={section.csvUpload} dateCompanyFilter={section.dateCompanyFilter} />
+            <DataTable key={section.id} title={section.singular} table={section.table} cols={section.cols} csvUpload={section.csvUpload} dateCompanyFilter={section.dateCompanyFilter} indemnityEdit={section.indemnityEdit} />
           )}
         </main>
       </div>
@@ -110,7 +110,7 @@ function exportCsv(title: string, cols: Col[], rows: Record<string, unknown>[]) 
   URL.revokeObjectURL(url);
 }
 
-function DataTable({ title, table, cols, csvUpload, dateCompanyFilter }: { title: string; table: string; cols: Col[]; csvUpload?: boolean | undefined; dateCompanyFilter?: boolean | undefined }) {
+function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnityEdit }: { title: string; table: string; cols: Col[]; csvUpload?: boolean | undefined; dateCompanyFilter?: boolean | undefined; indemnityEdit?: boolean | undefined }) {
   const qc = useQueryClient();
   const [q, setQ] = useState("");
   const [from, setFrom] = useState("");
@@ -169,7 +169,11 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter }: { title
   }
 
   if (editing) {
-    return <EditRecord title={title} table={table} cols={cols} row={editing} onDone={() => { setEditing(null); qc.invalidateQueries({ queryKey: ["admin", table] }); }} onCancel={() => setEditing(null)} />;
+    const onDone = () => { setEditing(null); qc.invalidateQueries({ queryKey: ["admin", table] }); };
+    const onCancel = () => setEditing(null);
+    return indemnityEdit
+      ? <ApplicationEditPanel table={table} row={editing} onDone={onDone} onCancel={onCancel} />
+      : <EditRecord title={title} table={table} cols={cols} row={editing} onDone={onDone} onCancel={onCancel} />;
   }
 
   return (
@@ -236,6 +240,82 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter }: { title
               ))}
             </tbody>
           </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const RESEND_TEMPLATES = [
+  "Applicant Indemnity Request",
+  "Applicant Confirmed Booking",
+  "Mentor Application Complete",
+  "HR Application Complete",
+];
+
+function ApplicationEditPanel({ table, row, onDone, onCancel }: { table: string; row: Record<string, unknown>; onDone: () => void; onCancel: () => void }) {
+  const [file, setFile] = useState<File | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const filename = fmt(row["indemnity_file"] ?? row["indemnity"]);
+
+  async function upload() {
+    if (!file) return;
+    setBusy(true);
+    setErr(null);
+    const path = `applications/${row["id"]}-${file.name}`;
+    const up = await supabase.storage.from("scholar-docs").upload(path, file, { upsert: true });
+    if (up.error) { setBusy(false); return setErr(up.error.message); }
+    const { error } = await (supabase.from(table as "careers") as any).update({ indemnity_file: path }).eq("id", row["id"]);
+    setBusy(false);
+    if (error) return setErr(error.message);
+    onDone();
+  }
+
+  async function download() {
+    if (!filename) return;
+    const { data, error } = await supabase.storage.from("scholar-docs").download(filename);
+    if (error || !data) return setErr(error?.message ?? "File not found.");
+    const url = URL.createObjectURL(data);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename.split("/").pop() ?? filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between bg-foreground px-6 py-5 text-background">
+        <h1 className="text-xl font-semibold">Edit Application #{String(row["id"])}</h1>
+        <button onClick={onCancel} className="text-sm font-semibold hover:underline">Back to list</button>
+      </div>
+      <div className="grid gap-px bg-foreground/10 sm:grid-cols-2">
+        <div>
+          <div className="bg-foreground px-6 py-5 text-background"><h2 className="text-xl font-semibold">Edit Application #{String(row["id"])}</h2></div>
+          <div className="bg-teal/90 px-6 py-5 text-primary-foreground">
+            {filename && <p className="text-sm">{filename}</p>}
+            <input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="mt-2 block text-xs" />
+            {err && <p className="mt-2 text-sm font-semibold">{err}</p>}
+            <div className="mt-3 flex gap-2">
+              <button onClick={upload} disabled={busy || !file} className="bg-cta px-4 py-2 text-sm font-bold uppercase text-cta-foreground disabled:opacity-50">Update</button>
+              <button onClick={download} disabled={!filename} className="bg-cta px-4 py-2 text-sm font-bold uppercase text-cta-foreground disabled:opacity-50">Download File</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div className="bg-foreground px-6 py-5 text-background"><h2 className="text-xl font-semibold">Resend Mails</h2></div>
+          <div className="bg-teal/90 px-6 py-5 text-primary-foreground">
+            <div className="flex flex-col gap-2">
+              {RESEND_TEMPLATES.map((t, i) => (
+                <button key={t} onClick={() => setNotice(`"${t}" is queued to resend (no email service connected in this build).`)} className="bg-cta px-4 py-2 text-left text-xs font-bold uppercase tracking-wide text-cta-foreground">
+                  {i + 1}. {t}
+                </button>
+              ))}
+            </div>
+            {notice && <p className="mt-3 text-sm">{notice}</p>}
+          </div>
         </div>
       </div>
     </div>
