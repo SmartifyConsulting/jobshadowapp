@@ -7,7 +7,7 @@ import { PROVINCES, ROLES } from "@/lib/data";
 import { saveApplication, type Application } from "@/lib/applications";
 
 export const Route = createFileRoute("/apply")({
-  validateSearch: (s: Record<string, unknown>) => ({ role: typeof s.role === "string" ? s.role : undefined }),
+  validateSearch: (s: Record<string, unknown>): { role?: string } => ({ role: typeof s["role"] === "string" ? (s["role"] as string) : undefined }),
   head: () => ({
     meta: [
       { title: "Apply to job shadow — JobShadow" },
@@ -71,7 +71,7 @@ function Apply() {
 
   const next = () => {
     if (step < 4) {
-      const r = schemas[step].safeParse(data[step]);
+      const r = schemas[step]!.safeParse(data[step]);
       if (!r.success) {
         setErrors(Object.fromEntries(r.error.issues.map((i) => [String(i.path[0]), i.message])));
         return;
