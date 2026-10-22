@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApplyRouteImport } from './routes/apply'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as PartnersRouteImport } from './routes/partners'
@@ -18,6 +19,11 @@ import { Route as RolesRouteImport } from './routes/roles'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApplyRoute = ApplyRouteImport.update({
+  id: '/apply',
+  path: '/apply',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -43,6 +49,7 @@ const RolesRoute = RolesRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/apply': typeof ApplyRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
   '/partners': typeof PartnersRoute
@@ -50,6 +57,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/apply': typeof ApplyRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
   '/partners': typeof PartnersRoute
@@ -58,6 +66,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/apply': typeof ApplyRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
   '/partners': typeof PartnersRoute
@@ -65,14 +74,22 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/contact' | '/dashboard' | '/partners' | '/roles'
+  fullPaths: '/' | '/apply' | '/contact' | '/dashboard' | '/partners' | '/roles'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/contact' | '/dashboard' | '/partners' | '/roles'
-  id: '__root__' | '/' | '/contact' | '/dashboard' | '/partners' | '/roles'
+  to: '/' | '/apply' | '/contact' | '/dashboard' | '/partners' | '/roles'
+  id:
+    | '__root__'
+    | '/'
+    | '/apply'
+    | '/contact'
+    | '/dashboard'
+    | '/partners'
+    | '/roles'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApplyRoute: typeof ApplyRoute
   ContactRoute: typeof ContactRoute
   DashboardRoute: typeof DashboardRoute
   PartnersRoute: typeof PartnersRoute
@@ -86,6 +103,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/apply': {
+      id: '/apply'
+      path: '/apply'
+      fullPath: '/apply'
+      preLoaderRoute: typeof ApplyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contact': {
@@ -121,6 +145,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApplyRoute: ApplyRoute,
   ContactRoute: ContactRoute,
   DashboardRoute: DashboardRoute,
   PartnersRoute: PartnersRoute,
