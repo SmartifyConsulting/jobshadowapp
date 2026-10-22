@@ -105,14 +105,14 @@ function Home() {
         <div className="mx-auto max-w-6xl px-5">
           <div className="flex items-end justify-between">
             <h2 className="font-display text-4xl uppercase">Popular job roles</h2>
-            <Link to="/roles" className="text-sm font-semibold text-primary hover:underline">See all {ROLES.length} →</Link>
+            <Link to="/roles" className="text-sm font-semibold text-primary hover:underline">See all job roles →</Link>
           </div>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {ROLES.slice(0, 6).map((r) => (
               <Link key={r.slug} to="/roles" search={{ q: r.title }} className="group rounded border border-border p-5 transition hover:border-primary">
                 <p className="text-xs font-semibold uppercase tracking-wider text-primary">{r.field}</p>
                 <p className="mt-1 text-xl font-bold group-hover:text-primary">{r.title}</p>
-                <p className="mt-2 text-sm text-muted-foreground">{r.summary}</p>
+                <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">{r.summary}</p>
               </Link>
             ))}
           </div>

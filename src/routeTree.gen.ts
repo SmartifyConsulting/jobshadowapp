@@ -18,6 +18,7 @@ import { Route as HowToRouteImport } from './routes/how-to'
 import { Route as PartnersRouteImport } from './routes/partners'
 import { Route as RealStoriesRouteImport } from './routes/real-stories'
 import { Route as RolesRouteImport } from './routes/roles'
+import { Route as SendToAFriendRouteImport } from './routes/send-to-a-friend'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -64,6 +65,11 @@ const RolesRoute = RolesRouteImport.update({
   path: '/roles',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SendToAFriendRoute = SendToAFriendRouteImport.update({
+  id: '/send-to-a-friend',
+  path: '/send-to-a-friend',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/partners': typeof PartnersRoute
   '/real-stories': typeof RealStoriesRoute
   '/roles': typeof RolesRoute
+  '/send-to-a-friend': typeof SendToAFriendRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -86,6 +93,7 @@ export interface FileRoutesByTo {
   '/partners': typeof PartnersRoute
   '/real-stories': typeof RealStoriesRoute
   '/roles': typeof RolesRoute
+  '/send-to-a-friend': typeof SendToAFriendRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -98,6 +106,7 @@ export interface FileRoutesById {
   '/partners': typeof PartnersRoute
   '/real-stories': typeof RealStoriesRoute
   '/roles': typeof RolesRoute
+  '/send-to-a-friend': typeof SendToAFriendRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -111,6 +120,7 @@ export interface FileRouteTypes {
     | '/partners'
     | '/real-stories'
     | '/roles'
+    | '/send-to-a-friend'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -122,6 +132,7 @@ export interface FileRouteTypes {
     | '/partners'
     | '/real-stories'
     | '/roles'
+    | '/send-to-a-friend'
   id:
     | '__root__'
     | '/'
@@ -133,6 +144,7 @@ export interface FileRouteTypes {
     | '/partners'
     | '/real-stories'
     | '/roles'
+    | '/send-to-a-friend'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -145,6 +157,7 @@ export interface RootRouteChildren {
   PartnersRoute: typeof PartnersRoute
   RealStoriesRoute: typeof RealStoriesRoute
   RolesRoute: typeof RolesRoute
+  SendToAFriendRoute: typeof SendToAFriendRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -212,6 +225,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RolesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/send-to-a-friend': {
+      id: '/send-to-a-friend'
+      path: '/send-to-a-friend'
+      fullPath: '/send-to-a-friend'
+      preLoaderRoute: typeof SendToAFriendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -225,6 +245,7 @@ const rootRouteChildren: RootRouteChildren = {
   PartnersRoute: PartnersRoute,
   RealStoriesRoute: RealStoriesRoute,
   RolesRoute: RolesRoute,
+  SendToAFriendRoute: SendToAFriendRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -8,10 +8,11 @@ const NAV = [
   { to: "/about", label: "About" },
   { to: "/real-stories", label: "Real stories" },
   { to: "/how-to", label: "How To" },
+  { to: "/send-to-a-friend", label: "Send to a Friend" },
   { to: "/roles", label: "Job Roles" },
   { to: "/contact", label: "Contact Us" },
   { to: "/apply", label: "Register" },
-  { to: "/dashboard", label: "My applications" },
+  { to: "/dashboard", label: "Log in" },
 ] as const;
 
 const SOCIAL = [
@@ -28,7 +29,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
           <Link to="/" aria-label="JobShadow home" className="shrink-0">
             <img src={logo.url} alt="Job Shadow" width={358} height={195} className="h-14 w-auto md:h-16" />
           </Link>
-          <nav className="hidden items-center gap-5 lg:flex">
+          <nav className="hidden items-center gap-4 xl:flex">
             {NAV.map((n) => (
               <Link
                 key={n.to}
@@ -48,10 +49,10 @@ export function SiteLayout({ children }: { children: ReactNode }) {
               ))}
             </div>
           </nav>
-          <button className="lg:hidden" aria-label="Menu" onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button>
+          <button className="xl:hidden" aria-label="Menu" onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button>
         </div>
         {open && (
-          <nav className="flex flex-col gap-3 border-t border-primary-foreground/20 px-5 py-4 font-semibold lg:hidden">
+          <nav className="flex flex-col gap-3 border-t border-primary-foreground/20 px-5 py-4 font-semibold xl:hidden">
             {NAV.map((n) => <Link key={n.to} to={n.to} onClick={() => setOpen(false)}>{n.label}</Link>)}
           </nav>
         )}
@@ -62,6 +63,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
           <div className="md:col-span-2">
             <img src={logo.url} alt="Job Shadow" width={358} height={195} loading="lazy" className="h-16 w-auto" />
             <p className="mt-4 max-w-sm text-sm opacity-90">Be sure about the career and life you choose with Job Shadow.</p>
+            <a href="mailto:info@jobshadow.co.za" className="mt-2 inline-block text-sm font-bold text-accent hover:underline">info@jobshadow.co.za</a>
             <div className="mt-4 flex gap-2">
               {SOCIAL.map((s) => (
                 <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label} className="grid h-9 w-9 place-items-center rounded-full bg-primary-foreground text-primary hover:bg-accent">
@@ -76,6 +78,8 @@ export function SiteLayout({ children }: { children: ReactNode }) {
               <li><Link to="/roles">Job Roles</Link></li>
               <li><Link to="/apply">Book a Job Shadow</Link></li>
               <li><Link to="/how-to">How To</Link></li>
+              <li><Link to="/send-to-a-friend">Send to a Friend</Link></li>
+              <li><Link to="/real-stories">Real stories</Link></li>
             </ul>
           </div>
           <div className="text-sm">

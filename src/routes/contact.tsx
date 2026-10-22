@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
 import { CheckCircle2 } from "lucide-react";
-import { SiteLayout } from "@/components/SiteLayout";
+import { SiteLayout, PageHero } from "@/components/SiteLayout";
+import { CONTACT_EMAIL } from "@/lib/data";
 
 const TYPES = { sponsor: "Sponsor a learner", host: "Host inquiry", school: "School partnership", general: "General question" } as const;
 type T = keyof typeof TYPES;
@@ -44,6 +45,9 @@ function Contact() {
       return;
     }
     setErrors({});
+    const d = r.data;
+    const body = `Name: ${d.name}\nEmail: ${d.email}\n${type === "school" ? "School" : "Company"}: ${d.organisation || "-"}\n\n${d.message}`;
+    window.location.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`${TYPES[type]} – ${d.name}`)}&body=${encodeURIComponent(body)}`;
     setSent(true);
   };
 
@@ -61,18 +65,21 @@ function Contact() {
 
   return (
     <SiteLayout>
+      <PageHero title="Contact Us" />
       <section className="mx-auto grid max-w-6xl gap-12 px-5 py-14 md:grid-cols-[1fr_1.3fr]">
-        <div>
-          <h1 className="font-display text-5xl font-semibold">Let's talk.</h1>
-          <p className="mt-4 text-muted-foreground">Whether you want to sponsor a learner, host a scholar for a day, or bring JobShadow to your school, we'll get back to you within two working days.</p>
-          <p className="mt-8 text-sm"><strong>Email</strong><br />hello@jobshadow.co.za</p>
+        <div className="space-y-4">
+          <p>If you are a school and want to include job shadow as <strong>part of your life orientation program</strong></p>
+          <p>if you are a company who would like to be <strong>a part of our hosting</strong> program</p>
+          <p>if you are a company who would like to <strong>sponsor learners</strong> as part of your CSI Initiatives</p>
+          <p className="pt-4 font-display text-2xl uppercase">If you just want to say hi <span className="text-primary">please contact us</span></p>
+          <a href={`mailto:${CONTACT_EMAIL}`} className="inline-block text-xl font-bold text-primary hover:underline">{CONTACT_EMAIL}</a>
         </div>
         <div className="rounded-2xl bg-card p-7 ring-1 ring-border">
           {sent ? (
             <div className="py-10 text-center">
               <CheckCircle2 className="mx-auto h-12 w-12 text-primary" />
-              <h2 className="mt-4 font-display text-2xl font-semibold">Thank you, {form.name.split(" ")[0]}!</h2>
-              <p className="mt-2 text-muted-foreground">Your {TYPES[type].toLowerCase()} has been received.</p>
+              <h2 className="mt-4 font-display text-2xl font-semibold">Almost done, {form.name.split(" ")[0]}!</h2>
+              <p className="mt-2 text-muted-foreground">Your {TYPES[type].toLowerCase()} is ready in your email app — just press send. You can also email us directly at {CONTACT_EMAIL}.</p>
               <button onClick={() => { setSent(false); setForm({ name: "", email: "", organisation: "", message: "" }); }} className="mt-6 text-sm font-semibold text-primary">Send another</button>
             </div>
           ) : (
