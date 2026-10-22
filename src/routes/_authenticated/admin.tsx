@@ -122,7 +122,7 @@ function DataTable({ table, cols }: { table: string; cols: Col[] }) {
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={String(r.id)} className="border-t">
+              <tr key={String(r["id"])} className="border-t">
                 {cols.map((c) => <td key={c.key} className="px-3 py-2 align-top">{fmt(r[c.key])}</td>)}
               </tr>
             ))}
