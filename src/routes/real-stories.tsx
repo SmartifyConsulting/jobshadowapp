@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { SiteLayout, PageHero } from "@/components/SiteLayout";
+import { ChevronDown } from "lucide-react";
+import { SiteLayout } from "@/components/SiteLayout";
 import { YouTube } from "@/components/YouTube";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { STORIES, STORIES_VIDEO } from "@/lib/content";
 
 export const Route = createFileRoute("/real-stories")({
@@ -20,17 +22,31 @@ export const Route = createFileRoute("/real-stories")({
 function Stories() {
   return (
     <SiteLayout>
-      <PageHero title="Real stories" />
-      <section className="mx-auto max-w-6xl px-5 py-14">
-        <div className="grid gap-6 md:grid-cols-2">
-          {STORIES.map((s) => (
-            <figure key={s.img} className="overflow-hidden rounded bg-foreground text-background">
-              <img src={s.img} alt="" width={827} height={322} loading="lazy" className="w-full" />
-              <blockquote className="p-6 italic opacity-90">“{s.quote}”</blockquote>
-            </figure>
-          ))}
+      <div className="bg-primary text-primary-foreground">
+        <div className="bg-teal text-primary-foreground">
+          <div className="mx-auto flex max-w-7xl items-center gap-3 px-5 py-4">
+            <ChevronDown className="h-6 w-6" />
+            <span className="font-display text-2xl uppercase">Real stories</span>
+          </div>
         </div>
-        <div className="mx-auto mt-14 max-w-3xl"><YouTube {...STORIES_VIDEO} /></div>
+      </div>
+      <section className="bg-accent py-14">
+        <Carousel opts={{ loop: true }} className="mx-auto max-w-7xl px-5">
+          <CarouselContent className="-ml-8">
+            {STORIES.map((s) => (
+              <CarouselItem key={s.name} className="basis-1/2 pl-8 md:basis-1/2">
+                <div className="flex items-center gap-4">
+                  <h3 className="font-display text-4xl uppercase text-primary-foreground">{s.name}</h3>
+                  <img src={s.img} alt={s.name} width={140} height={140} loading="lazy" className="h-28 w-28 shrink-0 rounded-full object-cover" />
+                </div>
+                <p className="mt-6 text-sm leading-relaxed text-accent-foreground">{s.quote}</p>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious className="left-0" />
+          <CarouselNext className="right-0" />
+        </Carousel>
+        <div className="mx-auto mt-14 max-w-3xl px-5"><YouTube {...STORIES_VIDEO} /></div>
       </section>
     </SiteLayout>
   );

@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { SiteLayout, PageHero } from "@/components/SiteLayout";
+import { ChevronDown } from "lucide-react";
+import { SiteLayout } from "@/components/SiteLayout";
 import { YouTube } from "@/components/YouTube";
 import { VIDEOS } from "@/lib/content";
 
@@ -20,14 +21,18 @@ export const Route = createFileRoute("/how-to")({
 function HowTo() {
   return (
     <SiteLayout>
-      <PageHero title="How To" />
-      <section className="mx-auto grid max-w-6xl gap-10 px-5 py-14 md:grid-cols-2">
-        {VIDEOS.map((v) => (
-          <div key={v.id}>
-            <h2 className="mb-3 text-xl font-bold">{v.title}</h2>
-            <YouTube {...v} />
-          </div>
-        ))}
+      <div className="bg-cta text-cta-foreground">
+        <div className="mx-auto flex max-w-7xl items-center gap-3 px-5 py-4">
+          <ChevronDown className="h-6 w-6" />
+          <span className="font-display text-2xl uppercase">How To</span>
+        </div>
+      </div>
+      <section className="bg-primary">
+        <div className="mx-auto grid max-w-7xl gap-6 px-5 py-14 md:grid-cols-3">
+          {VIDEOS.map((v) => (
+            <YouTube key={v.id} {...v} />
+          ))}
+        </div>
       </section>
     </SiteLayout>
   );

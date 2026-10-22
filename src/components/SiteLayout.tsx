@@ -85,9 +85,9 @@ export function SiteLayout({ children }: { children: ReactNode }) {
           <div className="text-sm">
             <p className="font-display text-lg text-accent">Get involved</p>
             <ul className="mt-2 space-y-1 opacity-90">
-              <li><Link to="/contact" search={{ type: "sponsor" }}>Sponsor a learner</Link></li>
-              <li><Link to="/contact" search={{ type: "host" }}>Hosting contact</Link></li>
-              <li><Link to="/contact" search={{ type: "school" }}>School contact</Link></li>
+              <li><Link to="/contact">Sponsor a learner</Link></li>
+              <li><Link to="/contact">Hosting contact</Link></li>
+              <li><Link to="/contact">School contact</Link></li>
               <li><Link to="/partners">Partner with us</Link></li>
             </ul>
           </div>
