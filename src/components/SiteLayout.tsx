@@ -12,7 +12,7 @@ const NAV = [
   { to: "/roles", label: "Job Roles" },
   { to: "/contact", label: "Contact Us" },
   { to: "/apply", label: "Register" },
-  { to: "/dashboard", label: "Log in" },
+  { to: "/auth", label: "Log in" },
 ] as const;
 
 const SOCIAL = [

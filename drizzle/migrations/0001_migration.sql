@@ -1,0 +1,8 @@
+create or replace function public.handle_admin_signup() returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if lower(new.email) in ('info@jobshadow.co.za') then
+    insert into public.user_roles(user_id, role) values (new.id, 'admin') on conflict do nothing;
+  end if;
+  return new;
+end $$;
+create trigger on_auth_user_created_admin after insert on auth.users for each row execute function public.handle_admin_signup();
