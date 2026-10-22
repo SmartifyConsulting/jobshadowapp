@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
@@ -165,22 +166,22 @@ function ProfileForm({ userId }: { userId: string }) {
         {field("guardian_email", "Parent / Guardian email address", "PARENT / GUARDIAN EMAIL ADDRESS")}
         {field("guardian_id", "Parent / Guardian ID/passport", "PARENT / GUARDIAN ID NO")}
       </div>
-      <div>
-        <h1 className="font-display text-2xl text-primary">T &amp; C's</h1>
-        <details className="mt-2 rounded border p-3 text-xs text-muted-foreground">
-          <summary className="cursor-pointer font-semibold text-foreground">Terms &amp; Conditions</summary>
-          <div className="mt-2 max-h-96 space-y-2 overflow-y-auto">
-            {TERMS.map((t, i) => <p key={i}>{t}</p>)}
-          </div>
-        </details>
-      </div>
-      <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" checked={!!f["tc_accepted"]} onChange={(e) => setF({ ...f, tc_accepted: e.target.checked })} />
-        I agree with the Terms &amp; Conditions
-      </label>
+      <details className="group -mx-6 bg-cta px-6 py-5 text-cta-foreground">
+        <summary className="flex cursor-pointer list-none items-center gap-3 font-display text-2xl">
+          <ChevronDown className="h-6 w-6 shrink-0 transition group-open:rotate-180" /> T &amp; C's
+        </summary>
+        <a href="#" onClick={(e) => e.preventDefault()} className="mt-3 block text-sm font-bold underline">View here</a>
+        <div className="mt-3 max-h-64 space-y-2 overflow-y-auto text-xs">
+          {TERMS.map((t, i) => <p key={i}>{t}</p>)}
+        </div>
+        <label className="mt-3 flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={!!f["tc_accepted"]} onChange={(e) => setF({ ...f, tc_accepted: e.target.checked })} />
+          I agree with the Terms &amp; Conditions
+        </label>
+      </details>
       {errors["tc_accepted"] && <p className="text-xs text-destructive">{errors["tc_accepted"]}</p>}
       {errors["form"] && <p className="text-sm text-destructive">{errors["form"]}</p>}
-      <Button type="submit" disabled={busy}>Submit</Button>
+      <Button type="submit" disabled={busy} className="bg-primary text-primary-foreground">Complete &amp; Go To Step 2</Button>
     </form>
   );
 }

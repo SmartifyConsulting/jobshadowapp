@@ -1,7 +1,10 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
-import { Menu, X, Facebook, Instagram } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Menu, X, Facebook, Instagram, ChevronDown } from "lucide-react";
 import logo from "@/assets/logo.png.asset.json";
+import { supabase } from "@/integrations/supabase/client";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 const NAV = [
   { to: "/", label: "Home" },
@@ -11,9 +14,30 @@ const NAV = [
   { to: "/send-to-a-friend", label: "Send to a Friend" },
   { to: "/roles", label: "Job Roles" },
   { to: "/contact", label: "Contact Us" },
+] as const;
+
+const GUEST_NAV = [
   { to: "/register", label: "Register" },
   { to: "/auth", label: "Log in" },
 ] as const;
+
+const ADMIN_NAV = [
+  { to: "/admin", label: "Companies" },
+  { to: "/admin", label: "Vouchers" },
+  { to: "/admin", label: "Applications" },
+] as const;
+
+function useSession() {
+  return useQuery({
+    queryKey: ["site-session"],
+    queryFn: async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return { user: null, isAdmin: false };
+      const { data } = await supabase.from("user_roles").select("role").eq("user_id", u.user.id).eq("role", "admin");
+      return { user: u.user, isAdmin: (data?.length ?? 0) > 0 };
+    },
+  });
+}
 
 const SOCIAL = [
   { href: "https://www.facebook.com/JobShadowBookings", icon: Facebook, label: "Facebook" },
@@ -22,6 +46,17 @@ const SOCIAL = [
 
 export function SiteLayout({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+  const { data: session } = useSession();
+  const user = session?.user ?? null;
+  const isAdmin = session?.isAdmin ?? false;
+  const displayName = (user?.user_metadata?.["name"] as string | undefined) || user?.email || "Account";
+
+  async function logout() {
+    await supabase.auth.signOut();
+    navigate({ to: "/" });
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-40 bg-primary text-primary-foreground shadow-warm">
@@ -41,6 +76,24 @@ export function SiteLayout({ children }: { children: ReactNode }) {
                 {n.label}
               </Link>
             ))}
+            {isAdmin && ADMIN_NAV.map((n) => (
+              <Link key={n.label} to={n.to} className="border-b-4 border-transparent py-2 text-sm font-semibold transition hover:border-accent">{n.label}</Link>
+            ))}
+            {!user && GUEST_NAV.map((n) => (
+              <Link key={n.to} to={n.to} className="border-b-4 border-transparent py-2 text-sm font-semibold transition hover:border-accent" activeProps={{ className: "border-cta" }}>{n.label}</Link>
+            ))}
+            {user && (
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center gap-1 text-sm font-semibold">
+                  {displayName} <ChevronDown className="h-4 w-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild><Link to="/my-account">My Account</Link></DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link to="/dashboard">My Bookings</Link></DropdownMenuItem>
+                  <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
             <div className="ml-2 flex gap-2">
               {SOCIAL.map((s) => (
                 <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label} className="grid h-8 w-8 place-items-center rounded-full bg-primary-foreground text-primary transition hover:bg-accent">
@@ -54,6 +107,15 @@ export function SiteLayout({ children }: { children: ReactNode }) {
         {open && (
           <nav className="flex flex-col gap-3 border-t border-primary-foreground/20 px-5 py-4 font-semibold xl:hidden">
             {NAV.map((n) => <Link key={n.to} to={n.to} onClick={() => setOpen(false)}>{n.label}</Link>)}
+            {isAdmin && ADMIN_NAV.map((n) => <Link key={n.label} to={n.to} onClick={() => setOpen(false)}>{n.label}</Link>)}
+            {!user && GUEST_NAV.map((n) => <Link key={n.to} to={n.to} onClick={() => setOpen(false)}>{n.label}</Link>)}
+            {user && (
+              <>
+                <Link to="/my-account" onClick={() => setOpen(false)}>My Account</Link>
+                <Link to="/dashboard" onClick={() => setOpen(false)}>My Bookings</Link>
+                <button className="text-left" onClick={() => { setOpen(false); void logout(); }}>Logout</button>
+              </>
+            )}
           </nav>
         )}
       </header>
