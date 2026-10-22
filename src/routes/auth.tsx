@@ -37,7 +37,7 @@ function AuthPage() {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       setBusy(false);
       if (error) return setMsg("Email or password is incorrect.");
-      navigate({ to: "/admin" });
+      const { data: u } = await supabase.auth.getUser(); const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: u.user!.id, _role: "admin" }); navigate({ to: isAdmin ? "/admin" : "/my-account" });
     } else {
       if (password.length < 8) {
         setBusy(false);
@@ -46,7 +46,7 @@ function AuthPage() {
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: `${window.location.origin}/admin` },
+        options: { emailRedirectTo: `${window.location.origin}/my-account` },
       });
       setBusy(false);
       setMsg(error ? error.message : "Check your email to confirm your account, then log in.");

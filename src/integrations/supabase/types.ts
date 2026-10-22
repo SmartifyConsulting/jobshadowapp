@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      bookings: {
+        Row: {
+          amount_due: number
+          base_amount: number
+          career: string | null
+          company: string | null
+          company_id: number
+          created_at: string
+          discount: number
+          id: string
+          indemnity_received: boolean
+          location: string | null
+          paid_at: string | null
+          sector: string | null
+          shadow_date: string
+          status: string
+          user_id: string
+          voucher_code: string | null
+        }
+        Insert: {
+          amount_due?: number
+          base_amount?: number
+          career?: string | null
+          company?: string | null
+          company_id: number
+          created_at?: string
+          discount?: number
+          id?: string
+          indemnity_received?: boolean
+          location?: string | null
+          paid_at?: string | null
+          sector?: string | null
+          shadow_date: string
+          status?: string
+          user_id?: string
+          voucher_code?: string | null
+        }
+        Update: {
+          amount_due?: number
+          base_amount?: number
+          career?: string | null
+          company?: string | null
+          company_id?: number
+          created_at?: string
+          discount?: number
+          id?: string
+          indemnity_received?: boolean
+          location?: string | null
+          paid_at?: string | null
+          sector?: string | null
+          shadow_date?: string
+          status?: string
+          user_id?: string
+          voucher_code?: string | null
+        }
+        Relationships: []
+      }
       careers: {
         Row: {
           id: number
@@ -119,6 +176,42 @@ export type Database = {
         }
         Relationships: []
       }
+      email_outbox: {
+        Row: {
+          body: string
+          booking_id: string | null
+          created_at: string
+          id: string
+          recipient: string | null
+          status: string
+          subject: string
+          template: string
+          user_id: string | null
+        }
+        Insert: {
+          body: string
+          booking_id?: string | null
+          created_at?: string
+          id?: string
+          recipient?: string | null
+          status?: string
+          subject: string
+          template: string
+          user_id?: string | null
+        }
+        Update: {
+          body?: string
+          booking_id?: string | null
+          created_at?: string
+          id?: string
+          recipient?: string | null
+          status?: string
+          subject?: string
+          template?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       legacy_applications: {
         Row: {
           cancelled: boolean | null
@@ -203,6 +296,63 @@ export type Database = {
         }
         Relationships: []
       }
+      scholar_profiles: {
+        Row: {
+          career_interests: string | null
+          contact_no: string
+          created_at: string
+          dietary: string | null
+          full_name: string
+          guardian_contact: string | null
+          guardian_email: string | null
+          guardian_id: string | null
+          guardian_name: string | null
+          id_number: string
+          school: string
+          school_type: string
+          tc_accepted: boolean
+          updated_at: string
+          user_id: string
+          where_heard: string | null
+        }
+        Insert: {
+          career_interests?: string | null
+          contact_no: string
+          created_at?: string
+          dietary?: string | null
+          full_name: string
+          guardian_contact?: string | null
+          guardian_email?: string | null
+          guardian_id?: string | null
+          guardian_name?: string | null
+          id_number: string
+          school: string
+          school_type: string
+          tc_accepted?: boolean
+          updated_at?: string
+          user_id: string
+          where_heard?: string | null
+        }
+        Update: {
+          career_interests?: string | null
+          contact_no?: string
+          created_at?: string
+          dietary?: string | null
+          full_name?: string
+          guardian_contact?: string | null
+          guardian_email?: string | null
+          guardian_id?: string | null
+          guardian_name?: string | null
+          id_number?: string
+          school?: string
+          school_type?: string
+          tc_accepted?: boolean
+          updated_at?: string
+          user_id?: string
+          where_heard?: string | null
+        }
+        Relationships: []
+      }
       sectors: {
         Row: {
           id: number
@@ -274,6 +424,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_voucher: {
+        Args: { _code: string }
+        Returns: {
+          code: string
+          discount: number
+        }[]
+      }
+      confirm_test_payment: { Args: { _booking: string }; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -281,6 +439,22 @@ export type Database = {
         }
         Returns: boolean
       }
+      list_placements: {
+        Args: never
+        Returns: {
+          amount: number
+          arrival_time: string
+          availability: string
+          career: string
+          collection_time: string
+          company: string
+          days_per_shadow: number
+          id: number
+          location: string
+          sector: string
+        }[]
+      }
+      submit_indemnity: { Args: { _booking: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "user"
