@@ -44,7 +44,7 @@ function Roles() {
       <section className="mx-auto grid max-w-6xl gap-5 px-5 pt-12 md:grid-cols-2">
         <div className="rounded border-t-4 border-primary bg-card p-6 ring-1 ring-border">
           <a href={ROLES_PDF} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-cta px-5 py-2.5 font-semibold text-cta-foreground">
-            <FileDown className="h-4 w-4" /> Roles as at 19Mar2026 for School
+            <FileDown className="h-4 w-4" /> Roles as at 19 March 2026 for School
           </a>
           <p className="mt-4 text-sm">If the role that you are looking for is not listed, please email <a href={`mailto:${CONTACT_EMAIL}`} className="font-bold text-primary">{CONTACT_EMAIL}</a> so we can help you.</p>
         </div>
