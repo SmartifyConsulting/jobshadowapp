@@ -96,7 +96,7 @@ function ProfileForm({ userId }: { userId: string }) {
     }
     setErrors({});
     setBusy(true);
-    const { error } = await supabase.from("scholar_profiles").insert({ ...r.data, user_id: userId });
+    const { error } = await supabase.from("scholar_profiles").insert({ ...r.data, career_interests: r.data.career_interests ?? null, dietary: r.data.dietary ?? null, guardian_id: r.data.guardian_id ?? null, user_id: userId });
     setBusy(false);
     if (error) return setErrors({ form: error.message });
     qc.invalidateQueries({ queryKey: ["profile"] });
