@@ -11,7 +11,7 @@ const NAV = [
   { to: "/send-to-a-friend", label: "Send to a Friend" },
   { to: "/roles", label: "Job Roles" },
   { to: "/contact", label: "Contact Us" },
-  { to: "/apply", label: "Register" },
+  { to: "/my-account", label: "Register" },
   { to: "/auth", label: "Log in" },
 ] as const;
 
