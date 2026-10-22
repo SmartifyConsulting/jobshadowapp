@@ -24,6 +24,7 @@ export type Database = {
           created_at: string
           discount: number
           id: string
+          indemnity_path: string | null
           indemnity_received: boolean
           location: string | null
           paid_at: string | null
@@ -42,6 +43,7 @@ export type Database = {
           created_at?: string
           discount?: number
           id?: string
+          indemnity_path?: string | null
           indemnity_received?: boolean
           location?: string | null
           paid_at?: string | null
@@ -60,6 +62,7 @@ export type Database = {
           created_at?: string
           discount?: number
           id?: string
+          indemnity_path?: string | null
           indemnity_received?: boolean
           location?: string | null
           paid_at?: string | null
@@ -307,7 +310,9 @@ export type Database = {
           guardian_email: string | null
           guardian_id: string | null
           guardian_name: string | null
+          id_file_path: string | null
           id_number: string
+          photo_path: string | null
           school: string
           school_type: string
           tc_accepted: boolean
@@ -325,7 +330,9 @@ export type Database = {
           guardian_email?: string | null
           guardian_id?: string | null
           guardian_name?: string | null
+          id_file_path?: string | null
           id_number: string
+          photo_path?: string | null
           school: string
           school_type: string
           tc_accepted?: boolean
@@ -343,7 +350,9 @@ export type Database = {
           guardian_email?: string | null
           guardian_id?: string | null
           guardian_name?: string | null
+          id_file_path?: string | null
           id_number?: string
+          photo_path?: string | null
           school?: string
           school_type?: string
           tc_accepted?: boolean
@@ -449,10 +458,15 @@ export type Database = {
           collection_time: string
           company: string
           days_per_shadow: number
+          description: string
           id: number
           location: string
           sector: string
         }[]
+      }
+      set_indemnity_path: {
+        Args: { _booking: string; _path: string }
+        Returns: undefined
       }
       submit_indemnity: { Args: { _booking: string }; Returns: undefined }
     }
