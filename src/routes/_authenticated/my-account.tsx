@@ -209,7 +209,7 @@ function Bookings() {
   );
 }
 
-type Placement = { id: number; company: string; sector: string; career: string; location: string; availability: string; amount: number };
+type Placement = { id: number; company: string; sector: string; career: string; location: string; availability: string; amount: number; days_per_shadow: number | null; arrival_time: string | null; collection_time: string | null; description?: string };
 
 function NewBooking() {
   const qc = useQueryClient();
