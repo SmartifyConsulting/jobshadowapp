@@ -10,15 +10,23 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as ApplyRouteImport } from './routes/apply'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as HowToRouteImport } from './routes/how-to'
 import { Route as PartnersRouteImport } from './routes/partners'
+import { Route as RealStoriesRouteImport } from './routes/real-stories'
 import { Route as RolesRouteImport } from './routes/roles'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApplyRoute = ApplyRouteImport.update({
@@ -36,9 +44,19 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HowToRoute = HowToRouteImport.update({
+  id: '/how-to',
+  path: '/how-to',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PartnersRoute = PartnersRouteImport.update({
   id: '/partners',
   path: '/partners',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RealStoriesRoute = RealStoriesRouteImport.update({
+  id: '/real-stories',
+  path: '/real-stories',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RolesRoute = RolesRouteImport.update({
@@ -49,50 +67,83 @@ const RolesRoute = RolesRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/apply': typeof ApplyRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
+  '/how-to': typeof HowToRoute
   '/partners': typeof PartnersRoute
+  '/real-stories': typeof RealStoriesRoute
   '/roles': typeof RolesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/apply': typeof ApplyRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
+  '/how-to': typeof HowToRoute
   '/partners': typeof PartnersRoute
+  '/real-stories': typeof RealStoriesRoute
   '/roles': typeof RolesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/apply': typeof ApplyRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
+  '/how-to': typeof HowToRoute
   '/partners': typeof PartnersRoute
+  '/real-stories': typeof RealStoriesRoute
   '/roles': typeof RolesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/apply' | '/contact' | '/dashboard' | '/partners' | '/roles'
-  fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/apply' | '/contact' | '/dashboard' | '/partners' | '/roles'
-  id:
-    | '__root__'
+  fullPaths:
     | '/'
+    | '/about'
     | '/apply'
     | '/contact'
     | '/dashboard'
+    | '/how-to'
     | '/partners'
+    | '/real-stories'
+    | '/roles'
+  fileRoutesByTo: FileRoutesByTo
+  to:
+    | '/'
+    | '/about'
+    | '/apply'
+    | '/contact'
+    | '/dashboard'
+    | '/how-to'
+    | '/partners'
+    | '/real-stories'
+    | '/roles'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/apply'
+    | '/contact'
+    | '/dashboard'
+    | '/how-to'
+    | '/partners'
+    | '/real-stories'
     | '/roles'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
   ApplyRoute: typeof ApplyRoute
   ContactRoute: typeof ContactRoute
   DashboardRoute: typeof DashboardRoute
+  HowToRoute: typeof HowToRoute
   PartnersRoute: typeof PartnersRoute
+  RealStoriesRoute: typeof RealStoriesRoute
   RolesRoute: typeof RolesRoute
 }
 
@@ -103,6 +154,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/apply': {
@@ -126,11 +184,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/how-to': {
+      id: '/how-to'
+      path: '/how-to'
+      fullPath: '/how-to'
+      preLoaderRoute: typeof HowToRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/partners': {
       id: '/partners'
       path: '/partners'
       fullPath: '/partners'
       preLoaderRoute: typeof PartnersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/real-stories': {
+      id: '/real-stories'
+      path: '/real-stories'
+      fullPath: '/real-stories'
+      preLoaderRoute: typeof RealStoriesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/roles': {
@@ -145,10 +217,13 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
   ApplyRoute: ApplyRoute,
   ContactRoute: ContactRoute,
   DashboardRoute: DashboardRoute,
+  HowToRoute: HowToRoute,
   PartnersRoute: PartnersRoute,
+  RealStoriesRoute: RealStoriesRoute,
   RolesRoute: RolesRoute,
 }
 export const routeTree = rootRouteImport
