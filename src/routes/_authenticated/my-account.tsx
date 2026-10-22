@@ -80,10 +80,12 @@ function ProfileForm({ userId }: { userId: string }) {
   const [f, setF] = useState<Record<string, string | boolean>>({ school_type: "Public School", tc_accepted: false });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
-  const field = (k: string, label: string) => (
+  const [files, setFiles] = useState<{ id?: File | undefined; photo?: File | undefined }>({});
+  void files;
+  const field = (k: string, label: string, placeholder?: string) => (
     <div>
       <Label htmlFor={k}>{label}</Label>
-      <Input id={k} value={(f[k] as string) ?? ""} onChange={(e) => setF({ ...f, [k]: e.target.value })} />
+      <Input id={k} placeholder={placeholder} value={(f[k] as string) ?? ""} onChange={(e) => setF({ ...f, [k]: e.target.value })} />
       {errors[k] && <p className="text-xs text-destructive">{errors[k]}</p>}
     </div>
   );
@@ -104,20 +106,32 @@ function ProfileForm({ userId }: { userId: string }) {
   return (
     <form onSubmit={save} className="space-y-6 rounded-lg border bg-card p-6">
       <div>
-        <h2 className="font-display text-3xl text-primary">Personal Details</h2>
-        <p className="text-sm text-muted-foreground">NOTE: no more than one scholar per registration.</p>
+        <h1 className="font-display text-4xl text-primary">Personal Details</h1>
+        <h5 className="mt-1 font-semibold">NOTE: no more than one scholar per registration.</h5>
+      </div>
+      <h5 className="font-semibold">The Job Shadow-ers Details</h5>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {field("full_name", "Name & Surname", "NAME & SURNAME")}
+        {field("contact_no", "Tel No", "TEL NO")}
+        {field("id_number", "ID / passport number", "ID NO")}
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        {field("full_name", "Name & Surname")}
-        {field("contact_no", "Tel No")}
-        {field("id_number", "ID / passport number")}
-        {field("school", "Current School")}
         <div>
-          <Label>School type</Label>
-          <div className="flex gap-4 pt-2 text-sm">
+          <h5 className="font-semibold">The Job Shadow-ers Scan of ID</h5>
+          <Input type="file" accept="image/*,application/pdf" onChange={(e) => setFiles({ ...files, id: e.target.files?.[0] })} />
+        </div>
+        <div>
+          <h5 className="font-semibold">The Job Shadow-ers Profile Photo</h5>
+          <Input type="file" accept="image/*" onChange={(e) => setFiles({ ...files, photo: e.target.files?.[0] })} />
+        </div>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {field("school", "Current School", "CURRENT SCHOOL")}
+        <div>
+          <div className="flex gap-4 pt-7 text-sm">
             {["Public School", "Private School", "Home School"].map((t) => (
               <label key={t} className="flex items-center gap-1">
-                <input type="radio" checked={f["school_type"] === t} onChange={() => setF({ ...f, school_type: t })} /> {t}
+                <input type="radio" name="school_type" checked={f["school_type"] === t} onChange={() => setF({ ...f, school_type: t })} /> {t}
               </label>
             ))}
           </div>
@@ -125,15 +139,21 @@ function ProfileForm({ userId }: { userId: string }) {
         {field("career_interests", "Career interests")}
         {field("dietary", "Dietary requirements/allergies")}
       </div>
-      <div>
-        <h3 className="font-display text-2xl text-primary">Parent / Guardian Information</h3>
-        <p className="text-sm text-muted-foreground">If you are under the age of 18, please fill in your parent/ guardian information below</p>
-      </div>
+      <h5 className="font-semibold">Parent / Guardian Information</h5>
       <div className="grid gap-4 sm:grid-cols-2">
-        {field("guardian_name", "Parent / Guardian name")}
-        {field("guardian_contact", "Parent / Guardian contact no")}
-        {field("guardian_email", "Parent / Guardian email address")}
-        {field("guardian_id", "Parent / Guardian ID/passport")}
+        {field("guardian_name", "Parent / Guardian name", "PARENT / GUARDIAN NAME")}
+        {field("guardian_contact", "Parent / Guardian contact no", "PARENT / GUARDIAN CONTACT NO")}
+        {field("guardian_email", "Parent / Guardian email address", "PARENT / GUARDIAN EMAIL ADDRESS")}
+        {field("guardian_id", "Parent / Guardian ID/passport", "PARENT / GUARDIAN ID NO")}
+      </div>
+      <div>
+        <h1 className="font-display text-2xl text-primary">T &amp; C's</h1>
+        <details className="mt-2 rounded border p-3 text-xs text-muted-foreground">
+          <summary className="cursor-pointer font-semibold text-foreground">Terms &amp; Conditions</summary>
+          <p className="mt-2">You are reading a legal document, which is an agreement between yourself, the browser or user of the Website or Services described herein, and the owners of the Website, referred to as “Jobshadow”, being a company registered in South Africa situated at 4th on Anslow Office Park, Anslow Lane, Bryanston 2021. By using this Website, you agree that all the terms of this Agreement are reasonable. If you don’t think that they are reasonable, you must not use this Website.</p>
+          <p className="mt-2">SERVICES: Connecting Scholars to host companies through the use of the Website, and thereby providing Scholars the opportunity to learn about a particular industry or occupation and to gain valuable work skills through job shadowing.</p>
+          <p className="mt-2">All payments are done online through PayFast – we do not keep any personal information in this regard.</p>
+        </details>
       </div>
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" checked={!!f["tc_accepted"]} onChange={(e) => setF({ ...f, tc_accepted: e.target.checked })} />
@@ -141,7 +161,7 @@ function ProfileForm({ userId }: { userId: string }) {
       </label>
       {errors["tc_accepted"] && <p className="text-xs text-destructive">{errors["tc_accepted"]}</p>}
       {errors["form"] && <p className="text-sm text-destructive">{errors["form"]}</p>}
-      <Button type="submit" disabled={busy}>Save and continue</Button>
+      <Button type="submit" disabled={busy}>Submit</Button>
     </form>
   );
 }
@@ -189,7 +209,7 @@ function Bookings() {
   );
 }
 
-type Placement = { id: number; company: string; sector: string; career: string; location: string; availability: string; amount: number };
+type Placement = { id: number; company: string; sector: string; career: string; location: string; availability: string; amount: number; days_per_shadow: number | null; arrival_time: string | null; collection_time: string | null; description?: string };
 
 function NewBooking() {
   const qc = useQueryClient();
@@ -198,6 +218,8 @@ function NewBooking() {
     queryFn: async () => ((await supabase.rpc("list_placements")).data ?? []) as Placement[],
   });
   const [sector, setSector] = useState("");
+  const [career, setCareer] = useState("");
+  const [step, setStep] = useState(1);
   const [pid, setPid] = useState<number | null>(null);
   const [date, setDate] = useState("");
   const [code, setCode] = useState("");
@@ -233,42 +255,79 @@ function NewBooking() {
     qc.invalidateQueries({ queryKey: ["bookings"] });
   }
 
+  const careers = [...new Set(options.map((p) => p.career))].sort();
+  const hosts = options.filter((p) => p.career === career);
+  const sel = "w-full rounded-md border bg-background p-2";
+  const titles = ["Choose a Sector", "Choose a Career", "Choose a Company", "Placement Details", "Choose a Date & Pay"];
   return (
     <div className="space-y-4 rounded-lg border bg-card p-6">
       <h2 className="font-display text-3xl text-primary">Book a Job Shadow</h2>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <Label>1. Sector</Label>
-          <select className="w-full rounded-md border bg-background p-2" value={sector} onChange={(e) => { setSector(e.target.value); setPid(null); setDate(""); }}>
-            <option value="">Select a sector</option>
-            {sectors.map((s) => <option key={s}>{s}</option>)}
-          </select>
-        </div>
-        <div>
-          <Label>2. Career &amp; host</Label>
-          <select className="w-full rounded-md border bg-background p-2" value={pid ?? ""} disabled={!sector} onChange={(e) => { setPid(Number(e.target.value) || null); setDate(""); }}>
+      <ol className="flex flex-wrap gap-2 text-xs font-semibold">
+        {titles.map((t, i) => (
+          <li key={t} className={`rounded-full px-3 py-1 ${i + 1 === step ? "bg-primary text-primary-foreground" : i + 1 < step ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"}`}>
+            Step {i + 1}
+          </li>
+        ))}
+      </ol>
+      <h3 className="text-xl font-semibold">Step {step}: {titles[step - 1]}</h3>
+      {step === 1 && (
+        <select className={sel} value={sector} onChange={(e) => { setSector(e.target.value); setCareer(""); setPid(null); setDate(""); }}>
+          <option value="">Select a sector</option>
+          {sectors.map((s) => <option key={s}>{s}</option>)}
+        </select>
+      )}
+      {step === 2 && (
+        <>
+          <select className={sel} value={career} onChange={(e) => { setCareer(e.target.value); setPid(null); setDate(""); }}>
             <option value="">Select a career</option>
-            {options.map((p) => <option key={p.id} value={p.id}>{p.career} – {p.company}</option>)}
+            {careers.map((c) => <option key={c}>{c}</option>)}
           </select>
-        </div>
-        <div>
-          <Label>3. Date</Label>
-          <select className="w-full rounded-md border bg-background p-2" value={date} disabled={!chosen} onChange={(e) => setDate(e.target.value)}>
-            <option value="">{chosen && dates.length === 0 ? "No upcoming dates" : "Select a date"}</option>
-            {dates.map((d) => <option key={d}>{d}</option>)}
-          </select>
-        </div>
-        <div>
-          <Label>4. Promo code (optional)</Label>
-          <div className="flex gap-2">
-            <Input value={code} onChange={(e) => setCode(e.target.value)} />
-            <Button type="button" variant="outline" onClick={applyVoucher} disabled={!code}>Apply</Button>
+          {career && <p className="text-sm text-muted-foreground">{options.find((p) => p.career === career)?.description || ""}</p>}
+        </>
+      )}
+      {step === 3 && (
+        <select className={sel} value={pid ?? ""} onChange={(e) => { setPid(Number(e.target.value) || null); setDate(""); }}>
+          <option value="">Select a company</option>
+          {hosts.map((p) => <option key={p.id} value={p.id}>{p.company} – {p.location}</option>)}
+        </select>
+      )}
+      {step === 4 && chosen && (
+        <dl className="grid grid-cols-2 gap-2 text-sm">
+          <dt className="font-semibold">Company</dt><dd>{chosen.company}</dd>
+          <dt className="font-semibold">Location</dt><dd>{chosen.location}</dd>
+          <dt className="font-semibold">Days per shadow</dt><dd>{chosen.days_per_shadow ?? 1}</dd>
+          <dt className="font-semibold">Arrival time</dt><dd>{chosen.arrival_time || "TBC"}</dd>
+          <dt className="font-semibold">Collection time</dt><dd>{chosen.collection_time || "TBC"}</dd>
+          <dt className="font-semibold">Fee</dt><dd>R{base.toFixed(0)}</dd>
+        </dl>
+      )}
+      {step === 5 && chosen && (
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">{dates.length ? "Please select from the available dates below" : "There are no available dates for this placement."}</p>
+          <div className="flex flex-wrap gap-2">
+            {dates.map((d) => (
+              <button key={d} type="button" onClick={() => setDate(d)} className={`rounded border px-3 py-1 text-sm ${date === d ? "bg-primary text-primary-foreground" : "border-primary text-primary"}`}>{d}</button>
+            ))}
           </div>
+          <div>
+            <Label>Voucher code</Label>
+            <div className="flex gap-2">
+              <Input value={code} onChange={(e) => setCode(e.target.value)} />
+              <Button type="button" variant="outline" onClick={applyVoucher} disabled={!code}>Apply</Button>
+            </div>
+          </div>
+          <p className="text-sm">Total: <strong>R{due.toFixed(0)}</strong>{voucher && ` (was R${base.toFixed(0)})`}</p>
         </div>
-      </div>
-      {chosen && <p className="text-sm">Price: <strong>R{due.toFixed(0)}</strong>{voucher && ` (was R${base.toFixed(0)})`} · {chosen.location}</p>}
+      )}
       {msg && <p aria-live="polite" className="text-sm text-muted-foreground">{msg}</p>}
-      <Button onClick={book} disabled={!chosen || !date}>5. Continue to payment</Button>
+      <div className="flex gap-2">
+        {step > 1 && <Button variant="outline" onClick={() => setStep(step - 1)}>Back</Button>}
+        {step < 5 ? (
+          <Button onClick={() => setStep(step + 1)} disabled={(step === 1 && !sector) || (step === 2 && !career) || (step === 3 && !chosen)}>Continue</Button>
+        ) : (
+          <Button onClick={async () => { await book(); setStep(1); setSector(""); setCareer(""); }} disabled={!chosen || !date}>Pay with PayFast</Button>
+        )}
+      </div>
     </div>
   );
 }
