@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SiteLayout, PageHero } from "@/components/SiteLayout";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TERMS } from "@/lib/terms";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/my-account")({
@@ -81,7 +82,7 @@ function ProfileForm({ userId }: { userId: string }) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [files, setFiles] = useState<{ id?: File | undefined; photo?: File | undefined }>({});
-  void files;
+
   const field = (k: string, label: string, placeholder?: string) => (
     <div>
       <Label htmlFor={k}>{label}</Label>
@@ -239,7 +240,7 @@ function Bookings() {
   );
 }
 
-type Placement = { id: number; company: string; sector: string; career: string; location: string; availability: string; amount: number; days_per_shadow: number | null; arrival_time: string | null; collection_time: string | null; description?: string };
+type Placement = { id: number; company: string; sector: string; career: string; location: string; availability: string; amount: number; days_per_shadow: number | null; arrival_time: string | null; collection_time: string | null; description: string | null };
 
 function NewBooking() {
   const qc = useQueryClient();
