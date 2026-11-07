@@ -27,6 +27,7 @@ import { Route as SendToAFriendRouteImport } from './routes/send-to-a-friend'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedMentorRouteImport } from './routes/_authenticated/mentor'
 import { Route as AuthenticatedMyAccountRouteImport } from './routes/_authenticated/my-account'
+import { Route as AuthenticatedIndemnityBookingIdRouteImport } from './routes/_authenticated/indemnity.$bookingId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -117,6 +118,12 @@ const AuthenticatedMyAccountRoute = AuthenticatedMyAccountRouteImport.update({
   path: '/my-account',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedIndemnityBookingIdRoute =
+  AuthenticatedIndemnityBookingIdRouteImport.update({
+    id: '/indemnity/$bookingId',
+    path: '/indemnity/$bookingId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -136,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRoute
   '/mentor': typeof AuthenticatedMentorRoute
   '/my-account': typeof AuthenticatedMyAccountRoute
+  '/indemnity/$bookingId': typeof AuthenticatedIndemnityBookingIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -155,6 +163,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminRoute
   '/mentor': typeof AuthenticatedMentorRoute
   '/my-account': typeof AuthenticatedMyAccountRoute
+  '/indemnity/$bookingId': typeof AuthenticatedIndemnityBookingIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -176,6 +185,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/mentor': typeof AuthenticatedMentorRoute
   '/_authenticated/my-account': typeof AuthenticatedMyAccountRoute
+  '/_authenticated/indemnity/$bookingId': typeof AuthenticatedIndemnityBookingIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -197,6 +207,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/mentor'
     | '/my-account'
+    | '/indemnity/$bookingId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -216,6 +227,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/mentor'
     | '/my-account'
+    | '/indemnity/$bookingId'
   id:
     | '__root__'
     | '/'
@@ -236,6 +248,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/mentor'
     | '/_authenticated/my-account'
+    | '/_authenticated/indemnity/$bookingId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -384,6 +397,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMyAccountRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/indemnity/$bookingId': {
+      id: '/_authenticated/indemnity/$bookingId'
+      path: '/indemnity/$bookingId'
+      fullPath: '/indemnity/$bookingId'
+      preLoaderRoute: typeof AuthenticatedIndemnityBookingIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -391,12 +411,14 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedMentorRoute: typeof AuthenticatedMentorRoute
   AuthenticatedMyAccountRoute: typeof AuthenticatedMyAccountRoute
+  AuthenticatedIndemnityBookingIdRoute: typeof AuthenticatedIndemnityBookingIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedMentorRoute: AuthenticatedMentorRoute,
   AuthenticatedMyAccountRoute: AuthenticatedMyAccountRoute,
+  AuthenticatedIndemnityBookingIdRoute: AuthenticatedIndemnityBookingIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

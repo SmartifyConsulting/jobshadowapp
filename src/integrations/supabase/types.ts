@@ -515,6 +515,10 @@ export type Database = {
         Args: { _mentor_email: string }
         Returns: boolean
       }
+      get_booking_company_details: {
+        Args: { _booking: string }
+        Returns: { address: string; location: string; arrival_time: string; collection_time: string }[]
+      }
       list_mentor_bookings: {
         Args: never
         Returns: {

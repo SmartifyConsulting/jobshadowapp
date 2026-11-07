@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -259,10 +259,13 @@ function Bookings() {
               <Button size="sm" onClick={() => act("confirm_test_payment", b.id)}>Pay R{Number(b.amount_due).toFixed(0)} (test payment)</Button>
             )}
             {b.status === "indemnity_required" && (
-              <label className="text-sm">
-                <span className="font-semibold">Upload signed indemnity: </span>
-                <input type="file" accept="image/*,application/pdf,.doc,.docx" onChange={(e) => { const file = e.target.files?.[0]; if (file) void uploadIndemnity(b.id, file); }} />
-              </label>
+              <>
+                <Link to="/indemnity/$bookingId" params={{ bookingId: b.id }} target="_blank" className="rounded bg-primary px-3 py-1.5 text-xs font-bold uppercase text-primary-foreground">Download indemnity form</Link>
+                <label className="text-sm">
+                  <span className="font-semibold">Upload signed indemnity: </span>
+                  <input type="file" accept="image/*,application/pdf,.doc,.docx" onChange={(e) => { const file = e.target.files?.[0]; if (file) void uploadIndemnity(b.id, file); }} />
+                </label>
+              </>
             )}
           </div>
         </div>
