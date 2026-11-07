@@ -328,6 +328,8 @@ export type Database = {
           id_file_path: string | null
           id_number: string
           photo_path: string | null
+          popi_accepted: boolean
+          popi_accepted_at: string | null
           school: string
           school_type: string
           tc_accepted: boolean
@@ -348,6 +350,8 @@ export type Database = {
           id_file_path?: string | null
           id_number: string
           photo_path?: string | null
+          popi_accepted?: boolean
+          popi_accepted_at?: string | null
           school: string
           school_type: string
           tc_accepted?: boolean
@@ -368,6 +372,8 @@ export type Database = {
           id_file_path?: string | null
           id_number?: string
           photo_path?: string | null
+          popi_accepted?: boolean
+          popi_accepted_at?: string | null
           school?: string
           school_type?: string
           tc_accepted?: boolean

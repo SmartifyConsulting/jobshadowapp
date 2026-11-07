@@ -24,17 +24,35 @@ function AuthPage() {
   const [remember, setRemember] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [unconfirmed, setUnconfirmed] = useState(false);
+  const [resent, setResent] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setMsg(null);
+    setUnconfirmed(false);
+    setResent(false);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setBusy(false);
-    if (error) return setMsg("Email or password is incorrect.");
+    if (error) {
+      if (/email.*not.*confirmed/i.test(error.message)) {
+        setUnconfirmed(true);
+        return setMsg("Please confirm your email address before logging in. Check your inbox for the confirmation link.");
+      }
+      return setMsg("Email or password is incorrect.");
+    }
     const { data: u } = await supabase.auth.getUser();
     const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: u.user!.id, _role: "admin" });
     navigate({ to: isAdmin ? "/admin" : "/my-account" });
+  }
+
+  async function resendConfirmation() {
+    setBusy(true);
+    const { error } = await supabase.auth.resend({ type: "signup", email });
+    setBusy(false);
+    setResent(!error);
+    if (error) setMsg(error.message);
   }
 
   const input = "mt-1 w-full border-b border-primary-foreground/60 bg-transparent px-1 py-2 text-sm uppercase tracking-wide placeholder:text-primary-foreground/70 outline-none focus:border-primary-foreground";
@@ -54,6 +72,10 @@ function AuthPage() {
             <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} /> Remember me
           </label>
           {msg && <p aria-live="polite" className="mt-3 text-sm">{msg}</p>}
+          {unconfirmed && !resent && (
+            <button type="button" onClick={resendConfirmation} disabled={busy} className="mt-2 text-sm font-bold uppercase tracking-wide underline">Resend confirmation email</button>
+          )}
+          {resent && <p className="mt-2 text-sm">Confirmation email sent — check your inbox.</p>}
           <div className="mt-5 flex flex-wrap items-center gap-5">
             <button type="submit" disabled={busy} className="bg-teal px-6 py-2.5 text-sm font-bold uppercase tracking-wide text-primary-foreground">Sign In</button>
             <Link to="/forgot-password" className="text-sm font-bold uppercase tracking-wide underline">Forgot your password?</Link>

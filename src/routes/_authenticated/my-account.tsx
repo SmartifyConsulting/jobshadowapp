@@ -76,11 +76,12 @@ const profileSchema = z.object({
   guardian_email: z.string().trim().email("Enter a valid email"),
   guardian_id: z.string().trim().optional(),
   tc_accepted: z.literal(true, { errorMap: () => ({ message: "Please accept the Terms & Conditions" }) }),
+  popi_accepted: z.literal(true, { errorMap: () => ({ message: "Please provide POPI consent to continue" }) }),
 });
 
 function ProfileForm({ userId }: { userId: string }) {
   const qc = useQueryClient();
-  const [f, setF] = useState<Record<string, string | boolean>>({ school_type: "Public School", tc_accepted: false });
+  const [f, setF] = useState<Record<string, string | boolean>>({ school_type: "Public School", tc_accepted: false, popi_accepted: false });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [files, setFiles] = useState<{ id?: File | undefined; photo?: File | undefined }>({});
@@ -118,7 +119,7 @@ function ProfileForm({ userId }: { userId: string }) {
       setBusy(false);
       return setErrors({ form: (ex as Error).message });
     }
-    const { error } = await supabase.from("scholar_profiles").insert({ ...r.data, career_interests: r.data.career_interests ?? null, dietary: r.data.dietary ?? null, guardian_id: r.data.guardian_id ?? null, user_id: userId, id_file_path, photo_path });
+    const { error } = await supabase.from("scholar_profiles").insert({ ...r.data, career_interests: r.data.career_interests ?? null, dietary: r.data.dietary ?? null, guardian_id: r.data.guardian_id ?? null, user_id: userId, id_file_path, photo_path, popi_accepted_at: new Date().toISOString() });
     setBusy(false);
     if (error) return setErrors({ form: error.message });
     qc.invalidateQueries({ queryKey: ["profile"] });
@@ -180,6 +181,22 @@ function ProfileForm({ userId }: { userId: string }) {
         </label>
       </details>
       {errors["tc_accepted"] && <p className="text-xs text-destructive">{errors["tc_accepted"]}</p>}
+      <details className="group -mx-6 bg-cta px-6 py-5 text-cta-foreground">
+        <summary className="flex cursor-pointer list-none items-center gap-3 font-display text-2xl">
+          <ChevronDown className="h-6 w-6 shrink-0 transition group-open:rotate-180" /> POPI Consent
+        </summary>
+        <div className="mt-3 max-h-64 space-y-2 overflow-y-auto text-xs">
+          <p>In terms of the Protection of Personal Information Act 4 of 2013 ("POPIA"), we need your consent, as parent or legal guardian, to collect and process the Job Shadow-er's personal information above (including name, ID/passport number, school, a copy of their ID, and a photo) for the purpose of:</p>
+          <p>registering the scholar for a Job Shadow placement; sharing their name, school and relevant details with the host company and mentor so the placement can take place; verifying their identity and age; and contacting you and the scholar about the booking (confirmations, indemnity requirements and scheduling).</p>
+          <p>Your information will not be sold or used for any purpose beyond operating the Job Shadow booking and placement process, and will be retained only for as long as reasonably necessary for that purpose. You may request access to, correction of, or deletion of this information at any time by emailing info@jobshadow.co.za.</p>
+          <p>As the scholar's parent or legal guardian, I consent to Job Shadow collecting and processing the above personal information on this basis.</p>
+        </div>
+        <label className="mt-3 flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={!!f["popi_accepted"]} onChange={(e) => setF({ ...f, popi_accepted: e.target.checked })} />
+          As parent/guardian, I give POPI consent to process this information
+        </label>
+      </details>
+      {errors["popi_accepted"] && <p className="text-xs text-destructive">{errors["popi_accepted"]}</p>}
       {errors["form"] && <p className="text-sm text-destructive">{errors["form"]}</p>}
       <Button type="submit" disabled={busy} className="bg-primary text-primary-foreground">Complete &amp; Go To Step 2</Button>
     </form>

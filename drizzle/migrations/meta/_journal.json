@@ -57,6 +57,13 @@
       "when": 1794371400000,
       "tag": "0007_mentor_portal",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794371500000,
+      "tag": "0008_popi_consent",
+      "breakpoints": true
     }
   ]
 }
