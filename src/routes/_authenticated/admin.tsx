@@ -121,12 +121,15 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
   const [to, setTo] = useState("");
   const [company, setCompany] = useState("All companies");
   const [editing, setEditing] = useState<Record<string, unknown> | null>(null);
+  const [creating, setCreating] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [showSpam, setShowSpam] = useState(false);
+  const isUsers = table === "legacy_users";
   async function loadAll(source: string) {
     return fetchAllRows(async (from, to) => {
       let query = supabase.from(source as "careers").select("*").order("id", { ascending: false });
-      if (source === "legacy_users") query = (query as any).eq("is_spam", false);
+      if (source === "legacy_users" && !showSpam) query = (query as any).eq("is_spam", false);
       const { data, error } = await query.range(from, to);
       if (error) throw error;
       return (data ?? []) as Record<string, unknown>[];
@@ -146,10 +149,10 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
     }
   }
   const { data, isLoading } = useQuery({
-    queryKey: ["admin", table],
+    queryKey: ["admin", table, showSpam],
     queryFn: async () => {
       let query = supabase.from(table as "careers").select("*").order("id", { ascending: false });
-      if (table === "legacy_users") query = (query as any).eq("is_spam", false);
+      if (table === "legacy_users" && !showSpam) query = (query as any).eq("is_spam", false);
       const rows: Record<string, unknown>[] = [];
       for (let from = 0; ; from += 1000) {
         const { data, error } = await query.range(from, from + 999);
@@ -204,6 +207,11 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
       : <EditRecord title={title} table={table} cols={cols} row={editing} onDone={onDone} onCancel={onCancel} />;
   }
 
+  if (creating) {
+    const onDone = () => { setCreating(false); qc.invalidateQueries({ queryKey: ["admin", table] }); };
+    return <CreateRole onDone={onDone} onCancel={() => setCreating(false)} />;
+  }
+
   return (
     <div>
       {csvUpload && (
@@ -237,14 +245,27 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
             </label>
           </div>
         )}
-        <Button onClick={exportAll} disabled={isLoading || exporting} className="bg-cta px-4 py-2 text-sm font-bold uppercase text-cta-foreground">{exporting ? "Exporting…" : "Export"}</Button>
+        <div className="flex items-center gap-3">
+          {table === "companies" && (
+            <Button onClick={() => setCreating(true)} className="bg-cta px-4 py-2 text-sm font-bold uppercase text-cta-foreground">Add New Role</Button>
+          )}
+          <Button onClick={exportAll} disabled={isLoading || exporting} className="bg-cta px-4 py-2 text-sm font-bold uppercase text-cta-foreground">{exporting ? "Exporting…" : "Export"}</Button>
+        </div>
       </div>
       <div className="bg-teal/90 px-6 py-6 text-primary-foreground">
         {exportError && <p role="alert" className="mb-4 text-sm font-semibold">{exportError}</p>}
-        <label className="block max-w-sm text-sm">
-          Search Table
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Input Value" className="mt-1 w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none placeholder:text-primary-foreground/60" />
-        </label>
+        <div className="flex flex-wrap items-end gap-6">
+          <label className="block max-w-sm text-sm">
+            Search Table
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Input Value" className="mt-1 w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none placeholder:text-primary-foreground/60" />
+          </label>
+          {isUsers && (
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={showSpam} onChange={(e) => setShowSpam(e.target.checked)} />
+              Show spam-flagged accounts
+            </label>
+          )}
+        </div>
         <div className="mt-6 overflow-x-auto">
           <table className="w-full min-w-[700px] text-left text-sm">
             <thead>
@@ -346,6 +367,75 @@ function ApplicationEditPanel({ table, row, onDone, onCancel }: { table: string;
             {notice && <p className="mt-3 text-sm">{notice}</p>}
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+const ROLE_TYPES = [
+  { label: "Face-to-Face", amount: 350 },
+  { label: "Online Interview", amount: 200 },
+];
+
+function CreateRole({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
+  const [type, setType] = useState(0);
+  const [vals, setVals] = useState<Record<string, string>>({ company: "", career: "", sector: "", location: "", amount: String(ROLE_TYPES[0]!.amount) });
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  function setType_(i: number) {
+    setType(i);
+    setVals((v) => ({ ...v, amount: String(ROLE_TYPES[i]!.amount) }));
+  }
+
+  const fields: { key: string; label: string }[] = [
+    { key: "company", label: "Company" }, { key: "career", label: "Career / Role title" },
+    { key: "sector", label: "Sector" }, { key: "location", label: "Location" },
+    { key: "mentor_name", label: "Mentor name" }, { key: "mentor_phone", label: "Mentor phone" }, { key: "mentor_email", label: "Mentor email" },
+    { key: "hr_contact_name", label: "HR contact name" }, { key: "hr_contact_phone", label: "HR contact phone" }, { key: "hr_contact_email", label: "HR contact email" },
+    { key: "backup_mentor_name", label: "Backup mentor name" }, { key: "backup_mentor_phone", label: "Backup mentor phone" }, { key: "backup_mentor_email", label: "Backup mentor email" },
+    { key: "dates", label: "Dates" }, { key: "max_applicants", label: "Places" },
+  ];
+
+  async function save() {
+    if (!vals["company"] || !vals["career"]) { setErr("Company and Career are required."); return; }
+    setBusy(true);
+    setErr(null);
+    const patch: Record<string, unknown> = { ...vals, amount: Number(vals["amount"]) || ROLE_TYPES[type]!.amount };
+    if (patch["max_applicants"]) patch["max_applicants"] = Number(patch["max_applicants"]);
+    const { error } = await supabase.from("companies").insert(patch as never);
+    setBusy(false);
+    if (error) return setErr(error.message);
+    onDone();
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between bg-foreground px-6 py-5 text-background">
+        <h1 className="text-xl font-semibold">Add New Role</h1>
+        <button onClick={onCancel} className="text-sm font-semibold hover:underline">Back to list</button>
+      </div>
+      <div className="bg-teal/90 px-6 py-6 text-primary-foreground">
+        <label className="block max-w-sm text-sm">
+          Shadow type
+          <select value={type} onChange={(e) => setType_(Number(e.target.value))} className="mt-1 block w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 text-primary-foreground outline-none">
+            {ROLE_TYPES.map((t, i) => <option key={t.label} value={i} className="text-foreground">{t.label} (R{t.amount})</option>)}
+          </select>
+        </label>
+        <div className="mt-5 grid gap-5 sm:grid-cols-3">
+          {fields.map((f) => (
+            <label key={f.key} className="block text-sm">
+              {f.label}
+              <input value={vals[f.key] ?? ""} onChange={(e) => setVals({ ...vals, [f.key]: e.target.value })} className="mt-1 w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none focus:border-primary-foreground" />
+            </label>
+          ))}
+          <label className="block text-sm">
+            Price (R)
+            <input type="number" value={vals["amount"] ?? ""} onChange={(e) => setVals({ ...vals, amount: e.target.value })} className="mt-1 w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none focus:border-primary-foreground" />
+          </label>
+        </div>
+        {err && <p className="mt-4 text-sm font-semibold">{err}</p>}
+        <button onClick={save} disabled={busy} className="mt-6 bg-cta px-5 py-2.5 text-sm font-bold uppercase text-cta-foreground">Create</button>
       </div>
     </div>
   );
