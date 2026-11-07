@@ -515,7 +515,7 @@ type ScholarProfile = {
   user_id: string; full_name: string; school: string; id_number: string;
   id_file_path: string | null; photo_path: string | null; id_verified: boolean;
 };
-type ScholarBooking = { id: string; user_id: string; career: string | null; company: string | null; shadow_date: string; status: string; indemnity_path: string | null; indemnity_received: boolean; internship_preapproved: boolean; internship_notes: string | null };
+type ScholarBooking = { id: string; user_id: string; career: string | null; company: string | null; shadow_date: string; status: string; indemnity_path: string | null; indemnity_received: boolean; internship_preapproved: boolean; internship_notes: string | null; ad_hoc_requested: boolean; ad_hoc_note: string | null };
 
 async function downloadDoc(path: string | null) {
   if (!path) return;
@@ -590,6 +590,11 @@ function ScholarVerification() {
                           </label>
                         </div>
                       </div>
+                      {b.ad_hoc_requested && (
+                        <p className="mt-1 rounded bg-cta/30 px-2 py-1 text-xs">
+                          Ad-hoc date requested - not pre-confirmed by the host{b.ad_hoc_note ? `: ${b.ad_hoc_note}` : ""}
+                        </p>
+                      )}
                       {b.internship_preapproved && (
                         <p className="mt-1 rounded bg-accent/30 px-2 py-1 text-xs">
                           Internship pre-approved by mentor{b.internship_notes ? `: ${b.internship_notes}` : ""}

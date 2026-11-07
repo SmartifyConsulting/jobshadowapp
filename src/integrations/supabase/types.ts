@@ -34,6 +34,8 @@ export type Database = {
       }
       bookings: {
         Row: {
+          ad_hoc_note: string | null
+          ad_hoc_requested: boolean
           amount_due: number
           base_amount: number
           career: string | null
@@ -56,6 +58,8 @@ export type Database = {
           voucher_code: string | null
         }
         Insert: {
+          ad_hoc_note?: string | null
+          ad_hoc_requested?: boolean
           amount_due?: number
           base_amount?: number
           career?: string | null
@@ -78,6 +82,8 @@ export type Database = {
           voucher_code?: string | null
         }
         Update: {
+          ad_hoc_note?: string | null
+          ad_hoc_requested?: boolean
           amount_due?: number
           base_amount?: number
           career?: string | null

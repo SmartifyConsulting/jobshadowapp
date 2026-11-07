@@ -31,6 +31,18 @@ const STATUS: Record<string, string> = {
   completed: "Completed",
 };
 
+function toIsoDate(mdy: string) {
+  const [m, d, y] = mdy.split("/").map(Number);
+  if (!m || !d || !y) return "";
+  return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+function fromIsoDate(iso: string) {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return "";
+  return `${m}/${d}/${y}`;
+}
+
 function useUser() {
   return useQuery({ queryKey: ["me"], queryFn: async () => (await supabase.auth.getUser()).data.user });
 }
@@ -280,6 +292,9 @@ function NewBooking() {
   const [voucher, setVoucher] = useState<{ code: string; discount: number } | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [confirmDupe, setConfirmDupe] = useState(false);
+  const [requestingDate, setRequestingDate] = useState(false);
+  const [requestedDate, setRequestedDate] = useState("");
+  const [requestNote, setRequestNote] = useState("");
   const today = new Date();
   const sectors = useMemo(() => [...new Set((placements.data ?? []).map((p) => p.sector))].sort(), [placements.data]);
   const options = (placements.data ?? []).filter((p) => p.sector === sector);
@@ -300,13 +315,16 @@ function NewBooking() {
     setMsg(`Promo code applied: ${v.discount}% off.`);
   }
   async function book() {
-    if (!chosen || !date) return setMsg("Choose a career and a date.");
+    const effectiveDate = requestingDate ? requestedDate : date;
+    if (!chosen || !effectiveDate) return setMsg("Choose a career and a date.");
     if (duplicate && !confirmDupe) return;
     const { error } = await supabase.from("bookings").insert({
       company_id: chosen.id, company: chosen.company, sector: chosen.sector, career: chosen.career, location: chosen.location,
-      shadow_date: date, base_amount: base, voucher_code: voucher?.code ?? null, discount: voucher?.discount ?? 0, amount_due: due,
-    });
+      shadow_date: effectiveDate, base_amount: base, voucher_code: voucher?.code ?? null, discount: voucher?.discount ?? 0, amount_due: due,
+      ad_hoc_requested: requestingDate, ad_hoc_note: requestingDate ? (requestNote || null) : null,
+    } as never);
     if (error) return setMsg(error.message);
+    setRequestingDate(false); setRequestedDate(""); setRequestNote("");
     setPid(null); setDate(""); setVoucher(null); setCode(""); setConfirmDupe(false);
     setMsg("Booking created – pay below to secure it.");
     qc.invalidateQueries({ queryKey: ["bookings"] });
@@ -366,9 +384,27 @@ function NewBooking() {
               <p className="text-sm">{dates.length ? "Please select from the available dates below" : "There are no available dates for this placement."}</p>
               <div className="flex flex-wrap gap-2">
                 {dates.map((d) => (
-                  <button key={d} type="button" onClick={() => { setDate(d); setConfirmDupe(false); }} className={`border px-3 py-1 text-sm ${date === d ? "bg-primary text-primary-foreground" : "border-primary-foreground/60"}`}>{d}</button>
+                  <button key={d} type="button" onClick={() => { setDate(d); setConfirmDupe(false); setRequestingDate(false); }} className={`border px-3 py-1 text-sm ${!requestingDate && date === d ? "bg-primary text-primary-foreground" : "border-primary-foreground/60"}`}>{d}</button>
                 ))}
               </div>
+              {!requestingDate ? (
+                <button type="button" onClick={() => { setRequestingDate(true); setDate(""); setConfirmDupe(false); }} className="text-sm underline">
+                  None of these dates work? Request a different date
+                </button>
+              ) : (
+                <div className="space-y-2 rounded border border-primary-foreground/40 bg-primary-foreground/10 p-3">
+                  <label className="block text-sm">
+                    Requested date
+                    <input type="date" value={requestedDate ? toIsoDate(requestedDate) : ""} onChange={(e) => setRequestedDate(fromIsoDate(e.target.value))} className="mt-1 block w-full max-w-xs border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none" />
+                  </label>
+                  <label className="block text-sm">
+                    Note for the mentor (optional)
+                    <textarea value={requestNote} onChange={(e) => setRequestNote(e.target.value)} className="mt-1 block w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none" />
+                  </label>
+                  <p className="text-xs text-primary-foreground/70">This date isn't pre-confirmed by the host — we'll check availability and follow up before it's finalised.</p>
+                  <button type="button" onClick={() => { setRequestingDate(false); setRequestedDate(""); setRequestNote(""); }} className="text-xs underline">Use a listed date instead</button>
+                </div>
+              )}
               <div>
                 <label className="text-sm font-semibold">Voucher code</label>
                 <div className="mt-1 flex gap-2">
@@ -400,7 +436,7 @@ function NewBooking() {
         {step < 5 ? (
           <button type="button" onClick={() => setStep(step + 1)} disabled={!canContinue} className="bg-cta px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-cta-foreground disabled:opacity-50">Continue to Step {step + 1}</button>
         ) : (
-          <button type="button" onClick={async () => { await book(); setStep(1); setSector(""); setCareer(""); }} disabled={!chosen || !date || (!!duplicate && !confirmDupe)} className="bg-cta px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-cta-foreground disabled:opacity-50">Pay with PayFast</button>
+          <button type="button" onClick={async () => { await book(); setStep(1); setSector(""); setCareer(""); }} disabled={!chosen || !(requestingDate ? requestedDate : date) || (!!duplicate && !confirmDupe)} className="bg-cta px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-cta-foreground disabled:opacity-50">{requestingDate ? "Submit date request" : "Pay with PayFast"}</button>
         )}
       </div>
     </div>
