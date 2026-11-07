@@ -250,6 +250,10 @@ function NewBooking() {
     queryKey: ["placements"],
     queryFn: async () => ((await supabase.rpc("list_placements")).data ?? []) as Placement[],
   });
+  const myBookings = useQuery({
+    queryKey: ["bookings"],
+    queryFn: async () => (await supabase.from("bookings").select("*").order("created_at", { ascending: false })).data ?? [],
+  });
   const [sector, setSector] = useState("");
   const [career, setCareer] = useState("");
   const [step, setStep] = useState(1);
@@ -258,6 +262,7 @@ function NewBooking() {
   const [code, setCode] = useState("");
   const [voucher, setVoucher] = useState<{ code: string; discount: number } | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const [confirmDupe, setConfirmDupe] = useState(false);
   const today = new Date();
   const sectors = useMemo(() => [...new Set((placements.data ?? []).map((p) => p.sector))].sort(), [placements.data]);
   const options = (placements.data ?? []).filter((p) => p.sector === sector);
@@ -267,6 +272,7 @@ function NewBooking() {
     .filter((d) => { const [m, dd, y] = d.split("/").map(Number); return new Date(y!, m! - 1, dd!) >= today; });
   const base = Number(chosen?.amount ?? 0);
   const due = voucher ? Math.max(0, base - (base * Number(voucher.discount)) / 100) : base;
+  const duplicate = (myBookings.data ?? []).find((b) => chosen && (b.shadow_date === date || (b.company_id === chosen.id && b.career === chosen.career)));
 
   async function applyVoucher() {
     setMsg(null);
@@ -278,12 +284,13 @@ function NewBooking() {
   }
   async function book() {
     if (!chosen || !date) return setMsg("Choose a career and a date.");
+    if (duplicate && !confirmDupe) return;
     const { error } = await supabase.from("bookings").insert({
       company_id: chosen.id, company: chosen.company, sector: chosen.sector, career: chosen.career, location: chosen.location,
       shadow_date: date, base_amount: base, voucher_code: voucher?.code ?? null, discount: voucher?.discount ?? 0, amount_due: due,
     });
     if (error) return setMsg(error.message);
-    setPid(null); setDate(""); setVoucher(null); setCode("");
+    setPid(null); setDate(""); setVoucher(null); setCode(""); setConfirmDupe(false);
     setMsg("Booking created – pay below to secure it.");
     qc.invalidateQueries({ queryKey: ["bookings"] });
   }
@@ -319,7 +326,7 @@ function NewBooking() {
             </>
           )}
           {step === 3 && (
-            <select className={sel} value={pid ?? ""} onChange={(e) => { setPid(Number(e.target.value) || null); setDate(""); }}>
+            <select className={sel} value={pid ?? ""} onChange={(e) => { setPid(Number(e.target.value) || null); setDate(""); setConfirmDupe(false); }}>
               <option value="">Select a company</option>
               {hosts.map((p) => <option key={p.id} value={p.id}>{p.company} – {p.location}</option>)}
             </select>
@@ -339,7 +346,7 @@ function NewBooking() {
               <p className="text-sm">{dates.length ? "Please select from the available dates below" : "There are no available dates for this placement."}</p>
               <div className="flex flex-wrap gap-2">
                 {dates.map((d) => (
-                  <button key={d} type="button" onClick={() => setDate(d)} className={`border px-3 py-1 text-sm ${date === d ? "bg-primary text-primary-foreground" : "border-primary-foreground/60"}`}>{d}</button>
+                  <button key={d} type="button" onClick={() => { setDate(d); setConfirmDupe(false); }} className={`border px-3 py-1 text-sm ${date === d ? "bg-primary text-primary-foreground" : "border-primary-foreground/60"}`}>{d}</button>
                 ))}
               </div>
               <div>
@@ -350,6 +357,19 @@ function NewBooking() {
                 </div>
               </div>
               <p className="text-sm">Total: <strong>R{due.toFixed(0)}</strong>{voucher && ` (was R${base.toFixed(0)})`}</p>
+              {duplicate && (
+                <div className="rounded border border-primary-foreground/40 bg-primary-foreground/10 p-3 text-sm">
+                  <p>
+                    {duplicate.shadow_date === date
+                      ? "You already have a booking on this date."
+                      : `You already have a booking for ${duplicate.career} at ${duplicate.company}.`}
+                  </p>
+                  <label className="mt-2 flex items-center gap-2">
+                    <input type="checkbox" checked={confirmDupe} onChange={(e) => setConfirmDupe(e.target.checked)} />
+                    Book anyway
+                  </label>
+                </div>
+              )}
             </div>
           )}
           {msg && <p aria-live="polite" className="mt-3 text-sm font-semibold">{msg}</p>}
@@ -360,7 +380,7 @@ function NewBooking() {
         {step < 5 ? (
           <button type="button" onClick={() => setStep(step + 1)} disabled={!canContinue} className="bg-cta px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-cta-foreground disabled:opacity-50">Continue to Step {step + 1}</button>
         ) : (
-          <button type="button" onClick={async () => { await book(); setStep(1); setSector(""); setCareer(""); }} disabled={!chosen || !date} className="bg-cta px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-cta-foreground disabled:opacity-50">Pay with PayFast</button>
+          <button type="button" onClick={async () => { await book(); setStep(1); setSector(""); setCareer(""); }} disabled={!chosen || !date || (!!duplicate && !confirmDupe)} className="bg-cta px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-cta-foreground disabled:opacity-50">Pay with PayFast</button>
         )}
       </div>
     </div>
