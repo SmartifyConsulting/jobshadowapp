@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteLayout } from "@/components/SiteLayout";
+import { Turnstile } from "@/components/Turnstile";
 
 export const Route = createFileRoute("/register")({
   head: () => ({
@@ -25,17 +26,24 @@ function RegisterPage() {
   const [whereHear, setWhereHear] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRequired = !!(import.meta.env["VITE_TURNSTILE_SITE_KEY"] as string | undefined);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setMsg(null);
     if (password.length < 8) return setMsg("Password must be at least 8 characters.");
     if (password !== confirm) return setMsg("The passwords do not match.");
+    if (captchaRequired && !captchaToken) return setMsg("Please complete the verification challenge.");
     setBusy(true);
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: `${window.location.origin}/my-account`, data: { name, where_hear: whereHear } },
+      options: {
+        emailRedirectTo: `${window.location.origin}/my-account`,
+        data: { name, where_hear: whereHear },
+        ...(captchaToken ? { captchaToken } : {}),
+      },
     });
     setBusy(false);
     setMsg(error ? error.message : "Check your email to confirm your account, then log in.");
@@ -59,8 +67,9 @@ function RegisterPage() {
             <input type="password" required placeholder="REPEAT PASSWORD" value={confirm} onChange={(e) => setConfirm(e.target.value)} className={input} />
             <input placeholder="WHERE DID YOU HEAR ABOUT JOB SHADOW?" value={whereHear} onChange={(e) => setWhereHear(e.target.value)} className={`${input} sm:col-span-2 sm:max-w-md`} />
           </div>
+          <Turnstile onVerify={setCaptchaToken} />
           {msg && <p aria-live="polite" className="mt-4 max-w-md text-sm">{msg}</p>}
-          <button type="submit" disabled={busy} className="mt-6 bg-primary px-6 py-3 text-sm font-bold uppercase tracking-wide text-primary-foreground">Register</button>
+          <button type="submit" disabled={busy || (captchaRequired && !captchaToken)} className="mt-6 bg-primary px-6 py-3 text-sm font-bold uppercase tracking-wide text-primary-foreground disabled:opacity-50">Register</button>
           <Link to="/auth" className="mt-4 block text-sm underline">Already have an account? Log in</Link>
         </form>
       </section>
