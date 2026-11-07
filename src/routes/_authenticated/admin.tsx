@@ -26,6 +26,7 @@ type Field = "text" | "number" | "date" | "checkbox";
 type Col = { key: string; label: string; field?: Field };
 const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string; singular: string; cols: Col[]; csvUpload?: boolean; dateCompanyFilter?: boolean; indemnityEdit?: boolean; custom?: boolean }[] = [
   { id: "scholars", label: "Scholars", icon: GraduationCap, table: "scholar_profiles", singular: "Scholars", custom: true, cols: [] },
+  { id: "emails", label: "Email Archive", icon: FileText, table: "email_outbox", singular: "Emails", custom: true, cols: [] },
   { id: "apps", label: "Applications", icon: UsersIcon, table: "legacy_applications", singular: "Applications", dateCompanyFilter: true, indemnityEdit: true, cols: [
     { key: "id", label: "ID" }, { key: "name", label: "Name" }, { key: "id_number", label: "ID No." },
     { key: "email", label: "Email" }, { key: "contact", label: "Contact" }, { key: "school", label: "School" },
@@ -91,8 +92,10 @@ function AdminPage() {
             <p className="p-8">Loading…</p>
           ) : !admin.data ? (
             <p className="p-8">Your account doesn't have admin access. Ask JobShadow to grant it.</p>
-          ) : section.custom ? (
+          ) : section.id === "scholars" ? (
             <ScholarVerification key={section.id} />
+          ) : section.id === "emails" ? (
+            <EmailArchive key={section.id} />
           ) : (
             <DataTable key={section.id} title={section.singular} table={section.table} cols={section.cols} csvUpload={section.csvUpload} dateCompanyFilter={section.dateCompanyFilter} indemnityEdit={section.indemnityEdit} />
           )}
@@ -596,6 +599,48 @@ function ScholarVerification() {
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+type EmailRow = { id: string; recipient: string | null; subject: string; body: string; template: string; status: string; created_at: string };
+
+function EmailArchive() {
+  const [q, setQ] = useState("");
+  const emails = useQuery({
+    queryKey: ["admin", "email_outbox"],
+    queryFn: async () => ((await supabase.from("email_outbox").select("*").order("created_at", { ascending: false }).limit(500)).data ?? []) as EmailRow[],
+  });
+  const rows = useMemo(() => {
+    const s = q.toLowerCase().trim();
+    return (emails.data ?? []).filter((e) => !s || [e.recipient, e.subject, e.template, e.status].some((v) => (v ?? "").toLowerCase().includes(s)));
+  }, [emails.data, q]);
+
+  return (
+    <div>
+      <div className="bg-foreground px-6 py-6 text-background"><h1 className="text-2xl font-semibold">Email Archive {!emails.isLoading && `(${rows.length})`}</h1></div>
+      <div className="bg-teal/90 px-6 py-6 text-primary-foreground">
+        <label className="block max-w-sm text-sm">
+          Search
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Recipient, subject, template or status" className="mt-1 w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none" />
+        </label>
+        <div className="mt-6 space-y-2">
+          {emails.isLoading ? (
+            <p>Loading…</p>
+          ) : rows.length === 0 ? (
+            <p>No emails found.</p>
+          ) : (
+            rows.map((e) => (
+              <details key={e.id} className="rounded-lg border border-primary-foreground/20 bg-background/10 p-3 text-sm">
+                <summary className="cursor-pointer">
+                  <strong>{e.subject}</strong> → {e.recipient || "(no address on file)"} · {e.template} · {e.status} · {new Date(e.created_at).toLocaleString()}
+                </summary>
+                <p className="mt-2 whitespace-pre-wrap">{e.body}</p>
+              </details>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
