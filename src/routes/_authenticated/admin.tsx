@@ -381,6 +381,60 @@ const ROLE_TYPES = [
   { label: "Online Interview", amount: 200 },
 ];
 
+function CanonicalSelect({ table, label, value, onChange }: { table: "careers" | "sectors"; label: string; value: string; onChange: (v: string) => void }) {
+  const qc = useQueryClient();
+  const options = useQuery({
+    queryKey: ["canonical", table],
+    queryFn: async () => ((await supabase.from(table).select("name").order("name")).data ?? []).map((r) => r.name as string),
+  });
+  const [adding, setAdding] = useState(false);
+  const [newVal, setNewVal] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function addNew() {
+    const name = newVal.trim();
+    if (!name) return;
+    setBusy(true);
+    const { data: maxRow } = await supabase.from(table).select("id").order("id", { ascending: false }).limit(1).maybeSingle();
+    const nextId = ((maxRow?.id as number | undefined) ?? 0) + 1;
+    const { error } = await (supabase.from(table) as any).insert({ id: nextId, name });
+    setBusy(false);
+    if (error) return window.alert(error.message);
+    qc.invalidateQueries({ queryKey: ["canonical", table] });
+    onChange(name);
+    setAdding(false);
+    setNewVal("");
+  }
+
+  if (adding) {
+    return (
+      <label className="block text-sm">
+        {label}
+        <div className="mt-1 flex gap-2">
+          <input autoFocus value={newVal} onChange={(e) => setNewVal(e.target.value)} className="w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none focus:border-primary-foreground" />
+          <button type="button" onClick={addNew} disabled={busy || !newVal.trim()} className="shrink-0 bg-cta px-3 py-1 text-xs font-bold uppercase text-cta-foreground disabled:opacity-50">Add</button>
+          <button type="button" onClick={() => { setAdding(false); setNewVal(""); }} className="shrink-0 text-xs underline">Cancel</button>
+        </div>
+      </label>
+    );
+  }
+
+  return (
+    <label className="block text-sm">
+      {label}
+      <select
+        value={(options.data ?? []).includes(value) ? value : ""}
+        onChange={(e) => (e.target.value === "__add__" ? setAdding(true) : onChange(e.target.value))}
+        className="mt-1 w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 text-primary-foreground outline-none focus:border-primary-foreground"
+      >
+        <option value="" className="text-foreground">Select…</option>
+        {options.data?.map((n) => <option key={n} value={n} className="text-foreground">{n}</option>)}
+        <option value="__add__" className="text-foreground">+ Add new…</option>
+      </select>
+    </label>
+  );
+}
+
 function CreateRole({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
   const [type, setType] = useState(0);
   const [vals, setVals] = useState<Record<string, string>>({ company: "", career: "", sector: "", location: "", amount: String(ROLE_TYPES[0]!.amount) });
@@ -394,8 +448,7 @@ function CreateRole({ onDone, onCancel }: { onDone: () => void; onCancel: () => 
   }
 
   const fields: { key: string; label: string }[] = [
-    { key: "company", label: "Company" }, { key: "career", label: "Career / Role title" },
-    { key: "sector", label: "Sector" }, { key: "location", label: "Location" },
+    { key: "company", label: "Company" }, { key: "location", label: "Location" },
     { key: "mentor_name", label: "Mentor name" }, { key: "mentor_phone", label: "Mentor phone" }, { key: "mentor_email", label: "Mentor email" },
     { key: "hr_contact_name", label: "HR contact name" }, { key: "hr_contact_phone", label: "HR contact phone" }, { key: "hr_contact_email", label: "HR contact email" },
     { key: "backup_mentor_name", label: "Backup mentor name" }, { key: "backup_mentor_phone", label: "Backup mentor phone" }, { key: "backup_mentor_email", label: "Backup mentor email" },
@@ -428,6 +481,8 @@ function CreateRole({ onDone, onCancel }: { onDone: () => void; onCancel: () => 
           </select>
         </label>
         <div className="mt-5 grid gap-5 sm:grid-cols-3">
+          <CanonicalSelect table="sectors" label="Sector" value={vals["sector"] ?? ""} onChange={(v) => setVals({ ...vals, sector: v })} />
+          <CanonicalSelect table="careers" label="Career / Role title" value={vals["career"] ?? ""} onChange={(v) => setVals({ ...vals, career: v })} />
           {fields.map((f) => (
             <label key={f.key} className="block text-sm">
               {f.label}
@@ -563,23 +618,33 @@ function EditRecord({ title, table, cols, row, onDone, onCancel }: { title: stri
       </div>
       <div className="bg-teal/90 px-6 py-6 text-primary-foreground">
         <div className="grid gap-5 sm:grid-cols-3">
-          {editable.map((c) => (
-            <label key={c.key} className="block text-sm">
-              {c.label}
-              {c.field === "checkbox" ? (
-                <div className="mt-2">
-                  <input type="checkbox" checked={!!vals[c.key]} onChange={(e) => setVals({ ...vals, [c.key]: e.target.checked })} />
-                </div>
-              ) : (
-                <input
-                  type={c.field === "number" ? "number" : c.field === "date" ? "date" : "text"}
-                  value={(vals[c.key] as string) ?? ""}
-                  onChange={(e) => setVals({ ...vals, [c.key]: e.target.value })}
-                  className="mt-1 w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none focus:border-primary-foreground"
-                />
-              )}
-            </label>
-          ))}
+          {editable.map((c) =>
+            table === "companies" && (c.key === "career" || c.key === "sector") ? (
+              <CanonicalSelect
+                key={c.key}
+                table={c.key === "career" ? "careers" : "sectors"}
+                label={c.label}
+                value={(vals[c.key] as string) ?? ""}
+                onChange={(v) => setVals({ ...vals, [c.key]: v })}
+              />
+            ) : (
+              <label key={c.key} className="block text-sm">
+                {c.label}
+                {c.field === "checkbox" ? (
+                  <div className="mt-2">
+                    <input type="checkbox" checked={!!vals[c.key]} onChange={(e) => setVals({ ...vals, [c.key]: e.target.checked })} />
+                  </div>
+                ) : (
+                  <input
+                    type={c.field === "number" ? "number" : c.field === "date" ? "date" : "text"}
+                    value={(vals[c.key] as string) ?? ""}
+                    onChange={(e) => setVals({ ...vals, [c.key]: e.target.value })}
+                    className="mt-1 w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none focus:border-primary-foreground"
+                  />
+                )}
+              </label>
+            )
+          )}
         </div>
         {err && <p className="mt-4 text-sm font-semibold">{err}</p>}
         <button onClick={save} disabled={busy} className="mt-6 bg-cta px-5 py-2.5 text-sm font-bold uppercase text-cta-foreground">Update</button>
