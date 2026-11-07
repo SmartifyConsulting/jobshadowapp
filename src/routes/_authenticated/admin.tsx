@@ -37,7 +37,8 @@ const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string
     { key: "mentor_position", label: "Mentor position" },
     { key: "backup_mentor_name", label: "Backup mentor" }, { key: "backup_mentor_phone", label: "Backup mentor phone" }, { key: "backup_mentor_email", label: "Backup mentor email" },
     { key: "hr_contact_name", label: "HR contact name" }, { key: "hr_contact_phone", label: "HR contact phone" }, { key: "hr_contact_email", label: "HR contact email" },
-    { key: "dates", label: "Dates" }, { key: "max_applicants", label: "Places", field: "number" }, { key: "amount", label: "Price (R)", field: "number" } ] },
+    { key: "dates", label: "Dates" }, { key: "max_applicants", label: "Places", field: "number" }, { key: "amount", label: "Price (R)", field: "number" },
+    { key: "active", label: "Active", field: "checkbox" } ] },
   { id: "vouchers", label: "Vouchers", icon: ShoppingCart, table: "vouchers", singular: "Vouchers", cols: [
     { key: "id", label: "#" }, { key: "name", label: "Name" }, { key: "code", label: "Code" },
     { key: "discount", label: "Discount", field: "number" }, { key: "available_from", label: "From", field: "date" },
@@ -380,6 +381,7 @@ const ROLE_TYPES = [
 function CreateRole({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
   const [type, setType] = useState(0);
   const [vals, setVals] = useState<Record<string, string>>({ company: "", career: "", sector: "", location: "", amount: String(ROLE_TYPES[0]!.amount) });
+  const [active, setActive] = useState(true);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -401,7 +403,7 @@ function CreateRole({ onDone, onCancel }: { onDone: () => void; onCancel: () => 
     if (!vals["company"] || !vals["career"]) { setErr("Company and Career are required."); return; }
     setBusy(true);
     setErr(null);
-    const patch: Record<string, unknown> = { ...vals, amount: Number(vals["amount"]) || ROLE_TYPES[type]!.amount };
+    const patch: Record<string, unknown> = { ...vals, amount: Number(vals["amount"]) || ROLE_TYPES[type]!.amount, active };
     if (patch["max_applicants"]) patch["max_applicants"] = Number(patch["max_applicants"]);
     const { error } = await supabase.from("companies").insert(patch as never);
     setBusy(false);
@@ -432,6 +434,10 @@ function CreateRole({ onDone, onCancel }: { onDone: () => void; onCancel: () => 
           <label className="block text-sm">
             Price (R)
             <input type="number" value={vals["amount"] ?? ""} onChange={(e) => setVals({ ...vals, amount: e.target.value })} className="mt-1 w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none focus:border-primary-foreground" />
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
+            Active (visible for booking)
           </label>
         </div>
         {err && <p className="mt-4 text-sm font-semibold">{err}</p>}
