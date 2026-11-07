@@ -315,7 +315,11 @@ function NewBooking() {
   const careers = [...new Set(options.map((p) => p.career))].sort();
   const hosts = options.filter((p) => p.career === career);
   const sel = "block w-full max-w-md border-b border-primary-foreground/50 bg-transparent p-2 text-primary-foreground outline-none [&>option]:text-foreground";
-  const titles = ["Sector", "Career", "Company", "Placement Details", "Date & Pay"];
+  const titles = ["Sector", "Career", "Host", "Placement Details", "Date & Pay"];
+  const hostLabel = (p: Placement, i: number) => {
+    const sameLocation = hosts.filter((h) => h.location === p.location);
+    return sameLocation.length > 1 ? `${p.location} (Option ${sameLocation.indexOf(p) + 1})` : p.location || `Host ${i + 1}`;
+  };
   const STEP_BG = ["bg-teal", "bg-cta", "bg-teal", "bg-cta", "bg-teal"];
   const canContinue = (step === 1 && !!sector) || (step === 2 && !!career) || (step === 3 && !!chosen) || step === 4;
 
@@ -344,13 +348,12 @@ function NewBooking() {
           )}
           {step === 3 && (
             <select className={sel} value={pid ?? ""} onChange={(e) => { setPid(Number(e.target.value) || null); setDate(""); setConfirmDupe(false); }}>
-              <option value="">Select a company</option>
-              {hosts.map((p) => <option key={p.id} value={p.id}>{p.company} – {p.location}</option>)}
+              <option value="">Select a host</option>
+              {hosts.map((p, i) => <option key={p.id} value={p.id}>{hostLabel(p, i)}</option>)}
             </select>
           )}
           {step === 4 && chosen && (
             <dl className="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
-              <div><dt className="font-semibold">Company</dt><dd>{chosen.company}</dd></div>
               <div><dt className="font-semibold">Location</dt><dd>{chosen.location}</dd></div>
               <div><dt className="font-semibold">Days per shadow</dt><dd>{chosen.days_per_shadow ?? 1}</dd></div>
               <div><dt className="font-semibold">Arrival time</dt><dd>{chosen.arrival_time || "TBC"}</dd></div>
