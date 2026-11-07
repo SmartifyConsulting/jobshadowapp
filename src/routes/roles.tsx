@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { FileDown, PlayCircle, ChevronDown, ArrowDown } from "lucide-react";
 import { SiteLayout } from "@/components/SiteLayout";
 import { YouTube } from "@/components/YouTube";
+import { supabase } from "@/integrations/supabase/client";
 import { CONTACT_EMAIL, ROLES, ROLES_PDF } from "@/lib/data";
 
 const BAND_COLORS = ["bg-cta text-cta-foreground", "bg-accent text-accent-foreground", "bg-teal text-primary-foreground", "bg-primary text-primary-foreground"];
@@ -24,6 +26,15 @@ export const Route = createFileRoute("/roles")({
 
 function Roles() {
   const [open, setOpen] = useState<string | null>(null);
+
+  const placements = useQuery({
+    queryKey: ["placements"],
+    queryFn: async () => ((await supabase.rpc("list_placements")).data ?? []) as { career: string }[],
+  });
+  const bookableCareers = useMemo(
+    () => new Set((placements.data ?? []).map((p) => p.career.trim().toLowerCase())),
+    [placements.data]
+  );
 
   const grouped = useMemo(() => {
     const m = new Map<string, typeof ROLES>();
@@ -74,7 +85,13 @@ function Roles() {
                     <div className="space-y-3 bg-primary-foreground/5 px-5 pb-5 text-sm">
                       {r.video && <div className="max-w-xl"><YouTube id={r.video} title={r.title} /></div>}
                       {r.summary.split("\n").map((p, i) => <p key={i}>{p}</p>)}
-                      <Link to="/auth" className="inline-block bg-cta px-5 py-2 font-semibold uppercase tracking-wider text-cta-foreground">Book this Job Shadow</Link>
+                      {bookableCareers.has(r.title.trim().toLowerCase()) ? (
+                        <Link to="/auth" className="inline-block bg-cta px-5 py-2 font-semibold uppercase tracking-wider text-cta-foreground">Book this Job Shadow</Link>
+                      ) : (
+                        <p className="text-primary-foreground/70">
+                          No host is currently available for this role. <a href={`mailto:${CONTACT_EMAIL}?subject=Interested%20in%20${encodeURIComponent(r.title)}`} className="font-bold underline">Email us</a> and we'll let you know when one opens up.
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
