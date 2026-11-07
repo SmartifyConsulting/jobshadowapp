@@ -6,7 +6,7 @@ describe("Complete admin exports", () => {
     const dataset = Array.from({ length: 2015 }, (_, id) => ({ id }));
     const rows = await fetchAllRows(async (from, to) => dataset.slice(from, to + 1));
     expect(rows).toHaveLength(2015);
-    expect(rows.at(-1)?.id).toBe(2014);
+    expect(rows.at(-1)?.["id"]).toBe(2014);
   });
   it("joins mentor position and HR contacts by company_code, not name", () => {
     const rows = joinApplicationContacts([{ id: 1, company_code: " JS1 ", career: "Engineer" }], [
