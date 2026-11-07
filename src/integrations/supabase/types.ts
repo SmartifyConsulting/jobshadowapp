@@ -147,6 +147,7 @@ export type Database = {
           hr_phone: string | null
           id: number
           location: string | null
+          logo_path: string | null
           max_applicants: number | null
           mentor_email: string | null
           mentor_name: string | null
@@ -181,6 +182,7 @@ export type Database = {
           hr_phone?: string | null
           id: number
           location?: string | null
+          logo_path?: string | null
           max_applicants?: number | null
           mentor_email?: string | null
           mentor_name?: string | null
@@ -215,6 +217,7 @@ export type Database = {
           hr_phone?: string | null
           id?: number
           location?: string | null
+          logo_path?: string | null
           max_applicants?: number | null
           mentor_email?: string | null
           mentor_name?: string | null
@@ -545,6 +548,10 @@ export type Database = {
           sector: string
           dates: string
         }[]
+      }
+      list_partner_logos: {
+        Args: never
+        Returns: { company: string; logo_path: string }[]
       }
       list_placements: {
         Args: never

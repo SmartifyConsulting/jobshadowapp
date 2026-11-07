@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { Check } from "lucide-react";
 import { SiteLayout } from "@/components/SiteLayout";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/partners")({
   head: () => ({
@@ -23,6 +25,11 @@ const BLOCKS = [
 ] as const;
 
 function Partners() {
+  const logos = useQuery({
+    queryKey: ["partner-logos"],
+    queryFn: async () => ((await supabase.rpc("list_partner_logos")).data ?? []) as { company: string; logo_path: string }[],
+  });
+
   return (
     <SiteLayout>
       <section className="mx-auto max-w-6xl px-5 py-14">
@@ -39,6 +46,22 @@ function Partners() {
             </div>
           ))}
         </div>
+        {!!logos.data?.length && (
+          <div className="mt-16">
+            <h2 className="text-center font-display text-2xl font-semibold text-muted-foreground">Our host partners</h2>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-8">
+              {logos.data.map((l) => (
+                <img
+                  key={l.company}
+                  src={supabase.storage.from("partner-logos").getPublicUrl(l.logo_path).data.publicUrl}
+                  alt={l.company}
+                  title={l.company}
+                  className="h-12 w-auto object-contain grayscale transition hover:grayscale-0"
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </section>
     </SiteLayout>
   );

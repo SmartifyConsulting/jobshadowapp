@@ -41,7 +41,7 @@ const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string
     { key: "backup_mentor_name", label: "Backup mentor" }, { key: "backup_mentor_phone", label: "Backup mentor phone" }, { key: "backup_mentor_email", label: "Backup mentor email" },
     { key: "hr_contact_name", label: "HR contact name" }, { key: "hr_contact_phone", label: "HR contact phone" }, { key: "hr_contact_email", label: "HR contact email" },
     { key: "dates", label: "Dates" }, { key: "max_applicants", label: "Places", field: "number" }, { key: "amount", label: "Price (R)", field: "number" },
-    { key: "active", label: "Active", field: "checkbox" } ] },
+    { key: "active", label: "Active", field: "checkbox" }, { key: "logo_path", label: "Logo" } ] },
   { id: "vouchers", label: "Vouchers", icon: ShoppingCart, table: "vouchers", singular: "Vouchers", cols: [
     { key: "id", label: "#" }, { key: "name", label: "Name" }, { key: "code", label: "Code" },
     { key: "discount", label: "Discount", field: "number" }, { key: "available_from", label: "From", field: "date" },
@@ -703,6 +703,33 @@ function BookingSettings() {
   );
 }
 
+function LogoUpload({ companyId, value, onChange }: { companyId: unknown; value: string; onChange: (path: string) => void }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const previewUrl = value ? supabase.storage.from("partner-logos").getPublicUrl(value).data.publicUrl : null;
+
+  async function upload(file: File) {
+    setBusy(true);
+    setErr(null);
+    const path = `${companyId}-${Date.now()}-${file.name}`;
+    const { error } = await supabase.storage.from("partner-logos").upload(path, file, { upsert: true });
+    setBusy(false);
+    if (error) return setErr(error.message);
+    onChange(path);
+  }
+
+  return (
+    <label className="block text-sm">
+      Logo
+      <div className="mt-1 flex items-center gap-3">
+        {previewUrl && <img src={previewUrl} alt="Logo preview" className="h-10 w-10 rounded bg-white object-contain" />}
+        <input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload(f); }} disabled={busy} className="text-xs" />
+      </div>
+      {err && <p className="text-xs text-destructive">{err}</p>}
+    </label>
+  );
+}
+
 function EditRecord({ title, table, cols, row, onDone, onCancel }: { title: string; table: string; cols: Col[]; row: Record<string, unknown>; onDone: () => void; onCancel: () => void }) {
   const [vals, setVals] = useState<Record<string, unknown>>(row);
   const [busy, setBusy] = useState(false);
@@ -736,6 +763,8 @@ function EditRecord({ title, table, cols, row, onDone, onCancel }: { title: stri
                 value={(vals[c.key] as string) ?? ""}
                 onChange={(v) => setVals({ ...vals, [c.key]: v })}
               />
+            ) : table === "companies" && c.key === "logo_path" ? (
+              <LogoUpload key={c.key} companyId={row["id"]} value={(vals[c.key] as string) ?? ""} onChange={(v) => setVals({ ...vals, logo_path: v })} />
             ) : (
               <label key={c.key} className="block text-sm">
                 {c.label}
