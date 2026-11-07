@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { Users as UsersIcon, FileText, ShoppingCart, Briefcase, GraduationCap, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png.asset.json";
+import { Button } from "@/components/ui/button";
+import { completeExportColumns, fetchAllRows, joinApplicationContacts, toCsv } from "@/lib/admin-export";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -32,6 +34,9 @@ const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string
     { key: "id", label: "ID" }, { key: "company", label: "Company" }, { key: "career", label: "Career" },
     { key: "sector", label: "Sector" }, { key: "location", label: "Location" }, { key: "mentor_name", label: "Mentor" },
     { key: "mentor_email", label: "Mentor email" }, { key: "mentor_phone", label: "Mentor phone" },
+    { key: "mentor_position", label: "Mentor position" },
+    { key: "backup_mentor_name", label: "Backup mentor" }, { key: "backup_mentor_phone", label: "Backup mentor phone" }, { key: "backup_mentor_email", label: "Backup mentor email" },
+    { key: "hr_contact_name", label: "HR contact name" }, { key: "hr_contact_phone", label: "HR contact phone" }, { key: "hr_contact_email", label: "HR contact email" },
     { key: "dates", label: "Dates" }, { key: "max_applicants", label: "Places", field: "number" }, { key: "amount", label: "Price (R)", field: "number" } ] },
   { id: "vouchers", label: "Vouchers", icon: ShoppingCart, table: "vouchers", singular: "Vouchers", cols: [
     { key: "id", label: "#" }, { key: "name", label: "Name" }, { key: "code", label: "Code" },
@@ -57,8 +62,9 @@ function useIsAdmin() {
 
 function AdminPage() {
   const admin = useIsAdmin();
-  const [active, setActive] = useState(TABLES[0]!.id);
-  const section = TABLES.find((t) => t.id === active) ?? TABLES[0]!;
+  const [active, setActive] = useState("apps");
+  const section = TABLES.find((t) => t.id === active);
+  if (!section) return null;
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -99,9 +105,7 @@ function fmt(v: unknown) {
 }
 
 function exportCsv(title: string, cols: Col[], rows: Record<string, unknown>[]) {
-  const header = cols.map((c) => c.label).join(",");
-  const body = rows.map((r) => cols.map((c) => `"${fmt(r[c.key]).replace(/"/g, '""')}"`).join(",")).join("\n");
-  const blob = new Blob([`${header}\n${body}`], { type: "text/csv" });
+  const blob = new Blob([toCsv(cols, rows)], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -117,6 +121,30 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
   const [to, setTo] = useState("");
   const [company, setCompany] = useState("All companies");
   const [editing, setEditing] = useState<Record<string, unknown> | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+  async function loadAll(source: string) {
+    return fetchAllRows(async (from, to) => {
+      let query = supabase.from(source as "careers").select("*").order("id", { ascending: false });
+      if (source === "legacy_users") query = (query as any).eq("is_spam", false);
+      const { data, error } = await query.range(from, to);
+      if (error) throw error;
+      return (data ?? []) as Record<string, unknown>[];
+    });
+  }
+  async function exportAll() {
+    setExporting(true);
+    setExportError(null);
+    try {
+      let all = await loadAll(table);
+      if (table === "legacy_applications") all = joinApplicationContacts(all, await loadAll("companies"));
+      exportCsv(title, completeExportColumns(cols, all), all);
+    } catch (error) {
+      setExportError(error instanceof Error ? error.message : "Unable to export records. Please try again.");
+    } finally {
+      setExporting(false);
+    }
+  }
   const { data, isLoading } = useQuery({
     queryKey: ["admin", table],
     queryFn: async () => {
@@ -209,9 +237,10 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
             </label>
           </div>
         )}
-        <button onClick={() => exportCsv(title, cols, rows)} className="bg-cta px-4 py-2 text-sm font-bold uppercase text-cta-foreground">Export</button>
+        <Button onClick={exportAll} disabled={isLoading || exporting} className="bg-cta px-4 py-2 text-sm font-bold uppercase text-cta-foreground">{exporting ? "Exporting…" : "Export"}</Button>
       </div>
       <div className="bg-teal/90 px-6 py-6 text-primary-foreground">
+        {exportError && <p role="alert" className="mb-4 text-sm font-semibold">{exportError}</p>}
         <label className="block max-w-sm text-sm">
           Search Table
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Input Value" className="mt-1 w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none placeholder:text-primary-foreground/60" />
