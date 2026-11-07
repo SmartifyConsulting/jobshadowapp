@@ -25,6 +25,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RolesRouteImport } from './routes/roles'
 import { Route as SendToAFriendRouteImport } from './routes/send-to-a-friend'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedMentorRouteImport } from './routes/_authenticated/mentor'
 import { Route as AuthenticatedMyAccountRouteImport } from './routes/_authenticated/my-account'
 
 const IndexRoute = IndexRouteImport.update({
@@ -106,6 +107,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMentorRoute = AuthenticatedMentorRouteImport.update({
+  id: '/mentor',
+  path: '/mentor',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedMyAccountRoute = AuthenticatedMyAccountRouteImport.update({
   id: '/my-account',
   path: '/my-account',
@@ -128,6 +134,7 @@ export interface FileRoutesByFullPath {
   '/roles': typeof RolesRoute
   '/send-to-a-friend': typeof SendToAFriendRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/mentor': typeof AuthenticatedMentorRoute
   '/my-account': typeof AuthenticatedMyAccountRoute
 }
 export interface FileRoutesByTo {
@@ -146,6 +153,7 @@ export interface FileRoutesByTo {
   '/roles': typeof RolesRoute
   '/send-to-a-friend': typeof SendToAFriendRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/mentor': typeof AuthenticatedMentorRoute
   '/my-account': typeof AuthenticatedMyAccountRoute
 }
 export interface FileRoutesById {
@@ -166,6 +174,7 @@ export interface FileRoutesById {
   '/roles': typeof RolesRoute
   '/send-to-a-friend': typeof SendToAFriendRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/mentor': typeof AuthenticatedMentorRoute
   '/_authenticated/my-account': typeof AuthenticatedMyAccountRoute
 }
 export interface FileRouteTypes {
@@ -186,6 +195,7 @@ export interface FileRouteTypes {
     | '/roles'
     | '/send-to-a-friend'
     | '/admin'
+    | '/mentor'
     | '/my-account'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -204,6 +214,7 @@ export interface FileRouteTypes {
     | '/roles'
     | '/send-to-a-friend'
     | '/admin'
+    | '/mentor'
     | '/my-account'
   id:
     | '__root__'
@@ -223,6 +234,7 @@ export interface FileRouteTypes {
     | '/roles'
     | '/send-to-a-friend'
     | '/_authenticated/admin'
+    | '/_authenticated/mentor'
     | '/_authenticated/my-account'
   fileRoutesById: FileRoutesById
 }
@@ -358,6 +370,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/mentor': {
+      id: '/_authenticated/mentor'
+      path: '/mentor'
+      fullPath: '/mentor'
+      preLoaderRoute: typeof AuthenticatedMentorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/my-account': {
       id: '/_authenticated/my-account'
       path: '/my-account'
@@ -370,11 +389,13 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedMentorRoute: typeof AuthenticatedMentorRoute
   AuthenticatedMyAccountRoute: typeof AuthenticatedMyAccountRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedMentorRoute: AuthenticatedMentorRoute,
   AuthenticatedMyAccountRoute: AuthenticatedMyAccountRoute,
 }
 

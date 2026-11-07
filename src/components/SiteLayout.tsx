@@ -90,6 +90,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem asChild><Link to="/my-account">My Account</Link></DropdownMenuItem>
                   <DropdownMenuItem asChild><Link to="/my-account">My Bookings</Link></DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link to="/mentor">Mentor Portal</Link></DropdownMenuItem>
                   <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -113,6 +114,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
               <>
                 <Link to="/my-account" onClick={() => setOpen(false)}>My Account</Link>
                 <Link to="/my-account" onClick={() => setOpen(false)}>My Bookings</Link>
+                <Link to="/mentor" onClick={() => setOpen(false)}>Mentor Portal</Link>
                 <button className="text-left" onClick={() => { setOpen(false); void logout(); }}>Logout</button>
               </>
             )}

@@ -91,6 +91,7 @@ export type Database = {
       }
       companies: {
         Row: {
+          active: boolean
           address: string | null
           amount: number | null
           arrival_time: string | null
@@ -124,6 +125,7 @@ export type Database = {
           website: string | null
         }
         Insert: {
+          active?: boolean
           address?: string | null
           amount?: number | null
           arrival_time?: string | null
@@ -157,6 +159,7 @@ export type Database = {
           website?: string | null
         }
         Update: {
+          active?: boolean
           address?: string | null
           amount?: number | null
           arrival_time?: string | null
@@ -460,6 +463,42 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_mentor_email_match: {
+        Args: { _mentor_email: string }
+        Returns: boolean
+      }
+      list_mentor_bookings: {
+        Args: never
+        Returns: {
+          company: string
+          career: string
+          id: string
+          indemnity_received: boolean
+          location: string
+          scholar_contact: string
+          scholar_name: string
+          scholar_school: string
+          shadow_date: string
+          status: string
+        }[]
+      }
+      list_mentor_placements: {
+        Args: never
+        Returns: {
+          active: boolean
+          arrival_time: string
+          career: string
+          collection_time: string
+          company: string
+          days_per_shadow: number
+          description: string
+          id: number
+          location: string
+          max_applicants: number
+          sector: string
+          dates: string
+        }[]
+      }
       list_placements: {
         Args: never
         Returns: {
@@ -481,6 +520,18 @@ export type Database = {
         Returns: undefined
       }
       submit_indemnity: { Args: { _booking: string }; Returns: undefined }
+      update_mentor_placement: {
+        Args: {
+          _active: boolean
+          _arrival_time: string
+          _collection_time: string
+          _dates: string
+          _description: string
+          _id: number
+          _max_applicants: number | null
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "user"
