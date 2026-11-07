@@ -29,6 +29,13 @@
       "when": 1792682863281,
       "tag": "0003_scholar_documents",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794070810598,
+      "tag": "0004_reconcile_deleted_users_and_company_contacts",
+      "breakpoints": true
     }
   ]
 }
