@@ -105,6 +105,9 @@ export type Database = {
           dates: string | null
           days_per_shadow: number | null
           description: string | null
+          hr_contact_email: string | null
+          hr_contact_name: string | null
+          hr_contact_phone: string | null
           hr_email: string | null
           hr_name: string | null
           hr_phone: string | null
@@ -114,6 +117,7 @@ export type Database = {
           mentor_email: string | null
           mentor_name: string | null
           mentor_phone: string | null
+          mentor_position: string | null
           period: string | null
           sector: string | null
           total_days: number | null
@@ -134,6 +138,9 @@ export type Database = {
           dates?: string | null
           days_per_shadow?: number | null
           description?: string | null
+          hr_contact_email?: string | null
+          hr_contact_name?: string | null
+          hr_contact_phone?: string | null
           hr_email?: string | null
           hr_name?: string | null
           hr_phone?: string | null
@@ -143,6 +150,7 @@ export type Database = {
           mentor_email?: string | null
           mentor_name?: string | null
           mentor_phone?: string | null
+          mentor_position?: string | null
           period?: string | null
           sector?: string | null
           total_days?: number | null
@@ -163,6 +171,9 @@ export type Database = {
           dates?: string | null
           days_per_shadow?: number | null
           description?: string | null
+          hr_contact_email?: string | null
+          hr_contact_name?: string | null
+          hr_contact_phone?: string | null
           hr_email?: string | null
           hr_name?: string | null
           hr_phone?: string | null
@@ -172,6 +183,7 @@ export type Database = {
           mentor_email?: string | null
           mentor_name?: string | null
           mentor_phone?: string | null
+          mentor_position?: string | null
           period?: string | null
           sector?: string | null
           total_days?: number | null
