@@ -26,6 +26,8 @@ export type Database = {
           id: string
           indemnity_path: string | null
           indemnity_received: boolean
+          internship_notes: string | null
+          internship_preapproved: boolean
           location: string | null
           paid_at: string | null
           reminder_sent_at: string | null
@@ -46,6 +48,8 @@ export type Database = {
           id?: string
           indemnity_path?: string | null
           indemnity_received?: boolean
+          internship_notes?: string | null
+          internship_preapproved?: boolean
           location?: string | null
           paid_at?: string | null
           reminder_sent_at?: string | null
@@ -66,6 +70,8 @@ export type Database = {
           id?: string
           indemnity_path?: string | null
           indemnity_received?: boolean
+          internship_notes?: string | null
+          internship_preapproved?: boolean
           location?: string | null
           paid_at?: string | null
           reminder_sent_at?: string | null
@@ -489,6 +495,8 @@ export type Database = {
           career: string
           id: string
           indemnity_received: boolean
+          internship_notes: string
+          internship_preapproved: boolean
           location: string
           scholar_contact: string
           scholar_name: string
@@ -532,6 +540,10 @@ export type Database = {
       }
       set_indemnity_path: {
         Args: { _booking: string; _path: string }
+        Returns: undefined
+      }
+      set_internship_preapproval: {
+        Args: { _booking: string; _preapproved: boolean; _notes: string | null }
         Returns: undefined
       }
       submit_indemnity: { Args: { _booking: string }; Returns: undefined }

@@ -509,7 +509,7 @@ type ScholarProfile = {
   user_id: string; full_name: string; school: string; id_number: string;
   id_file_path: string | null; photo_path: string | null; id_verified: boolean;
 };
-type ScholarBooking = { id: string; user_id: string; career: string | null; company: string | null; shadow_date: string; status: string; indemnity_path: string | null; indemnity_received: boolean };
+type ScholarBooking = { id: string; user_id: string; career: string | null; company: string | null; shadow_date: string; status: string; indemnity_path: string | null; indemnity_received: boolean; internship_preapproved: boolean; internship_notes: string | null };
 
 async function downloadDoc(path: string | null) {
   if (!path) return;
@@ -573,15 +573,22 @@ function ScholarVerification() {
               {own.length > 0 && (
                 <div className="mt-3 space-y-2 border-t border-primary-foreground/20 pt-3">
                   {own.map((b) => (
-                    <div key={b.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                      <span>{b.career} · {b.company} · {b.shadow_date} · {b.status}</span>
-                      <div className="flex items-center gap-3">
-                        <button onClick={() => downloadDoc(b.indemnity_path)} disabled={!b.indemnity_path} className="bg-cta px-3 py-1 text-xs font-bold uppercase text-cta-foreground disabled:opacity-50">Download indemnity</button>
-                        <label className="flex items-center gap-1">
-                          <input type="checkbox" checked={b.indemnity_received} onChange={(e) => setIndemnityReceived(b.id, e.target.checked)} />
-                          Received
-                        </label>
+                    <div key={b.id} className="text-sm">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span>{b.career} · {b.company} · {b.shadow_date} · {b.status}</span>
+                        <div className="flex items-center gap-3">
+                          <button onClick={() => downloadDoc(b.indemnity_path)} disabled={!b.indemnity_path} className="bg-cta px-3 py-1 text-xs font-bold uppercase text-cta-foreground disabled:opacity-50">Download indemnity</button>
+                          <label className="flex items-center gap-1">
+                            <input type="checkbox" checked={b.indemnity_received} onChange={(e) => setIndemnityReceived(b.id, e.target.checked)} />
+                            Received
+                          </label>
+                        </div>
                       </div>
+                      {b.internship_preapproved && (
+                        <p className="mt-1 rounded bg-accent/30 px-2 py-1 text-xs">
+                          Internship pre-approved by mentor{b.internship_notes ? `: ${b.internship_notes}` : ""}
+                        </p>
+                      )}
                     </div>
                   ))}
                 </div>

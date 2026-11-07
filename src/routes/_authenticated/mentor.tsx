@@ -26,6 +26,7 @@ type Placement = {
 type MentorBooking = {
   id: string; company: string; career: string; location: string; shadow_date: string; status: string;
   scholar_name: string | null; scholar_contact: string | null; scholar_school: string | null; indemnity_received: boolean;
+  internship_preapproved: boolean; internship_notes: string | null;
 };
 
 const STATUS: Record<string, string> = { awaiting_payment: "Awaiting payment", indemnity_required: "Paid – indemnity needed", confirmed: "Confirmed", completed: "Completed" };
@@ -63,24 +64,61 @@ function MentorPortal() {
             <p className="mt-2 text-sm text-muted-foreground">No bookings yet.</p>
           )}
           <div className="mt-4 space-y-3">
-            {bookings.data?.map((b) => (
-              <div key={b.id} className="rounded-lg border bg-card p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <p className="font-semibold">{b.scholar_name ?? "Scholar"} · {b.career}</p>
-                    <p className="text-sm text-muted-foreground">{b.scholar_school ?? ""} · {b.location} · {b.shadow_date}</p>
-                  </div>
-                  <span className="rounded-full bg-accent px-3 py-1 text-xs font-semibold text-accent-foreground">{STATUS[b.status] ?? b.status}</span>
-                </div>
-                <p className="mt-2 text-sm">
-                  Contact: {b.scholar_contact ?? "—"} · Indemnity: {b.indemnity_received ? "Received" : "Outstanding"}
-                </p>
-              </div>
-            ))}
+            {bookings.data?.map((b) => <BookingCard key={b.id} booking={b} />)}
           </div>
         </div>
       </section>
     </SiteLayout>
+  );
+}
+
+function BookingCard({ booking }: { booking: MentorBooking }) {
+  const qc = useQueryClient();
+  const [preapproved, setPreapproved] = useState(booking.internship_preapproved);
+  const [notes, setNotes] = useState(booking.internship_notes ?? "");
+  const [busy, setBusy] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  async function saveInternship() {
+    setBusy(true);
+    setSaved(false);
+    const { error } = await supabase.rpc("set_internship_preapproval", { _booking: booking.id, _preapproved: preapproved, _notes: notes || null });
+    setBusy(false);
+    if (error) return window.alert(error.message);
+    setSaved(true);
+    qc.invalidateQueries({ queryKey: ["mentor-bookings"] });
+  }
+
+  return (
+    <div className="rounded-lg border bg-card p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p className="font-semibold">{booking.scholar_name ?? "Scholar"} · {booking.career}</p>
+          <p className="text-sm text-muted-foreground">{booking.scholar_school ?? ""} · {booking.location} · {booking.shadow_date}</p>
+        </div>
+        <span className="rounded-full bg-accent px-3 py-1 text-xs font-semibold text-accent-foreground">{STATUS[booking.status] ?? booking.status}</span>
+      </div>
+      <p className="mt-2 text-sm">
+        Contact: {booking.scholar_contact ?? "—"} · Indemnity: {booking.indemnity_received ? "Received" : "Outstanding"}
+      </p>
+      <div className="mt-3 border-t border-foreground/10 pt-3">
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={preapproved} onChange={(e) => setPreapproved(e.target.checked)} />
+          Pre-approve this scholar for a future internship at your company
+        </label>
+        {preapproved && (
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Optional notes for admin (e.g. preferred start date, role)"
+            className="mt-2 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+          />
+        )}
+        <button onClick={saveInternship} disabled={busy} className="mt-2 rounded bg-primary px-3 py-1.5 text-xs font-bold uppercase text-primary-foreground disabled:opacity-50">
+          {saved ? "Saved" : "Save"}
+        </button>
+      </div>
+    </div>
   );
 }
 
