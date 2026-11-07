@@ -24,7 +24,8 @@ export const Route = createFileRoute("/_authenticated/admin")({
 
 type Field = "text" | "number" | "date" | "checkbox";
 type Col = { key: string; label: string; field?: Field };
-const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string; singular: string; cols: Col[]; csvUpload?: boolean; dateCompanyFilter?: boolean; indemnityEdit?: boolean }[] = [
+const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string; singular: string; cols: Col[]; csvUpload?: boolean; dateCompanyFilter?: boolean; indemnityEdit?: boolean; custom?: boolean }[] = [
+  { id: "scholars", label: "Scholars", icon: GraduationCap, table: "scholar_profiles", singular: "Scholars", custom: true, cols: [] },
   { id: "apps", label: "Applications", icon: UsersIcon, table: "legacy_applications", singular: "Applications", dateCompanyFilter: true, indemnityEdit: true, cols: [
     { key: "id", label: "ID" }, { key: "name", label: "Name" }, { key: "id_number", label: "ID No." },
     { key: "email", label: "Email" }, { key: "contact", label: "Contact" }, { key: "school", label: "School" },
@@ -90,6 +91,8 @@ function AdminPage() {
             <p className="p-8">Loading…</p>
           ) : !admin.data ? (
             <p className="p-8">Your account doesn't have admin access. Ask JobShadow to grant it.</p>
+          ) : section.custom ? (
+            <ScholarVerification key={section.id} />
           ) : (
             <DataTable key={section.id} title={section.singular} table={section.table} cols={section.cols} csvUpload={section.csvUpload} dateCompanyFilter={section.dateCompanyFilter} indemnityEdit={section.indemnityEdit} />
           )}
@@ -442,6 +445,95 @@ function CreateRole({ onDone, onCancel }: { onDone: () => void; onCancel: () => 
         </div>
         {err && <p className="mt-4 text-sm font-semibold">{err}</p>}
         <button onClick={save} disabled={busy} className="mt-6 bg-cta px-5 py-2.5 text-sm font-bold uppercase text-cta-foreground">Create</button>
+      </div>
+    </div>
+  );
+}
+
+type ScholarProfile = {
+  user_id: string; full_name: string; school: string; id_number: string;
+  id_file_path: string | null; photo_path: string | null; id_verified: boolean;
+};
+type ScholarBooking = { id: string; user_id: string; career: string | null; company: string | null; shadow_date: string; status: string; indemnity_path: string | null; indemnity_received: boolean };
+
+async function downloadDoc(path: string | null) {
+  if (!path) return;
+  const { data, error } = await supabase.storage.from("scholar-docs").download(path);
+  if (error || !data) return window.alert(error?.message ?? "File not found.");
+  const url = URL.createObjectURL(data);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = path.split("/").pop() ?? path;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function ScholarVerification() {
+  const qc = useQueryClient();
+  const profiles = useQuery({
+    queryKey: ["admin", "scholar_profiles"],
+    queryFn: async () => ((await supabase.from("scholar_profiles").select("*").order("created_at", { ascending: false })).data ?? []) as ScholarProfile[],
+  });
+  const bookings = useQuery({
+    queryKey: ["admin", "scholar_bookings"],
+    queryFn: async () => ((await supabase.from("bookings").select("*").order("shadow_date", { ascending: false })).data ?? []) as ScholarBooking[],
+  });
+
+  async function setIdVerified(userId: string, verified: boolean) {
+    const { error } = await supabase.from("scholar_profiles").update({ id_verified: verified, id_verified_at: verified ? new Date().toISOString() : null }).eq("user_id", userId);
+    if (error) return window.alert(error.message);
+    qc.invalidateQueries({ queryKey: ["admin", "scholar_profiles"] });
+  }
+
+  async function setIndemnityReceived(id: string, received: boolean) {
+    const { error } = await supabase.from("bookings").update({ indemnity_received: received }).eq("id", id);
+    if (error) return window.alert(error.message);
+    qc.invalidateQueries({ queryKey: ["admin", "scholar_bookings"] });
+  }
+
+  if (profiles.isLoading || bookings.isLoading) {
+    return <p className="p-8">Loading…</p>;
+  }
+
+  return (
+    <div>
+      <div className="bg-foreground px-6 py-6 text-background"><h1 className="text-2xl font-semibold">Scholars ({profiles.data?.length ?? 0})</h1></div>
+      <div className="space-y-4 bg-teal/90 px-6 py-6 text-primary-foreground">
+        {profiles.data?.length === 0 && <p>No scholar profiles yet.</p>}
+        {profiles.data?.map((p) => {
+          const own = (bookings.data ?? []).filter((b) => b.user_id === p.user_id);
+          return (
+            <div key={p.user_id} className="rounded-lg border border-primary-foreground/20 bg-background/10 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="font-semibold">{p.full_name} · {p.school} · ID: {p.id_number}</p>
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={p.id_verified} onChange={(e) => setIdVerified(p.user_id, e.target.checked)} />
+                  ID verified
+                </label>
+              </div>
+              <div className="mt-2 flex gap-3 text-sm">
+                <button onClick={() => downloadDoc(p.id_file_path)} disabled={!p.id_file_path} className="bg-cta px-3 py-1.5 text-xs font-bold uppercase text-cta-foreground disabled:opacity-50">Download ID scan</button>
+                <button onClick={() => downloadDoc(p.photo_path)} disabled={!p.photo_path} className="bg-cta px-3 py-1.5 text-xs font-bold uppercase text-cta-foreground disabled:opacity-50">Download photo</button>
+              </div>
+              {own.length > 0 && (
+                <div className="mt-3 space-y-2 border-t border-primary-foreground/20 pt-3">
+                  {own.map((b) => (
+                    <div key={b.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                      <span>{b.career} · {b.company} · {b.shadow_date} · {b.status}</span>
+                      <div className="flex items-center gap-3">
+                        <button onClick={() => downloadDoc(b.indemnity_path)} disabled={!b.indemnity_path} className="bg-cta px-3 py-1 text-xs font-bold uppercase text-cta-foreground disabled:opacity-50">Download indemnity</button>
+                        <label className="flex items-center gap-1">
+                          <input type="checkbox" checked={b.indemnity_received} onChange={(e) => setIndemnityReceived(b.id, e.target.checked)} />
+                          Received
+                        </label>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

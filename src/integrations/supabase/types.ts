@@ -327,6 +327,8 @@ export type Database = {
           guardian_name: string | null
           id_file_path: string | null
           id_number: string
+          id_verified: boolean
+          id_verified_at: string | null
           photo_path: string | null
           popi_accepted: boolean
           popi_accepted_at: string | null
@@ -349,6 +351,8 @@ export type Database = {
           guardian_name?: string | null
           id_file_path?: string | null
           id_number: string
+          id_verified?: boolean
+          id_verified_at?: string | null
           photo_path?: string | null
           popi_accepted?: boolean
           popi_accepted_at?: string | null
@@ -371,6 +375,8 @@ export type Database = {
           guardian_name?: string | null
           id_file_path?: string | null
           id_number?: string
+          id_verified?: boolean
+          id_verified_at?: string | null
           photo_path?: string | null
           popi_accepted?: boolean
           popi_accepted_at?: string | null

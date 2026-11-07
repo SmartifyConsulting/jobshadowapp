@@ -64,6 +64,13 @@
       "when": 1794371500000,
       "tag": "0008_popi_consent",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794371600000,
+      "tag": "0009_admin_document_verification",
+      "breakpoints": true
     }
   ]
 }
