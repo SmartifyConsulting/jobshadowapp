@@ -36,6 +36,13 @@
       "when": 1794070810598,
       "tag": "0004_reconcile_deleted_users_and_company_contacts",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794371200000,
+      "tag": "0005_email_outbox_autosend",
+      "breakpoints": true
     }
   ]
 }
