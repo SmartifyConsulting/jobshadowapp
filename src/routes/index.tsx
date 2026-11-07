@@ -17,9 +17,22 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
+const ORG_JSON_LD = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Job Shadow",
+  url: "https://jobshadow.co.za",
+  logo: "https://jobshadow.co.za/favicon.png",
+  email: "info@jobshadow.co.za",
+  description: "Job Shadow facilitates job shadowing for South African high school students.",
+  areaServed: "ZA",
+  sameAs: ["https://www.facebook.com/JobShadowBookings", "https://www.instagram.com/jobshadowbookings"],
+});
+
 function Home() {
   return (
     <SiteLayout>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ORG_JSON_LD }} />
       <section className="relative overflow-hidden bg-primary text-primary-foreground">
         <div className="absolute inset-0 bg-brand-deep [clip-path:polygon(4%_0,100%_38%,100%_100%,8%_100%)]" />
         <img src={arrow.url} alt="" aria-hidden width={326} height={1080} className="pointer-events-none absolute -bottom-4 right-[4%] hidden h-[110%] w-auto md:block" />
