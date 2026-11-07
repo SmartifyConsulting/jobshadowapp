@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      booking_settings: {
+        Row: {
+          blackout_dates: string[]
+          id: number
+          min_lead_days: number
+        }
+        Insert: {
+          blackout_dates?: string[]
+          id?: number
+          min_lead_days?: number
+        }
+        Update: {
+          blackout_dates?: string[]
+          id?: number
+          min_lead_days?: number
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           amount_due: number

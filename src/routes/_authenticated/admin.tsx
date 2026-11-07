@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Users as UsersIcon, FileText, ShoppingCart, Briefcase, GraduationCap, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png.asset.json";
@@ -27,6 +27,7 @@ type Col = { key: string; label: string; field?: Field };
 const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string; singular: string; cols: Col[]; csvUpload?: boolean; dateCompanyFilter?: boolean; indemnityEdit?: boolean; custom?: boolean }[] = [
   { id: "scholars", label: "Scholars", icon: GraduationCap, table: "scholar_profiles", singular: "Scholars", custom: true, cols: [] },
   { id: "emails", label: "Email Archive", icon: FileText, table: "email_outbox", singular: "Emails", custom: true, cols: [] },
+  { id: "settings", label: "Booking Settings", icon: FileText, table: "booking_settings", singular: "Settings", custom: true, cols: [] },
   { id: "apps", label: "Applications", icon: UsersIcon, table: "legacy_applications", singular: "Applications", dateCompanyFilter: true, indemnityEdit: true, cols: [
     { key: "id", label: "ID" }, { key: "name", label: "Name" }, { key: "id_number", label: "ID No." },
     { key: "email", label: "Email" }, { key: "contact", label: "Contact" }, { key: "school", label: "School" },
@@ -96,6 +97,8 @@ function AdminPage() {
             <ScholarVerification key={section.id} />
           ) : section.id === "emails" ? (
             <EmailArchive key={section.id} />
+          ) : section.id === "settings" ? (
+            <BookingSettings key={section.id} />
           ) : (
             <DataTable key={section.id} title={section.singular} table={section.table} cols={section.cols} csvUpload={section.csvUpload} dateCompanyFilter={section.dateCompanyFilter} indemnityEdit={section.indemnityEdit} />
           )}
@@ -641,6 +644,55 @@ function EmailArchive() {
             ))
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function BookingSettings() {
+  const qc = useQueryClient();
+  const settings = useQuery({
+    queryKey: ["admin", "booking_settings"],
+    queryFn: async () => (await supabase.from("booking_settings").select("*").eq("id", 1).single()).data,
+  });
+  const [minLead, setMinLead] = useState("3");
+  const [blackout, setBlackout] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    if (!settings.data) return;
+    setMinLead(String(settings.data.min_lead_days));
+    setBlackout((settings.data.blackout_dates ?? []).join(", "));
+  }, [settings.data]);
+
+  async function save() {
+    setBusy(true);
+    setErr(null);
+    setSaved(false);
+    const dates = blackout.split(",").map((d) => d.trim()).filter(Boolean);
+    const { error } = await (supabase.from("booking_settings") as any).update({ min_lead_days: Number(minLead) || 0, blackout_dates: dates }).eq("id", 1);
+    setBusy(false);
+    if (error) return setErr(error.message);
+    setSaved(true);
+    qc.invalidateQueries({ queryKey: ["admin", "booking_settings"] });
+  }
+
+  return (
+    <div>
+      <div className="bg-foreground px-6 py-6 text-background"><h1 className="text-2xl font-semibold">Booking Settings</h1></div>
+      <div className="max-w-xl space-y-5 bg-teal/90 px-6 py-6 text-primary-foreground">
+        <label className="block text-sm">
+          Minimum lead time (days before a shadow date a booking is allowed)
+          <input type="number" value={minLead} onChange={(e) => setMinLead(e.target.value)} className="mt-1 w-full max-w-xs border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none" />
+        </label>
+        <label className="block text-sm">
+          Blackout dates (comma separated, MM/DD/YYYY - no bookings allowed on these dates)
+          <textarea value={blackout} onChange={(e) => setBlackout(e.target.value)} placeholder="12/15/2026, 12/16/2026" className="mt-1 w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none" />
+        </label>
+        {err && <p className="text-sm font-semibold">{err}</p>}
+        <button onClick={save} disabled={busy || settings.isLoading} className="bg-cta px-5 py-2.5 text-sm font-bold uppercase text-cta-foreground disabled:opacity-50">{saved ? "Saved" : "Save"}</button>
       </div>
     </div>
   );
