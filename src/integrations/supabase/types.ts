@@ -28,6 +28,7 @@ export type Database = {
           indemnity_received: boolean
           location: string | null
           paid_at: string | null
+          reminder_sent_at: string | null
           sector: string | null
           shadow_date: string
           status: string
@@ -47,6 +48,7 @@ export type Database = {
           indemnity_received?: boolean
           location?: string | null
           paid_at?: string | null
+          reminder_sent_at?: string | null
           sector?: string | null
           shadow_date: string
           status?: string
@@ -66,6 +68,7 @@ export type Database = {
           indemnity_received?: boolean
           location?: string | null
           paid_at?: string | null
+          reminder_sent_at?: string | null
           sector?: string | null
           shadow_date?: string
           status?: string
