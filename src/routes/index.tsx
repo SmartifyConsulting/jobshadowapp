@@ -26,7 +26,7 @@ function Home() {
         <div className="relative mx-auto flex max-w-5xl flex-col items-center px-5 py-20 text-center md:py-28">
           <h1 className="sr-only">Be sure about the career and life you choose with Job Shadow.</h1>
           <img src={headline.url} alt="" width={1263} height={338} className="w-full max-w-4xl" />
-          <Link to="/apply" className="mt-12 bg-cta px-9 py-4 text-lg font-semibold uppercase tracking-[0.2em] text-cta-foreground shadow-warm transition hover:-translate-y-0.5 hover:brightness-110">
+          <Link to="/auth" className="mt-12 bg-cta px-9 py-4 text-lg font-semibold uppercase tracking-[0.2em] text-cta-foreground shadow-warm transition hover:-translate-y-0.5 hover:brightness-110">
             Book Job Shadow
           </Link>
         </div>

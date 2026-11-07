@@ -74,7 +74,7 @@ function Roles() {
                     <div className="space-y-3 bg-primary-foreground/5 px-5 pb-5 text-sm">
                       {r.video && <div className="max-w-xl"><YouTube id={r.video} title={r.title} /></div>}
                       {r.summary.split("\n").map((p, i) => <p key={i}>{p}</p>)}
-                      <Link to="/apply" search={{ role: r.title }} className="inline-block bg-cta px-5 py-2 font-semibold uppercase tracking-wider text-cta-foreground">Book this Job Shadow</Link>
+                      <Link to="/auth" className="inline-block bg-cta px-5 py-2 font-semibold uppercase tracking-wider text-cta-foreground">Book this Job Shadow</Link>
                     </div>
                   )}
                 </div>

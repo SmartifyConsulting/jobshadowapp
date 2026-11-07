@@ -89,7 +89,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem asChild><Link to="/my-account">My Account</Link></DropdownMenuItem>
-                  <DropdownMenuItem asChild><Link to="/dashboard">My Bookings</Link></DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link to="/my-account">My Bookings</Link></DropdownMenuItem>
                   <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -112,7 +112,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
             {user && (
               <>
                 <Link to="/my-account" onClick={() => setOpen(false)}>My Account</Link>
-                <Link to="/dashboard" onClick={() => setOpen(false)}>My Bookings</Link>
+                <Link to="/my-account" onClick={() => setOpen(false)}>My Bookings</Link>
                 <button className="text-left" onClick={() => { setOpen(false); void logout(); }}>Logout</button>
               </>
             )}
@@ -138,7 +138,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
             <p className="font-display text-lg text-accent">Explore</p>
             <ul className="mt-2 space-y-1 opacity-90">
               <li><Link to="/roles">Job Roles</Link></li>
-              <li><Link to="/apply">Book a Job Shadow</Link></li>
+              <li><Link to="/auth">Book a Job Shadow</Link></li>
               <li><Link to="/how-to">How To</Link></li>
               <li><Link to="/send-to-a-friend">Send to a Friend</Link></li>
               <li><Link to="/real-stories">Real stories</Link></li>
