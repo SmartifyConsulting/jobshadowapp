@@ -56,7 +56,7 @@ function MyAccount() {
   });
   return (
     <SiteLayout>
-      <section className="bg-teal space-y-10 px-5 py-10 text-primary-foreground">
+      <section className="bg-teal space-y-10 px-5 py-10 text-teal-foreground">
         <div className="mx-auto max-w-4xl space-y-10">
         {profile.isLoading || !user ? (
           <p>Loading…</p>
@@ -241,7 +241,7 @@ function Bookings() {
   }
   return (
     <div className="space-y-3">
-      <h2 className="font-display text-3xl text-primary">My bookings</h2>
+      <h2 className="font-display text-3xl text-teal-foreground">My bookings</h2>
       {err && <p className="text-sm text-destructive">{err}</p>}
       {q.data?.length === 0 && <p className="text-muted-foreground">No bookings yet. Book your first Job Shadow below.</p>}
       {q.data?.map((b) => (
@@ -335,18 +335,18 @@ function NewBooking() {
 
   const careers = [...new Set(options.map((p) => p.career))].sort();
   const hosts = options.filter((p) => p.career === career);
-  const sel = "block w-full max-w-md border-b border-primary-foreground/50 bg-transparent p-2 text-primary-foreground outline-none [&>option]:text-foreground";
+  const sel = "block w-full max-w-md border-b border-current/50 bg-transparent p-2 text-teal-foreground outline-none [&>option]:text-foreground";
   const titles = ["Sector", "Career", "Host", "Placement Details", "Date & Pay"];
   const hostLabel = (p: Placement, i: number) => {
     const sameLocation = hosts.filter((h) => h.location === p.location);
     return sameLocation.length > 1 ? `${p.location} (Option ${sameLocation.indexOf(p) + 1})` : p.location || `Host ${i + 1}`;
   };
-  const STEP_BG = ["bg-teal", "bg-cta", "bg-teal", "bg-cta", "bg-teal"];
+  const STEP_BG = ["bg-teal text-teal-foreground", "bg-cta text-cta-foreground", "bg-teal text-teal-foreground", "bg-cta text-cta-foreground", "bg-teal text-teal-foreground"];
   const canContinue = (step === 1 && !!sector) || (step === 2 && !!career) || (step === 3 && !!chosen) || step === 4;
 
   return (
     <div className="-mx-6">
-      <div className={`${STEP_BG[step - 1]} px-6 py-5 text-primary-foreground`}>
+      <div className={`${STEP_BG[step - 1]} px-6 py-5`}>
         <div className="flex items-center gap-3">
           <ChevronDown className="h-6 w-6 shrink-0" />
           <h2 className="font-display text-2xl">Step {step}: {titles[step - 1]}</h2>
@@ -387,7 +387,7 @@ function NewBooking() {
               <p className="text-sm">{dates.length ? "Please select from the available dates below" : "There are no available dates for this placement."}</p>
               <div className="flex flex-wrap gap-2">
                 {dates.map((d) => (
-                  <button key={d} type="button" onClick={() => { setDate(d); setConfirmDupe(false); setRequestingDate(false); }} className={`border px-3 py-1 text-sm ${!requestingDate && date === d ? "bg-primary text-primary-foreground" : "border-primary-foreground/60"}`}>{d}</button>
+                  <button key={d} type="button" onClick={() => { setDate(d); setConfirmDupe(false); setRequestingDate(false); }} className={`border px-3 py-1 text-sm ${!requestingDate && date === d ? "bg-primary text-primary-foreground" : "border-current/60"}`}>{d}</button>
                 ))}
               </div>
               {!requestingDate ? (
@@ -395,29 +395,29 @@ function NewBooking() {
                   None of these dates work? Request a different date
                 </button>
               ) : (
-                <div className="space-y-2 rounded border border-primary-foreground/40 bg-primary-foreground/10 p-3">
+                <div className="space-y-2 rounded border border-current/40 bg-primary-foreground/10 p-3">
                   <label className="block text-sm">
                     Requested date
-                    <input type="date" value={requestedDate ? toIsoDate(requestedDate) : ""} onChange={(e) => setRequestedDate(fromIsoDate(e.target.value))} className="mt-1 block w-full max-w-xs border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none" />
+                    <input type="date" value={requestedDate ? toIsoDate(requestedDate) : ""} onChange={(e) => setRequestedDate(fromIsoDate(e.target.value))} className="mt-1 block w-full max-w-xs border-b border-current/50 bg-transparent px-1 py-1 outline-none" />
                   </label>
                   <label className="block text-sm">
                     Note for the mentor (optional)
-                    <textarea value={requestNote} onChange={(e) => setRequestNote(e.target.value)} className="mt-1 block w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none" />
+                    <textarea value={requestNote} onChange={(e) => setRequestNote(e.target.value)} className="mt-1 block w-full border-b border-current/50 bg-transparent px-1 py-1 outline-none" />
                   </label>
-                  <p className="text-xs text-primary-foreground/70">This date isn't pre-confirmed by the host — we'll check availability and follow up before it's finalised.</p>
+                  <p className="text-xs text-current/70">This date isn't pre-confirmed by the host — we'll check availability and follow up before it's finalised.</p>
                   <button type="button" onClick={() => { setRequestingDate(false); setRequestedDate(""); setRequestNote(""); }} className="text-xs underline">Use a listed date instead</button>
                 </div>
               )}
               <div>
                 <label className="text-sm font-semibold">Voucher code</label>
                 <div className="mt-1 flex gap-2">
-                  <input value={code} onChange={(e) => setCode(e.target.value)} className="w-full max-w-xs border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none" />
-                  <button type="button" onClick={applyVoucher} disabled={!code} className="border border-primary-foreground/60 px-4 py-1.5 text-sm font-semibold uppercase disabled:opacity-50">Apply</button>
+                  <input value={code} onChange={(e) => setCode(e.target.value)} className="w-full max-w-xs border-b border-current/50 bg-transparent px-1 py-1 outline-none" />
+                  <button type="button" onClick={applyVoucher} disabled={!code} className="border border-current/60 px-4 py-1.5 text-sm font-semibold uppercase disabled:opacity-50">Apply</button>
                 </div>
               </div>
               <p className="text-sm">Total: <strong>R{due.toFixed(0)}</strong>{voucher && ` (was R${base.toFixed(0)})`}</p>
               {duplicate && (
-                <div className="rounded border border-primary-foreground/40 bg-primary-foreground/10 p-3 text-sm">
+                <div className="rounded border border-current/40 bg-primary-foreground/10 p-3 text-sm">
                   <p>
                     {duplicate.shadow_date === date
                       ? "You already have a booking on this date."
@@ -453,7 +453,7 @@ function Emails() {
   });
   return (
     <div className="space-y-3">
-      <h2 className="font-display text-3xl text-primary">Email notifications</h2>
+      <h2 className="font-display text-3xl text-teal-foreground">Email notifications</h2>
       <p className="text-sm text-muted-foreground">Emails this booking triggers. They are recorded here and not sent yet.</p>
       {q.data?.length === 0 && <p className="text-sm text-muted-foreground">None yet.</p>}
       {q.data?.map((m) => (

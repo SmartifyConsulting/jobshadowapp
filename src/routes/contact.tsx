@@ -18,9 +18,9 @@ export const Route = createFileRoute("/contact")({
 });
 
 const BLOCKS = [
-  { color: "bg-teal", text: <>If you are a school and want to include job shadow as <strong>part of your life orientation program</strong></> },
+  { color: "bg-teal text-teal-foreground", text: <>If you are a school and want to include job shadow as <strong>part of your life orientation program</strong></> },
   { color: "bg-accent text-accent-foreground", text: <>if you are a company who would like to be <strong>a part of our hosting</strong> program</> },
-  { color: "bg-cta", text: <>if you are a company who would like to <strong>sponsor learners</strong> as part of your CSI Initiatives</> },
+  { color: "bg-cta text-cta-foreground", text: <>if you are a company who would like to <strong>sponsor learners</strong> as part of your CSI Initiatives</> },
 ];
 
 function Contact() {

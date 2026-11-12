@@ -2,7 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Menu, X, Facebook, Instagram, ChevronDown } from "lucide-react";
-import logo from "@/assets/logo.png.asset.json";
+import { BrandLogo } from "@/components/BrandLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
@@ -59,10 +59,10 @@ export function SiteLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-40 bg-primary text-primary-foreground shadow-warm">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-5 py-3">
-          <Link to="/" aria-label="JobShadow home" className="shrink-0">
-            <img src={logo.url} alt="Job Shadow" width={358} height={195} className="h-14 w-auto md:h-16" />
+      <header className="sticky top-0 z-40 bg-brand-deep text-primary-foreground shadow-warm">
+        <div className="relative mx-auto flex max-w-7xl items-center justify-center gap-6 px-5 xl:justify-between">
+          <Link to="/" aria-label="JobShadow home" className="shrink-0 xl:order-2">
+            <BrandLogo className="h-24 w-24 xl:h-28 xl:w-28" />
           </Link>
           <nav className="hidden items-center gap-4 xl:flex">
             {NAV.map((n) => (
@@ -85,7 +85,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
             {user && (
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-1 text-sm font-semibold">
-                  {displayName} <ChevronDown className="h-4 w-4" />
+                  <span className="max-w-48 truncate">{displayName}</span> <ChevronDown className="h-4 w-4 shrink-0" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem asChild><Link to="/my-account">My Account</Link></DropdownMenuItem>
@@ -103,7 +103,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
               ))}
             </div>
           </nav>
-          <button className="xl:hidden" aria-label="Menu" onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button>
+          <button className="absolute right-5 rounded p-2 xl:hidden" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button>
         </div>
         {open && (
           <nav className="flex flex-col gap-3 border-t border-primary-foreground/20 px-5 py-4 font-semibold xl:hidden">
@@ -122,11 +122,10 @@ export function SiteLayout({ children }: { children: ReactNode }) {
         )}
       </header>
       <main className="flex-1">{children}</main>
-      <footer className="bg-primary text-primary-foreground">
+      <footer className="bg-brand-deep text-primary-foreground">
         <div className="mx-auto grid max-w-7xl gap-8 px-5 py-12 md:grid-cols-4">
           <div className="md:col-span-2">
-            <img src={logo.url} alt="Job Shadow" width={358} height={195} loading="lazy" className="h-16 w-auto" />
-            <p className="mt-4 max-w-sm text-sm opacity-90">Be sure about the career and life you choose with Job Shadow.</p>
+            <p className="max-w-sm font-display text-2xl leading-snug">Be sure about the career and life you choose with Job Shadow.</p>
             <a href="mailto:info@jobshadow.co.za" className="mt-2 inline-block text-sm font-bold text-accent hover:underline">info@jobshadow.co.za</a>
             <div className="mt-4 flex gap-2">
               {SOCIAL.map((s) => (
@@ -156,7 +155,12 @@ export function SiteLayout({ children }: { children: ReactNode }) {
             </ul>
           </div>
         </div>
-        <p className="border-t border-primary-foreground/20 py-4 text-center text-xs opacity-80">© JobShadow {new Date().getFullYear()}</p>
+        <div className="border-t border-primary-foreground/20">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-5 px-5 py-3">
+            <p className="text-xs opacity-80">© JobShadow {new Date().getFullYear()}</p>
+            <BrandLogo loading="lazy" className="h-24 w-24" />
+          </div>
+        </div>
       </footer>
     </div>
   );

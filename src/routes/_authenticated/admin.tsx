@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { Users as UsersIcon, FileText, ShoppingCart, Briefcase, GraduationCap, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import logo from "@/assets/logo.png.asset.json";
+import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { completeExportColumns, fetchAllRows, joinApplicationContacts, toCsv } from "@/lib/admin-export";
 
@@ -73,8 +73,8 @@ function AdminPage() {
   return (
     <div className="flex min-h-screen bg-background">
       <aside className="w-60 shrink-0 bg-foreground text-background">
-        <div className="px-5 py-6">
-          <img src={logo.url} alt="Job Shadow" width={358} height={195} className="h-10 w-auto" />
+        <div className="flex justify-center px-5 py-6">
+          <BrandLogo className="h-28 w-28" />
         </div>
         <nav className="space-y-1 px-3">
           {TABLES.map((t) => (
@@ -228,14 +228,14 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
         <div className="grid border-b border-foreground/10 sm:grid-cols-2">
           <div>
             <div className="bg-foreground px-6 py-5 text-background"><h2 className="text-xl font-semibold">Upload New Jobs</h2></div>
-            <div className="bg-teal/90 px-6 py-5 text-primary-foreground">
+            <div className="bg-teal/90 px-6 py-5 text-teal-foreground">
               <input type="file" accept=".csv" onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadCsv(f); }} className="block text-xs" />
               <button className="mt-3 bg-cta px-4 py-2 text-sm font-bold uppercase text-cta-foreground">Upload File</button>
             </div>
           </div>
           <div>
             <div className="bg-foreground px-6 py-5 text-background"><h2 className="text-xl font-semibold">Update Jobs</h2></div>
-            <div className="bg-teal/90 px-6 py-5 text-primary-foreground">
+            <div className="bg-teal/90 px-6 py-5 text-teal-foreground">
               <input type="file" accept=".csv" onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadCsv(f); }} className="block text-xs" />
               <button className="mt-3 bg-cta px-4 py-2 text-sm font-bold uppercase text-cta-foreground">Upload File</button>
             </div>
@@ -262,7 +262,7 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
           <Button onClick={exportAll} disabled={isLoading || exporting} className="bg-cta px-4 py-2 text-sm font-bold uppercase text-cta-foreground">{exporting ? "Exporting…" : "Export"}</Button>
         </div>
       </div>
-      <div className="bg-teal/90 px-6 py-6 text-primary-foreground">
+      <div className="bg-teal/90 px-6 py-6 text-teal-foreground">
         {exportError && <p role="alert" className="mb-4 text-sm font-semibold">{exportError}</p>}
         <div className="flex flex-wrap items-end gap-6">
           <label className="block max-w-sm text-sm">
@@ -354,7 +354,7 @@ function ApplicationEditPanel({ table, row, onDone, onCancel }: { table: string;
       <div className="grid gap-px bg-foreground/10 sm:grid-cols-2">
         <div>
           <div className="bg-foreground px-6 py-5 text-background"><h2 className="text-xl font-semibold">Edit Application #{String(row["id"])}</h2></div>
-          <div className="bg-teal/90 px-6 py-5 text-primary-foreground">
+          <div className="bg-teal/90 px-6 py-5 text-teal-foreground">
             {filename && <p className="text-sm">{filename}</p>}
             <input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="mt-2 block text-xs" />
             {err && <p className="mt-2 text-sm font-semibold">{err}</p>}
@@ -366,7 +366,7 @@ function ApplicationEditPanel({ table, row, onDone, onCancel }: { table: string;
         </div>
         <div>
           <div className="bg-foreground px-6 py-5 text-background"><h2 className="text-xl font-semibold">Resend Mails</h2></div>
-          <div className="bg-teal/90 px-6 py-5 text-primary-foreground">
+          <div className="bg-teal/90 px-6 py-5 text-teal-foreground">
             <div className="flex flex-col gap-2">
               {RESEND_TEMPLATES.map((t, i) => (
                 <button key={t} onClick={() => setNotice(`"${t}" is queued to resend (no email service connected in this build).`)} className="bg-cta px-4 py-2 text-left text-xs font-bold uppercase tracking-wide text-cta-foreground">
@@ -479,7 +479,7 @@ function CreateRole({ onDone, onCancel }: { onDone: () => void; onCancel: () => 
         <h1 className="text-xl font-semibold">Add New Role</h1>
         <button onClick={onCancel} className="text-sm font-semibold hover:underline">Back to list</button>
       </div>
-      <div className="bg-teal/90 px-6 py-6 text-primary-foreground">
+      <div className="bg-teal/90 px-6 py-6 text-teal-foreground">
         <label className="block max-w-sm text-sm">
           Shadow type
           <select value={type} onChange={(e) => setType_(Number(e.target.value))} className="mt-1 block w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 text-primary-foreground outline-none">
@@ -559,7 +559,7 @@ function ScholarVerification() {
   return (
     <div>
       <div className="bg-foreground px-6 py-6 text-background"><h1 className="text-2xl font-semibold">Scholars ({profiles.data?.length ?? 0})</h1></div>
-      <div className="space-y-4 bg-teal/90 px-6 py-6 text-primary-foreground">
+      <div className="space-y-4 bg-teal/90 px-6 py-6 text-teal-foreground">
         {profiles.data?.length === 0 && <p>No scholar profiles yet.</p>}
         {profiles.data?.map((p) => {
           const own = (bookings.data ?? []).filter((b) => b.user_id === p.user_id);
@@ -628,7 +628,7 @@ function EmailArchive() {
   return (
     <div>
       <div className="bg-foreground px-6 py-6 text-background"><h1 className="text-2xl font-semibold">Email Archive {!emails.isLoading && `(${rows.length})`}</h1></div>
-      <div className="bg-teal/90 px-6 py-6 text-primary-foreground">
+      <div className="bg-teal/90 px-6 py-6 text-teal-foreground">
         <label className="block max-w-sm text-sm">
           Search
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Recipient, subject, template or status" className="mt-1 w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none" />
@@ -687,7 +687,7 @@ function BookingSettings() {
   return (
     <div>
       <div className="bg-foreground px-6 py-6 text-background"><h1 className="text-2xl font-semibold">Booking Settings</h1></div>
-      <div className="max-w-xl space-y-5 bg-teal/90 px-6 py-6 text-primary-foreground">
+      <div className="max-w-xl space-y-5 bg-teal/90 px-6 py-6 text-teal-foreground">
         <label className="block text-sm">
           Minimum lead time (days before a shadow date a booking is allowed)
           <input type="number" value={minLead} onChange={(e) => setMinLead(e.target.value)} className="mt-1 w-full max-w-xs border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none" />
@@ -752,7 +752,7 @@ function EditRecord({ title, table, cols, row, onDone, onCancel }: { title: stri
         <h1 className="text-xl font-semibold">Edit {title.replace(/s$/, "")} #{String(row["id"])}</h1>
         <button onClick={onCancel} className="text-sm font-semibold hover:underline">Back to list</button>
       </div>
-      <div className="bg-teal/90 px-6 py-6 text-primary-foreground">
+      <div className="bg-teal/90 px-6 py-6 text-teal-foreground">
         <div className="grid gap-5 sm:grid-cols-3">
           {editable.map((c) =>
             table === "companies" && (c.key === "career" || c.key === "sector") ? (

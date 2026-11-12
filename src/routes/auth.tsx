@@ -55,7 +55,7 @@ function AuthPage() {
     if (error) setMsg(error.message);
   }
 
-  const input = "mt-1 w-full border-b border-primary-foreground/60 bg-transparent px-1 py-2 text-sm uppercase tracking-wide placeholder:text-primary-foreground/70 outline-none focus:border-primary-foreground";
+  const input = "mt-1 w-full border-b border-current/60 bg-transparent px-1 py-2 text-sm uppercase tracking-wide placeholder:text-current/70 outline-none focus:border-primary-foreground";
 
   return (
     <SiteLayout>
@@ -77,7 +77,7 @@ function AuthPage() {
           )}
           {resent && <p className="mt-2 text-sm">Confirmation email sent — check your inbox.</p>}
           <div className="mt-5 flex flex-wrap items-center gap-5">
-            <button type="submit" disabled={busy} className="bg-teal px-6 py-2.5 text-sm font-bold uppercase tracking-wide text-primary-foreground">Sign In</button>
+            <button type="submit" disabled={busy} className="bg-teal px-6 py-2.5 text-sm font-bold uppercase tracking-wide text-teal-foreground">Sign In</button>
             <Link to="/forgot-password" className="text-sm font-bold uppercase tracking-wide underline">Forgot your password?</Link>
           </div>
           <Link to="/register" className="mt-4 block text-sm underline">No account? Register here.</Link>

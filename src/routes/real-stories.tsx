@@ -23,7 +23,7 @@ function Stories() {
   return (
     <SiteLayout>
       <div className="bg-primary text-primary-foreground">
-        <div className="bg-teal text-primary-foreground">
+        <div className="bg-teal text-teal-foreground">
           <div className="mx-auto flex max-w-7xl items-center gap-3 px-5 py-4">
             <ChevronDown className="h-6 w-6" />
             <span className="font-display text-2xl uppercase">Real stories</span>
@@ -33,11 +33,13 @@ function Stories() {
       <section className="bg-accent py-14">
         <Carousel opts={{ loop: true }} className="mx-auto max-w-7xl px-5">
           <CarouselContent className="-ml-8">
-            {STORIES.map((s) => (
-              <CarouselItem key={s.name} className="basis-1/2 pl-8 md:basis-1/2">
-                <div className="flex items-center gap-4">
-                  <h3 className="font-display text-4xl uppercase text-primary-foreground">{s.name}</h3>
-                  <img src={s.img} alt={s.name} width={140} height={140} loading="lazy" className="h-28 w-28 shrink-0 rounded-full object-cover" />
+            {STORIES.map((s, index) => (
+              <CarouselItem key={s.name} className="basis-full pl-8 sm:basis-1/2">
+                <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
+                  <h3 className="font-display text-3xl uppercase text-accent-foreground">{s.name}</h3>
+                  <div className={`h-28 w-28 shrink-0 overflow-hidden rounded-full ${["bg-teal", "bg-primary", "bg-cta", "bg-teal"][index % 4]}`}>
+                    <img src={s.img} alt={s.name} width={140} height={140} loading="lazy" className="brand-photo h-full w-full object-cover object-right" />
+                  </div>
                 </div>
                 <p className="mt-6 text-sm leading-relaxed text-accent-foreground">{s.quote}</p>
               </CarouselItem>

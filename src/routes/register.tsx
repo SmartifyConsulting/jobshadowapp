@@ -49,7 +49,7 @@ function RegisterPage() {
     setMsg(error ? error.message : "Check your email to confirm your account, then log in.");
   }
 
-  const input = "mt-1 w-full border-b border-primary-foreground/60 bg-transparent px-1 py-2 text-sm uppercase tracking-wide placeholder:text-primary-foreground/70 outline-none focus:border-primary-foreground";
+  const input = "mt-1 w-full border-b border-current/60 bg-transparent px-1 py-2 text-sm uppercase tracking-wide placeholder:text-current/70 outline-none focus:border-primary-foreground";
 
   return (
     <SiteLayout>
@@ -58,14 +58,14 @@ function RegisterPage() {
         <p className="mx-auto mt-2 max-w-7xl text-sm">Complete all the steps starting with signing in. You are moments away from getting a job shadow!</p>
         <p className="mx-auto mt-3 max-w-7xl text-sm font-bold">NOTE: no more than one scholar per registration.</p>
       </div>
-      <section className="bg-teal px-5 py-8 text-primary-foreground">
+      <section className="bg-teal px-5 py-8 text-teal-foreground">
         <form onSubmit={submit} className="mx-auto max-w-7xl">
           <div className="grid gap-4 sm:grid-cols-2">
             <input required placeholder="NAME" value={name} onChange={(e) => setName(e.target.value)} className={input} />
             <input type="email" required placeholder="EMAIL ADDRESS" value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
             <input type="password" required placeholder="PASSWORD" value={password} onChange={(e) => setPassword(e.target.value)} className={input} />
             <input type="password" required placeholder="REPEAT PASSWORD" value={confirm} onChange={(e) => setConfirm(e.target.value)} className={input} />
-            <input placeholder="WHERE DID YOU HEAR ABOUT JOB SHADOW?" value={whereHear} onChange={(e) => setWhereHear(e.target.value)} className={`${input} sm:col-span-2 sm:max-w-md`} />
+            <input aria-label="Where did you hear about Job Shadow?" placeholder="HOW DID YOU HEAR ABOUT US?" value={whereHear} onChange={(e) => setWhereHear(e.target.value)} className={`${input} sm:col-span-2 sm:max-w-md`} />
           </div>
           <Turnstile onVerify={setCaptchaToken} />
           {msg && <p aria-live="polite" className="mt-4 max-w-md text-sm">{msg}</p>}
