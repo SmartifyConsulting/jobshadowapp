@@ -503,7 +503,17 @@ export type Database = {
           discount: number
         }[]
       }
+      complete_and_request_evaluations: { Args: never; Returns: undefined }
       confirm_test_payment: { Args: { _booking: string }; Returns: undefined }
+      get_booking_company_details: {
+        Args: { _booking: string }
+        Returns: {
+          address: string
+          arrival_time: string
+          collection_time: string
+          location: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -515,15 +525,11 @@ export type Database = {
         Args: { _mentor_email: string }
         Returns: boolean
       }
-      get_booking_company_details: {
-        Args: { _booking: string }
-        Returns: { address: string; location: string; arrival_time: string; collection_time: string }[]
-      }
       list_mentor_bookings: {
         Args: never
         Returns: {
-          company: string
           career: string
+          company: string
           id: string
           indemnity_received: boolean
           internship_notes: string
@@ -544,18 +550,21 @@ export type Database = {
           career: string
           collection_time: string
           company: string
+          dates: string
           days_per_shadow: number
           description: string
           id: number
           location: string
           max_applicants: number
           sector: string
-          dates: string
         }[]
       }
       list_partner_logos: {
         Args: never
-        Returns: { company: string; logo_path: string }[]
+        Returns: {
+          company: string
+          logo_path: string
+        }[]
       }
       list_placements: {
         Args: never
@@ -573,12 +582,13 @@ export type Database = {
           sector: string
         }[]
       }
+      send_shadow_reminders: { Args: never; Returns: undefined }
       set_indemnity_path: {
         Args: { _booking: string; _path: string }
         Returns: undefined
       }
       set_internship_preapproval: {
-        Args: { _booking: string; _preapproved: boolean; _notes: string | null }
+        Args: { _booking: string; _notes: string; _preapproved: boolean }
         Returns: undefined
       }
       submit_indemnity: { Args: { _booking: string }; Returns: undefined }
@@ -590,7 +600,7 @@ export type Database = {
           _dates: string
           _description: string
           _id: number
-          _max_applicants: number | null
+          _max_applicants: number
         }
         Returns: undefined
       }

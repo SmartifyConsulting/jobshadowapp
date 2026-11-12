@@ -134,6 +134,13 @@
       "when": 1794372500000,
       "tag": "0018_evaluation_emails",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1794510114213,
+      "tag": "0019_restrict_booking_settings_read",
+      "breakpoints": true
     }
   ]
 }

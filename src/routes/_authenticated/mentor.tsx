@@ -82,7 +82,7 @@ function BookingCard({ booking }: { booking: MentorBooking }) {
   async function saveInternship() {
     setBusy(true);
     setSaved(false);
-    const { error } = await supabase.rpc("set_internship_preapproval", { _booking: booking.id, _preapproved: preapproved, _notes: notes || null });
+    const { error } = await supabase.rpc("set_internship_preapproval", { _booking: booking.id, _preapproved: preapproved, _notes: (notes || null) as string });
     setBusy(false);
     if (error) return window.alert(error.message);
     setSaved(true);
@@ -143,7 +143,7 @@ function PlacementCard({ placement }: { placement: Placement }) {
       _id: placement.id,
       _dates: vals.dates,
       _active: vals.active,
-      _max_applicants: vals.max_applicants ? Number(vals.max_applicants) : null,
+      _max_applicants: vals.max_applicants ? Number(vals.max_applicants) : (null as unknown as number),
       _arrival_time: vals.arrival_time,
       _collection_time: vals.collection_time,
       _description: vals.description,
