@@ -5,6 +5,9 @@ import { Users as UsersIcon, FileText, ShoppingCart, Briefcase, GraduationCap, P
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png.asset.json";
 import { Button } from "@/components/ui/button";
+import { useServerFn } from "@tanstack/react-start";
+import { sendQueuedEmails } from "@/lib/email.functions";
+import { renderEmailHtml } from "@/lib/email-template";
 import { completeExportColumns, fetchAllRows, joinApplicationContacts, toCsv } from "@/lib/admin-export";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -620,6 +623,20 @@ function EmailArchive() {
     queryKey: ["admin", "email_outbox"],
     queryFn: async () => ((await supabase.from("email_outbox").select("*").order("created_at", { ascending: false }).limit(500)).data ?? []) as EmailRow[],
   });
+  const qc = useQueryClient();
+  const send = useServerFn(sendQueuedEmails);
+  const [sending, setSending] = useState(false);
+  const [sendMsg, setSendMsg] = useState<string | null>(null);
+  async function flush(retryFailed: boolean) {
+    setSending(true); setSendMsg(null);
+    try {
+      const r = await send({ data: { retryFailed } });
+      const failed = r.results.filter((x) => !x.ok);
+      setSendMsg(`Sent ${r.sent} of ${r.processed}.` + (failed.length ? ` First error: ${failed[0].error}` : ""));
+    } catch (e) { setSendMsg((e as Error).message); }
+    setSending(false);
+    qc.invalidateQueries({ queryKey: ["admin", "email_outbox"] });
+  }
   const rows = useMemo(() => {
     const s = q.toLowerCase().trim();
     return (emails.data ?? []).filter((e) => !s || [e.recipient, e.subject, e.template, e.status].some((v) => (v ?? "").toLowerCase().includes(s)));
@@ -633,6 +650,11 @@ function EmailArchive() {
           Search
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Recipient, subject, template or status" className="mt-1 w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none" />
         </label>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button onClick={() => flush(false)} disabled={sending} className="bg-cta px-4 py-2 text-xs font-bold uppercase tracking-wide text-cta-foreground disabled:opacity-50">Send queued emails now</button>
+          <button onClick={() => flush(true)} disabled={sending} className="bg-primary px-4 py-2 text-xs font-bold uppercase tracking-wide text-primary-foreground disabled:opacity-50">Retry failed emails</button>
+        </div>
+        {sendMsg && <p className="mt-2 text-sm break-words">{sendMsg}</p>}
         <div className="mt-6 space-y-2">
           {emails.isLoading ? (
             <p>Loading…</p>
@@ -644,7 +666,7 @@ function EmailArchive() {
                 <summary className="cursor-pointer">
                   <strong>{e.subject}</strong> → {e.recipient || "(no address on file)"} · {e.template} · {e.status} · {new Date(e.created_at).toLocaleString()}
                 </summary>
-                <p className="mt-2 whitespace-pre-wrap">{e.body}</p>
+                <iframe title={`Preview: ${e.subject}`} srcDoc={renderEmailHtml(e)} className="mt-3 h-[560px] w-full rounded bg-background" />
               </details>
             ))
           )}

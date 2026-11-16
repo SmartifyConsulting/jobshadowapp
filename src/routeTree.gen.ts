@@ -28,6 +28,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedMentorRouteImport } from './routes/_authenticated/mentor'
 import { Route as AuthenticatedMyAccountRouteImport } from './routes/_authenticated/my-account'
 import { Route as AuthenticatedIndemnityBookingIdRouteImport } from './routes/_authenticated/indemnity.$bookingId'
+import { Route as ApiPublicEmailDispatchRouteImport } from './routes/api/public/email-dispatch'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -124,6 +125,11 @@ const AuthenticatedIndemnityBookingIdRoute =
     path: '/indemnity/$bookingId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicEmailDispatchRoute = ApiPublicEmailDispatchRouteImport.update({
+  id: '/api/public/email-dispatch',
+  path: '/api/public/email-dispatch',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -144,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/mentor': typeof AuthenticatedMentorRoute
   '/my-account': typeof AuthenticatedMyAccountRoute
   '/indemnity/$bookingId': typeof AuthenticatedIndemnityBookingIdRoute
+  '/api/public/email-dispatch': typeof ApiPublicEmailDispatchRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -164,6 +171,7 @@ export interface FileRoutesByTo {
   '/mentor': typeof AuthenticatedMentorRoute
   '/my-account': typeof AuthenticatedMyAccountRoute
   '/indemnity/$bookingId': typeof AuthenticatedIndemnityBookingIdRoute
+  '/api/public/email-dispatch': typeof ApiPublicEmailDispatchRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -186,6 +194,7 @@ export interface FileRoutesById {
   '/_authenticated/mentor': typeof AuthenticatedMentorRoute
   '/_authenticated/my-account': typeof AuthenticatedMyAccountRoute
   '/_authenticated/indemnity/$bookingId': typeof AuthenticatedIndemnityBookingIdRoute
+  '/api/public/email-dispatch': typeof ApiPublicEmailDispatchRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -208,6 +217,7 @@ export interface FileRouteTypes {
     | '/mentor'
     | '/my-account'
     | '/indemnity/$bookingId'
+    | '/api/public/email-dispatch'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -228,6 +238,7 @@ export interface FileRouteTypes {
     | '/mentor'
     | '/my-account'
     | '/indemnity/$bookingId'
+    | '/api/public/email-dispatch'
   id:
     | '__root__'
     | '/'
@@ -249,6 +260,7 @@ export interface FileRouteTypes {
     | '/_authenticated/mentor'
     | '/_authenticated/my-account'
     | '/_authenticated/indemnity/$bookingId'
+    | '/api/public/email-dispatch'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -267,6 +279,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   RolesRoute: typeof RolesRoute
   SendToAFriendRoute: typeof SendToAFriendRoute
+  ApiPublicEmailDispatchRoute: typeof ApiPublicEmailDispatchRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -404,6 +417,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndemnityBookingIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/email-dispatch': {
+      id: '/api/public/email-dispatch'
+      path: '/api/public/email-dispatch'
+      fullPath: '/api/public/email-dispatch'
+      preLoaderRoute: typeof ApiPublicEmailDispatchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -440,6 +460,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   RolesRoute: RolesRoute,
   SendToAFriendRoute: SendToAFriendRoute,
+  ApiPublicEmailDispatchRoute: ApiPublicEmailDispatchRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
