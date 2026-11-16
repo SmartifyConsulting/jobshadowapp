@@ -632,7 +632,7 @@ function EmailArchive() {
     try {
       const r = await send({ data: { retryFailed } });
       const failed = r.results.filter((x) => !x.ok);
-      setSendMsg(`Sent ${r.sent} of ${r.processed}.` + (failed.length ? ` First error: ${failed[0].error}` : ""));
+      setSendMsg(`Sent ${r.sent} of ${r.processed}.` + (failed.length ? ` First error: ${failed[0]?.error}` : ""));
     } catch (e) { setSendMsg((e as Error).message); }
     setSending(false);
     qc.invalidateQueries({ queryKey: ["admin", "email_outbox"] });
