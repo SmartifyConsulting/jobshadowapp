@@ -40,7 +40,7 @@ export function renderEmailHtml(opts: { template: string; subject: string; body:
 <a href="${SITE_URL}${cta.path}" style="display:inline-block;padding:13px 26px;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;color:#ffffff;text-decoration:none">${escapeHtml(cta.label)}</a></td></tr></table>`
     : "";
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(opts.subject)}</title></head>
-<body style="margin:0;padding:0;background:#ffffff;font-family:'Work Sans',Arial,sans-serif">
+<body style="margin:0;padding:0;background:#f4f4f4;font-family:'Work Sans',Arial,sans-serif">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4"><tr><td align="center" style="padding:24px 12px">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff">
 <tr><td align="center" style="background:${BRAND.red};padding:22px 24px"><a href="${SITE_URL}"><img src="${LOGO_URL}" alt="Job Shadow" width="180" style="display:block;width:180px;max-width:60%;height:auto;border:0"></a></td></tr>
