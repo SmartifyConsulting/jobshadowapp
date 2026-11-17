@@ -1,5 +1,4 @@
 import raw from "./roles.json";
-import rolesPdf from "@/assets/roles-19-march-2026.pdf.asset.json";
 
 export interface Role {
   slug: string;
@@ -16,7 +15,6 @@ export const FIELDS: string[] = [...new Set(ROLES.map((r) => r.field))];
 /** Unique role titles for selection lists (some roles appear under several fields). */
 export const ROLE_TITLES: string[] = [...new Set(ROLES.map((r) => r.title))].sort();
 
-export const ROLES_PDF = rolesPdf.url;
 export const CONTACT_EMAIL = "info@jobshadow.co.za";
 
 export const PROVINCES = [

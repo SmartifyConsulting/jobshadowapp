@@ -1,11 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { FileDown, PlayCircle, ChevronDown, ArrowDown } from "lucide-react";
+import { PlayCircle, ChevronDown, ArrowDown } from "lucide-react";
 import { SiteLayout } from "@/components/SiteLayout";
 import { YouTube } from "@/components/YouTube";
 import { supabase } from "@/integrations/supabase/client";
-import { CONTACT_EMAIL, ROLES, ROLES_PDF } from "@/lib/data";
+import { CONTACT_EMAIL, ROLES } from "@/lib/data";
 
 const BAND_COLORS = ["bg-cta text-cta-foreground", "bg-accent text-accent-foreground", "bg-teal text-teal-foreground", "bg-primary text-primary-foreground"];
 
@@ -63,10 +63,7 @@ function Roles() {
 
       <section className="bg-teal px-5 pb-10 pt-12 text-center text-teal-foreground">
         <h2 className="font-display text-2xl md:text-3xl">Already have an idea of your dream career?</h2>
-        <p className="font-display text-2xl md:text-3xl">See some of the job shadows you can book by downloading the pdf link below!</p>
-        <a href={ROLES_PDF} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center gap-2 bg-cta px-5 py-2.5 font-semibold text-cta-foreground">
-          <FileDown className="h-4 w-4" /> Roles as at 19Mar2026 for School
-        </a>
+        <p className="font-display text-2xl md:text-3xl">See some of the job shadows you can book below!</p>
         <p className="mx-auto mt-5 max-w-2xl text-sm">If the role that you are looking for is not listed, please email <a href={`mailto:${CONTACT_EMAIL}`} className="font-bold">{CONTACT_EMAIL}</a> so we can help you.</p>
         <ArrowDown className="mx-auto mt-6 h-8 w-8 text-cta" />
         <div className="mx-auto mt-6 max-w-2xl text-sm">
