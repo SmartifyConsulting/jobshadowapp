@@ -47,9 +47,9 @@ function AccountMenu({ displayName, avatarUrl, isAdmin, logout }: { displayName:
     <DropdownMenuContent align="end" className="max-w-[calc(100vw-2rem)]">
       <DropdownMenuLabel className="max-w-xs break-words">{displayName}</DropdownMenuLabel>
       <DropdownMenuSeparator />
-      {isAdmin && <DropdownMenuItem asChild><Link to="/admin">Admin</Link></DropdownMenuItem>}
-      <DropdownMenuItem asChild><Link to="/mentor">Host Portal</Link></DropdownMenuItem>
       <DropdownMenuItem asChild><Link to="/profile">Profile</Link></DropdownMenuItem>
+      {isAdmin && <DropdownMenuItem asChild><Link to="/admin">Admin Portal</Link></DropdownMenuItem>}
+      <DropdownMenuItem asChild><Link to="/mentor">Host Portal</Link></DropdownMenuItem>
       <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>;
@@ -81,8 +81,8 @@ export function SiteLayout({ children, headerLogo, className = "" }: { children:
     <div className={`flex min-h-screen flex-col ${className}`}>
       <header className="sticky top-0 z-40 bg-brand-deep text-primary-foreground shadow-warm">
         <div className="relative mx-auto flex max-w-7xl items-center justify-center gap-6 px-5 lg:justify-between">
-          <Link to="/" aria-label="JobShadow home" className="flex h-24 shrink-0 items-center lg:h-28">
-            {headerLogo ?? <HeaderLogo className="h-20 w-auto lg:h-24" />}
+          <Link to="/" aria-label="JobShadow home" className="flex h-24 shrink-0 items-end lg:h-28">
+            {headerLogo ?? <HeaderLogo className="h-24 w-auto lg:h-28" />}
           </Link>
           <nav className="hidden min-w-0 flex-1 flex-wrap items-center justify-end gap-4 lg:ml-auto lg:flex">
             {SITE_NAV.map((n) => (

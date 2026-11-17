@@ -63,7 +63,7 @@ function SendToFriend() {
             </div>
             <Link to="/share-experience" className="mt-4 inline-block text-sm font-semibold text-accent hover:underline">Share your experience with us</Link>
           </div>
-          <div className="rounded-xl border border-primary-foreground/20 bg-primary-foreground/5 p-6">
+          <div className="mt-14 rounded-xl border border-primary-foreground/20 bg-primary-foreground/5 p-6 md:mt-[4.25rem]">
             <h2 className="font-display text-2xl uppercase">Your Message</h2>
             <form onSubmit={submit} className="mt-6 grid gap-4">
               <label><span className="text-xs uppercase tracking-wide opacity-80">Recipient's first name</span><input className={input} value={f.recipientFirstName} onChange={(e) => setF({ ...f, recipientFirstName: e.target.value })} />{err("recipientFirstName")}</label>
