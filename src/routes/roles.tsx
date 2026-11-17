@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { PlayCircle, ChevronDown, Search, BellRing, Plus, Minus } from "lucide-react";
-import { SiteLayout } from "@/components/SiteLayout";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { PlayCircle, ChevronDown, Search, BellRing, Plus, Minus, Heart } from "lucide-react";
+import { SiteLayout, useSiteSession } from "@/components/SiteLayout";
 import { YouTube } from "@/components/YouTube";
 import { supabase } from "@/integrations/supabase/client";
 import { CONTACT_EMAIL, ROLES } from "@/lib/data";
+import { notify } from "@/lib/dialogs";
 
 const BAND_COLORS = ["bg-cta text-cta-foreground", "bg-accent text-accent-foreground", "bg-teal text-teal-foreground", "bg-primary text-primary-foreground"];
 
@@ -25,10 +26,29 @@ export const Route = createFileRoute("/roles")({
 });
 
 function Roles() {
+  const qc = useQueryClient();
+  const { data: session } = useSiteSession();
   const [openFields, setOpenFields] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
   const [openRoles, setOpenRoles] = useState<Set<string>>(new Set());
+  const [favouritesOnly, setFavouritesOnly] = useState(false);
   const toggleRole = (slug: string) => setOpenRoles((prev) => { const n = new Set(prev); n.has(slug) ? n.delete(slug) : n.add(slug); return n; });
+
+  const favourites = useQuery({
+    queryKey: ["career-favourites", session?.user?.id],
+    enabled: !!session?.user,
+    queryFn: async () => new Set(((await supabase.from("career_favourites").select("career_slug")).data ?? []).map((r) => r.career_slug)),
+  });
+
+  async function toggleFavourite(slug: string) {
+    if (!session?.user) return notify("Please sign in to save favourite careers.", "error");
+    const isFav = favourites.data?.has(slug);
+    const { error } = isFav
+      ? await supabase.from("career_favourites").delete().eq("user_id", session.user.id).eq("career_slug", slug)
+      : await supabase.from("career_favourites").insert({ user_id: session.user.id, career_slug: slug });
+    if (error) return notify(error.message, "error");
+    qc.invalidateQueries({ queryKey: ["career-favourites", session.user.id] });
+  }
 
   const placements = useQuery({
     queryKey: ["placements"],
@@ -49,8 +69,10 @@ function Roles() {
 
   const filteredRoles = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return q ? ROLES.filter((r) => r.title.toLowerCase().includes(q) || r.field.toLowerCase().includes(q)) : ROLES;
-  }, [search]);
+    let list = q ? ROLES.filter((r) => r.title.toLowerCase().includes(q) || r.field.toLowerCase().includes(q)) : ROLES;
+    if (favouritesOnly) list = list.filter((r) => favourites.data?.has(r.slug));
+    return list;
+  }, [search, favouritesOnly, favourites.data]);
 
   const grouped = useMemo(() => {
     const m = new Map<string, typeof ROLES>();
@@ -108,6 +130,16 @@ function Roles() {
         <p className="mx-auto mt-3 max-w-xl text-center text-xs text-primary-foreground/70">
           Tap the notification icon on a career with no host to be notified when one becomes available.
         </p>
+        {session?.user && (
+          <div className="mt-3 flex justify-center">
+            <button
+              type="button" onClick={() => setFavouritesOnly((v) => !v)} aria-pressed={favouritesOnly}
+              className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide transition ${favouritesOnly ? "border-cta bg-cta text-cta-foreground" : "border-primary-foreground/40 text-primary-foreground hover:bg-primary-foreground/10"}`}
+            >
+              <Heart className={`h-3.5 w-3.5 ${favouritesOnly ? "fill-current" : ""}`} /> My Favourites
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="bg-primary pb-10 pt-2">
@@ -140,16 +172,26 @@ function Roles() {
                             <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-warm-divider bg-card text-charcoal">{open ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}</span>
                             <span className="flex items-center gap-2 text-sm font-semibold text-charcoal">{r.title}{r.video && <PlayCircle className="h-4 w-4" aria-label="Has video" />}</span>
                           </button>
-                          {count > 0 ? (
-                            <span className="shrink-0 self-start rounded-full bg-cta px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-cta-foreground sm:self-center">
-                              {count} mentor{count === 1 ? "" : "s"} available
-                            </span>
-                          ) : (
-                            <div className="flex shrink-0 items-center gap-2 self-start sm:self-center">
-                              <span className="rounded-full bg-warm-divider px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-soft-grey">None available</span>
-                              <NotifyBell career={r.title} />
-                            </div>
-                          )}
+                          <div className="flex shrink-0 items-center gap-2 self-start sm:self-center">
+                            <button
+                              type="button" onClick={() => toggleFavourite(r.slug)}
+                              aria-pressed={favourites.data?.has(r.slug) ?? false}
+                              aria-label={favourites.data?.has(r.slug) ? `Remove ${r.title} from favourites` : `Save ${r.title} to favourites`}
+                              className="text-charcoal/60 transition hover:text-cta"
+                            >
+                              <Heart className={`h-4 w-4 ${favourites.data?.has(r.slug) ? "fill-cta text-cta" : ""}`} />
+                            </button>
+                            {count > 0 ? (
+                              <span className="rounded-full bg-cta px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-cta-foreground">
+                                {count} mentor{count === 1 ? "" : "s"} available
+                              </span>
+                            ) : (
+                              <>
+                                <span className="rounded-full bg-warm-divider px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-soft-grey">None available</span>
+                                <NotifyBell career={r.title} />
+                              </>
+                            )}
+                          </div>
                         </div>
                         {open && (
                           <div className="mt-2 pl-9">

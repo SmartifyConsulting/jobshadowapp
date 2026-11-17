@@ -65,6 +65,12 @@ export type Database = {
         }
         Relationships: []
       }
+      career_favourites: {
+        Row: { career_slug: string; created_at: string; user_id: string }
+        Insert: { career_slug: string; created_at?: string; user_id: string }
+        Update: { career_slug?: string; created_at?: string; user_id?: string }
+        Relationships: []
+      }
       evaluations: {
         Row: {
           booking_id: string
