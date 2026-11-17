@@ -113,6 +113,27 @@ export type Database = {
         }
         Relationships: []
       }
+      career_merge_backup_2026: {
+        Row: {
+          old_career: string | null
+          old_mode: string | null
+          record_id: string | null
+          source: string | null
+        }
+        Insert: {
+          old_career?: string | null
+          old_mode?: string | null
+          record_id?: string | null
+          source?: string | null
+        }
+        Update: {
+          old_career?: string | null
+          old_mode?: string | null
+          record_id?: string | null
+          source?: string | null
+        }
+        Relationships: []
+      }
       careers: {
         Row: {
           id: number
