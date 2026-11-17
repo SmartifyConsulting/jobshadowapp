@@ -260,6 +260,13 @@
       "when": 1794942447172,
       "tag": "0036_names_and_career_descriptions",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1794942767086,
+      "tag": "0037_lock_career_merge_backup",
+      "breakpoints": true
     }
   ]
 }
