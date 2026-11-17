@@ -88,6 +88,15 @@ function Home() {
         className="relative overflow-hidden bg-primary text-primary-foreground"
         style={{ backgroundImage: "radial-gradient(ellipse at top left, #ff1648 0%, transparent 65%), linear-gradient(135deg, #e81c44, #aa0027)" }}
       >
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            clipPath: "polygon(2% 0, 22% 0, 100% 55%, 100% 100%, 2% 24%)",
+            background: "linear-gradient(135deg, rgba(75, 0, 20, 0.62) 0%, rgba(91, 0, 24, 0.36) 28%, rgba(113, 0, 29, 0.12) 52%, transparent 76%)",
+            filter: "blur(3px)",
+          }}
+        />
         <img src={arrow.url} alt="" aria-hidden width={326} height={1080} className="pointer-events-none absolute -bottom-4 right-[4%] hidden h-[110%] w-auto md:block" />
         <div className="relative mx-auto flex max-w-5xl flex-col items-center px-5 pb-32 pt-16 text-center sm:pt-20 md:pt-24">
           <h1 className="max-w-3xl font-display text-[clamp(2.5rem,5.5vw,5rem)] uppercase leading-[1.05]">
