@@ -46,6 +46,19 @@ export function RegisterForm({ compact }: { compact?: boolean }) {
   return (
     <form onSubmit={submit} className={compact ? "grid gap-2 text-left" : "mx-auto max-w-7xl"}>
       <div className={compact ? "grid gap-2" : "grid gap-4 sm:grid-cols-2"}>
+        <select
+          required
+          aria-label="I am signing up as"
+          value={accountType}
+          onChange={(e) => setAccountType(e.target.value)}
+          className={`${input} [&>option]:text-foreground ${compact ? "" : "sm:col-span-2 sm:max-w-md"}`}
+        >
+          <option value="">I am signing up as…</option>
+          <option value="student">Student</option>
+          <option value="host">Host</option>
+          <option value="hr_admin">HR Admin</option>
+          <option value="school">School</option>
+        </select>
         <input required aria-label="First name" placeholder="First name" autoComplete="given-name" value={firstName} onChange={(e) => setFirstName(e.target.value)} className={input} />
         <input required aria-label="Last name" placeholder="Last name" autoComplete="family-name" value={lastName} onChange={(e) => setLastName(e.target.value)} className={input} />
         <input type="email" required placeholder="Email address" value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
@@ -54,19 +67,6 @@ export function RegisterForm({ compact }: { compact?: boolean }) {
           {!compact && <p className="mt-1 text-xs text-current/70">At least 8 characters. Avoid common or easy-to-guess passwords.</p>}
         </div>
         <PasswordInput required placeholder="Repeat password" value={confirm} onChange={(e) => setConfirm(e.target.value)} className={input} />
-        <select
-          required
-          aria-label="I am signing up as"
-          value={accountType}
-          onChange={(e) => setAccountType(e.target.value)}
-          className={`${input} [&>option]:text-foreground`}
-        >
-          <option value="">I am signing up as…</option>
-          <option value="student">Student</option>
-          <option value="host">Host</option>
-          <option value="hr_admin">HR Admin</option>
-          <option value="school">School</option>
-        </select>
         <select
           aria-label="Where did you hear about Job Shadow?"
           value={whereHear}

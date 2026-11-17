@@ -309,6 +309,13 @@
       "when": 1794943400000,
       "tag": "0043_digital_signing",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1794943500000,
+      "tag": "0044_school_signup_requires_approval",
+      "breakpoints": true
     }
   ]
 }

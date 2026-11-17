@@ -110,24 +110,25 @@ function Roles() {
         </p>
       </div>
 
+      <div className="bg-primary pb-10 pt-2">
       {grouped.length === 0 && (
-        <p className="bg-primary px-5 pb-10 text-center text-sm text-primary-foreground/70">No careers match “{search}”.</p>
+        <p className="px-5 pb-10 text-center text-sm text-primary-foreground/70">No careers match “{search}”.</p>
       )}
 
       {grouped.map(([f, roles], fi) => {
         const fieldOpen = isFieldOpen(f);
         return (
-          <div key={f} className="mx-auto mt-2 w-full max-w-6xl px-3">
+          <div key={f} className="mx-auto mt-4 w-full max-w-6xl overflow-hidden rounded-lg border-2 border-ivory px-3">
             <button
               onClick={() => toggleField(f)}
               aria-expanded={fieldOpen}
-              className={`flex w-full items-center justify-between gap-3 rounded-lg px-5 py-4 text-left ${BAND_COLORS[fi % BAND_COLORS.length]}`}
+              className={`flex w-full items-center justify-between gap-3 px-5 py-4 text-left ${BAND_COLORS[fi % BAND_COLORS.length]}`}
             >
               <h2 className="font-display text-2xl uppercase">{f}</h2>
               <ChevronDown className={`h-6 w-6 shrink-0 transition ${fieldOpen ? "rotate-180" : ""}`} />
             </button>
             {fieldOpen && (
-              <div className="mt-1 overflow-hidden rounded-lg border border-warm-divider bg-ivory">
+              <div className="bg-ivory">
                 <div className="divide-y divide-warm-divider">
                   {roles.map((r) => {
                     const count = mentorCounts.get(r.title.trim().toLowerCase()) ?? 0;
@@ -168,6 +169,7 @@ function Roles() {
           </div>
         );
       })}
+      </div>
       <div className="h-10" />
     </SiteLayout>
   );

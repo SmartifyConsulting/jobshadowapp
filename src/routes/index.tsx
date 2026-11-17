@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { SiteLayout } from "@/components/SiteLayout";
+import { SiteLayout, useSiteSession } from "@/components/SiteLayout";
 import { RegisterForm } from "@/components/RegisterForm";
 import { PasswordInput } from "@/components/PasswordInput";
 import { supabase } from "@/integrations/supabase/client";
@@ -69,10 +69,14 @@ function InlineSignIn() {
 }
 
 function Home() {
+  const navigate = useNavigate();
+  const { data: session } = useSiteSession();
+  const signedIn = !!session?.user;
   const [showSignIn, setShowSignIn] = useState(false);
   const [showSignUp, setShowSignUp] = useState(false);
 
   function focusSignIn() {
+    if (signedIn) { void navigate({ to: "/profile", search: { tab: "bookings" } }); return; }
     setShowSignIn(true);
     setShowSignUp(false);
     requestAnimationFrame(() => {
@@ -82,7 +86,7 @@ function Home() {
   }
 
   return (
-    <SiteLayout className="home-reference" headerLogo={<img src="/assets/jobshadow-logo-flat.png" alt="Job Shadow" width={359} height={195} className="h-auto w-[17.5vw] min-w-24 self-start" fetchPriority="high" />}>
+    <SiteLayout className="home-reference" headerLogo={<img src="/assets/jobshadow-logo-flat.png" alt="Job Shadow" width={359} height={195} className="h-auto w-[14.9vw] min-w-[82px] self-start" fetchPriority="high" />}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ORG_JSON_LD }} />
       <section
         className="relative overflow-hidden text-primary-foreground"
@@ -101,7 +105,7 @@ function Home() {
             Book Job Shadow
           </button>
 
-          <div id="home-signin-frame" className="mt-10 grid w-full max-w-md grid-cols-2 gap-4 rounded-2xl border border-primary-foreground/30 bg-black/15 p-5 backdrop-blur-sm">
+          {!signedIn && <div id="home-signin-frame" className="mt-10 grid w-full max-w-md grid-cols-2 gap-4 rounded-2xl border border-primary-foreground/30 bg-black/15 p-5 backdrop-blur-sm">
             <div className="flex flex-col items-center gap-2">
               <p className="text-xs font-semibold uppercase tracking-wider opacity-80">New here?</p>
               <button
@@ -130,7 +134,7 @@ function Home() {
               </div>
             )}
             {showSignIn && <InlineSignIn />}
-          </div>
+          </div>}
         </div>
       </section>
     </SiteLayout>
