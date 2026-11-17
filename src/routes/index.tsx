@@ -108,7 +108,8 @@ function Home() {
               <button
                 type="button"
                 onClick={() => { setShowSignUp((v) => !v); setShowSignIn(false); }}
-                className="w-full rounded-full border border-primary-foreground/40 px-4 py-2 text-sm font-semibold uppercase tracking-wide transition hover:bg-primary-foreground/10"
+                aria-pressed={showSignUp}
+                className={`w-full rounded-full border px-4 py-2 text-sm font-semibold uppercase tracking-wide transition ${showSignUp ? "border-cta bg-cta text-cta-foreground shadow-warm" : "border-primary-foreground/40 hover:bg-primary-foreground/10"}`}
               >
                 Sign Up
               </button>
@@ -118,7 +119,8 @@ function Home() {
               <button
                 type="button"
                 onClick={() => { setShowSignIn((v) => !v); setShowSignUp(false); }}
-                className="w-full rounded-full border border-primary-foreground/40 px-4 py-2 text-sm font-semibold uppercase tracking-wide transition hover:bg-primary-foreground/10"
+                aria-pressed={showSignIn}
+                className={`w-full rounded-full border px-4 py-2 text-sm font-semibold uppercase tracking-wide transition ${showSignIn ? "border-cta bg-cta text-cta-foreground shadow-warm" : "border-primary-foreground/40 hover:bg-primary-foreground/10"}`}
               >
                 Sign In
               </button>
