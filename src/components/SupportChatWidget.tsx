@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { MessageCircle, X, Send } from "lucide-react";
+import { X, Send } from "lucide-react";
 import { askSupportChat } from "@/lib/support-chat.functions";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
 const GREETING: Msg = {
   role: "assistant",
-  content: "Hi! I'm the Job Shadow support assistant. Ask me anything about booking, hosting, indemnity forms, or how the platform works.",
+  content: "Hi, I'm Reddy! Ask me anything about booking, hosting, indemnity forms, or how Job Shadow works.",
 };
 
 export function SupportChatWidget({ viewerRole }: { viewerRole?: string | undefined }) {
@@ -39,7 +39,10 @@ export function SupportChatWidget({ viewerRole }: { viewerRole?: string | undefi
       {open && (
         <div className="mb-3 flex h-[28rem] w-80 max-w-[calc(100vw-2.5rem)] flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-xl">
           <div className="flex items-center justify-between bg-primary px-4 py-3 text-primary-foreground">
-            <p className="font-display text-sm uppercase tracking-wide">Job Shadow Support</p>
+            <div className="flex items-center gap-2">
+              <img src="/assets/reddy-mascot.webp" alt="" className="h-8 w-8 rounded-full bg-white object-contain" />
+              <p className="font-display text-sm uppercase tracking-wide">Ask Reddy</p>
+            </div>
             <button onClick={() => setOpen(false)} aria-label="Close support chat" className="rounded p-1 hover:bg-primary-foreground/10"><X className="h-4 w-4" /></button>
           </div>
           <div className="flex-1 space-y-3 overflow-y-auto p-3">
@@ -65,9 +68,9 @@ export function SupportChatWidget({ viewerRole }: { viewerRole?: string | undefi
       )}
       <button
         onClick={() => setOpen((v) => !v)} aria-label={open ? "Close support chat" : "Open support chat"}
-        className="grid h-14 w-14 place-items-center rounded-full bg-cta text-cta-foreground shadow-warm transition hover:brightness-110"
+        className="grid h-16 w-16 place-items-center rounded-full bg-white shadow-warm transition hover:brightness-105"
       >
-        {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
+        {open ? <X className="h-6 w-6 text-primary" /> : <img src="/assets/reddy-mascot.webp" alt="Chat with Reddy" className="h-full w-full rounded-full object-cover" />}
       </button>
     </div>
   );

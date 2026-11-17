@@ -91,7 +91,7 @@ function AdminPage() {
 
   return (
     <div className="flex min-h-screen bg-muted/40">
-      <aside className="w-60 shrink-0 border-r border-primary/20 bg-primary text-primary-foreground">
+      <aside className="w-60 shrink-0 border-r border-primary/20 bg-brand-deep text-primary-foreground shadow-warm">
         <div className="flex items-end justify-center px-5 pb-4 pt-6">
           <HeaderLogo className="h-24 w-auto lg:h-28" />
         </div>
@@ -104,7 +104,7 @@ function AdminPage() {
         </nav>
       </aside>
       <div className="min-w-0 flex-1">
-        <header className="flex flex-wrap items-center justify-end gap-x-6 gap-y-3 bg-primary px-6 py-4 text-primary-foreground">
+        <header className="sticky top-0 z-40 flex flex-wrap items-center justify-end gap-x-6 gap-y-3 bg-brand-deep px-6 py-4 text-primary-foreground shadow-warm">
           <nav aria-label="Website navigation" className="ml-auto flex flex-wrap items-center justify-end gap-x-5 gap-y-2">
             {SITE_NAV.map((item) => <Link key={item.to} to={item.to} activeOptions={{ exact: item.to === "/" }} activeProps={{ className: "border-cta" }} className="border-b-4 border-transparent py-2 text-sm font-semibold transition hover:border-accent">{item.label}</Link>)}
           </nav>

@@ -63,9 +63,9 @@ function MentorPortal() {
 
   return (
     <div className="flex min-h-screen flex-col bg-muted/40 md:flex-row">
-      <aside className="shrink-0 bg-primary text-primary-foreground md:w-60">
-        <div className="hidden items-center justify-center px-5 py-6 md:flex">
-          <Link to="/" aria-label="JobShadow home"><HeaderLogo className="w-44 h-auto" /></Link>
+      <aside className="shrink-0 bg-brand-deep text-primary-foreground shadow-warm md:w-60">
+        <div className="hidden items-end justify-center px-5 pb-4 pt-6 md:flex">
+          <Link to="/" aria-label="JobShadow home"><HeaderLogo className="h-24 w-auto lg:h-28" /></Link>
         </div>
         <p className="px-6 pt-4 text-xs font-bold uppercase tracking-widest text-primary-foreground/70 md:pt-0">Host Portal</p>
         <nav className="flex gap-1 overflow-x-auto px-3 py-3 md:block md:space-y-1">
@@ -77,7 +77,7 @@ function MentorPortal() {
         </nav>
       </aside>
       <div className="min-w-0 flex-1">
-        <header className="flex flex-wrap items-center justify-end gap-x-6 gap-y-3 bg-primary px-6 py-4 text-primary-foreground">
+        <header className="sticky top-0 z-40 flex flex-wrap items-center justify-end gap-x-6 gap-y-3 bg-brand-deep px-6 py-4 text-primary-foreground shadow-warm">
           <nav aria-label="Website navigation" className="ml-auto hidden flex-wrap items-center justify-end gap-x-5 gap-y-2 lg:flex">
             {SITE_NAV.map((item) => <Link key={item.to} to={item.to} className="border-b-4 border-transparent py-2 text-sm font-semibold transition hover:border-accent">{item.label}</Link>)}
           </nav>
