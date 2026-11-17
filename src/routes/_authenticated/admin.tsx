@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Users as UsersIcon, FileText, ShoppingCart, Briefcase, GraduationCap, Pencil, Trash2 } from "lucide-react";
+import { Users as UsersIcon, FileText, ShoppingCart, Briefcase, GraduationCap, Pencil, Trash2, Download, IdCard, Image } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { sendQueuedEmails } from "@/lib/email.functions";
 import { getAccounts, updateAccountRole, removeAccount } from "@/lib/users.functions";
 import { mapCsvColumns } from "@/lib/csv-import.functions";
+import { confirmAction, notify } from "@/lib/dialogs";
 import type { AccountRow } from "@/lib/users.server";
 import { renderEmailHtml } from "@/lib/email-template";
 import { completeExportColumns, fetchAllRows, joinApplicationContacts, toCsv } from "@/lib/admin-export";
@@ -158,7 +159,7 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
     const nextId = ((maxRow?.id as number | undefined) ?? 0) + 1;
     const { error } = await (supabase.from(table as "careers") as any).insert({ id: nextId, name });
     setAddBusy(false);
-    if (error) return window.alert(error.message);
+    if (error) return notify(error.message, "error");
     setNewName("");
     qc.invalidateQueries({ queryKey: ["admin", table] });
   }
@@ -232,9 +233,9 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
   }, [data, q, cols, dateCompanyFilter, company, from, to]);
 
   async function remove(row: Record<string, unknown>) {
-    if (!window.confirm("Delete this record?")) return;
+    if (!(await confirmAction("Delete this record?", { danger: true, confirmLabel: "Delete" }))) return;
     const { error } = await (supabase.from(table as "careers") as any).delete().eq("id", row["id"]);
-    if (error) return window.alert(error.message);
+    if (error) return notify(error.message, "error");
     qc.invalidateQueries({ queryKey: ["admin", table] });
   }
 
@@ -495,7 +496,7 @@ function CanonicalSelect({ table, label, value, onChange }: { table: "careers" |
     const nextId = ((maxRow?.id as number | undefined) ?? 0) + 1;
     const { error } = await (supabase.from(table) as any).insert({ id: nextId, name });
     setBusy(false);
-    if (error) return window.alert(error.message);
+    if (error) return notify(error.message, "error");
     qc.invalidateQueries({ queryKey: ["canonical", table] });
     onChange(name);
     setAdding(false);
@@ -610,7 +611,7 @@ type ScholarBooking = { id: string; user_id: string; career: string | null; comp
 async function downloadDoc(path: string | null) {
   if (!path) return;
   const { data, error } = await supabase.storage.from("scholar-docs").download(path);
-  if (error || !data) return window.alert(error?.message ?? "File not found.");
+  if (error || !data) return notify(error?.message ?? "File not found.", "error");
   const url = URL.createObjectURL(data);
   const a = document.createElement("a");
   a.href = url;
@@ -645,19 +646,19 @@ function AdminUsers() {
       await updateRoleFn({ data: { userId, role } });
       qc.invalidateQueries({ queryKey: ["admin", "accounts"] });
     } catch (e) {
-      window.alert((e as Error).message);
+      notify((e as Error).message, "error");
     }
     setBusyId(null);
   }
 
   async function deleteAccountRow(userId: string, label: string) {
-    if (!window.confirm(`Permanently delete the account for ${label}? This removes their login and all linked data. This cannot be undone.`)) return;
+    if (!(await confirmAction(`Permanently delete the account for ${label}? This removes their login and all linked data. This cannot be undone.`, { danger: true, confirmLabel: "Delete" }))) return;
     setBusyId(userId);
     try {
       await removeAccountFn({ data: { userId } });
       qc.invalidateQueries({ queryKey: ["admin", "accounts"] });
     } catch (e) {
-      window.alert((e as Error).message);
+      notify((e as Error).message, "error");
     }
     setBusyId(null);
   }
@@ -687,11 +688,11 @@ function AdminUsers() {
   return (
     <div>
       <div className="bg-[#E81C45] px-6 py-6 text-background"><h1 className="text-2xl font-semibold">Users {!accounts.isLoading && `(${rows.length})`}</h1></div>
-      <div className="px-6 py-6">
+      <div className="bg-teal/90 px-6 py-6 text-teal-foreground">
         <div className="flex flex-wrap gap-1.5">
           <button
             onClick={() => setLetter(null)}
-            className={`rounded-full px-2.5 py-1 text-xs font-bold uppercase transition ${letter === null ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70"}`}
+            className={`rounded-full px-2.5 py-1 text-xs font-bold uppercase transition ${letter === null ? "bg-primary text-primary-foreground" : "bg-background/60 text-foreground hover:bg-background/80"}`}
           >
             All
           </button>
@@ -702,7 +703,7 @@ function AdminUsers() {
                 key={ch}
                 onClick={() => setLetter(letter === ch ? null : ch)}
                 disabled={count === 0}
-                className={`rounded-full px-2.5 py-1 text-xs font-bold uppercase transition ${letter === ch ? "bg-primary text-primary-foreground" : count === 0 ? "bg-muted/40 text-muted-foreground/40" : "bg-muted text-muted-foreground hover:bg-muted/70"}`}
+                className={`rounded-full px-2.5 py-1 text-xs font-bold uppercase transition ${letter === ch ? "bg-primary text-primary-foreground" : count === 0 ? "bg-background/30 text-foreground/40" : "bg-background/60 text-foreground hover:bg-background/80"}`}
               >
                 {ch}
               </button>
@@ -749,8 +750,14 @@ function AdminUsers() {
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <button onClick={() => downloadDoc(a.id_file_path)} disabled={!a.id_file_path} className="bg-cta px-3 py-1.5 text-xs font-bold uppercase text-cta-foreground disabled:opacity-50">Download ID scan</button>
-                    <button onClick={() => downloadDoc(a.photo_path)} disabled={!a.photo_path} className="bg-cta px-3 py-1.5 text-xs font-bold uppercase text-cta-foreground disabled:opacity-50">Download photo</button>
+                    <button onClick={() => downloadDoc(a.id_file_path)} disabled={!a.id_file_path} aria-label="Download ID scan" title="Download ID scan" className="relative rounded bg-cta p-1.5 text-cta-foreground disabled:opacity-50">
+                      <IdCard className="h-3.5 w-3.5" />
+                      <Download className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-background p-0.5 text-cta" />
+                    </button>
+                    <button onClick={() => downloadDoc(a.photo_path)} disabled={!a.photo_path} aria-label="Download photo" title="Download photo" className="relative rounded bg-cta p-1.5 text-cta-foreground disabled:opacity-50">
+                      <Image className="h-3.5 w-3.5" />
+                      <Download className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-background p-0.5 text-cta" />
+                    </button>
                     <select
                       value={a.role}
                       disabled={busyId === a.id}
@@ -796,13 +803,13 @@ function ScholarVerification() {
 
   async function setIdVerified(userId: string, verified: boolean) {
     const { error } = await supabase.from("scholar_profiles").update({ id_verified: verified, id_verified_at: verified ? new Date().toISOString() : null }).eq("user_id", userId);
-    if (error) return window.alert(error.message);
+    if (error) return notify(error.message, "error");
     qc.invalidateQueries({ queryKey: ["admin", "scholar_profiles"] });
   }
 
   async function setIndemnityReceived(id: string, received: boolean) {
     const { error } = await supabase.from("bookings").update({ indemnity_received: received }).eq("id", id);
-    if (error) return window.alert(error.message);
+    if (error) return notify(error.message, "error");
     qc.invalidateQueries({ queryKey: ["admin", "scholar_bookings"] });
   }
 
@@ -813,15 +820,15 @@ function ScholarVerification() {
 
   async function saveEdit(userId: string) {
     const { error } = await supabase.from("scholar_profiles").update(vals).eq("user_id", userId);
-    if (error) return window.alert(error.message);
+    if (error) return notify(error.message, "error");
     setEditing(null);
     qc.invalidateQueries({ queryKey: ["admin", "scholar_profiles"] });
   }
 
   async function deleteProfile(userId: string, name: string) {
-    if (!window.confirm(`Delete ${name}'s scholar profile? This removes their profile record only, not their login account. This cannot be undone.`)) return;
+    if (!(await confirmAction(`Delete ${name}'s scholar profile? This removes their profile record only, not their login account. This cannot be undone.`, { danger: true, confirmLabel: "Delete" }))) return;
     const { error } = await supabase.from("scholar_profiles").delete().eq("user_id", userId);
-    if (error) return window.alert(error.message);
+    if (error) return notify(error.message, "error");
     qc.invalidateQueries({ queryKey: ["admin", "scholar_profiles"] });
   }
 
