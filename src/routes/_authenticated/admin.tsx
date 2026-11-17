@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
 import { sendQueuedEmails } from "@/lib/email.functions";
 import { getAccounts, updateAccountRole, removeAccount } from "@/lib/users.functions";
+import { mapCsvColumns } from "@/lib/csv-import.functions";
 import type { AccountRow } from "@/lib/users.server";
 import { renderEmailHtml } from "@/lib/email-template";
 import { completeExportColumns, fetchAllRows, joinApplicationContacts, toCsv } from "@/lib/admin-export";
@@ -51,8 +52,8 @@ const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string
     { key: "id", label: "#" }, { key: "name", label: "Name" }, { key: "code", label: "Code" },
     { key: "discount", label: "Discount", field: "number" }, { key: "available_from", label: "From", field: "date" },
     { key: "available_until", label: "Until", field: "date" }, { key: "usage_limit", label: "Limit", field: "number" } ] },
-  { id: "sectors", label: "Sectors", icon: FileText, table: "sectors", singular: "Sectors", cols: [{ key: "id", label: "#" }, { key: "name", label: "Sector Name" }, { key: "_student_count", label: "Students" }] },
-  { id: "careers", label: "Careers", icon: Briefcase, table: "careers", singular: "Careers", cols: [{ key: "id", label: "#" }, { key: "name", label: "Career Name" }, { key: "_student_count", label: "Students" }] },
+  { id: "sectors", label: "Sectors", icon: FileText, table: "sectors", singular: "Sectors", cols: [{ key: "name", label: "Sector Name" }, { key: "_student_count", label: "Students" }] },
+  { id: "careers", label: "Careers", icon: Briefcase, table: "careers", singular: "Careers", cols: [{ key: "name", label: "Career Name" }, { key: "_student_count", label: "Students" }] },
   { id: "users", label: "Users", icon: GraduationCap, table: "legacy_users", singular: "Users", custom: true, cols: [] },
 ];
 
@@ -143,6 +144,9 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
   const [showSpam, setShowSpam] = useState(false);
   const [newName, setNewName] = useState("");
   const [addBusy, setAddBusy] = useState(false);
+  const [uploadBusy, setUploadBusy] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
+  const mapCsvColumnsFn = useServerFn(mapCsvColumns);
   const isUsers = table === "legacy_users";
   const isNameOnly = table === "sectors" || table === "careers";
 
@@ -234,18 +238,51 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
     qc.invalidateQueries({ queryKey: ["admin", table] });
   }
 
+  function coerce(field: Col["field"] | undefined, raw: string | null) {
+    if (raw === null || raw === "") return null;
+    if (field === "number") { const n = Number(raw); return Number.isFinite(n) ? n : null; }
+    if (field === "checkbox") return /^(1|true|yes|y)$/i.test(raw.trim());
+    return raw;
+  }
+
   async function uploadCsv(file: File) {
-    const text = await file.text();
-    const [headerLine, ...lines] = text.trim().split(/\r?\n/);
-    const headers = (headerLine ?? "").split(",").map((h) => h.trim());
-    const records = lines.filter(Boolean).map((line) => {
-      const vals = line.split(",").map((v) => v.trim());
-      return Object.fromEntries(headers.map((h, i) => [h, vals[i] ?? null]));
-    });
-    if (records.length === 0) return;
-    const { error } = await (supabase.from(table as "careers") as any).upsert(records);
-    if (error) return window.alert(error.message);
-    qc.invalidateQueries({ queryKey: ["admin", table] });
+    setUploadBusy(true);
+    setUploadStatus(null);
+    try {
+      const text = await file.text();
+      const [headerLine, ...lines] = text.trim().split(/\r?\n/);
+      const headers = (headerLine ?? "").split(",").map((h) => h.trim());
+      const rawRows = lines.filter(Boolean).map((line) => line.split(",").map((v) => v.trim()));
+      if (rawRows.length === 0) return;
+
+      setUploadStatus("Matching columns…");
+      const mapping = await mapCsvColumnsFn({
+        data: { headers, sampleRows: rawRows.slice(0, 3), targetColumns: cols.map((c) => ({ key: c.key, label: c.label, field: c.field })) },
+      });
+
+      const records = rawRows.map((vals) => {
+        const rec: Record<string, unknown> = {};
+        headers.forEach((h, i) => {
+          const targetKey = mapping[h];
+          if (!targetKey) return;
+          const col = cols.find((c) => c.key === targetKey);
+          rec[targetKey] = coerce(col?.field, vals[i] ?? null);
+        });
+        return rec;
+      }).filter((r) => r["id"] !== undefined && r["id"] !== null);
+
+      const unmapped = headers.filter((h) => !mapping[h]);
+      if (records.length === 0) {
+        setUploadStatus("Couldn't match any rows — make sure the file has an ID column.");
+        return;
+      }
+      const { error } = await (supabase.from(table as "careers") as any).upsert(records);
+      if (error) return setUploadStatus(error.message);
+      setUploadStatus(`Imported ${records.length} row${records.length === 1 ? "" : "s"}.${unmapped.length ? ` Skipped unmatched columns: ${unmapped.join(", ")}.` : ""}`);
+      qc.invalidateQueries({ queryKey: ["admin", table] });
+    } finally {
+      setUploadBusy(false);
+    }
   }
 
   if (editing) {
@@ -268,15 +305,18 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
           <div>
             <div className="bg-[#E81C45] px-6 py-5 text-background"><h2 className="text-xl font-semibold">Upload New Jobs</h2></div>
             <div className="bg-teal/90 px-6 py-5 text-teal-foreground">
-              <input type="file" accept=".csv" onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadCsv(f); }} className="block text-xs" />
-              <button className="mt-3 bg-cta px-4 py-2 text-sm font-bold uppercase text-cta-foreground">Upload File</button>
+              <p className="mb-2 text-xs opacity-80">Column headers don't need to match exactly — AI matches them to the right fields automatically.</p>
+              <input type="file" accept=".csv" disabled={uploadBusy} onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadCsv(f); e.target.value = ""; }} className="block text-xs disabled:opacity-50" />
+              <button disabled={uploadBusy} className="mt-3 bg-cta px-4 py-2 text-sm font-bold uppercase text-cta-foreground disabled:opacity-50">{uploadBusy ? "Processing…" : "Upload File"}</button>
+              {uploadStatus && <p className="mt-2 text-xs font-semibold">{uploadStatus}</p>}
             </div>
           </div>
           <div>
             <div className="bg-[#E81C45] px-6 py-5 text-background"><h2 className="text-xl font-semibold">Update Jobs</h2></div>
             <div className="bg-teal/90 px-6 py-5 text-teal-foreground">
-              <input type="file" accept=".csv" onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadCsv(f); }} className="block text-xs" />
-              <button className="mt-3 bg-cta px-4 py-2 text-sm font-bold uppercase text-cta-foreground">Upload File</button>
+              <p className="mb-2 text-xs opacity-80">Column headers don't need to match exactly — AI matches them to the right fields automatically.</p>
+              <input type="file" accept=".csv" disabled={uploadBusy} onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadCsv(f); e.target.value = ""; }} className="block text-xs disabled:opacity-50" />
+              <button disabled={uploadBusy} className="mt-3 bg-cta px-4 py-2 text-sm font-bold uppercase text-cta-foreground disabled:opacity-50">{uploadBusy ? "Processing…" : "Upload File"}</button>
             </div>
           </div>
         </div>
@@ -624,12 +664,14 @@ function AdminUsers() {
 
   const rows = useMemo(() => {
     const s = q.toLowerCase().trim();
-    return (accounts.data ?? []).filter((a) => {
-      if (!showSpam && a.is_spam) return false;
-      if (s && ![a.email, a.display_name, a.full_name].some((v) => (v ?? "").toLowerCase().includes(s))) return false;
-      if (letter && surnameOf(a).charAt(0) !== letter) return false;
-      return true;
-    });
+    return (accounts.data ?? [])
+      .filter((a) => {
+        if (!showSpam && a.is_spam) return false;
+        if (s && ![a.email, a.display_name, a.full_name].some((v) => (v ?? "").toLowerCase().includes(s))) return false;
+        if (letter && surnameOf(a).charAt(0) !== letter) return false;
+        return true;
+      })
+      .sort((a, b) => (a.display_name || a.full_name || a.email || "").localeCompare(b.display_name || b.full_name || b.email || ""));
   }, [accounts.data, q, showSpam, letter]);
 
   const letterCounts = useMemo(() => {
