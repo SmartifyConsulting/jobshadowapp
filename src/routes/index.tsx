@@ -85,8 +85,8 @@ function Home() {
     <SiteLayout hideLogo>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ORG_JSON_LD }} />
       <section
-        className="relative overflow-hidden bg-no-repeat text-primary-foreground"
-        style={{ backgroundImage: "url(/assets/home-hero-bg.webp)", backgroundSize: "85%", backgroundPosition: "left top", backgroundColor: "#D2163A" }}
+        className="relative overflow-hidden bg-cover bg-top text-primary-foreground"
+        style={{ backgroundImage: "url(/assets/home-hero-bg.webp)" }}
       >
         <img src={arrow.url} alt="" aria-hidden width={326} height={1080} className="pointer-events-none absolute -bottom-4 right-[4%] hidden h-[110%] w-auto md:block" />
         <div className="relative mx-auto flex max-w-5xl flex-col items-center px-5 pb-32 pt-40 text-center sm:pt-44 md:pt-56">
