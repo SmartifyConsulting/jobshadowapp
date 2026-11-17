@@ -84,7 +84,7 @@ export function SiteLayout({ children, hideLogo }: { children: ReactNode; hideLo
               <BrandLogo className="h-24 w-24 lg:h-28 lg:w-28" />
             </Link>
           )}
-          <nav className={`hidden items-center gap-4 lg:flex ${hideLogo ? "lg:relative lg:left-[2%] lg:mx-auto" : "lg:ml-auto"}`}>
+          <nav className={`hidden items-center gap-4 lg:flex ${hideLogo ? "lg:ml-auto lg:max-w-[78%] lg:flex-wrap lg:justify-end" : "lg:ml-auto"}`}>
             {SITE_NAV.map((n) => (
               <Link
                 key={n.to}
