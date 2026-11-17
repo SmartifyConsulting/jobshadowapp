@@ -626,6 +626,8 @@ function ScholarVerification() {
     queryKey: ["admin", "scholar_bookings"],
     queryFn: async () => ((await supabase.from("bookings").select("*").order("shadow_date", { ascending: false })).data ?? []) as ScholarBooking[],
   });
+  const [editing, setEditing] = useState<string | null>(null);
+  const [vals, setVals] = useState({ full_name: "", school: "", id_number: "" });
 
   async function setIdVerified(userId: string, verified: boolean) {
     const { error } = await supabase.from("scholar_profiles").update({ id_verified: verified, id_verified_at: verified ? new Date().toISOString() : null }).eq("user_id", userId);
@@ -639,6 +641,25 @@ function ScholarVerification() {
     qc.invalidateQueries({ queryKey: ["admin", "scholar_bookings"] });
   }
 
+  function startEdit(p: ScholarProfile) {
+    setEditing(p.user_id);
+    setVals({ full_name: p.full_name, school: p.school, id_number: p.id_number });
+  }
+
+  async function saveEdit(userId: string) {
+    const { error } = await supabase.from("scholar_profiles").update(vals).eq("user_id", userId);
+    if (error) return window.alert(error.message);
+    setEditing(null);
+    qc.invalidateQueries({ queryKey: ["admin", "scholar_profiles"] });
+  }
+
+  async function deleteProfile(userId: string, name: string) {
+    if (!window.confirm(`Delete ${name}'s scholar profile? This removes their profile record only, not their login account. This cannot be undone.`)) return;
+    const { error } = await supabase.from("scholar_profiles").delete().eq("user_id", userId);
+    if (error) return window.alert(error.message);
+    qc.invalidateQueries({ queryKey: ["admin", "scholar_profiles"] });
+  }
+
   if (profiles.isLoading || bookings.isLoading) {
     return <p className="p-8">Loading…</p>;
   }
@@ -650,18 +671,33 @@ function ScholarVerification() {
         {profiles.data?.length === 0 && <p>No scholar profiles yet.</p>}
         {profiles.data?.map((p) => {
           const own = (bookings.data ?? []).filter((b) => b.user_id === p.user_id);
+          const isEditing = editing === p.user_id;
           return (
             <div key={p.user_id} className="rounded-lg border border-primary-foreground/20 bg-background/10 p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="font-semibold">{p.full_name} · {p.school} · ID: {p.id_number}</p>
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={p.id_verified} onChange={(e) => setIdVerified(p.user_id, e.target.checked)} />
-                  ID verified
-                </label>
-              </div>
-              <div className="mt-2 flex gap-3 text-sm">
+              {isEditing ? (
+                <div className="grid gap-2 sm:grid-cols-3">
+                  <input value={vals.full_name} onChange={(e) => setVals({ ...vals, full_name: e.target.value })} placeholder="Full name" className="border-b border-primary-foreground/40 bg-transparent px-1 py-1 text-sm outline-none" />
+                  <input value={vals.school} onChange={(e) => setVals({ ...vals, school: e.target.value })} placeholder="School" className="border-b border-primary-foreground/40 bg-transparent px-1 py-1 text-sm outline-none" />
+                  <input value={vals.id_number} onChange={(e) => setVals({ ...vals, id_number: e.target.value })} placeholder="ID number" className="border-b border-primary-foreground/40 bg-transparent px-1 py-1 text-sm outline-none" />
+                  <div className="flex gap-2 sm:col-span-3">
+                    <button onClick={() => saveEdit(p.user_id)} className="bg-cta px-3 py-1.5 text-xs font-bold uppercase text-cta-foreground">Save</button>
+                    <button onClick={() => setEditing(null)} className="bg-background/30 px-3 py-1.5 text-xs font-bold uppercase">Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="font-semibold">{p.full_name} · {p.school} · ID: {p.id_number}</p>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={p.id_verified} onChange={(e) => setIdVerified(p.user_id, e.target.checked)} />
+                    ID verified
+                  </label>
+                </div>
+              )}
+              <div className="mt-2 flex flex-wrap gap-3 text-sm">
                 <button onClick={() => downloadDoc(p.id_file_path)} disabled={!p.id_file_path} className="bg-cta px-3 py-1.5 text-xs font-bold uppercase text-cta-foreground disabled:opacity-50">Download ID scan</button>
                 <button onClick={() => downloadDoc(p.photo_path)} disabled={!p.photo_path} className="bg-cta px-3 py-1.5 text-xs font-bold uppercase text-cta-foreground disabled:opacity-50">Download photo</button>
+                {!isEditing && <button onClick={() => startEdit(p)} className="bg-background/30 px-3 py-1.5 text-xs font-bold uppercase">Edit</button>}
+                <button onClick={() => deleteProfile(p.user_id, p.full_name)} className="bg-destructive px-3 py-1.5 text-xs font-bold uppercase text-destructive-foreground">Delete</button>
               </div>
               {own.length > 0 && (
                 <div className="mt-3 space-y-2 border-t border-primary-foreground/20 pt-3">
