@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { SiteLayout } from "@/components/SiteLayout";
+import { RegisterForm } from "@/components/RegisterForm";
 import { supabase } from "@/integrations/supabase/client";
 import arrow from "@/assets/yellow-arrow.png.asset.json";
 
@@ -53,7 +54,7 @@ function InlineSignIn() {
 
   return (
     <form onSubmit={submit} className="col-span-2 mt-2 grid gap-2 text-left">
-      <input type="email" required placeholder="EMAIL" value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
+      <input id="home-signin-email" type="email" required placeholder="EMAIL" value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
       <input type="password" required placeholder="PASSWORD" value={password} onChange={(e) => setPassword(e.target.value)} className={input} />
       {msg && <p aria-live="polite" className="text-xs font-semibold text-accent">{msg}</p>}
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -68,6 +69,17 @@ function InlineSignIn() {
 
 function Home() {
   const [showSignIn, setShowSignIn] = useState(false);
+  const [showSignUp, setShowSignUp] = useState(false);
+
+  function focusSignIn() {
+    setShowSignIn(true);
+    setShowSignUp(false);
+    requestAnimationFrame(() => {
+      document.getElementById("home-signin-frame")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      document.getElementById("home-signin-email")?.focus();
+    });
+  }
+
   return (
     <SiteLayout hideLogo>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ORG_JSON_LD }} />
@@ -81,27 +93,40 @@ function Home() {
             Be sure about the career and life you choose
             <span className="mt-4 block text-[0.8em] text-accent">with Job Shadow.</span>
           </h1>
-          <Link to="/auth" className="mt-12 rounded-2xl bg-cta px-9 py-4 text-lg font-semibold uppercase tracking-[0.2em] text-cta-foreground shadow-warm transition hover:-translate-y-0.5 hover:brightness-110">
+          <button
+            type="button"
+            onClick={focusSignIn}
+            className="mt-12 rounded-2xl bg-cta px-9 py-4 text-lg font-semibold uppercase tracking-[0.2em] text-cta-foreground shadow-warm transition hover:-translate-y-0.5 hover:brightness-110"
+          >
             Book Job Shadow
-          </Link>
+          </button>
 
-          <div className="mt-10 grid w-full max-w-md grid-cols-2 gap-4 rounded-2xl border border-primary-foreground/30 bg-black/15 p-5 backdrop-blur-sm">
+          <div id="home-signin-frame" className="mt-10 grid w-full max-w-md grid-cols-2 gap-4 rounded-2xl border border-primary-foreground/30 bg-black/15 p-5 backdrop-blur-sm">
             <div className="flex flex-col items-center gap-2">
               <p className="text-xs font-semibold uppercase tracking-wider opacity-80">New here?</p>
-              <Link to="/register" className="w-full rounded-full border border-primary-foreground/40 px-4 py-2 text-sm font-semibold uppercase tracking-wide transition hover:bg-primary-foreground/10">
+              <button
+                type="button"
+                onClick={() => { setShowSignUp((v) => !v); setShowSignIn(false); }}
+                className="w-full rounded-full border border-primary-foreground/40 px-4 py-2 text-sm font-semibold uppercase tracking-wide transition hover:bg-primary-foreground/10"
+              >
                 Sign Up
-              </Link>
+              </button>
             </div>
             <div className="flex flex-col items-center gap-2">
               <p className="text-xs font-semibold uppercase tracking-wider opacity-80">Returning?</p>
               <button
                 type="button"
-                onClick={() => setShowSignIn((v) => !v)}
+                onClick={() => { setShowSignIn((v) => !v); setShowSignUp(false); }}
                 className="w-full rounded-full border border-primary-foreground/40 px-4 py-2 text-sm font-semibold uppercase tracking-wide transition hover:bg-primary-foreground/10"
               >
                 Sign In
               </button>
             </div>
+            {showSignUp && (
+              <div className="col-span-2 mt-2">
+                <RegisterForm compact />
+              </div>
+            )}
             {showSignIn && <InlineSignIn />}
           </div>
         </div>

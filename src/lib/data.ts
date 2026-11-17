@@ -17,6 +17,8 @@ export const ROLE_TITLES: string[] = [...new Set(ROLES.map((r) => r.title))].sor
 
 export const CONTACT_EMAIL = "info@jobshadow.co.za";
 
+export const WHERE_HEAR_OPTIONS = ["School", "Job Shadow User", "Friend or family", "Word of mouth", "Internet / Social media", "Other"];
+
 export const PROVINCES = [
   "Eastern Cape", "Free State", "Gauteng", "KwaZulu-Natal", "Limpopo",
   "Mpumalanga", "North West", "Northern Cape", "Western Cape",

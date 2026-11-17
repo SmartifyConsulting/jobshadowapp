@@ -1,8 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { SiteLayout } from "@/components/SiteLayout";
-import { Turnstile } from "@/components/Turnstile";
+import { RegisterForm } from "@/components/RegisterForm";
 
 export const Route = createFileRoute("/register")({
   head: () => ({
@@ -18,41 +16,7 @@ export const Route = createFileRoute("/register")({
   component: RegisterPage,
 });
 
-const WHERE_HEAR_OPTIONS = ["School", "Friend or family", "Internet / Social media", "Other"];
-
 function RegisterPage() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
-  const [whereHear, setWhereHear] = useState("");
-  const [msg, setMsg] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  const captchaRequired = !!(import.meta.env["VITE_TURNSTILE_SITE_KEY"] as string | undefined);
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    setMsg(null);
-    if (password.length < 8) return setMsg("Password must be at least 8 characters.");
-    if (password !== confirm) return setMsg("The passwords do not match.");
-    if (captchaRequired && !captchaToken) return setMsg("Please complete the verification challenge.");
-    setBusy(true);
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/my-account`,
-        data: { name, where_hear: whereHear },
-        ...(captchaToken ? { captchaToken } : {}),
-      },
-    });
-    setBusy(false);
-    setMsg(error ? error.message : "Check your email to confirm your account, then log in.");
-  }
-
-  const input = "mt-1 w-full border-b border-current/60 bg-transparent px-1 py-2 text-sm tracking-wide placeholder:text-current/70 outline-none focus:border-primary-foreground";
-
   return (
     <SiteLayout>
       <div className="bg-primary px-5 py-6 text-primary-foreground">
@@ -61,29 +25,10 @@ function RegisterPage() {
         <p className="mx-auto mt-3 max-w-7xl text-sm font-bold">NOTE: no more than one scholar per registration.</p>
       </div>
       <section className="bg-teal px-5 py-8 text-teal-foreground">
-        <form onSubmit={submit} className="mx-auto max-w-7xl">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <input required placeholder="NAME" value={name} onChange={(e) => setName(e.target.value)} className={input} />
-            <input type="email" required placeholder="EMAIL ADDRESS" value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
-            <div>
-              <input type="password" required placeholder="PASSWORD" value={password} onChange={(e) => setPassword(e.target.value)} className={input} />
-              <p className="mt-1 text-xs text-current/70">At least 8 characters. Avoid common or easy-to-guess passwords.</p>
-            </div>
-            <input type="password" required placeholder="REPEAT PASSWORD" value={confirm} onChange={(e) => setConfirm(e.target.value)} className={input} />
-            <select aria-label="Where did you hear about Job Shadow?" value={whereHear} onChange={(e) => setWhereHear(e.target.value)} className={`${input} sm:col-span-2 sm:max-w-md [&>option]:text-foreground`}>
-              <option value="">HOW DID YOU HEAR ABOUT US?</option>
-              {WHERE_HEAR_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
-            </select>
-          </div>
-          <Turnstile onVerify={setCaptchaToken} />
-          <button type="submit" disabled={busy || (captchaRequired && !captchaToken)} className="mt-6 rounded-full bg-primary px-6 py-3 text-sm font-bold uppercase tracking-wide text-primary-foreground disabled:opacity-50">Register</button>
-          {msg && (
-            <p aria-live="assertive" className="mt-3 max-w-md rounded border-2 border-destructive bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive">
-              {msg}
-            </p>
-          )}
+        <div className="mx-auto max-w-7xl">
+          <RegisterForm />
           <Link to="/auth" className="mt-4 block text-sm underline">Already have an account? Log in</Link>
-        </form>
+        </div>
       </section>
     </SiteLayout>
   );
