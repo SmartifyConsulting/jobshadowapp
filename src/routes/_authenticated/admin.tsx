@@ -38,6 +38,8 @@ export const Route = createFileRoute("/_authenticated/admin")({
 
 type Field = "text" | "number" | "date" | "checkbox";
 type Col = { key: string; label: string; field?: Field };
+
+const BAND_COLORS = ["bg-cta text-cta-foreground", "bg-accent text-accent-foreground", "bg-teal text-teal-foreground", "bg-primary text-primary-foreground"];
 const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string; singular: string; cols: Col[]; csvUpload?: boolean; dateCompanyFilter?: boolean; indemnityEdit?: boolean; custom?: boolean }[] = [
   { id: "users", label: "Users", icon: GraduationCap, table: "legacy_users", singular: "Users", custom: true, cols: [] },
   { id: "apps", label: "Applications", icon: UsersIcon, table: "legacy_applications", singular: "Applications", dateCompanyFilter: true, indemnityEdit: true, cols: [
@@ -86,8 +88,8 @@ function AdminPage() {
   return (
     <div className="flex min-h-screen bg-muted/40">
       <aside className="w-60 shrink-0 border-r border-primary/20 bg-primary text-primary-foreground">
-        <div className="flex items-center justify-center px-5 py-6">
-          <HeaderLogo className="w-48 h-auto" />
+        <div className="flex items-end justify-center px-5 pb-4 pt-6">
+          <HeaderLogo className="h-24 w-auto lg:h-28" />
         </div>
         <nav className="space-y-1 px-3 pb-6">
           {TABLES.map((t) => (
@@ -395,7 +397,55 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
             </label>
           )}
         </div>
-        <div className="mt-6 overflow-x-auto">
+        {isNameOnly ? (
+          <div className="mt-6 space-y-2">
+            {[...new Set(rows.map((r) => alphabetInitial(fmt(r["name"]))))].sort((a, b) => a === "#" ? 1 : b === "#" ? -1 : a.localeCompare(b)).map((group, gi) => {
+              const groupRows = rows.filter((r) => alphabetInitial(fmt(r["name"])) === group);
+              return (
+                <Accordion key={group} type="multiple" className="overflow-hidden rounded-lg border-2 border-ivory">
+                  <AccordionItem value={group} className="border-none">
+                    <AccordionTrigger className={`justify-start gap-3 px-5 py-3 text-left hover:no-underline [&>svg]:ml-auto ${BAND_COLORS[gi % BAND_COLORS.length]}`}>
+                      <span className="font-display text-xl uppercase">{group}</span>
+                      <span className="text-xs opacity-80">{groupRows.length} {groupRows.length === 1 ? title.replace(/s$/, "") : title}</span>
+                    </AccordionTrigger>
+                    <AccordionContent className="bg-ivory pb-0 text-foreground">
+                      <div className="divide-y divide-warm-divider">
+                        {groupRows.map((r) => {
+                          const rid = String(r["id"]);
+                          const descOpen = openDesc.has(rid);
+                          return (
+                            <Fragment key={rid}>
+                              <div className="flex items-center justify-between gap-3 px-5 py-3">
+                                <div className="flex min-w-0 items-center gap-2">
+                                  {table === "careers" && (
+                                    <button type="button" aria-expanded={descOpen} aria-label={descOpen ? "Hide description" : "Show description"} onClick={() => setOpenDesc((prev) => { const n = new Set(prev); n.has(rid) ? n.delete(rid) : n.add(rid); return n; })} className="grid h-5 w-5 shrink-0 place-items-center rounded border border-warm-divider text-xs font-bold text-muted-foreground hover:text-primary">{descOpen ? "−" : "+"}</button>
+                                  )}
+                                  <span className="truncate text-sm font-medium">{fmt(r["name"])}</span>
+                                  <span className="shrink-0 text-xs text-muted-foreground">{fmt(r["_student_count"])} students</span>
+                                </div>
+                                <div className="flex shrink-0 gap-1.5">
+                                  <button onClick={() => setEditing(r)} className="rounded border border-warm-divider p-1.5 text-muted-foreground transition hover:text-primary" aria-label="Edit"><Pencil className="h-3 w-3" /></button>
+                                  <button onClick={() => remove(r)} className="rounded p-1.5 text-muted-foreground transition hover:bg-destructive/5 hover:text-destructive" aria-label="Delete"><Trash2 className="h-3 w-3" /></button>
+                                </div>
+                              </div>
+                              {table === "careers" && descOpen && (
+                                <div className="bg-background/60 px-10 py-3 text-sm text-muted-foreground">
+                                  {r["description"] ? <RichText text={String(r["description"])} /> : <em>No description yet — edit this career to add one.</em>}
+                                </div>
+                              )}
+                            </Fragment>
+                          );
+                        })}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              );
+            })}
+            {rows.length === 0 && <p className="py-6 text-sm text-muted-foreground">No {title.toLowerCase()} match this search.</p>}
+          </div>
+        ) : (
+        <div className="mt-6 overflow-x-auto [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-track]:bg-muted">
           <table className={`w-full min-w-[700px] text-left ${table === "companies" ? "text-xs" : "text-sm"}`}>
             <thead>
               <tr className="border-b border-border font-medium">
@@ -408,7 +458,7 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
                 <tr><td className="px-3 py-4" colSpan={cols.length + 1}>Loading…</td></tr>
               ) : rows.map((r) => { const rid = String(r["id"]); const descOpen = openDesc.has(rid); return (
                 <Fragment key={rid}>
-                <tr className="border-b border-border/60">
+                <tr className="border-b border-warm-divider">
                   {cols.map((c) => <td key={c.key} className={`align-top ${table === "companies" ? "px-2 py-1" : "px-3 py-2"}`}>{table === "careers" && c.key === "name" ? (
                     <span className="flex items-start gap-2">
                       <button type="button" aria-expanded={descOpen} aria-label={descOpen ? "Hide description" : "Show description"} onClick={() => setOpenDesc((prev) => { const n = new Set(prev); n.has(rid) ? n.delete(rid) : n.add(rid); return n; })} className="grid h-5 w-5 shrink-0 place-items-center rounded border border-border text-xs font-bold text-muted-foreground hover:text-primary">{descOpen ? "−" : "+"}</button>
@@ -432,6 +482,7 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
             </tbody>
           </table>
         </div>
+        )}
       </div>
     </div>
   );
@@ -664,7 +715,7 @@ function UserDocument({ path, kind, verified = false }: { path: string | null; k
   return <div className="flex items-center gap-1">
     <span className="relative rounded p-1 text-muted-foreground" title={kind === "id" ? "ID document" : "Photo"}>
       <Icon aria-hidden="true" className="h-4 w-4" /><span className="sr-only">{kind === "id" ? "ID document" : "Photo"}</span>
-      {verified && <BadgeCheck aria-label="ID verified" className="absolute -right-1 -top-1 h-3.5 w-3.5 fill-[#E81C45] text-white" />}
+      {verified && <BadgeCheck aria-label="ID verified" className="absolute -right-1 -top-1 h-3.5 w-3.5 fill-primary text-white" />}
     </span>
     {file.data === true && <button onClick={() => downloadDoc(path)} aria-label={kind === "id" ? "Download ID scan" : "Download photo"} title={kind === "id" ? "Download ID scan" : "Download photo"} className="rounded p-1 text-muted-foreground transition hover:bg-muted hover:text-primary"><Download className="h-4 w-4" /></button>}
   </div>;
@@ -865,25 +916,21 @@ export function AdminUsers() {
             {[...new Set(rows.map((a) => accountInitial(a)))].sort((a, b) => a === "#" ? 1 : b === "#" ? -1 : a.localeCompare(b)).map((group) => (
               <AccordionItem key={group} value={group} className={"group overflow-hidden rounded-md border border-foreground/15 " + (view === "table" ? "bg-[#7CCCC8]" : "bg-background")}>
                 <AccordionTrigger className="justify-start gap-3 px-4 py-2.5 text-sm hover:no-underline [&>svg]:ml-auto"><span className="w-5 font-medium text-primary">{group}</span><span className="text-xs text-muted-foreground">{rows.filter((a) => (accountInitial(a)) === group).length} users</span></AccordionTrigger>
-                <AccordionContent className="pb-0">{view === "cards" ? <UserCards rows={rows.filter((a) => (accountInitial(a)) === group)} selectedId={selectedId} busyId={busyId} onSelect={setSelectedId} onEdit={(a) => setEditing({ ...a, roles: [...a.roles] })} onDelete={deleteAccountRow} onVerify={setIdVerified} /> : <div className="overflow-x-auto border-t border-border">
-                  <table className="w-full min-w-[1120px] text-left text-xs">
-                    <thead className="bg-background/40 text-foreground"><tr>{["Name", "User type", "Email", "Phone", "School", "ID / passport", "Documents", "Applications", "Actions"].map((heading) => <th key={heading} className="whitespace-nowrap px-3 py-2 font-normal">{heading}</th>)}</tr></thead>
+                <AccordionContent className="pb-0">{view === "cards" ? <UserCards rows={rows.filter((a) => (accountInitial(a)) === group)} selectedId={selectedId} busyId={busyId} onSelect={setSelectedId} onEdit={(a) => setEditing({ ...a, roles: [...a.roles] })} onDelete={deleteAccountRow} onVerify={setIdVerified} /> : <div className="overflow-x-auto border-t border-border [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-track]:bg-muted">
+                  <table className="w-full min-w-[820px] text-left text-xs">
+                    <thead className="bg-background/40 text-foreground"><tr>{["Name", "User type", "Documents", "Applications", "Actions"].map((heading) => <th key={heading} className="whitespace-nowrap px-3 py-2 font-normal">{heading}</th>)}</tr></thead>
                     <tbody>
                     {rows.filter((a) => (accountInitial(a)) === group).map((a) => {
                       const avatarUrl = a.avatar_path ? supabase.storage.from("avatars").getPublicUrl(a.avatar_path).data.publicUrl : null;
                       const label = a.display_name || a.full_name || a.email || a.id;
                       return <Fragment key={a.id}>
-                        <tr className={'border-t border-border/60 transition-colors hover:bg-teal/5 ' + (selectedId === a.id ? 'bg-teal/10' : '')}>
+                        <tr className={'border-t border-warm-divider transition-colors hover:bg-teal/5 ' + (selectedId === a.id ? 'bg-teal/10' : '')}>
                           <td className="px-3 py-2.5"><div className="flex items-center gap-2" title={'Joined ' + new Date(a.created_at).toLocaleDateString()}>
                             {avatarUrl ? <img src={avatarUrl} alt="" className="h-7 w-7 shrink-0 rounded-full object-cover" /> : <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-teal/15 text-[11px] uppercase">{label.slice(0, 1)}</span>}
                             <button onClick={() => setSelectedId(a.id)} className="max-w-40 truncate text-left font-medium hover:text-primary" title={label} aria-label={'View details for ' + label}>{label}</button>
                             {a.is_spam && <span className="text-[10px] text-destructive">Spam</span>}
                           </div></td>
                           <td className="px-3 py-2.5"><div className="flex gap-1">{a.roles.map((role) => <span key={role} className="whitespace-nowrap rounded bg-muted px-1.5 py-1 text-[10px] text-foreground">{ROLE_LABELS[role]}</span>)}</div></td>
-                          <td className="px-3 py-2.5"><span className="block max-w-44 truncate" title={a.email ?? undefined}>{a.email || '—'}</span></td>
-                          <td className="whitespace-nowrap px-3 py-2.5">{a.contact_no || '—'}</td>
-                          <td className="px-3 py-2.5"><span className="block max-w-32 truncate" title={a.school ?? undefined}>{a.school || '—'}</span></td>
-                          <td className="whitespace-nowrap px-3 py-2.5">{a.id_number || '—'}</td>
                           <td className="px-3 py-2.5"><div className="flex items-center gap-2">
                             <label className="flex items-center" title={a.id_verified === null ? 'No scholar profile to verify' : 'ID verified'}><input type="checkbox" className="accent-primary" checked={a.id_verified === true} disabled={a.id_verified === null || busyId === a.id} onChange={(e) => setIdVerified(a.id, e.target.checked)} aria-label={'ID verified for ' + label} /></label>
                             <UserDocument path={a.id_file_path} kind="id" verified={a.id_verified === true} />
@@ -895,7 +942,7 @@ export function AdminUsers() {
                             <button onClick={() => deleteAccountRow(a.id, label)} disabled={busyId === a.id} className="rounded p-1.5 text-muted-foreground transition hover:bg-destructive/5 hover:text-destructive disabled:opacity-50" aria-label={'Delete account for ' + label}><Trash2 className="h-3.5 w-3.5" /></button>
                           </div></td>
                         </tr>
-                        {expandedApplicationUser === a.id && <tr id={'applications-' + a.id}><td colSpan={9} className="border-t border-border bg-muted/30 px-5 py-3">
+                        {expandedApplicationUser === a.id && <tr id={'applications-' + a.id}><td colSpan={5} className="border-t border-border bg-muted/30 px-5 py-3">
                           <div className="mb-2 flex justify-between text-xs text-muted-foreground"><span>Applications for {label}</span><span>{a.booking_count} bookings · Joined {new Date(a.created_at).toLocaleDateString()}</span></div>
                           <table className="w-full text-left text-xs"><thead><tr>{["ID", "Company", "Career", "Dates", "Paid", "Indemnity", "Cancelled"].map((heading) => <th key={heading} className="px-2 py-2 font-medium">{heading}</th>)}</tr></thead><tbody>{a.applications.map((application) => <tr key={application.source + '-' + application.id} className="border-t border-border/70"><td className="px-2 py-2">{application.source} #{application.id}</td><td className="px-2 py-2">{application.company || '—'}</td><td className="px-2 py-2">{application.career || '—'}</td><td className="px-2 py-2">{application.dates || '—'}</td>{[application.paid, application.indemnity, application.cancelled].map((value, index) => <td key={index} className="px-2 py-2">{value === null ? 'Not recorded' : value ? 'Yes' : 'No'}</td>)}</tr>)}</tbody></table>
                         </td></tr>}
