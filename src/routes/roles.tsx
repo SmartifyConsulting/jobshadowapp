@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { PlayCircle, ChevronDown, ArrowDown } from "lucide-react";
+import { PlayCircle, ChevronDown, Search } from "lucide-react";
 import { SiteLayout } from "@/components/SiteLayout";
 import { YouTube } from "@/components/YouTube";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +26,8 @@ export const Route = createFileRoute("/roles")({
 
 function Roles() {
   const [open, setOpen] = useState<string | null>(null);
+  const [openFields, setOpenFields] = useState<Set<string>>(new Set());
+  const [search, setSearch] = useState("");
 
   const placements = useQuery({
     queryKey: ["placements"],
@@ -35,16 +37,33 @@ function Roles() {
     queryKey: ["no-availability-message"],
     queryFn: async () => (await supabase.rpc("get_no_availability_message")).data,
   });
-  const bookableCareers = useMemo(
-    () => new Set((placements.data ?? []).map((p) => p.career.trim().toLowerCase())),
-    [placements.data]
-  );
+  const mentorCounts = useMemo(() => {
+    const m = new Map<string, number>();
+    (placements.data ?? []).forEach((p) => {
+      const key = p.career.trim().toLowerCase();
+      m.set(key, (m.get(key) ?? 0) + 1);
+    });
+    return m;
+  }, [placements.data]);
+
+  const filteredRoles = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return q ? ROLES.filter((r) => r.title.toLowerCase().includes(q) || r.field.toLowerCase().includes(q)) : ROLES;
+  }, [search]);
 
   const grouped = useMemo(() => {
     const m = new Map<string, typeof ROLES>();
-    ROLES.forEach((r) => m.set(r.field, [...(m.get(r.field) ?? []), r]));
+    filteredRoles.forEach((r) => m.set(r.field, [...(m.get(r.field) ?? []), r]));
     return [...m.entries()];
-  }, []);
+  }, [filteredRoles]);
+
+  const isFieldOpen = (f: string) => (search.trim() ? true : openFields.has(f));
+  const toggleField = (f: string) =>
+    setOpenFields((prev) => {
+      const next = new Set(prev);
+      next.has(f) ? next.delete(f) : next.add(f);
+      return next;
+    });
 
   return (
     <SiteLayout>
@@ -55,7 +74,7 @@ function Roles() {
         </div>
       </div>
 
-      {!placements.isLoading && bookableCareers.size === 0 && noAvailabilityMessage.data && (
+      {!placements.isLoading && mentorCounts.size === 0 && noAvailabilityMessage.data && (
         <div className="bg-accent px-5 py-4 text-center text-sm font-semibold text-accent-foreground">
           {noAvailabilityMessage.data}
         </div>
@@ -65,7 +84,7 @@ function Roles() {
         <h2 className="font-display text-2xl md:text-3xl">Already have an idea of your dream career?</h2>
         <p className="font-display text-2xl md:text-3xl">See some of the job shadows you can book below!</p>
         <p className="mx-auto mt-5 max-w-2xl text-sm">If the role that you are looking for is not listed, please email <a href={`mailto:${CONTACT_EMAIL}`} className="font-bold">{CONTACT_EMAIL}</a> so we can help you.</p>
-        <ArrowDown className="mx-auto mt-6 h-8 w-8 text-cta" />
+        <a href="#roles-list" className="mt-6 inline-block rounded-2xl bg-cta px-7 py-3 text-sm font-bold uppercase tracking-wide text-cta-foreground transition hover:brightness-110">Browse Roles</a>
         <div className="mx-auto mt-6 max-w-2xl text-sm">
           <p>Need to easily identify your <strong>most suited career orientation</strong>, <strong>tertiary qualification</strong> and <strong>school subject requirements</strong> for this ideal career?</p>
           <p className="mt-3">Why not <strong>book a job shadow</strong> and get a <strong>10% discount on an online career guidance tool</strong>.</p>
@@ -74,39 +93,72 @@ function Roles() {
         </div>
       </section>
 
-      {grouped.map(([f, roles], fi) => (
-        <div key={f}>
-          <div className={`${BAND_COLORS[fi % BAND_COLORS.length]} py-5 text-center`}>
-            <h2 className="font-display text-2xl uppercase">{f}</h2>
-          </div>
-          <div className="grid divide-y divide-primary-foreground/10 bg-primary text-primary-foreground sm:grid-cols-2 sm:divide-y-0">
-            {roles.map((r) => {
-              const isOpen = open === r.slug;
-              return (
-                <div key={r.slug} className="border-b border-primary-foreground/10 sm:border-r sm:[&:nth-child(odd)]:border-r sm:[&:nth-last-child(1):nth-child(odd)]:border-b-0">
-                  <button onClick={() => setOpen(isOpen ? null : r.slug)} className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left hover:bg-primary-foreground/10" aria-expanded={isOpen}>
-                    <span className="flex items-center gap-2 text-sm font-semibold">{r.title}{r.video && <PlayCircle className="h-4 w-4" aria-label="Has video" />}</span>
-                    <ChevronDown className={`h-4 w-4 shrink-0 transition ${isOpen ? "rotate-180" : ""}`} />
-                  </button>
-                  {isOpen && (
-                    <div className="space-y-3 bg-primary-foreground/5 px-5 pb-5 text-sm">
-                      {r.video && <div className="max-w-xl"><YouTube id={r.video} title={r.title} /></div>}
-                      {r.summary.split("\n").map((p, i) => <p key={i}>{p}</p>)}
-                      {bookableCareers.has(r.title.trim().toLowerCase()) ? (
-                        <Link to="/auth" className="inline-block rounded-full bg-cta px-5 py-2 font-semibold uppercase tracking-wider text-cta-foreground">Book this Job Shadow</Link>
-                      ) : (
-                        <p className="text-primary-foreground/70">
-                          No host is currently available for this role. <a href={`mailto:${CONTACT_EMAIL}?subject=Interested%20in%20${encodeURIComponent(r.title)}`} className="font-bold underline">Email us</a> and we'll let you know when one opens up.
-                        </p>
+      <div id="roles-list" className="bg-primary px-5 py-6">
+        <div className="relative mx-auto max-w-xl">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary-foreground/60" />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search for a role or category…"
+            className="w-full rounded-full border border-primary-foreground/30 bg-primary-foreground/10 py-2.5 pl-10 pr-4 text-sm text-primary-foreground placeholder:text-primary-foreground/60 outline-none focus:border-primary-foreground/60"
+          />
+        </div>
+      </div>
+
+      {grouped.length === 0 && (
+        <p className="bg-primary px-5 pb-10 text-center text-sm text-primary-foreground/70">No roles match “{search}”.</p>
+      )}
+
+      {grouped.map(([f, roles], fi) => {
+        const fieldOpen = isFieldOpen(f);
+        return (
+          <div key={f}>
+            <button
+              onClick={() => toggleField(f)}
+              aria-expanded={fieldOpen}
+              className={`flex w-full items-center justify-between gap-3 px-5 py-5 text-left ${BAND_COLORS[fi % BAND_COLORS.length]}`}
+            >
+              <h2 className="font-display text-2xl uppercase">{f}</h2>
+              <ChevronDown className={`h-6 w-6 shrink-0 transition ${fieldOpen ? "rotate-180" : ""}`} />
+            </button>
+            {fieldOpen && (
+              <div className="grid divide-y divide-primary-foreground/10 bg-primary text-primary-foreground sm:grid-cols-2 sm:divide-y-0">
+                {roles.map((r) => {
+                  const isOpen = open === r.slug;
+                  const count = mentorCounts.get(r.title.trim().toLowerCase()) ?? 0;
+                  return (
+                    <div key={r.slug} className="border-b border-primary-foreground/10 sm:border-r sm:[&:nth-child(odd)]:border-r sm:[&:nth-last-child(1):nth-child(odd)]:border-b-0">
+                      <button onClick={() => setOpen(isOpen ? null : r.slug)} className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left hover:bg-primary-foreground/10" aria-expanded={isOpen}>
+                        <span className="flex items-center gap-2 text-sm font-semibold">
+                          {r.title}{r.video && <PlayCircle className="h-4 w-4" aria-label="Has video" />}
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${count > 0 ? "bg-cta text-cta-foreground" : "bg-primary-foreground/15 text-primary-foreground/70"}`}>
+                            {count > 0 ? `${count} mentor${count === 1 ? "" : "s"} available` : "None available"}
+                          </span>
+                        </span>
+                        <ChevronDown className={`h-4 w-4 shrink-0 transition ${isOpen ? "rotate-180" : ""}`} />
+                      </button>
+                      {isOpen && (
+                        <div className="space-y-3 bg-primary-foreground/5 px-5 pb-5 text-sm">
+                          {r.video && <div className="max-w-xl"><YouTube id={r.video} title={r.title} /></div>}
+                          {r.summary.split("\n").map((p, i) => <p key={i}>{p}</p>)}
+                          {count > 0 ? (
+                            <Link to="/auth" className="inline-block rounded-full bg-cta px-5 py-2 font-semibold uppercase tracking-wider text-cta-foreground">Book this Job Shadow</Link>
+                          ) : (
+                            <p className="text-primary-foreground/70">
+                              No host is currently available for this role. <a href={`mailto:${CONTACT_EMAIL}?subject=Interested%20in%20${encodeURIComponent(r.title)}`} className="font-bold underline">Email us</a> and we'll let you know when one opens up.
+                            </p>
+                          )}
+                        </div>
                       )}
                     </div>
-                  )}
-                </div>
-              );
-            })}
+                  );
+                })}
+              </div>
+            )}
           </div>
-        </div>
-      ))}
+        );
+      })}
     </SiteLayout>
   );
 }
