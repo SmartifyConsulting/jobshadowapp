@@ -9,7 +9,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 const NAV = [
   { to: "/", label: "Home" },
   { to: "/about", label: "About" },
-  { to: "/real-stories", label: "Real stories" },
+  { to: "/real-stories", label: "Real Stories" },
   { to: "/how-to", label: "How To" },
   { to: "/send-to-a-friend", label: "Send to a Friend" },
   { to: "/roles", label: "Job Roles" },
@@ -114,7 +114,7 @@ export function SiteLayout({ children, hideLogo }: { children: ReactNode; hideLo
           </nav>
         )}
       </header>
-      <main className="flex-1">{children}</main>
+      <main className="flex flex-1 flex-col">{children}</main>
       <footer className="bg-brand-deep text-primary-foreground">
         <div className="mx-auto grid max-w-7xl gap-6 px-5 py-6 md:grid-cols-4">
           <div className="md:col-span-2">
@@ -135,7 +135,7 @@ export function SiteLayout({ children, hideLogo }: { children: ReactNode; hideLo
               <li><Link to="/auth">Book a Job Shadow</Link></li>
               <li><Link to="/how-to">How To</Link></li>
               <li><Link to="/send-to-a-friend">Send to a Friend</Link></li>
-              <li><Link to="/real-stories">Real stories</Link></li>
+              <li><Link to="/real-stories">Real Stories</Link></li>
             </ul>
           </div>
           <div className="text-sm">

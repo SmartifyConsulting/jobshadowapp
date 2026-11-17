@@ -88,7 +88,7 @@ function Home() {
         style={{ backgroundImage: "url(/assets/home-hero-bg.webp)" }}
       >
         <img src={arrow.url} alt="" aria-hidden width={326} height={1080} className="pointer-events-none absolute -bottom-4 right-[4%] hidden h-[110%] w-auto md:block" />
-        <div className="relative mx-auto flex max-w-5xl flex-col items-center px-5 pb-20 pt-40 text-center sm:pt-44 md:pt-56">
+        <div className="relative mx-auto flex max-w-5xl flex-col items-center px-5 pb-32 pt-40 text-center sm:pt-44 md:pt-56">
           <h1 className="max-w-3xl font-display text-[clamp(2.5rem,5.5vw,5rem)] uppercase leading-[1.05]">
             Be sure about the career and life you choose
             <span className="mt-4 block text-[0.8em] text-accent">with Job Shadow.</span>

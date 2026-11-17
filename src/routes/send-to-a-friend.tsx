@@ -56,7 +56,7 @@ function SendToFriend() {
           <span className="font-display text-2xl uppercase">Send To A Friend</span>
         </div>
       </div>
-      <section className="bg-teal px-5 pb-20 pt-10 text-teal-foreground">
+      <section className="flex-1 bg-teal px-5 pb-20 pt-10 text-teal-foreground">
         <form onSubmit={submit} className="mx-auto max-w-5xl">
           <p className="text-sm">How do you want to send this message?</p>
           <div className="mt-3 flex gap-3">
