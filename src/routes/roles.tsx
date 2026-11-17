@@ -177,7 +177,7 @@ function NotifyBell({ career }: { career: string }) {
   async function subscribe(addr: string) {
     setState("busy"); setErr(null);
     const { error } = await supabase.from("role_notify_subscriptions").insert({ career, email: addr.trim().toLowerCase() });
-    if (error) { setErr("Please enter a valid email address."); setState("ask"); return; }
+    if (error && error.code !== "23505") { console.error("notify subscribe failed", error); setErr("Please enter a valid email address."); setState("ask"); return; }
     setState("done");
   }
   async function click() {

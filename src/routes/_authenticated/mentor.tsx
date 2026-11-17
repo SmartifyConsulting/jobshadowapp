@@ -121,7 +121,7 @@ function HostCalendar({ bookings }: { bookings: MentorBooking[] }) {
             <span className="text-sm">{d}</span>
             {(counts.get(key(d)) ?? 0) > 0 && (
               <span className="absolute bottom-1 right-1 rounded-full bg-cta px-2 py-0.5 text-[10px] font-bold text-cta-foreground">
-                {counts.get(key(d))} student{counts.get(key(d)) === 1 ? "" : "s"}
+                {counts.get(key(d))}<span className="hidden sm:inline"> student{counts.get(key(d)) === 1 ? "" : "s"}</span>
               </span>
             )}
           </button>
