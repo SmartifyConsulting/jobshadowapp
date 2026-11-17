@@ -55,13 +55,13 @@ export function SiteLayout({ children, hideLogo }: { children: ReactNode; hideLo
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-40 bg-brand-deep text-primary-foreground shadow-warm">
-        <div className="relative mx-auto flex max-w-7xl items-center justify-center gap-6 px-5 xl:justify-between">
+        <div className="relative mx-auto flex max-w-7xl items-center justify-center gap-6 px-5 lg:justify-between">
           {!hideLogo && (
             <Link to="/" aria-label="JobShadow home" className="shrink-0">
-              <BrandLogo className="h-24 w-24 xl:h-28 xl:w-28" />
+              <BrandLogo className="h-24 w-24 lg:h-28 lg:w-28" />
             </Link>
           )}
-          <nav className="hidden items-center gap-4 xl:ml-auto xl:flex">
+          <nav className="hidden items-center gap-4 lg:ml-auto lg:flex">
             {NAV.map((n) => (
               <Link
                 key={n.to}
@@ -97,10 +97,10 @@ export function SiteLayout({ children, hideLogo }: { children: ReactNode; hideLo
               ))}
             </div>
           </nav>
-          <button className="absolute right-5 rounded p-2 xl:hidden" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button>
+          <button className="absolute right-5 rounded p-2 lg:hidden" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button>
         </div>
         {open && (
-          <nav className="flex flex-col gap-3 border-t border-primary-foreground/20 px-5 py-4 font-semibold xl:hidden">
+          <nav className="flex flex-col gap-3 border-t border-primary-foreground/20 px-5 py-4 font-semibold lg:hidden">
             {NAV.map((n) => <Link key={n.to} to={n.to} onClick={() => setOpen(false)}>{n.label}</Link>)}
             {isAdmin && ADMIN_NAV.map((n) => <Link key={n.label} to={n.to} onClick={() => setOpen(false)}>{n.label}</Link>)}
             {user && (
