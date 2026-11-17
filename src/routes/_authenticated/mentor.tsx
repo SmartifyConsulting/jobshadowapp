@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { CalendarDays, Briefcase, MessageSquare, ChevronLeft, ChevronRight } from "lucide-react";
-import { BrandLogo } from "@/components/BrandLogo";
+import { HeaderLogo } from "@/components/BrandLogo";
 import { SITE_NAV, SiteAccountMenu } from "@/components/SiteLayout";
 import { bookingDayKey, countByDay, filterHostBookings } from "@/lib/host-bookings";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,7 +62,7 @@ function MentorPortal() {
     <div className="flex min-h-screen flex-col bg-muted/40 md:flex-row">
       <aside className="shrink-0 bg-primary text-primary-foreground md:w-60">
         <div className="hidden items-center justify-center px-5 py-6 md:flex">
-          <Link to="/" aria-label="JobShadow home"><BrandLogo className="h-40 w-40" /></Link>
+          <Link to="/" aria-label="JobShadow home"><HeaderLogo className="w-44 h-auto" /></Link>
         </div>
         <p className="px-6 pt-4 text-xs font-bold uppercase tracking-widest text-primary-foreground/70 md:pt-0">Host Portal</p>
         <nav className="flex gap-1 overflow-x-auto px-3 py-3 md:block md:space-y-1">

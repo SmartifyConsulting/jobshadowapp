@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Check, Facebook, Instagram } from "lucide-react";
 import { z } from "zod";
-import { SiteLayout } from "@/components/SiteLayout";
+import { SiteLayout, useSiteSession } from "@/components/SiteLayout";
 import { CONTACT_EMAIL } from "@/lib/data";
 import { PARTNER_BLOCKS, PARTNER_HERO } from "@/lib/content";
 
@@ -46,6 +46,8 @@ function Contact() {
   const [f, setF] = useState({ reachingOutAs: "", org: "", contact: "", email: "", phone: "", message: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [sent, setSent] = useState(false);
+  const { data: session } = useSiteSession();
+  const signedInEmail = session?.user?.email ?? null;
 
   const schema = z.object({
     reachingOutAs: copy ? z.string().optional() : z.enum(CONTACT_AUDIENCES, { errorMap: () => ({ message: "Please select who you are reaching out as" }) }),
@@ -58,7 +60,7 @@ function Contact() {
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    const r = schema.safeParse(f);
+    const r = schema.safeParse(signedInEmail ? { ...f, email: signedInEmail } : f);
     if (!r.success) {
       setErrors(Object.fromEntries(r.error.issues.map((i) => [String(i.path[0]), i.message])));
       return;
@@ -77,7 +79,7 @@ function Contact() {
 
   return (
     <SiteLayout>
-      <section className="bg-primary px-5 py-14 text-primary-foreground">
+      <section className="flex-1 bg-primary px-5 py-14 text-primary-foreground">
         <div className="mx-auto grid max-w-6xl items-start gap-10 md:grid-cols-2">
           <div>
             <h1 className="whitespace-pre-line font-display text-3xl uppercase leading-tight md:text-4xl">{PARTNER_HERO.title.replace(". ", ".\n")}</h1>
@@ -91,6 +93,7 @@ function Contact() {
               <a href="https://www.facebook.com/JobShadowBookings" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="grid h-9 w-9 place-items-center rounded-full bg-primary-foreground text-primary"><Facebook className="h-4 w-4" /></a>
               <a href="https://www.instagram.com/jobshadowbookings" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="grid h-9 w-9 place-items-center rounded-full bg-primary-foreground text-primary"><Instagram className="h-4 w-4" /></a>
             </div>
+            <Link to="/share-experience" className="mt-3 inline-block text-sm font-semibold text-accent hover:underline">Share your experience with us</Link>
           </div>
           <div className="space-y-4">
               {PARTNER_BLOCKS.map((b) => (
@@ -124,7 +127,7 @@ function Contact() {
                 {copy && (
                   <label><span className="text-xs uppercase tracking-wide opacity-80">Contact person</span><input className={input} value={f.contact} onChange={(e) => setF({ ...f, contact: e.target.value })} />{err("contact")}</label>
                 )}
-                <label><span className="text-xs uppercase tracking-wide opacity-80">Email</span><input className={input} type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />{err("email")}</label>
+                {!signedInEmail && <label><span className="text-xs uppercase tracking-wide opacity-80">Email</span><input className={input} type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />{err("email")}</label>}
                 {copy && (
                   <label><span className="text-xs uppercase tracking-wide opacity-80">Phone</span><input className={input} value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} />{err("phone")}</label>
                 )}

@@ -253,6 +253,13 @@
       "when": 1794941117266,
       "tag": "0035_signup_type_and_normalise_careers",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1794942447172,
+      "tag": "0036_names_and_career_descriptions",
+      "breakpoints": true
     }
   ]
 }

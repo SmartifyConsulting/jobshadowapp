@@ -5,7 +5,8 @@ import { PasswordInput } from "@/components/PasswordInput";
 import { WHERE_HEAR_OPTIONS } from "@/lib/data";
 
 export function RegisterForm({ compact }: { compact?: boolean }) {
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -19,6 +20,7 @@ export function RegisterForm({ compact }: { compact?: boolean }) {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setMsg(null);
+    if (!firstName.trim() || !lastName.trim()) return setMsg("Please enter your first name and last name.");
     if (!accountType) return setMsg("Please choose what you are signing up as.");
     if (password.length < 8) return setMsg("Password must be at least 8 characters.");
     if (password !== confirm) return setMsg("The passwords do not match.");
@@ -29,7 +31,7 @@ export function RegisterForm({ compact }: { compact?: boolean }) {
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/my-account`,
-        data: { name, where_hear: whereHear, account_type: accountType },
+        data: { name: `${firstName.trim()} ${lastName.trim()}`, first_name: firstName.trim(), last_name: lastName.trim(), where_hear: whereHear, account_type: accountType },
         ...(captchaToken ? { captchaToken } : {}),
       },
     });
@@ -44,13 +46,14 @@ export function RegisterForm({ compact }: { compact?: boolean }) {
   return (
     <form onSubmit={submit} className={compact ? "grid gap-2 text-left" : "mx-auto max-w-7xl"}>
       <div className={compact ? "grid gap-2" : "grid gap-4 sm:grid-cols-2"}>
-        <input required placeholder="NAME" value={name} onChange={(e) => setName(e.target.value)} className={input} />
-        <input type="email" required placeholder="EMAIL ADDRESS" value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
+        <input required aria-label="First name" placeholder="First name" autoComplete="given-name" value={firstName} onChange={(e) => setFirstName(e.target.value)} className={input} />
+        <input required aria-label="Last name" placeholder="Last name" autoComplete="family-name" value={lastName} onChange={(e) => setLastName(e.target.value)} className={input} />
+        <input type="email" required placeholder="Email address" value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
         <div>
-          <PasswordInput required placeholder="PASSWORD" value={password} onChange={(e) => setPassword(e.target.value)} className={input} />
+          <PasswordInput required placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className={input} />
           {!compact && <p className="mt-1 text-xs text-current/70">At least 8 characters. Avoid common or easy-to-guess passwords.</p>}
         </div>
-        <PasswordInput required placeholder="REPEAT PASSWORD" value={confirm} onChange={(e) => setConfirm(e.target.value)} className={input} />
+        <PasswordInput required placeholder="Repeat password" value={confirm} onChange={(e) => setConfirm(e.target.value)} className={input} />
         <select
           required
           aria-label="I am signing up as"
@@ -58,7 +61,7 @@ export function RegisterForm({ compact }: { compact?: boolean }) {
           onChange={(e) => setAccountType(e.target.value)}
           className={`${input} [&>option]:text-foreground`}
         >
-          <option value="">I AM SIGNING UP AS…</option>
+          <option value="">I am signing up as…</option>
           <option value="student">Student</option>
           <option value="host">Host</option>
           <option value="hr_admin">HR Admin</option>
@@ -70,7 +73,7 @@ export function RegisterForm({ compact }: { compact?: boolean }) {
           onChange={(e) => setWhereHear(e.target.value)}
           className={`${input} [&>option]:text-foreground ${compact ? "" : "sm:col-span-2 sm:max-w-md"}`}
         >
-          <option value="">HOW DID YOU HEAR ABOUT US?</option>
+          <option value="">How did you hear about us?</option>
           {WHERE_HEAR_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
         </select>
       </div>

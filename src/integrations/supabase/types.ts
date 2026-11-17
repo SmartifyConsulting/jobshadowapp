@@ -136,14 +136,17 @@ export type Database = {
       }
       careers: {
         Row: {
+          description: string | null
           id: number
           name: string
         }
         Insert: {
+          description?: string | null
           id: number
           name: string
         }
         Update: {
+          description?: string | null
           id?: number
           name?: string
         }
@@ -384,18 +387,24 @@ export type Database = {
         Row: {
           avatar_path: string | null
           display_name: string | null
+          first_name: string | null
+          last_name: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           avatar_path?: string | null
           display_name?: string | null
+          first_name?: string | null
+          last_name?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           avatar_path?: string | null
           display_name?: string | null
+          first_name?: string | null
+          last_name?: string | null
           updated_at?: string
           user_id?: string
         }

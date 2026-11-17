@@ -24,6 +24,7 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RolesRouteImport } from './routes/roles'
 import { Route as SendToAFriendRouteImport } from './routes/send-to-a-friend'
+import { Route as ShareExperienceRouteImport } from './routes/share-experience'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedMentorRouteImport } from './routes/_authenticated/mentor'
 import { Route as AuthenticatedMyAccountRouteImport } from './routes/_authenticated/my-account'
@@ -105,6 +106,11 @@ const SendToAFriendRoute = SendToAFriendRouteImport.update({
   path: '/send-to-a-friend',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShareExperienceRoute = ShareExperienceRouteImport.update({
+  id: '/share-experience',
+  path: '/share-experience',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -152,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/roles': typeof RolesRoute
   '/send-to-a-friend': typeof SendToAFriendRoute
+  '/share-experience': typeof ShareExperienceRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/mentor': typeof AuthenticatedMentorRoute
   '/my-account': typeof AuthenticatedMyAccountRoute
@@ -174,6 +181,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/roles': typeof RolesRoute
   '/send-to-a-friend': typeof SendToAFriendRoute
+  '/share-experience': typeof ShareExperienceRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/mentor': typeof AuthenticatedMentorRoute
   '/my-account': typeof AuthenticatedMyAccountRoute
@@ -198,6 +206,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/roles': typeof RolesRoute
   '/send-to-a-friend': typeof SendToAFriendRoute
+  '/share-experience': typeof ShareExperienceRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/mentor': typeof AuthenticatedMentorRoute
   '/_authenticated/my-account': typeof AuthenticatedMyAccountRoute
@@ -222,6 +231,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/roles'
     | '/send-to-a-friend'
+    | '/share-experience'
     | '/admin'
     | '/mentor'
     | '/my-account'
@@ -244,6 +254,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/roles'
     | '/send-to-a-friend'
+    | '/share-experience'
     | '/admin'
     | '/mentor'
     | '/my-account'
@@ -267,6 +278,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/roles'
     | '/send-to-a-friend'
+    | '/share-experience'
     | '/_authenticated/admin'
     | '/_authenticated/mentor'
     | '/_authenticated/my-account'
@@ -291,6 +303,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   RolesRoute: typeof RolesRoute
   SendToAFriendRoute: typeof SendToAFriendRoute
+  ShareExperienceRoute: typeof ShareExperienceRoute
   ApiPublicEmailDispatchRoute: typeof ApiPublicEmailDispatchRoute
 }
 
@@ -401,6 +414,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SendToAFriendRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/share-experience': {
+      id: '/share-experience'
+      path: '/share-experience'
+      fullPath: '/share-experience'
+      preLoaderRoute: typeof ShareExperienceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
@@ -481,6 +501,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   RolesRoute: RolesRoute,
   SendToAFriendRoute: SendToAFriendRoute,
+  ShareExperienceRoute: ShareExperienceRoute,
   ApiPublicEmailDispatchRoute: ApiPublicEmailDispatchRoute,
 }
 export const routeTree = rootRouteImport

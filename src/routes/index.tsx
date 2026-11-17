@@ -55,8 +55,8 @@ function InlineSignIn() {
 
   return (
     <form onSubmit={submit} className="col-span-2 mt-2 grid gap-2 text-left">
-      <input id="home-signin-email" type="email" required placeholder="EMAIL" value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
-      <PasswordInput required placeholder="PASSWORD" value={password} onChange={(e) => setPassword(e.target.value)} className={input} />
+      <input id="home-signin-email" type="email" required placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
+      <PasswordInput required placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className={input} />
       {msg && <p aria-live="polite" className="text-xs font-semibold text-accent">{msg}</p>}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <button type="submit" disabled={busy} className="rounded-full bg-cta px-5 py-2 text-xs font-bold uppercase tracking-wide text-cta-foreground disabled:opacity-50">

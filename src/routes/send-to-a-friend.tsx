@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
 import { Mail, Facebook, Twitter, Linkedin } from "lucide-react";
@@ -50,7 +50,7 @@ function SendToFriend() {
 
   return (
     <SiteLayout>
-      <section className="bg-primary px-5 py-14 text-primary-foreground">
+      <section className="flex-1 bg-primary px-5 py-14 text-primary-foreground">
         <div className="mx-auto grid max-w-6xl items-start gap-10 md:grid-cols-2">
           <div>
             <h1 className="font-display text-3xl uppercase leading-tight md:text-4xl">Send To A Friend</h1>
@@ -61,6 +61,7 @@ function SendToFriend() {
                 <span key={i} className="grid h-9 w-9 place-items-center rounded-full bg-primary-foreground text-primary"><Icon className="h-4 w-4" /></span>
               ))}
             </div>
+            <Link to="/share-experience" className="mt-4 inline-block text-sm font-semibold text-accent hover:underline">Share your experience with us</Link>
           </div>
           <div className="rounded-xl border border-primary-foreground/20 bg-primary-foreground/5 p-6">
             <h2 className="font-display text-2xl uppercase">Your Message</h2>

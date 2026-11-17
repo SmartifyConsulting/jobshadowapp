@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { Users as UsersIcon, FileText, ShoppingCart, Briefcase, GraduationCap, Pencil, Trash2, IdCard, Image as ImageIcon, Download, BadgeCheck, ChevronDown, LayoutGrid, List, X } from "lucide-react";
+import { Users as UsersIcon, FileText, ShoppingCart, Briefcase, GraduationCap, Pencil, Trash2, IdCard, Image as ImageIcon, Download, BadgeCheck, ChevronDown, LayoutGrid, List, X, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { BrandLogo } from "@/components/BrandLogo";
+import { HeaderLogo } from "@/components/BrandLogo";
+import { RichText } from "@/components/RichText";
+import { draftCareerDescription } from "@/lib/career-ai.functions";
 import { accountInitial, alphabetInitial } from "@/lib/alphabet";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { SITE_NAV, SiteAccountMenu } from "@/components/SiteLayout";
@@ -83,7 +85,7 @@ function AdminPage() {
     <div className="flex min-h-screen bg-muted/40">
       <aside className="w-60 shrink-0 border-r border-primary/20 bg-primary text-primary-foreground">
         <div className="flex items-center justify-center px-5 py-6">
-          <BrandLogo className="h-[11.2rem] w-[11.2rem]" />
+          <HeaderLogo className="w-48 h-auto" />
         </div>
         <nav className="space-y-1 px-3 pb-6">
           {TABLES.map((t) => (
@@ -139,6 +141,7 @@ function exportCsv(title: string, cols: Col[], rows: Record<string, unknown>[]) 
 function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnityEdit }: { title: string; table: string; cols: Col[]; csvUpload?: boolean | undefined; dateCompanyFilter?: boolean | undefined; indemnityEdit?: boolean | undefined }) {
   const qc = useQueryClient();
   const [q, setQ] = useState("");
+  const [openDesc, setOpenDesc] = useState<Set<string>>(new Set());
   const [letter, setLetter] = useState<string | null>(null);
   const alphabetField = table === "companies" ? "company" : ["vouchers", "careers"].includes(table) ? "name" : null;
   const [from, setFrom] = useState("");
@@ -401,9 +404,15 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
             <tbody>
               {isLoading ? (
                 <tr><td className="px-3 py-4" colSpan={cols.length + 1}>Loading…</td></tr>
-              ) : rows.map((r) => (
-                <tr key={String(r["id"])} className="border-b border-border/60">
-                  {cols.map((c) => <td key={c.key} className={`align-top ${table === "companies" ? "px-2 py-1" : "px-3 py-2"}`}>{fmt(r[c.key])}</td>)}
+              ) : rows.map((r) => { const rid = String(r["id"]); const descOpen = openDesc.has(rid); return (
+                <Fragment key={rid}>
+                <tr className="border-b border-border/60">
+                  {cols.map((c) => <td key={c.key} className={`align-top ${table === "companies" ? "px-2 py-1" : "px-3 py-2"}`}>{table === "careers" && c.key === "name" ? (
+                    <span className="flex items-start gap-2">
+                      <button type="button" aria-expanded={descOpen} aria-label={descOpen ? "Hide description" : "Show description"} onClick={() => setOpenDesc((prev) => { const n = new Set(prev); n.has(rid) ? n.delete(rid) : n.add(rid); return n; })} className="grid h-5 w-5 shrink-0 place-items-center rounded border border-border text-xs font-bold text-muted-foreground hover:text-primary">{descOpen ? "−" : "+"}</button>
+                      {fmt(r[c.key])}
+                    </span>
+                  ) : fmt(r[c.key])}</td>)}
                   <td className={table === "companies" ? "px-2 py-1" : "px-3 py-2"}>
                     <div className="flex gap-1.5">
                       <button onClick={() => setEditing(r)} className="rounded border border-border p-1.5 text-muted-foreground transition hover:text-primary" aria-label="Edit"><Pencil className="h-3 w-3" /></button>
@@ -411,7 +420,13 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
                     </div>
                   </td>
                 </tr>
-              ))}
+                {table === "careers" && descOpen && (
+                  <tr className="border-b border-border/60 bg-muted/30"><td colSpan={cols.length + 1} className="px-10 py-3 text-sm text-muted-foreground">
+                    {r["description"] ? <RichText text={String(r["description"])} /> : <em>No description yet — edit this career to add one.</em>}
+                  </td></tr>
+                )}
+                </Fragment>
+              ); })}
             </tbody>
           </table>
         </div>
@@ -1106,9 +1121,37 @@ function EditRecord({ title, table, cols, row, onDone, onCancel }: { title: stri
             )
           )}
         </div>
+        {table === "careers" && <CareerDescriptionField career={String(vals["name"] ?? "")} value={(vals["description"] as string) ?? ""} onChange={(v) => setVals({ ...vals, description: v })} />}
         {err && <p className="mt-4 text-sm font-medium">{err}</p>}
         <button onClick={save} disabled={busy} className="mt-6 rounded-md bg-teal/20 hover:bg-teal/30 px-5 py-2.5 text-sm font-medium uppercase text-foreground">Update</button>
       </div>
+    </div>
+  );
+}
+
+function CareerDescriptionField({ career, value, onChange }: { career: string; value: string; onChange: (v: string) => void }) {
+  const draft = useServerFn(draftCareerDescription);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  async function suggest() {
+    if (!career.trim()) return setErr("Enter the career name first.");
+    setBusy(true); setErr(null);
+    try { onChange((await draft({ data: { career } })).description); }
+    catch (e) { setErr((e as Error).message); }
+    finally { setBusy(false); }
+  }
+  return (
+    <div className="mt-6 max-w-3xl">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-sm">Description</span>
+        <button type="button" onClick={suggest} disabled={busy} className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs font-medium hover:border-primary hover:text-primary disabled:opacity-50">
+          <Sparkles className="h-3.5 w-3.5" /> {busy ? "Writing…" : "AI wizard"}
+        </button>
+      </div>
+      <textarea rows={4} value={value} onChange={(e) => onChange(e.target.value)} placeholder="A brief description of this career" className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary" />
+      <p className="mt-1 text-xs text-muted-foreground">Wrap career types in **double asterisks** to show them in bold.</p>
+      {value && <div className="mt-2 rounded bg-muted/40 p-2 text-sm"><RichText text={value} /></div>}
+      {err && <p className="mt-1 text-xs text-destructive">{err}</p>}
     </div>
   );
 }

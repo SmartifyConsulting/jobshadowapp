@@ -2,7 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Menu, X, Facebook, Instagram } from "lucide-react";
-import { BrandLogo } from "@/components/BrandLogo";
+import { BrandLogo, HeaderLogo } from "@/components/BrandLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 
@@ -12,9 +12,13 @@ export const SITE_NAV = [
   { to: "/real-stories", label: "Real Stories" },
   { to: "/how-to", label: "How To" },
   { to: "/send-to-a-friend", label: "Send to a Friend" },
-  { to: "/roles", label: "Job Roles" },
+  { to: "/roles", label: "Careers" },
   { to: "/contact", label: "Contact Us" },
 ] as const;
+
+export function useSiteSession() {
+  return useSession();
+}
 
 function useSession() {
   return useQuery({
@@ -78,7 +82,7 @@ export function SiteLayout({ children, headerLogo, className = "" }: { children:
       <header className="sticky top-0 z-40 bg-brand-deep text-primary-foreground shadow-warm">
         <div className="relative mx-auto flex max-w-7xl items-center justify-center gap-6 px-5 lg:justify-between">
           <Link to="/" aria-label="JobShadow home" className="flex h-24 shrink-0 items-center lg:h-28">
-            {headerLogo ?? <BrandLogo className="h-24 w-24 lg:h-28 lg:w-28" />}
+            {headerLogo ?? <HeaderLogo className="h-20 w-auto lg:h-24" />}
           </Link>
           <nav className="hidden min-w-0 flex-1 flex-wrap items-center justify-end gap-4 lg:ml-auto lg:flex">
             {SITE_NAV.map((n) => (
@@ -123,11 +127,12 @@ export function SiteLayout({ children, headerLogo, className = "" }: { children:
                 </a>
               ))}
             </div>
+            <Link to="/share-experience" className="mt-2 inline-block text-sm font-semibold text-accent hover:underline">Share your experience with us</Link>
           </div>
           <div className="text-sm">
             <p className="font-display text-base text-accent">Explore</p>
             <ul className="mt-1 space-y-0.5 opacity-90">
-              <li><Link to="/roles">Job Roles</Link></li>
+              <li><Link to="/roles">Careers</Link></li>
               <li><Link to="/auth">Book a Job Shadow</Link></li>
               <li><Link to="/how-to">How To</Link></li>
               <li><Link to="/send-to-a-friend">Send to a Friend</Link></li>

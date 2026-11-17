@@ -128,9 +128,9 @@ function ProfileForm({ userId }: { userId: string }) {
       </div>
       <h5 className="font-semibold">The Job Shadow-ers Details</h5>
       <div className="grid gap-4 sm:grid-cols-2">
-        {field("full_name", "Name & Surname", "NAME & SURNAME")}
-        {field("contact_no", "Tel No", "TEL NO")}
-        {field("id_number", "ID / passport number", "ID NO")}
+        {field("full_name", "Name & Surname", "Name & surname")}
+        {field("contact_no", "Tel No", "Tel no")}
+        {field("id_number", "ID / passport number", "Id no")}
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
@@ -143,7 +143,7 @@ function ProfileForm({ userId }: { userId: string }) {
         </div>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        {field("school", "Current School", "CURRENT SCHOOL")}
+        {field("school", "Current School", "Current school")}
         <div>
           <div className="flex gap-4 pt-7 text-sm">
             {["Public School", "Private School", "Home School"].map((t) => (
@@ -158,10 +158,10 @@ function ProfileForm({ userId }: { userId: string }) {
       </div>
       <h5 className="font-semibold">Parent / Guardian Information</h5>
       <div className="grid gap-4 sm:grid-cols-2">
-        {field("guardian_name", "Parent / Guardian name", "PARENT / GUARDIAN NAME")}
-        {field("guardian_contact", "Parent / Guardian contact no", "PARENT / GUARDIAN CONTACT NO")}
-        {field("guardian_email", "Parent / Guardian email address", "PARENT / GUARDIAN EMAIL ADDRESS")}
-        {field("guardian_id", "Parent / Guardian ID/passport", "PARENT / GUARDIAN ID NO")}
+        {field("guardian_name", "Parent / Guardian name", "Parent / guardian name")}
+        {field("guardian_contact", "Parent / Guardian contact no", "Parent / guardian contact no")}
+        {field("guardian_email", "Parent / Guardian email address", "Parent / guardian email address")}
+        {field("guardian_id", "Parent / Guardian ID/passport", "Parent / guardian ID no")}
       </div>
       <details className="group -mx-6 bg-cta px-6 py-5 text-cta-foreground">
         <summary className="flex cursor-pointer list-none items-center gap-3 font-display text-2xl">

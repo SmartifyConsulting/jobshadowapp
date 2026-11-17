@@ -38,12 +38,16 @@ function ProfileSettings() {
     queryFn: async () => (await supabase.from("profiles").select("*").eq("user_id", user!.id).maybeSingle()).data,
   });
 
-  const [name, setName] = useState<string | null>(null);
+  const [first, setFirst] = useState<string | null>(null);
+  const [last, setLast] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
-  const displayName = name ?? profile.data?.display_name ?? "";
+  const splitName = (profile.data?.display_name ?? "").trim().split(/\s+/);
+  const firstName = first ?? profile.data?.first_name ?? (splitName.length > 1 ? splitName.slice(0, -1).join(" ") : splitName[0] ?? "");
+  const lastName = last ?? profile.data?.last_name ?? (splitName.length > 1 ? splitName[splitName.length - 1] ?? "" : "");
+  const displayName = `${firstName} ${lastName}`.trim();
   const avatarUrl = profile.data?.avatar_path ? supabase.storage.from("avatars").getPublicUrl(profile.data.avatar_path).data.publicUrl : null;
 
   async function uploadAvatar(file: File) {
@@ -68,7 +72,8 @@ function ProfileSettings() {
     setBusy(true);
     setErr(null);
     setSaved(false);
-    const { error } = await supabase.from("profiles").upsert({ user_id: user.id, display_name: displayName.trim() || null, updated_at: new Date().toISOString() });
+    if (!firstName.trim() || !lastName.trim()) { setBusy(false); return setErr("Please enter your first name and last name."); }
+    const { error } = await supabase.from("profiles").upsert({ user_id: user.id, first_name: firstName.trim(), last_name: lastName.trim(), display_name: displayName, updated_at: new Date().toISOString() });
     setBusy(false);
     if (error) return setErr(error.message);
     setSaved(true);
@@ -117,16 +122,18 @@ function ProfileSettings() {
           </div>
         </div>
 
-        <div className="max-w-sm">
-          <label className="block text-sm font-semibold">
-            Display name
-            <input
-              value={displayName}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={user?.email ?? ""}
-              className="mt-1 w-full border-b border-foreground/30 bg-transparent px-1 py-2 text-sm outline-none focus:border-foreground"
-            />
-          </label>
+        <div className="max-w-lg">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="block text-sm font-semibold">
+              First name
+              <input value={firstName} onChange={(e) => setFirst(e.target.value)} autoComplete="given-name" className="mt-1 w-full border-b border-foreground/30 bg-transparent px-1 py-2 text-sm outline-none focus:border-foreground" />
+            </label>
+            <label className="block text-sm font-semibold">
+              Last name
+              <input value={lastName} onChange={(e) => setLast(e.target.value)} autoComplete="family-name" className="mt-1 w-full border-b border-foreground/30 bg-transparent px-1 py-2 text-sm outline-none focus:border-foreground" />
+            </label>
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">Shown as: {displayName || "—"}</p>
           {err && <p className="mt-2 text-sm text-destructive">{err}</p>}
           <button onClick={saveName} disabled={busy} className="mt-4 rounded-full bg-primary px-5 py-2 text-xs font-bold uppercase tracking-wide text-primary-foreground disabled:opacity-50">
             {saved ? "Saved" : "Save"}

@@ -66,8 +66,8 @@ function AuthPage() {
       <section className="bg-cta px-5 py-8 text-cta-foreground">
         <form onSubmit={submit} className="mx-auto max-w-7xl">
           <div className="grid max-w-md gap-4">
-            <input type="email" required placeholder="EMAIL" value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
-            <PasswordInput required placeholder="PASSWORD" value={password} onChange={(e) => setPassword(e.target.value)} className={input} />
+            <input type="email" required placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
+            <PasswordInput required placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className={input} />
           </div>
           <label className="mt-3 flex items-center gap-2 text-sm">
             <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} /> Remember me
