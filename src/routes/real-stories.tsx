@@ -34,7 +34,7 @@ function Stories() {
         <Carousel opts={{ loop: true }} className="mx-auto max-w-7xl px-5">
           <CarouselContent className="-ml-8">
             {STORIES.map((s, index) => (
-              <CarouselItem key={s.name} className="basis-full pl-8 sm:basis-1/2">
+              <CarouselItem key={s.name} className="basis-full pl-8">
                 <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
                   <h3 className="font-display text-3xl uppercase text-accent-foreground">{s.name}</h3>
                   <div className={`h-28 w-28 shrink-0 overflow-hidden rounded-full ${["bg-teal", "bg-primary", "bg-cta", "bg-teal"][index % 4]}`}>
