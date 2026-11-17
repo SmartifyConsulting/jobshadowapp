@@ -25,7 +25,6 @@ export const Route = createFileRoute("/roles")({
 });
 
 function Roles() {
-  const [open, setOpen] = useState<string | null>(null);
   const [openFields, setOpenFields] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
 
@@ -123,34 +122,28 @@ function Roles() {
               <ChevronDown className={`h-6 w-6 shrink-0 transition ${fieldOpen ? "rotate-180" : ""}`} />
             </button>
             {fieldOpen && (
-              <div className="grid divide-y divide-primary-foreground/10 bg-primary text-primary-foreground sm:grid-cols-2 sm:divide-y-0">
+              <div className="divide-y divide-primary-foreground/10 bg-primary text-primary-foreground">
                 {roles.map((r) => {
-                  const isOpen = open === r.slug;
                   const count = mentorCounts.get(r.title.trim().toLowerCase()) ?? 0;
                   return (
-                    <div key={r.slug} className="border-b border-primary-foreground/10 sm:border-r sm:[&:nth-child(odd)]:border-r sm:[&:nth-last-child(1):nth-child(odd)]:border-b-0">
-                      <button onClick={() => setOpen(isOpen ? null : r.slug)} className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left hover:bg-primary-foreground/10" aria-expanded={isOpen}>
-                        <span className="flex items-center gap-2 text-sm font-semibold">
+                    <div key={r.slug} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                      <div className="flex-1">
+                        <p className="flex items-center gap-2 text-sm font-semibold">
                           {r.title}{r.video && <PlayCircle className="h-4 w-4" aria-label="Has video" />}
-                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${count > 0 ? "bg-cta text-cta-foreground" : "bg-primary-foreground/15 text-primary-foreground/70"}`}>
-                            {count > 0 ? `${count} mentor${count === 1 ? "" : "s"} available` : "None available"}
-                          </span>
-                        </span>
-                        <ChevronDown className={`h-4 w-4 shrink-0 transition ${isOpen ? "rotate-180" : ""}`} />
-                      </button>
-                      {isOpen && (
-                        <div className="space-y-3 bg-primary-foreground/5 px-5 pb-5 text-sm">
-                          {r.video && <div className="max-w-xl"><YouTube id={r.video} title={r.title} /></div>}
-                          {r.summary.split("\n").map((p, i) => <p key={i}>{p}</p>)}
-                          {count > 0 ? (
-                            <Link to="/auth" className="inline-block rounded-full bg-cta px-5 py-2 font-semibold uppercase tracking-wider text-cta-foreground">Book this Job Shadow</Link>
-                          ) : (
-                            <p className="text-primary-foreground/70">
-                              No host is currently available for this role. <a href={`mailto:${CONTACT_EMAIL}?subject=Interested%20in%20${encodeURIComponent(r.title)}`} className="font-bold underline">Email us</a> and we'll let you know when one opens up.
-                            </p>
-                          )}
-                        </div>
-                      )}
+                        </p>
+                        {r.summary.split("\n").map((p, i) => <p key={i} className="mt-1 text-sm text-primary-foreground/80">{p}</p>)}
+                        {r.video && <div className="mt-3 max-w-xl"><YouTube id={r.video} title={r.title} /></div>}
+                        {count > 0 ? (
+                          <Link to="/auth" className="mt-3 inline-block rounded-full bg-cta px-5 py-2 text-xs font-semibold uppercase tracking-wider text-cta-foreground">Book this Job Shadow</Link>
+                        ) : (
+                          <p className="mt-3 text-sm text-primary-foreground/70">
+                            No host is currently available for this role. <a href={`mailto:${CONTACT_EMAIL}?subject=Interested%20in%20${encodeURIComponent(r.title)}`} className="font-bold underline">Email us</a> and we'll let you know when one opens up.
+                          </p>
+                        )}
+                      </div>
+                      <span className={`shrink-0 self-start rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide ${count > 0 ? "bg-cta text-cta-foreground" : "bg-primary-foreground/15 text-primary-foreground/70"}`}>
+                        {count > 0 ? `${count} mentor${count === 1 ? "" : "s"} available` : "None available"}
+                      </span>
                     </div>
                   );
                 })}
