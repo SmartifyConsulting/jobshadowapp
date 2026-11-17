@@ -10,6 +10,7 @@ export type AccountRow = {
   photo_path: string | null;
   has_profile: boolean;
   is_spam: boolean;
+  booking_count: number;
 };
 
 const ROLE_PRIORITY = ["admin", "hr_admin", "mentor"] as const;
@@ -27,11 +28,12 @@ export async function listAccounts(): Promise<AccountRow[]> {
     page += 1;
   }
 
-  const [{ data: roles }, { data: profiles }, { data: scholars }, { data: legacy }] = await Promise.all([
+  const [{ data: roles }, { data: profiles }, { data: scholars }, { data: legacy }, { data: bookingRows }] = await Promise.all([
     supabaseAdmin.from("user_roles").select("user_id, role"),
     supabaseAdmin.from("profiles").select("user_id, display_name, avatar_path"),
     supabaseAdmin.from("scholar_profiles").select("user_id, full_name, id_file_path, photo_path"),
     supabaseAdmin.from("legacy_users").select("email, has_profile, is_spam"),
+    supabaseAdmin.from("bookings").select("user_id"),
   ]);
 
   const roleByUser = new Map<string, string[]>();
@@ -39,6 +41,8 @@ export async function listAccounts(): Promise<AccountRow[]> {
   const profileByUser = new Map((profiles ?? []).map((p) => [p.user_id, p]));
   const scholarByUser = new Map((scholars ?? []).map((s) => [s.user_id, s]));
   const legacyByEmail = new Map((legacy ?? []).map((l) => [(l.email ?? "").trim().toLowerCase(), l]));
+  const bookingCountByUser = new Map<string, number>();
+  (bookingRows ?? []).forEach((b) => bookingCountByUser.set(b.user_id, (bookingCountByUser.get(b.user_id) ?? 0) + 1));
 
   return users
     .map((u) => {
@@ -59,6 +63,7 @@ export async function listAccounts(): Promise<AccountRow[]> {
         photo_path: scholar?.photo_path ?? null,
         has_profile: legacyRow?.has_profile ?? false,
         is_spam: legacyRow?.is_spam ?? false,
+        booking_count: bookingCountByUser.get(u.id) ?? 0,
       };
     })
     .sort((a, b) => b.created_at.localeCompare(a.created_at));

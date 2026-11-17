@@ -743,7 +743,9 @@ function AdminUsers() {
                         {a.is_spam && <span className="ml-2 rounded-full bg-destructive/20 px-2 py-0.5 text-[10px] font-bold uppercase text-destructive">Spam</span>}
                       </p>
                       {(a.display_name || a.full_name) && <p className="text-xs text-muted-foreground">{a.email}</p>}
-                      <p className="text-xs text-muted-foreground">Joined {new Date(a.created_at).toLocaleDateString()}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Joined {new Date(a.created_at).toLocaleDateString()} · {a.booking_count} booking{a.booking_count === 1 ? "" : "s"}
+                      </p>
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
