@@ -61,7 +61,7 @@ export function SiteLayout({ children, hideLogo }: { children: ReactNode; hideLo
               <BrandLogo className="h-24 w-24 xl:h-28 xl:w-28" />
             </Link>
           )}
-          <nav className="hidden items-center gap-4 xl:flex">
+          <nav className="hidden items-center gap-4 xl:ml-auto xl:flex">
             {NAV.map((n) => (
               <Link
                 key={n.to}
