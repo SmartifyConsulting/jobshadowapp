@@ -701,7 +701,7 @@ function BookingSettings() {
     setErr(null);
     setSaved(false);
     const dates = blackout.split(",").map((d) => d.trim()).filter(Boolean);
-    const { error } = await (supabase.from("booking_settings") as any).update({ min_lead_days: Number(minLead) || 0, blackout_dates: dates, no_availability_message: noAvailMsg }).eq("id", 1);
+    const { error } = await supabase.from("booking_settings").update({ min_lead_days: Number(minLead) || 0, blackout_dates: dates, no_availability_message: noAvailMsg }).eq("id", 1);
     setBusy(false);
     if (error) return setErr(error.message);
     setSaved(true);
