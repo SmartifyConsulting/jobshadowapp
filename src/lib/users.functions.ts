@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { deleteAccount, listAccounts, setAccountRole, type AccountRow } from "./users.server";
+import { deleteAccount, listAccounts, editAccount, type AccountRow } from "./users.server";
 
 export const getAccounts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -10,13 +11,14 @@ export const getAccounts = createServerFn({ method: "GET" })
     return listAccounts();
   });
 
-export const updateAccountRole = createServerFn({ method: "POST" })
+export const updateAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { userId: string; role: AccountRow["role"] }) => d)
+  .inputValidator(z.object({ userId: z.string().uuid(), display_name: z.string().trim().max(200), full_name: z.string().trim().max(200), contact_no: z.string().trim().max(100), school: z.string().trim().max(300), id_number: z.string().trim().max(100), roles: z.array(z.enum(["user", "mentor", "hr_admin", "admin"])).min(1).max(4) }))
   .handler(async ({ context, data }) => {
     const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (!isAdmin) throw new Error("Forbidden");
-    await setAccountRole(data.userId, data.role);
+    if (data.userId === context.userId && !data.roles.includes("admin")) throw new Error("You cannot remove your own admin access.");
+    await editAccount(data);
     return { ok: true };
   });
 

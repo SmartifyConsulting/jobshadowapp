@@ -1,13 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Users as UsersIcon, FileText, ShoppingCart, Briefcase, GraduationCap, Pencil, Trash2, FileUser, ImageDown } from "lucide-react";
+import { Users as UsersIcon, FileText, ShoppingCart, Briefcase, GraduationCap, Pencil, Trash2, IdCard, Image as ImageIcon, Download, BadgeCheck, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BrandLogo } from "@/components/BrandLogo";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
 import { sendQueuedEmails } from "@/lib/email.functions";
-import { getAccounts, updateAccountRole, removeAccount } from "@/lib/users.functions";
+import { getAccounts, updateAccount, removeAccount } from "@/lib/users.functions";
 import { mapCsvColumns } from "@/lib/csv-import.functions";
 import { confirmAction, notify } from "@/lib/dialogs";
 import type { AccountRow } from "@/lib/users.server";
@@ -132,6 +133,8 @@ function exportCsv(title: string, cols: Col[], rows: Record<string, unknown>[]) 
 function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnityEdit }: { title: string; table: string; cols: Col[]; csvUpload?: boolean | undefined; dateCompanyFilter?: boolean | undefined; indemnityEdit?: boolean | undefined }) {
   const qc = useQueryClient();
   const [q, setQ] = useState("");
+  const [letter, setLetter] = useState<string | null>(null);
+  const alphabetField = table === "companies" ? "company" : ["vouchers", "careers"].includes(table) ? "name" : null;
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [company, setCompany] = useState("All companies");
@@ -215,9 +218,18 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
     },
   });
   const companies = useMemo(() => ["All companies", ...new Set((data ?? []).map((r) => fmt(r["company"])).filter(Boolean))], [data]);
+  const letterCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    if (alphabetField) (data ?? []).forEach((row) => {
+      const initial = fmt(row[alphabetField]).trim().charAt(0).toUpperCase();
+      if (initial) counts.set(initial, (counts.get(initial) ?? 0) + 1);
+    });
+    return counts;
+  }, [data, alphabetField]);
   const rows = useMemo(() => {
     const s = q.toLowerCase().trim();
     return (data ?? []).filter((r) => {
+      if (letter && alphabetField && fmt(r[alphabetField]).trim().charAt(0).toUpperCase() !== letter) return false;
       if (s && !cols.some((c) => fmt(r[c.key]).toLowerCase().includes(s))) return false;
       if (dateCompanyFilter) {
         if (company !== "All companies" && fmt(r["company"]) !== company) return false;
@@ -227,7 +239,7 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
       }
       return true;
     });
-  }, [data, q, cols, dateCompanyFilter, company, from, to]);
+  }, [data, q, cols, dateCompanyFilter, company, from, to, letter, alphabetField]);
 
   async function remove(row: Record<string, unknown>) {
     if (!(await confirmAction("Delete this record?", { danger: true, confirmLabel: "Delete" }))) return;
@@ -298,6 +310,14 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
 
   return (
     <div>
+      {alphabetField && (
+        <div className="flex flex-wrap gap-1.5 bg-teal/90 px-6 py-4" aria-label={`Filter ${title} alphabetically`}>
+          <button type="button" onClick={() => setLetter(null)} aria-pressed={letter === null} className={`rounded-full px-2.5 py-1 text-xs font-bold uppercase transition ${letter === null ? "bg-primary text-primary-foreground" : "bg-background/60 text-foreground hover:bg-background/80"}`}>All</button>
+          {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((ch) => (
+            <button key={ch} type="button" onClick={() => setLetter(letter === ch ? null : ch)} disabled={!letterCounts.has(ch)} aria-pressed={letter === ch} className={`rounded-full px-2.5 py-1 text-xs font-bold uppercase transition ${letter === ch ? "bg-primary text-primary-foreground" : !letterCounts.has(ch) ? "bg-background/30 text-foreground/40" : "bg-background/60 text-foreground hover:bg-background/80"}`}>{ch}</button>
+          ))}
+        </div>
+      )}
       {csvUpload && (
         <div className="grid border-b border-foreground/10 sm:grid-cols-2">
           <div>
@@ -611,15 +631,33 @@ async function downloadDoc(path: string | null) {
   URL.revokeObjectURL(url);
 }
 
+function UserDocument({ path, kind, verified = false }: { path: string | null; kind: "id" | "photo"; verified?: boolean }) {
+  const file = useQuery({
+    queryKey: ["admin", "document-exists", path], enabled: !!path,
+    queryFn: async () => { const { data, error } = await supabase.storage.from("scholar-docs").info(path!); return !error && !!data; },
+    staleTime: 60_000,
+  });
+  const Icon = kind === "id" ? IdCard : ImageIcon;
+  return <div className="flex items-center gap-1">
+    <span className="relative rounded-md border border-foreground/20 bg-background/70 p-2" title={kind === "id" ? "ID document" : "Photo"}>
+      <Icon aria-hidden="true" className="h-5 w-5" /><span className="sr-only">{kind === "id" ? "ID document" : "Photo"}</span>
+      {verified && <BadgeCheck aria-label="ID verified" className="absolute -right-2 -top-2 h-4 w-4 fill-[#E81C45] text-white" />}
+    </span>
+    {file.data === true && <button onClick={() => downloadDoc(path)} aria-label={kind === "id" ? "Download ID scan" : "Download photo"} title={kind === "id" ? "Download ID scan" : "Download photo"} className="rounded p-1.5 hover:bg-background/70"><Download className="h-4 w-4" /></button>}
+  </div>;
+}
+
 const ROLE_LABELS: Record<AccountRow["role"], string> = { user: "Student", mentor: "Mentor", hr_admin: "HR Admin", admin: "Admin" };
 
 function AdminUsers() {
   const qc = useQueryClient();
   const getAccountsFn = useServerFn(getAccounts);
-  const updateRoleFn = useServerFn(updateAccountRole);
+  const updateRoleFn = useServerFn(updateAccount);
   const removeAccountFn = useServerFn(removeAccount);
   const accounts = useQuery({ queryKey: ["admin", "accounts"], queryFn: () => getAccountsFn() });
   const [q, setQ] = useState("");
+  const [editing, setEditing] = useState<AccountRow | null>(null);
+  const [openGroups, setOpenGroups] = useState<string[]>([]);
   const [showSpam, setShowSpam] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [letter, setLetter] = useState<string | null>(null);
@@ -647,15 +685,15 @@ function AdminUsers() {
     return (parts[parts.length - 1] ?? "").toUpperCase();
   }
 
-  async function changeRole(userId: string, role: AccountRow["role"]) {
-    setBusyId(userId);
+  async function saveAccount() {
+    if (!editing) return;
+    setBusyId(editing.id);
     try {
-      await updateRoleFn({ data: { userId, role } });
-      qc.invalidateQueries({ queryKey: ["admin", "accounts"] });
-    } catch (e) {
-      notify((e as Error).message, "error");
-    }
-    setBusyId(null);
+      await updateRoleFn({ data: { userId: editing.id, display_name: editing.display_name ?? "", full_name: editing.full_name ?? "", contact_no: editing.contact_no ?? "", school: editing.school ?? "", id_number: editing.id_number ?? "", roles: editing.roles } });
+      await qc.invalidateQueries({ queryKey: ["admin", "accounts"] });
+      setEditing(null);
+    } catch (e) { notify((e as Error).message, "error"); }
+    finally { setBusyId(null); }
   }
 
   async function deleteAccountRow(userId: string, label: string) {
@@ -675,7 +713,7 @@ function AdminUsers() {
     return (accounts.data ?? [])
       .filter((a) => {
         if (!showSpam && a.is_spam) return false;
-        if (s && ![a.email, a.display_name, a.full_name, ROLE_LABELS[a.role]].some((v) => (v ?? "").toLowerCase().includes(s))) return false;
+        if (s && ![a.email, a.display_name, a.full_name, a.contact_no, a.school, a.id_number, ...a.roles.map((role) => ROLE_LABELS[role]), ...a.applications.flatMap((application) => [application.company, application.career, application.dates])].some((v) => (v ?? "").toLowerCase().includes(s))) return false;
         if (letter && surnameOf(a).charAt(0) !== letter) return false;
         return true;
       })
@@ -694,6 +732,18 @@ function AdminUsers() {
 
   return (
     <div>
+      <Dialog open={!!editing} onOpenChange={(open) => { if (!open && busyId !== editing?.id) setEditing(null); }}>
+        <DialogContent className="max-h-[90vh] overflow-auto">
+          <DialogHeader><DialogTitle>Edit user</DialogTitle></DialogHeader>
+          {editing && <form onSubmit={(e) => { e.preventDefault(); saveAccount(); }} className="space-y-3">
+            <p className="text-sm text-muted-foreground">{editing.email}</p>
+            {([['display_name', 'Display name'], ['full_name', 'Full name'], ['contact_no', 'Phone'], ['school', 'School'], ['id_number', 'ID / passport number']] as const).map(([field, label]) => <label key={field} className="block text-sm">{label}<input disabled={busyId === editing.id || (field !== 'display_name' && !editing.has_scholar_profile)} value={editing[field] ?? ''} onChange={(e) => setEditing({ ...editing, [field]: e.target.value })} className="mt-1 w-full rounded border border-input bg-background px-3 py-2 disabled:opacity-50" /></label>)}
+            {!editing.has_scholar_profile && <p className="text-xs text-muted-foreground">Scholar details can be edited once this user has a scholar profile. Imported details remain on the original application.</p>}
+            <details className="rounded border border-input p-3"><summary className="cursor-pointer text-sm">User types: {editing.roles.map((role) => ROLE_LABELS[role]).join(', ') || 'Select roles'}</summary><div className="mt-2 space-y-2">{(Object.keys(ROLE_LABELS) as AccountRow['role'][]).map((role) => <label key={role} className="flex items-center gap-2 text-sm"><input type="checkbox" disabled={busyId === editing.id} checked={editing.roles.includes(role)} onChange={(e) => setEditing({ ...editing, roles: e.target.checked ? [...editing.roles, role] : editing.roles.filter((item) => item !== role) })} />{ROLE_LABELS[role]}</label>)}</div></details>
+            <div className="flex justify-end gap-2 pt-2"><Button type="button" variant="outline" disabled={busyId === editing.id} onClick={() => setEditing(null)}>Cancel</Button><Button disabled={busyId === editing.id || editing.roles.length === 0}>{busyId === editing.id ? 'Saving…' : 'Save changes'}</Button></div>
+          </form>}
+        </DialogContent>
+      </Dialog>
       <div className="bg-[#E81C45] px-6 py-6 text-background"><h1 className="text-2xl font-semibold">Users {!accounts.isLoading && `(${rows.length})`}</h1></div>
       <div className="bg-teal/90 px-6 py-6 text-teal-foreground">
         <div className="flex flex-wrap gap-1.5">
@@ -708,7 +758,7 @@ function AdminUsers() {
             return (
               <button
                 key={ch}
-                onClick={() => setLetter(letter === ch ? null : ch)}
+                onClick={() => { setLetter(letter === ch ? null : ch); setOpenGroups([ch]); }}
                 disabled={count === 0}
                 className={`rounded-full px-2.5 py-1 text-xs font-bold uppercase transition ${letter === ch ? "bg-primary text-primary-foreground" : count === 0 ? "bg-background/30 text-foreground/40" : "bg-background/60 text-foreground hover:bg-background/80"}`}
               >
@@ -720,7 +770,7 @@ function AdminUsers() {
         <div className="mt-4 flex flex-wrap items-end gap-6">
           <label className="block max-w-sm text-sm">
             Search
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name, email or user type" className="mt-1 w-full border-b border-foreground/30 bg-transparent px-1 py-1 outline-none" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name, email, school, company or career" className="mt-1 w-full border-b border-foreground/30 bg-transparent px-1 py-1 outline-none" />
           </label>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={showSpam} onChange={(e) => setShowSpam(e.target.checked)} />
@@ -732,11 +782,16 @@ function AdminUsers() {
         ) : accounts.error ? (
           <p className="mt-6 text-destructive">{(accounts.error as Error).message}</p>
         ) : (
-          <div className="mt-6 divide-y divide-border">
-            {rows.map((a) => {
+          <div className="mt-6 space-y-3">
+            {[...new Set(rows.map((a) => /^[A-Z]/.test(surnameOf(a)) ? surnameOf(a).charAt(0) : "#"))].sort((a, b) => a === "#" ? 1 : b === "#" ? -1 : a.localeCompare(b)).map((group) => (
+              <details key={group} open={openGroups.includes(group)} onToggle={(event) => { const open = event.currentTarget.open; setOpenGroups((current) => open ? [...new Set([...current, group])] : current.filter((item) => item !== group)); }} className="group rounded-lg border border-foreground/15 bg-background/50">
+                <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3 text-sm font-semibold [&::-webkit-details-marker]:hidden"><span className="text-lg">{group}</span><span className="text-muted-foreground">{rows.filter((a) => (/^[A-Z]/.test(surnameOf(a)) ? surnameOf(a).charAt(0) : "#") === group).length} users</span><ChevronDown className="ml-auto h-4 w-4 transition group-open:rotate-180" /></summary>
+                {openGroups.includes(group) && <div className="divide-y divide-foreground/10 px-4">
+            {rows.filter((a) => (/^[A-Z]/.test(surnameOf(a)) ? surnameOf(a).charAt(0) : "#") === group).map((a) => {
               const avatarUrl = a.avatar_path ? supabase.storage.from("avatars").getPublicUrl(a.avatar_path).data.publicUrl : null;
               return (
-                <div key={a.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                <div key={a.id} className="py-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     {avatarUrl ? (
                       <img src={avatarUrl} alt="" className="h-9 w-9 rounded-full object-cover" />
@@ -748,9 +803,10 @@ function AdminUsers() {
                     <div>
                       <p className="text-sm font-semibold">
                         {a.display_name || a.full_name || a.email || a.id}
-                        <span className="ml-2 inline-block rounded-full bg-background/70 px-2 py-0.5 text-[10px] font-semibold text-foreground">User type: {ROLE_LABELS[a.role]}</span>
+
                         {a.is_spam && <span className="ml-2 rounded-full bg-destructive/20 px-2 py-0.5 text-[10px] font-bold uppercase text-destructive">Spam</span>}
                       </p>
+                      <div className="my-1 flex flex-wrap gap-1.5">{a.roles.map((role) => <span key={role} className="rounded border border-foreground/20 px-1.5 py-0.5 text-[11px] font-medium leading-none text-foreground/80">{ROLE_LABELS[role]}</span>)}</div>
                       {(a.display_name || a.full_name) && <p className="text-xs text-muted-foreground">{a.email}</p>}
                       <p className="text-xs text-muted-foreground">
                         Joined {new Date(a.created_at).toLocaleDateString()} · {a.booking_count} booking{a.booking_count === 1 ? "" : "s"}
@@ -762,23 +818,9 @@ function AdminUsers() {
                       <input type="checkbox" checked={a.id_verified === true} disabled={a.id_verified === null || busyId === a.id} onChange={(e) => setIdVerified(a.id, e.target.checked)} aria-label={`ID verified for ${a.display_name || a.full_name || a.email || a.id}`} />
                       ID verified
                     </label>
-                    <button onClick={() => downloadDoc(a.id_file_path)} disabled={!a.id_file_path} aria-label="Download ID scan" title="Download ID scan" className="rounded bg-cta p-2 text-cta-foreground disabled:opacity-50">
-                      <FileUser aria-hidden="true" className="h-4 w-4" />
-                    </button>
-                    <button onClick={() => downloadDoc(a.photo_path)} disabled={!a.photo_path} aria-label="Download photo" title="Download photo" className="rounded bg-cta p-2 text-cta-foreground disabled:opacity-50">
-                      <ImageDown aria-hidden="true" className="h-4 w-4" />
-                    </button>
-                    <select
-                      aria-label={`Change user type for ${a.display_name || a.full_name || a.email || a.id}`}
-                      value={a.role}
-                      disabled={busyId === a.id}
-                      onChange={(e) => changeRole(a.id, e.target.value as AccountRow["role"])}
-                      className="rounded border border-input bg-background px-2 py-1 text-sm disabled:opacity-50"
-                    >
-                      {(Object.keys(ROLE_LABELS) as AccountRow["role"][]).map((r) => (
-                        <option key={r} value={r}>{ROLE_LABELS[r]}</option>
-                      ))}
-                    </select>
+                    <UserDocument path={a.id_file_path} kind="id" verified={a.id_verified === true} />
+                    <UserDocument path={a.photo_path} kind="photo" />
+                    <button onClick={() => setEditing({ ...a, roles: [...a.roles] })} disabled={busyId === a.id} className="flex items-center gap-1.5 rounded border border-foreground/20 bg-background/70 px-2.5 py-1.5 text-xs font-semibold" aria-label={'Edit ' + (a.display_name || a.full_name || a.email)}><Pencil className="h-3.5 w-3.5" />Edit</button>
                     <button
                       onClick={() => deleteAccountRow(a.id, a.display_name || a.full_name || a.email || a.id)}
                       disabled={busyId === a.id}
@@ -788,9 +830,37 @@ function AdminUsers() {
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
+                  </div>
+                  <dl className="mt-3 grid gap-x-6 gap-y-2 text-xs sm:grid-cols-3">
+                    <div><dt className="font-semibold">Phone</dt><dd className="break-words">{a.contact_no || "—"}</dd></div>
+                    <div><dt className="font-semibold">School</dt><dd className="break-words">{a.school || "—"}</dd></div>
+                    <div><dt className="font-semibold">ID / passport number</dt><dd className="break-words">{a.id_number || "—"}</dd></div>
+                  </dl>
+                  {a.applications.length > 0 ? (
+                    <details className="mt-3 rounded border border-foreground/20 bg-background/40 p-3">
+                      <summary className="cursor-pointer text-sm font-semibold">Applications ({a.applications.length})</summary>
+                      <div className="mt-3 overflow-x-auto">
+                        <table className="w-full min-w-[650px] text-left text-xs">
+                          <thead><tr>{["ID", "Company", "Career", "Dates", "Paid", "Indemnity", "Cancelled"].map((heading) => <th key={heading} className="px-2 py-2 font-semibold">{heading}</th>)}</tr></thead>
+                          <tbody>{a.applications.map((application) => (
+                            <tr key={`${application.source}-${application.id}`} className="border-t border-foreground/15">
+                              <td className="px-2 py-2">{application.source} #{application.id}</td>
+                              <td className="px-2 py-2">{application.company || "—"}</td>
+                              <td className="px-2 py-2">{application.career || "—"}</td>
+                              <td className="px-2 py-2">{application.dates || "—"}</td>
+                              {[application.paid, application.indemnity, application.cancelled].map((value, index) => <td key={index} className="px-2 py-2">{value === null ? "Not recorded" : value ? "Yes" : "No"}</td>)}
+                            </tr>
+                          ))}</tbody>
+                        </table>
+                      </div>
+                    </details>
+                  ) : <p className="mt-3 text-xs text-muted-foreground">No applications recorded.</p>}
                 </div>
               );
             })}
+                </div>}
+              </details>
+            ))}
             {rows.length === 0 && <p className="py-6 text-sm text-muted-foreground">No users match "{q}".</p>}
           </div>
         )}

@@ -1,11 +1,19 @@
+import { getUserApplications, type AccountApplication } from "./user-applications";
+
 export type AccountRow = {
   id: string;
   email: string | null;
   created_at: string;
   role: "user" | "mentor" | "hr_admin" | "admin";
+  roles: ("user" | "mentor" | "hr_admin" | "admin")[];
+  has_scholar_profile: boolean;
   display_name: string | null;
   avatar_path: string | null;
   full_name: string | null;
+  contact_no: string | null;
+  school: string | null;
+  id_number: string | null;
+  applications: AccountApplication[];
   id_file_path: string | null;
   photo_path: string | null;
   id_verified: boolean | null;
@@ -15,6 +23,16 @@ export type AccountRow = {
 };
 
 const ROLE_PRIORITY = ["admin", "hr_admin", "mentor"] as const;
+
+async function readAllRows<T>(load: (from: number, to: number) => Promise<{ data: T[] | null; error: { message: string } | null }>) {
+  const rows: T[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await load(from, from + 999);
+    if (error) throw new Error(error.message);
+    rows.push(...(data ?? []));
+    if (!data || data.length < 1000) return rows;
+  }
+}
 
 export async function listAccounts(): Promise<AccountRow[]> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -29,12 +47,13 @@ export async function listAccounts(): Promise<AccountRow[]> {
     page += 1;
   }
 
-  const [{ data: roles }, { data: profiles }, { data: scholars }, { data: legacy }, { data: bookingRows }] = await Promise.all([
+  const [{ data: roles }, { data: profiles }, { data: scholars }, { data: legacy }, bookingRows, applicationRows] = await Promise.all([
     supabaseAdmin.from("user_roles").select("user_id, role"),
     supabaseAdmin.from("profiles").select("user_id, display_name, avatar_path"),
-    supabaseAdmin.from("scholar_profiles").select("user_id, full_name, id_file_path, photo_path, id_verified"),
+    supabaseAdmin.from("scholar_profiles").select("user_id, full_name, contact_no, school, id_number, id_file_path, photo_path, id_verified"),
     supabaseAdmin.from("legacy_users").select("email, has_profile, is_spam"),
-    supabaseAdmin.from("bookings").select("user_id"),
+    readAllRows(async (from, to) => await supabaseAdmin.from("bookings").select("id, user_id, company, career, shadow_date, paid_at, indemnity_received, status").order("created_at", { ascending: false }).order("id").range(from, to)),
+    readAllRows(async (from, to) => await supabaseAdmin.from("legacy_applications").select("id, name, email, contact, school, id_number, company, career, dates, paid, indemnity, cancelled").order("id", { ascending: false }).range(from, to)),
   ]);
 
   const roleByUser = new Map<string, string[]>();
@@ -51,15 +70,22 @@ export async function listAccounts(): Promise<AccountRow[]> {
       const role = (ROLE_PRIORITY.find((r) => userRoles.includes(r)) ?? "user") as AccountRow["role"];
       const profile = profileByUser.get(u.id);
       const scholar = scholarByUser.get(u.id);
+      const { latestImported, applications } = getUserApplications(u, applicationRows, bookingRows);
       const legacyRow = u.email ? legacyByEmail.get(u.email.trim().toLowerCase()) : undefined;
       return {
         id: u.id,
         email: u.email,
         created_at: u.created_at,
         role,
+        roles: (userRoles.length ? [...new Set(userRoles)] : ["user"]) as AccountRow["roles"],
+        has_scholar_profile: !!scholar,
         display_name: profile?.display_name ?? null,
         avatar_path: profile?.avatar_path ?? null,
-        full_name: scholar?.full_name ?? null,
+        full_name: scholar?.full_name || latestImported?.name || null,
+        contact_no: scholar?.contact_no || latestImported?.contact || null,
+        school: scholar?.school || latestImported?.school || null,
+        id_number: scholar?.id_number || latestImported?.id_number || null,
+        applications,
         id_file_path: scholar?.id_file_path ?? null,
         photo_path: scholar?.photo_path ?? null,
         id_verified: scholar?.id_verified ?? null,
@@ -71,13 +97,29 @@ export async function listAccounts(): Promise<AccountRow[]> {
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
 }
 
-export async function setAccountRole(userId: string, role: AccountRow["role"]) {
+export type AccountEdit = { userId: string; display_name: string; full_name: string; contact_no: string; school: string; id_number: string; roles: AccountRow["roles"] };
+
+export async function editAccount(data: AccountEdit) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const del = await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
-  if (del.error) throw new Error(del.error.message);
-  if (role === "user") return;
-  const ins = await supabaseAdmin.from("user_roles").insert({ user_id: userId, role });
-  if (ins.error) throw new Error(ins.error.message);
+  const profile = await supabaseAdmin.from("profiles").update({ display_name: data.display_name }).eq("user_id", data.userId);
+  if (profile.error) throw new Error(profile.error.message);
+  // Never create scholar consent or a profile on the user's behalf.
+  const scholar = await supabaseAdmin.from("scholar_profiles").update({ full_name: data.full_name, contact_no: data.contact_no, school: data.school, id_number: data.id_number }).eq("user_id", data.userId);
+  if (scholar.error) throw new Error(scholar.error.message);
+  const current = await supabaseAdmin.from("user_roles").select("role").eq("user_id", data.userId);
+  if (current.error) throw new Error(current.error.message);
+  const wanted = [...new Set(data.roles)];
+  const existing = (current.data ?? []).map((r) => r.role);
+  const added = wanted.filter((role) => !existing.includes(role));
+  if (added.length) {
+    const result = await supabaseAdmin.from("user_roles").insert(added.map((role) => ({ user_id: data.userId, role })));
+    if (result.error) throw new Error(result.error.message);
+  }
+  const removed = existing.filter((role) => !wanted.includes(role));
+  if (removed.length) {
+    const result = await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId).in("role", removed);
+    if (result.error) throw new Error(result.error.message);
+  }
 }
 
 export async function deleteAccount(userId: string) {
