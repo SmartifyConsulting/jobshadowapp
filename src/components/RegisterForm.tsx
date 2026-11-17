@@ -10,6 +10,7 @@ export function RegisterForm({ compact }: { compact?: boolean }) {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [whereHear, setWhereHear] = useState("");
+  const [accountType, setAccountType] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
@@ -18,6 +19,7 @@ export function RegisterForm({ compact }: { compact?: boolean }) {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setMsg(null);
+    if (!accountType) return setMsg("Please choose what you are signing up as.");
     if (password.length < 8) return setMsg("Password must be at least 8 characters.");
     if (password !== confirm) return setMsg("The passwords do not match.");
     if (captchaRequired && !captchaToken) return setMsg("Please complete the verification challenge.");
@@ -27,7 +29,7 @@ export function RegisterForm({ compact }: { compact?: boolean }) {
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/my-account`,
-        data: { name, where_hear: whereHear },
+        data: { name, where_hear: whereHear, account_type: accountType },
         ...(captchaToken ? { captchaToken } : {}),
       },
     });
@@ -49,6 +51,19 @@ export function RegisterForm({ compact }: { compact?: boolean }) {
           {!compact && <p className="mt-1 text-xs text-current/70">At least 8 characters. Avoid common or easy-to-guess passwords.</p>}
         </div>
         <PasswordInput required placeholder="REPEAT PASSWORD" value={confirm} onChange={(e) => setConfirm(e.target.value)} className={input} />
+        <select
+          required
+          aria-label="I am signing up as"
+          value={accountType}
+          onChange={(e) => setAccountType(e.target.value)}
+          className={`${input} [&>option]:text-foreground`}
+        >
+          <option value="">I AM SIGNING UP AS…</option>
+          <option value="student">Student</option>
+          <option value="host">Host</option>
+          <option value="hr_admin">HR Admin</option>
+          <option value="school">School</option>
+        </select>
         <select
           aria-label="Where did you hear about Job Shadow?"
           value={whereHear}

@@ -653,7 +653,7 @@ function UserDocument({ path, kind, verified = false }: { path: string | null; k
   </div>;
 }
 
-const ROLE_LABELS: Record<AccountRow["role"], string> = { user: "Student", mentor: "Host", hr_admin: "HR Admin", admin: "Admin" };
+const ROLE_LABELS: Record<AccountRow["role"], string> = { user: "Student", mentor: "Host", hr_admin: "HR Admin", school: "School", admin: "Admin" };
 
 function UserFilePreview({ path, label }: { path: string | null; label: string }) {
   const preview = useQuery({
@@ -1052,7 +1052,7 @@ function EditRecord({ title, table, cols, row, onDone, onCancel }: { title: stri
   async function save() {
     setBusy(true);
     setErr(null);
-    const { id: _id, ...patch } = vals;
+    const patch = Object.fromEntries(Object.entries(vals).filter(([k]) => k !== "id" && !k.startsWith("_")));
     const { error } = await (supabase.from(table as "careers") as any).update(patch).eq("id", row["id"]);
     setBusy(false);
     if (error) return setErr(error.message);

@@ -690,6 +690,7 @@ export type Database = {
           sector: string
         }[]
       }
+      normalize_career_name: { Args: { _n: string }; Returns: string }
       release_expired_booking_holds: { Args: never; Returns: undefined }
       send_shadow_reminders: { Args: never; Returns: undefined }
       set_indemnity_path: {
@@ -715,7 +716,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user" | "mentor" | "hr_admin"
+      app_role: "admin" | "user" | "mentor" | "hr_admin" | "school"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -843,7 +844,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user", "mentor", "hr_admin"],
+      app_role: ["admin", "user", "mentor", "hr_admin", "school"],
     },
   },
 } as const

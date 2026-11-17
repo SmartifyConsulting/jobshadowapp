@@ -239,6 +239,20 @@
       "when": 1794940787278,
       "tag": "0033_grant_role_notify_access",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1794941099010,
+      "tag": "0034_add_school_role",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1794941117266,
+      "tag": "0035_signup_type_and_normalise_careers",
+      "breakpoints": true
     }
   ]
 }

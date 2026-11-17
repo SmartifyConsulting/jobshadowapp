@@ -4,8 +4,8 @@ export type AccountRow = {
   id: string;
   email: string | null;
   created_at: string;
-  role: "user" | "mentor" | "hr_admin" | "admin";
-  roles: ("user" | "mentor" | "hr_admin" | "admin")[];
+  role: "user" | "mentor" | "hr_admin" | "school" | "admin";
+  roles: ("user" | "mentor" | "hr_admin" | "school" | "admin")[];
   has_scholar_profile: boolean;
   display_name: string | null;
   avatar_path: string | null;
