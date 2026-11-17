@@ -88,7 +88,7 @@ function Roles() {
           <p>Need to easily identify your <strong>most suited career orientation</strong>, <strong>tertiary qualification</strong> and <strong>school subject requirements</strong> for this ideal career?</p>
           <p className="mt-3">Why not <strong>book a job shadow</strong> and get a <strong>10% discount on an online Career Guidance Tool</strong>.</p>
           <p className="mt-3">This is an online self-evaluation process which is <strong>easily accessible</strong>, identifies your interests and skills to <strong>best match your personality type</strong>, with <strong>immediate feedback</strong> via a report card to your inbox the moment you are done!</p>
-          <p className="mt-3">Please <strong>email</strong> <a href={`mailto:${CONTACT_EMAIL}?subject=Career%20Guidance%20Tool`} className="font-bold">{CONTACT_EMAIL}</a> if you are interested and we will send you a promo code and the link to access the <strong>Career Guidance Tool.</strong></p>
+          <p className="mt-3"><a href={`mailto:${CONTACT_EMAIL}?subject=Career%20Guidance%20Tool`} className="font-bold underline">Click here</a> to receive a promo code to access the <strong>Career Guidance Tool.</strong></p>
         </div>
       </section>
 
