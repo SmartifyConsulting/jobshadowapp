@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { Users as UsersIcon, FileText, ShoppingCart, Briefcase, GraduationCap, Pencil, Trash2, IdCard, Image as ImageIcon, Download, BadgeCheck, ChevronDown } from "lucide-react";
+import { Users as UsersIcon, FileText, ShoppingCart, Briefcase, GraduationCap, Pencil, Trash2, IdCard, Image as ImageIcon, Download, BadgeCheck, ChevronDown, LayoutGrid, List, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BrandLogo } from "@/components/BrandLogo";
 import { SITE_NAV } from "@/components/SiteLayout";
@@ -79,22 +79,22 @@ function AdminPage() {
 
   return (
     <div className="flex min-h-screen bg-muted/40">
-      <aside className="w-60 shrink-0 border-r border-border bg-background text-foreground">
+      <aside className="w-60 shrink-0 border-r border-primary/20 bg-primary text-primary-foreground">
         <div className="flex items-center justify-center px-5 py-6">
           <BrandLogo className="h-[11.2rem] w-[11.2rem]" />
         </div>
         <nav className="space-y-1 px-3 pb-6">
           {TABLES.map((t) => (
-            <button key={t.id} onClick={() => setActive(t.id)} className={`flex w-full items-center gap-3 rounded-md border-l-2 px-3 py-2.5 text-left text-sm font-medium transition ${active === t.id ? "border-primary bg-primary/5 text-primary" : "border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"}`}>
+            <button key={t.id} onClick={() => setActive(t.id)} className={`flex w-full items-center gap-3 rounded-md border-l-2 px-3 py-2.5 text-left text-sm font-medium transition ${active === t.id ? "border-primary-foreground bg-primary-foreground/15 text-primary-foreground" : "border-transparent text-primary-foreground/85 hover:bg-primary-foreground/10 hover:text-primary-foreground"}`}>
               <t.icon className="h-4 w-4" /> {t.label}
             </button>
           ))}
         </nav>
       </aside>
       <div className="min-w-0 flex-1">
-        <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-border bg-background px-6 py-4 text-foreground">
+        <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 bg-primary px-6 py-4 text-primary-foreground">
           <nav aria-label="Website navigation" className="flex flex-wrap items-center gap-x-5 gap-y-2">
-            {SITE_NAV.map((item) => <Link key={item.to} to={item.to} className="text-sm transition hover:text-primary">{item.label}</Link>)}
+            {SITE_NAV.map((item) => <Link key={item.to} to={item.to} activeOptions={{ exact: item.to === "/" }} activeProps={{ className: "border-cta" }} className="border-b-4 border-transparent py-2 text-sm font-semibold transition hover:border-accent">{item.label}</Link>)}
           </nav>
           <button onClick={() => supabase.auth.signOut().then(() => (window.location.href = "/"))} className="text-sm font-medium hover:underline">Logout</button>
         </header>
@@ -653,6 +653,59 @@ function UserDocument({ path, kind, verified = false }: { path: string | null; k
 
 const ROLE_LABELS: Record<AccountRow["role"], string> = { user: "Student", mentor: "Mentor", hr_admin: "HR Admin", admin: "Admin" };
 
+function UserFilePreview({ path, label }: { path: string | null; label: string }) {
+  const preview = useQuery({
+    queryKey: ["admin", "file-preview", path], enabled: !!path, staleTime: 240_000,
+    queryFn: async () => {
+      const bucket = supabase.storage.from("scholar-docs");
+      const info = await bucket.info(path!);
+      if (info.error || !info.data) throw new Error("Document unavailable.");
+      const signed = await bucket.createSignedUrl(path!, 300);
+      if (signed.error) throw new Error(signed.error.message);
+      return { url: signed.data.signedUrl, image: info.data.contentType?.startsWith("image/") === true };
+    },
+  });
+  return <section className="space-y-2">
+    <h3 className="text-xs font-medium">{label}</h3>
+    {!path ? <p className="text-xs text-muted-foreground">No file uploaded.</p> : preview.isPending ? <p className="text-xs text-muted-foreground">Loading document…</p> : preview.error ? <p className="text-xs text-muted-foreground">Document unavailable.</p> : preview.data && <a href={preview.data.url} target="_blank" rel="noopener noreferrer" className="block rounded border border-border bg-muted/30 p-2 text-xs text-primary">{preview.data.image ? <img src={preview.data.url} alt={label} className="max-h-48 w-full object-contain" /> : 'Open ' + label.toLowerCase()}</a>}
+  </section>;
+}
+
+function UserDetailPanel({ account: a, onClose, onEdit }: { account: AccountRow; onClose: () => void; onEdit: () => void }) {
+  const label = a.display_name || a.full_name || a.email || a.id;
+  return <aside aria-label="Selected user details" className="w-full shrink-0 border-t border-border bg-background p-5 xl:sticky xl:top-0 xl:max-h-screen xl:w-72 xl:overflow-y-auto xl:border-l xl:border-t-0">
+    <div className="mb-4 flex items-start justify-between gap-3"><div><h2 className="font-sans text-sm font-medium">{label}</h2><div className="mt-1 flex flex-wrap gap-1">{a.roles.map((role) => <span key={role} className="rounded bg-teal/15 px-1.5 py-0.5 text-[10px]">{ROLE_LABELS[role]}</span>)}</div></div><button onClick={onClose} aria-label="Close user details" className="rounded p-1 text-muted-foreground hover:bg-muted"><X className="h-4 w-4" /></button></div>
+    <dl className="space-y-2 text-xs">
+      {([['Email', a.email], ['Phone', a.contact_no], ['School', a.school], ['ID / passport', a.id_number], ['Joined', new Date(a.created_at).toLocaleDateString()]] as const).map(([title, value]) => <div key={title}><dt className="text-muted-foreground">{title}</dt><dd className="break-words">{value || '—'}</dd></div>)}
+    </dl>
+    <div className="my-4 flex items-center justify-between"><span className="text-xs text-muted-foreground">{a.id_verified ? 'ID verified' : 'ID not verified'}</span><button onClick={onEdit} className="flex items-center gap-1 text-xs text-primary"><Pencil className="h-3 w-3" />Edit user</button></div>
+    <div className="space-y-4 border-t border-border py-4"><UserFilePreview path={a.id_file_path} label="Uploaded ID" /><UserFilePreview path={a.photo_path} label="Uploaded photo" /></div>
+    <section className="border-t border-border pt-4"><h3 className="mb-3 text-xs font-medium">Application history ({a.applications.length})</h3><div className="space-y-3">{a.applications.length ? a.applications.map((application) => <article key={application.source + application.id} className="border-b border-border/60 pb-3 text-xs"><p className="font-medium">{application.career || 'Career not recorded'}</p><p className="text-muted-foreground">{application.company || 'Company not recorded'} · {application.dates || 'Dates not recorded'}</p><p className="mt-1 text-[10px]">{application.source} #{application.id}</p><p className="mt-1 text-[10px] text-muted-foreground">Paid: {application.paid === null ? 'Not recorded' : application.paid ? 'Yes' : 'No'} · Indemnity: {application.indemnity === null ? 'Not recorded' : application.indemnity ? 'Yes' : 'No'} · Cancelled: {application.cancelled === null ? 'Not recorded' : application.cancelled ? 'Yes' : 'No'}</p></article>) : <p className="text-xs text-muted-foreground">No applications recorded.</p>}</div></section>
+  </aside>;
+}
+
+function UserCards({ rows, selectedId, busyId, onSelect, onEdit, onDelete, onVerify }: {
+  rows: AccountRow[]; selectedId: string | null; busyId: string | null;
+  onSelect: (id: string) => void; onEdit: (account: AccountRow) => void;
+  onDelete: (id: string, label: string) => void; onVerify: (id: string, verified: boolean) => void;
+}) {
+  return <div className="grid gap-3 border-t border-border bg-muted/20 p-3 sm:grid-cols-2 2xl:grid-cols-3">{rows.map((a) => {
+    const label = a.display_name || a.full_name || a.email || a.id;
+    return <article key={a.id} className={'min-w-0 rounded-md border bg-background p-4 ' + (selectedId === a.id ? 'border-primary/40' : 'border-border')}>
+      <button className="max-w-full truncate text-left text-sm font-medium hover:text-primary" onClick={() => onSelect(a.id)}>{label}</button>
+      <div className="my-2 flex flex-wrap gap-1">{a.roles.map((role) => <span key={role} className="rounded bg-teal/15 px-1.5 py-0.5 text-[10px]">{ROLE_LABELS[role]}</span>)}{a.is_spam && <span className="text-[10px] text-destructive">Spam</span>}</div>
+      <div className="space-y-1 text-xs text-muted-foreground"><p className="truncate" title={a.email ?? undefined}>{a.email || 'No email'}</p><p>{a.contact_no || 'No phone'}</p><p className="truncate" title={a.school ?? undefined}>{a.school || 'No school'}</p><p>ID / passport: {a.id_number || '—'}</p><p>Joined {new Date(a.created_at).toLocaleDateString()}</p></div>
+      <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
+        <label title="ID verified"><input type="checkbox" className="accent-teal" checked={a.id_verified === true} disabled={a.id_verified === null || busyId === a.id} onChange={(e) => onVerify(a.id, e.target.checked)} aria-label={'ID verified for ' + label} /></label>
+        <UserDocument path={a.id_file_path} kind="id" verified={a.id_verified === true} /><UserDocument path={a.photo_path} kind="photo" />
+        <button onClick={() => onEdit(a)} disabled={busyId === a.id} className="ml-auto flex items-center gap-1 rounded border border-border px-2 py-1 text-xs"><Pencil className="h-3 w-3" />Edit</button>
+        <button onClick={() => onDelete(a.id, label)} disabled={busyId === a.id} aria-label={'Delete account for ' + label} className="p-1 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
+      </div>
+      <button onClick={() => onSelect(a.id)} className="mt-3 text-xs text-primary">View details · {a.applications.length} applications</button>
+    </article>;
+  })}</div>;
+}
+
 function AdminUsers() {
   const qc = useQueryClient();
   const getAccountsFn = useServerFn(getAccounts);
@@ -660,6 +713,9 @@ function AdminUsers() {
   const removeAccountFn = useServerFn(removeAccount);
   const accounts = useQuery({ queryKey: ["admin", "accounts"], queryFn: () => getAccountsFn() });
   const [q, setQ] = useState("");
+  const [view, setView] = useState<"table" | "cards">("table");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selectedAccount = accounts.data?.find((account) => account.id === selectedId);
   const [editing, setEditing] = useState<AccountRow | null>(null);
   const [openGroups, setOpenGroups] = useState<string[]>([]);
   const [expandedApplicationUser, setExpandedApplicationUser] = useState<string | null>(null);
@@ -749,8 +805,14 @@ function AdminUsers() {
           </form>}
         </DialogContent>
       </Dialog>
-      <div className="border-b border-border bg-background px-6 py-6 text-foreground"><h1 className="text-2xl font-medium">Users {!accounts.isLoading && `(${rows.length})`}</h1></div>
-      <div className="bg-muted/30 px-6 py-5 text-foreground">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-primary px-6 py-4 text-primary-foreground">
+        <h1 className="font-sans text-lg font-medium">Users {!accounts.isLoading && `(${rows.length})`}</h1>
+        <div role="group" aria-label="Users view" className="flex rounded border border-primary-foreground/30 p-0.5">
+          {([['table', List, 'Table'], ['cards', LayoutGrid, 'Cards']] as const).map(([value, Icon, label]) => <button key={value} onClick={() => setView(value)} aria-pressed={view === value} className={'flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs transition ' + (view === value ? 'bg-background text-primary' : 'hover:bg-primary-foreground/10')}><Icon className="h-3.5 w-3.5" />{label}</button>)}
+        </div>
+      </div>
+      <div className="flex flex-col items-start xl:flex-row">
+      <div className={'min-w-0 w-full flex-1 px-4 py-4 text-foreground ' + (view === 'table' ? 'bg-[#7CCCC8]' : 'bg-muted/30')}>
         <div className="flex flex-wrap gap-1.5">
           <button
             onClick={() => setLetter(null)}
@@ -789,20 +851,20 @@ function AdminUsers() {
         ) : (
           <div className="mt-5 space-y-2">
             {[...new Set(rows.map((a) => /^[A-Z]/.test(surnameOf(a)) ? surnameOf(a).charAt(0) : "#"))].sort((a, b) => a === "#" ? 1 : b === "#" ? -1 : a.localeCompare(b)).map((group) => (
-              <details key={group} open={openGroups.includes(group)} onToggle={(event) => { const open = event.currentTarget.open; setOpenGroups((current) => open ? [...new Set([...current, group])] : current.filter((item) => item !== group)); }} className="group overflow-hidden rounded-md border border-border bg-background">
+              <details key={group} open={openGroups.includes(group)} onToggle={(event) => { const open = event.currentTarget.open; setOpenGroups((current) => open ? [...new Set([...current, group])] : current.filter((item) => item !== group)); }} className={"group overflow-hidden rounded-md border border-foreground/15 " + (view === "table" ? "bg-[#7CCCC8]" : "bg-background")}>
                 <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-2.5 text-sm [&::-webkit-details-marker]:hidden"><span className="w-5 font-medium text-primary">{group}</span><span className="text-xs text-muted-foreground">{rows.filter((a) => (/^[A-Z]/.test(surnameOf(a)) ? surnameOf(a).charAt(0) : "#") === group).length} users</span><ChevronDown className="ml-auto h-3.5 w-3.5 text-muted-foreground transition group-open:rotate-180" /></summary>
-                {openGroups.includes(group) && <div className="overflow-x-auto border-t border-border">
+                {openGroups.includes(group) && (view === "cards" ? <UserCards rows={rows.filter((a) => (/^[A-Z]/.test(surnameOf(a)) ? surnameOf(a).charAt(0) : "#") === group)} selectedId={selectedId} busyId={busyId} onSelect={setSelectedId} onEdit={(a) => setEditing({ ...a, roles: [...a.roles] })} onDelete={deleteAccountRow} onVerify={setIdVerified} /> : <div className="overflow-x-auto border-t border-border">
                   <table className="w-full min-w-[1120px] text-left text-xs">
-                    <thead className="bg-muted/50 text-muted-foreground"><tr>{["Name", "User type", "Email", "Phone", "School", "ID / passport", "Documents", "Applications", "Actions"].map((heading) => <th key={heading} className="whitespace-nowrap px-3 py-2 font-normal">{heading}</th>)}</tr></thead>
+                    <thead className="bg-background/40 text-foreground"><tr>{["Name", "User type", "Email", "Phone", "School", "ID / passport", "Documents", "Applications", "Actions"].map((heading) => <th key={heading} className="whitespace-nowrap px-3 py-2 font-normal">{heading}</th>)}</tr></thead>
                     <tbody>
                     {rows.filter((a) => (/^[A-Z]/.test(surnameOf(a)) ? surnameOf(a).charAt(0) : "#") === group).map((a) => {
                       const avatarUrl = a.avatar_path ? supabase.storage.from("avatars").getPublicUrl(a.avatar_path).data.publicUrl : null;
                       const label = a.display_name || a.full_name || a.email || a.id;
                       return <Fragment key={a.id}>
-                        <tr className="border-t border-border/60 transition-colors hover:bg-muted/30">
+                        <tr className={'border-t border-border/60 transition-colors hover:bg-teal/5 ' + (selectedId === a.id ? 'bg-teal/10' : '')}>
                           <td className="px-3 py-2.5"><div className="flex items-center gap-2" title={'Joined ' + new Date(a.created_at).toLocaleDateString()}>
                             {avatarUrl ? <img src={avatarUrl} alt="" className="h-7 w-7 shrink-0 rounded-full object-cover" /> : <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-teal/15 text-[11px] uppercase">{label.slice(0, 1)}</span>}
-                            <span className="max-w-40 truncate font-medium" title={label}>{label}</span>
+                            <button onClick={() => setSelectedId(a.id)} className="max-w-40 truncate text-left font-medium hover:text-primary" title={label} aria-label={'View details for ' + label}>{label}</button>
                             {a.is_spam && <span className="text-[10px] text-destructive">Spam</span>}
                           </div></td>
                           <td className="px-3 py-2.5"><div className="flex gap-1">{a.roles.map((role) => <span key={role} className="whitespace-nowrap rounded bg-muted px-1.5 py-1 text-[10px] text-foreground">{ROLE_LABELS[role]}</span>)}</div></td>
@@ -829,12 +891,14 @@ function AdminUsers() {
                     })}
                     </tbody>
                   </table>
-                </div>}
+                </div>)}
               </details>
             ))}
             {rows.length === 0 && <p className="py-6 text-sm text-muted-foreground">No users match "{q}".</p>}
           </div>
         )}
+      </div>
+      {selectedAccount && <UserDetailPanel account={selectedAccount} onClose={() => setSelectedId(null)} onEdit={() => setEditing({ ...selectedAccount, roles: [...selectedAccount.roles] })} />}
       </div>
     </div>
   );
