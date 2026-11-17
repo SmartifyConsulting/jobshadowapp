@@ -150,14 +150,19 @@ function Roles() {
                             {count} mentor{count === 1 ? "" : "s"} available
                           </span>
                         ) : (
-                          <a
-                            href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`Notify me — ${r.title}`)}&body=${encodeURIComponent(`Please let me know when a host becomes available for ${r.title}.`)}`}
-                            aria-label={`Notify me when a host is available for ${r.title}`}
-                            title="Notify me when a host is available"
-                            className="grid h-8 w-8 shrink-0 place-items-center self-start rounded-full bg-muted text-muted-foreground transition hover:bg-cta hover:text-cta-foreground"
-                          >
-                            <Bell className="h-4 w-4" />
-                          </a>
+                          <div className="flex shrink-0 items-center gap-2 self-start">
+                            <span className="rounded-full bg-muted px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                              None available
+                            </span>
+                            <a
+                              href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`Notify me — ${r.title}`)}&body=${encodeURIComponent(`Please let me know when a host becomes available for ${r.title}.`)}`}
+                              aria-label={`Notify me when a host is available for ${r.title}`}
+                              title="Notify me when a host is available"
+                              className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground transition hover:bg-cta hover:text-cta-foreground"
+                            >
+                              <Bell className="h-4 w-4" />
+                            </a>
+                          </div>
                         )}
                       </div>
                     );
