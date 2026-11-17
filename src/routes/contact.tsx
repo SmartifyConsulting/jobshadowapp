@@ -95,15 +95,15 @@ function Contact() {
             </div>
             <Link to="/share-experience" className="mt-3 inline-block text-sm font-semibold text-accent hover:underline">Share your experience with us</Link>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-3">
               {PARTNER_BLOCKS.map((b) => (
-                <div key={b.type} className={"rounded-xl border border-foreground/10 p-5 " + BLOCKS[b.type].color}>
+                <div key={b.type} className={"rounded-xl border border-foreground/10 p-3 sm:p-4 " + BLOCKS[b.type].color}>
                   <h2 className="font-display text-xl">{b.title}</h2>
-                  <p className="mt-3 text-sm">{BLOCKS[b.type].text}</p>
-                  <ul className="mt-3 space-y-2">
+                  <p className="mt-2 text-sm leading-snug">{BLOCKS[b.type].text}</p>
+                  <ul className="mt-2 space-y-1">
                     {b.points.map((p) => <li key={p} className="flex gap-2 text-xs"><Check className="h-3.5 w-3.5 shrink-0 text-current" />{p}</li>)}
                   </ul>
-                  <Link to="/contact" search={{ type: b.type }} className="mt-4 inline-block rounded-full bg-primary px-5 py-2 text-xs font-bold uppercase tracking-wide text-primary-foreground">{b.cta}</Link>
+                  <Link to="/contact" search={{ type: b.type }} className="mt-2 inline-block rounded-full bg-primary px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-primary-foreground">{b.cta}</Link>
                 </div>
               ))}
           </div>

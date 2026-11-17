@@ -37,11 +37,12 @@ export function SupportChatWidget({ viewerRole }: { viewerRole?: string | undefi
   return (
     <div className="fixed bottom-5 right-5 z-50">
       {open && (
-        <div className="mb-3 flex h-[28rem] w-80 max-w-[calc(100vw-2.5rem)] flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-xl">
+        <div className="relative w-80 max-w-[calc(100vw-2.5rem)]">
+          <img src="/assets/reddy-mascot.webp" alt="" aria-hidden="true" className="pointer-events-none absolute -top-20 left-0 z-10 w-24 origin-bottom-right -rotate-12 object-contain drop-shadow-lg sm:top-auto sm:-left-28 sm:bottom-6 sm:w-32 sm:-rotate-6" />
+        <div className="flex h-[28rem] max-h-[calc(100dvh-8rem)] flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-xl sm:max-h-[calc(100dvh-3rem)]">
           <div className="flex items-center justify-between bg-primary px-4 py-3 text-primary-foreground">
             <div className="flex items-center gap-2">
-              <img src="/assets/reddy-mascot.webp" alt="" className="h-8 w-8 rounded-full bg-white object-contain" />
-              <p className="font-display text-sm uppercase tracking-wide">Ask Reddy</p>
+              <p className="font-display text-lg uppercase tracking-wide">Ask Reddy</p>
             </div>
             <button onClick={() => setOpen(false)} aria-label="Close support chat" className="rounded p-1 hover:bg-primary-foreground/10"><X className="h-4 w-4" /></button>
           </div>
@@ -65,13 +66,14 @@ export function SupportChatWidget({ viewerRole }: { viewerRole?: string | undefi
             </button>
           </div>
         </div>
+        </div>
       )}
-      <button
-        onClick={() => setOpen((v) => !v)} aria-label={open ? "Close support chat" : "Open support chat"}
+      {!open && <button
+        onClick={() => setOpen(true)} aria-label="Open support chat"
         className="grid h-16 w-16 place-items-center rounded-full bg-white shadow-warm transition hover:brightness-105"
       >
-        {open ? <X className="h-6 w-6 text-primary" /> : <img src="/assets/reddy-mascot.webp" alt="Chat with Reddy" className="h-full w-full rounded-full object-cover" />}
-      </button>
+        <img src="/assets/reddy-mascot.webp" alt="Chat with Reddy" className="h-full w-full rounded-full object-cover" />
+      </button>}
     </div>
   );
 }
