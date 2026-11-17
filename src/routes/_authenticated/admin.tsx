@@ -8,7 +8,7 @@ import { draftCareerDescription } from "@/lib/career-ai.functions";
 import { accountInitial, alphabetInitial } from "@/lib/alphabet";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Calendar } from "@/components/ui/calendar";
-import { SiteHeader } from "@/components/SiteLayout";
+import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
@@ -124,6 +124,7 @@ function AdminPage() {
         </main>
       </div>
       </div>
+      <SiteFooter />
     </div>
   );
 }

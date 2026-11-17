@@ -2,7 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Menu, X, Facebook, Instagram } from "lucide-react";
-import { BrandLogo, HeaderLogo } from "@/components/BrandLogo";
+import { HeaderLogo } from "@/components/BrandLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { SupportChatWidget } from "@/components/SupportChatWidget";
@@ -128,49 +128,55 @@ export function SiteLayout({ children, headerLogo, className = "" }: { children:
     <div className={`flex min-h-screen flex-col ${className}`}>
       <SiteHeader headerLogo={headerLogo} />
       <main className="flex flex-1 flex-col">{children}</main>
-      <footer className="bg-brand-deep text-primary-foreground">
-        <div className="mx-auto grid max-w-7xl gap-6 px-5 py-6 md:grid-cols-4">
-          <div className="md:col-span-2">
-            <p className="max-w-sm font-display text-lg leading-snug">Be sure about the career and life you choose with Job Shadow.</p>
-            <a href="mailto:info@jobshadow.co.za" className="mt-1 inline-block text-sm font-bold text-accent hover:underline">info@jobshadow.co.za</a>
-            <div className="mt-2 flex gap-2">
-              {SOCIAL.map((s) => (
-                <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label} className="grid h-8 w-8 place-items-center rounded-full bg-primary-foreground text-primary hover:bg-accent">
-                  <s.icon className="h-4 w-4" />
-                </a>
-              ))}
-            </div>
-            <Link to="/share-experience" className="mt-2 inline-block text-sm font-semibold text-accent hover:underline">Share your experience with us</Link>
-          </div>
-          <div className="text-sm">
-            <p className="font-display text-base text-accent">Explore</p>
-            <ul className="mt-1 space-y-0.5 opacity-90">
-              <li><Link to="/roles">Careers</Link></li>
-              <li><Link to="/auth">Book a Job Shadow</Link></li>
-              <li><Link to="/how-to">How To</Link></li>
-              <li><Link to="/send-to-a-friend">Send to a Friend</Link></li>
-              <li><Link to="/real-stories">Real Stories</Link></li>
-            </ul>
-          </div>
-          <div className="text-sm">
-            <p className="font-display text-base text-accent">Get involved</p>
-            <ul className="mt-1 space-y-0.5 opacity-90">
-              <li><Link to="/contact">Sponsor a learner</Link></li>
-              <li><Link to="/contact">Hosting contact</Link></li>
-              <li><Link to="/contact">School contact</Link></li>
-              <li><Link to="/partners">Partner with us</Link></li>
-            </ul>
-          </div>
-        </div>
-        <div>
-          <div className="mx-auto flex max-w-7xl items-center justify-between gap-5 px-5 py-2">
-            <p className="text-xs opacity-80">© JobShadow {new Date().getFullYear()}</p>
-            <BrandLogo loading="lazy" className="h-12 w-12" />
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
       <SupportChatWidget viewerRole={isAdmin ? "admin" : session?.roles?.[0]} />
     </div>
+  );
+}
+
+/** The site footer, shared verbatim with SiteHeader by Admin/Host Portal. */
+export function SiteFooter() {
+  return (
+    <footer className="bg-brand-deep text-primary-foreground">
+      <div className="mx-auto grid max-w-7xl gap-6 px-5 py-6 md:grid-cols-4">
+        <div className="md:col-span-2">
+          <p className="max-w-sm font-display text-lg leading-snug">Be sure about the career and life you choose with Job Shadow.</p>
+          <a href="mailto:info@jobshadow.co.za" className="mt-1 inline-block text-sm font-bold text-accent hover:underline">info@jobshadow.co.za</a>
+          <div className="mt-2 flex gap-2">
+            {SOCIAL.map((s) => (
+              <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label} className="grid h-8 w-8 place-items-center rounded-full bg-primary-foreground text-primary hover:bg-accent">
+                <s.icon className="h-4 w-4" />
+              </a>
+            ))}
+          </div>
+          <Link to="/share-experience" className="mt-2 inline-block text-sm font-semibold text-accent hover:underline">Share your experience with us</Link>
+        </div>
+        <div className="text-sm">
+          <p className="font-display text-base text-accent">Explore</p>
+          <ul className="mt-1 space-y-0.5 opacity-90">
+            <li><Link to="/roles">Careers</Link></li>
+            <li><Link to="/auth">Book a Job Shadow</Link></li>
+            <li><Link to="/how-to">How To</Link></li>
+            <li><Link to="/send-to-a-friend">Send to a Friend</Link></li>
+            <li><Link to="/real-stories">Real Stories</Link></li>
+          </ul>
+        </div>
+        <div className="text-sm">
+          <p className="font-display text-base text-accent">Get involved</p>
+          <ul className="mt-1 space-y-0.5 opacity-90">
+            <li><Link to="/contact">Sponsor a learner</Link></li>
+            <li><Link to="/contact">Hosting contact</Link></li>
+            <li><Link to="/contact">School contact</Link></li>
+            <li><Link to="/partners">Partner with us</Link></li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-5 px-5 py-2">
+          <p className="text-xs opacity-80">© JobShadow {new Date().getFullYear()}</p>
+        </div>
+      </div>
+    </footer>
   );
 }
 

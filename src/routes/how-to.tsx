@@ -27,6 +27,14 @@ function HowTo() {
           <span className="font-display text-2xl uppercase">How To</span>
         </div>
       </div>
+      <section className="bg-white px-5 py-10">
+        <figure className="mx-auto max-w-7xl">
+          <a href="/assets/jobshadow-flow-infographic.png" target="_blank" rel="noopener noreferrer" aria-label="Open the full-size How Job Shadow Works infographic">
+            <img src="/assets/jobshadow-flow-infographic.png" alt="How Job Shadow works: step-by-step guides for students and hosts" width={2098} height={749} className="h-auto w-full" loading="lazy" />
+          </a>
+          <figcaption className="sr-only">Students: explore careers, find a host, request a booking, complete indemnity and consent forms, get approval, do your job shadow and share feedback. Hosts: register, create your profile, set availability, complete host forms, receive booking requests, confirm a booking, host the experience and receive feedback.</figcaption>
+        </figure>
+      </section>
       <section className="bg-primary">
         <div className="mx-auto grid max-w-7xl gap-6 px-5 py-14 md:grid-cols-3">
           {VIDEOS.map((v) => (
