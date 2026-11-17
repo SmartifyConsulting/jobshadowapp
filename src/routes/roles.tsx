@@ -165,11 +165,11 @@ function Roles() {
       {grouped.map(([f, roles], fi) => {
         const fieldOpen = isFieldOpen(f);
         return (
-          <div key={f} className="mx-auto mt-4 w-full max-w-6xl overflow-hidden rounded-lg border-2 border-ivory px-3">
+          <div key={f} className="mx-auto mt-4 w-full max-w-6xl overflow-hidden rounded-lg border-[8px] border-ivory bg-ivory">
             <button
               onClick={() => toggleField(f)}
               aria-expanded={fieldOpen}
-              className={`flex w-full items-center justify-between gap-3 px-5 py-4 text-left ${BAND_COLORS[fi % BAND_COLORS.length]}`}
+              className={`flex min-h-14 w-full items-center justify-between gap-3 px-5 py-4 text-left ${BAND_COLORS[fi % BAND_COLORS.length]}`}
             >
               <h2 className="font-display text-2xl uppercase">{f}</h2>
               <ChevronDown className={`h-6 w-6 shrink-0 transition ${fieldOpen ? "rotate-180" : ""}`} />

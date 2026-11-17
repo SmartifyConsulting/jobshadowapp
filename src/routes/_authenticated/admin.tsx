@@ -405,7 +405,7 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
             {[...new Set(rows.map((r) => alphabetInitial(fmt(r["name"]))))].sort((a, b) => a === "#" ? 1 : b === "#" ? -1 : a.localeCompare(b)).map((group, gi) => {
               const groupRows = rows.filter((r) => alphabetInitial(fmt(r["name"])) === group);
               return (
-                <Accordion key={group} type="multiple" className="overflow-hidden rounded-lg border-2 border-ivory">
+                <Accordion key={group} type="multiple" className="overflow-hidden rounded-lg border-[8px] border-ivory bg-ivory">
                   <AccordionItem value={group} className="border-none">
                     <AccordionTrigger className={`justify-start gap-3 px-5 py-3 text-left hover:no-underline [&>svg]:ml-auto ${BAND_COLORS[gi % BAND_COLORS.length]}`}>
                       <span className="font-display text-xl uppercase">{group}</span>
@@ -932,7 +932,7 @@ export function AdminUsers() {
         ) : (
           <Accordion type="multiple" value={openGroups} onValueChange={setOpenGroups} className="mt-5 space-y-2">
             {[...new Set(rows.map((a) => accountInitial(a)))].sort((a, b) => a === "#" ? 1 : b === "#" ? -1 : a.localeCompare(b)).map((group) => (
-              <AccordionItem key={group} value={group} className={"group overflow-hidden rounded-md border border-foreground/15 " + (view === "table" ? "bg-[#7CCCC8]" : "bg-background")}>
+              <AccordionItem key={group} value={group} className={"group overflow-hidden rounded-md border-[8px] border-ivory " + (view === "table" ? "bg-[#7CCCC8]" : "bg-background")}>
                 <AccordionTrigger className="justify-start gap-3 px-4 py-2.5 text-sm hover:no-underline [&>svg]:ml-auto"><span className="w-5 font-medium text-primary">{group}</span><span className="text-xs text-muted-foreground">{rows.filter((a) => (accountInitial(a)) === group).length} users</span></AccordionTrigger>
                 <AccordionContent className="pb-0">{view === "cards" ? <UserCards rows={rows.filter((a) => (accountInitial(a)) === group)} selectedId={selectedId} busyId={busyId} onSelect={setSelectedId} onEdit={(a) => setEditing({ ...a, roles: [...a.roles] })} onDelete={deleteAccountRow} onVerify={setIdVerified} /> : <div className="overflow-x-auto border-t border-border [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-track]:bg-muted">
                   <table className="w-full min-w-[820px] text-left text-xs">
@@ -1333,7 +1333,7 @@ function BookingSettings() {
     qc.invalidateQueries({ queryKey: ["booking-settings"] });
   }
 
-  const sectionClass = "overflow-hidden rounded-lg border-2 border-ivory";
+  const sectionClass = "overflow-hidden rounded-lg border-[8px] border-ivory bg-ivory";
   const triggerClass = (color: string) => `px-5 py-3.5 text-left font-display text-lg uppercase hover:no-underline [&>svg]:ml-4 ${color}`;
 
   return (
