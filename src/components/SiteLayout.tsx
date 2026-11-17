@@ -1,10 +1,10 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Menu, X, Facebook, Instagram, ChevronDown } from "lucide-react";
+import { Menu, X, Facebook, Instagram } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { supabase } from "@/integrations/supabase/client";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 
 export const SITE_NAV = [
   { to: "/", label: "Home" },
@@ -34,6 +34,32 @@ const SOCIAL = [
   { href: "https://www.facebook.com/JobShadowBookings", icon: Facebook, label: "Facebook" },
   { href: "https://www.instagram.com/jobshadowbookings", icon: Instagram, label: "Instagram" },
 ];
+
+function AccountMenu({ displayName, avatarUrl, isAdmin, logout }: { displayName: string; avatarUrl: string | null; isAdmin: boolean; logout: () => void }) {
+  return <DropdownMenu>
+    <DropdownMenuTrigger aria-label="Open account menu" className="rounded-full transition hover:ring-2 hover:ring-primary-foreground/40">
+      {avatarUrl ? <img src={avatarUrl} alt="" className="h-8 w-8 rounded-full object-cover" /> : <span className="grid h-8 w-8 place-items-center rounded-full bg-primary-foreground/20 text-xs uppercase">{displayName.slice(0, 1)}</span>}
+    </DropdownMenuTrigger>
+    <DropdownMenuContent align="end" className="max-w-[calc(100vw-2rem)]">
+      <DropdownMenuLabel className="max-w-xs break-words">{displayName}</DropdownMenuLabel>
+      <DropdownMenuSeparator />
+      {isAdmin && <DropdownMenuItem asChild><Link to="/admin">Admin Dashboard</Link></DropdownMenuItem>}
+      <DropdownMenuItem asChild><Link to="/my-account">My Account</Link></DropdownMenuItem>
+      <DropdownMenuItem asChild><Link to="/my-account">My Bookings</Link></DropdownMenuItem>
+      <DropdownMenuItem asChild><Link to="/mentor">Mentor Portal</Link></DropdownMenuItem>
+      <DropdownMenuItem asChild><Link to="/profile">Profile Settings</Link></DropdownMenuItem>
+      <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenu>;
+}
+
+export function SiteAccountMenu() {
+  const { data: session } = useSession();
+  const navigate = useNavigate();
+  if (!session?.user) return null;
+  const name = session.displayName || (session.user.user_metadata?.["name"] as string | undefined) || session.user.email || "Account";
+  return <AccountMenu displayName={name} avatarUrl={session.avatarUrl} isAdmin={session.isAdmin} logout={() => { void supabase.auth.signOut().then(() => navigate({ to: "/" })); }} />;
+}
 
 export function SiteLayout({ children, hideLogo }: { children: ReactNode; hideLogo?: boolean }) {
   const [open, setOpen] = useState(false);
@@ -70,26 +96,7 @@ export function SiteLayout({ children, hideLogo }: { children: ReactNode; hideLo
                 {n.label}
               </Link>
             ))}
-            {user && (
-              <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-2 text-sm font-semibold">
-                  {avatarUrl ? (
-                    <img src={avatarUrl} alt="" className="h-7 w-7 rounded-full object-cover" />
-                  ) : (
-                    <span className="grid h-7 w-7 place-items-center rounded-full bg-primary-foreground/20 text-xs uppercase">{displayName.slice(0, 1)}</span>
-                  )}
-                  <span className="max-w-32 truncate">{displayName}</span> <ChevronDown className="h-4 w-4 shrink-0" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {isAdmin && <DropdownMenuItem asChild><Link to="/admin">Admin Dashboard</Link></DropdownMenuItem>}
-                  <DropdownMenuItem asChild><Link to="/my-account">My Account</Link></DropdownMenuItem>
-                  <DropdownMenuItem asChild><Link to="/my-account">My Bookings</Link></DropdownMenuItem>
-                  <DropdownMenuItem asChild><Link to="/mentor">Mentor Portal</Link></DropdownMenuItem>
-                  <DropdownMenuItem asChild><Link to="/profile">Profile Settings</Link></DropdownMenuItem>
-                  <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+            {user && <AccountMenu displayName={displayName} avatarUrl={avatarUrl} isAdmin={isAdmin} logout={logout} />}
             <div className="ml-2 flex gap-2">
               {SOCIAL.map((s) => (
                 <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label} className="grid h-8 w-8 place-items-center rounded-full bg-primary-foreground text-primary transition hover:bg-accent">
@@ -98,21 +105,12 @@ export function SiteLayout({ children, hideLogo }: { children: ReactNode; hideLo
               ))}
             </div>
           </nav>
-          <button className="absolute right-5 rounded p-2 lg:hidden" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button>
+          <div className="absolute right-5 flex items-center gap-3 lg:hidden">{user && <AccountMenu displayName={displayName} avatarUrl={avatarUrl} isAdmin={isAdmin} logout={logout} />}<button className="rounded p-2" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button></div>
         </div>
         {open && (
           <nav className="flex flex-col gap-3 border-t border-primary-foreground/20 px-5 py-4 font-semibold lg:hidden">
             {SITE_NAV.map((n) => <Link key={n.to} to={n.to} onClick={() => setOpen(false)}>{n.label}</Link>)}
-            {user && (
-              <>
-                {isAdmin && <Link to="/admin" onClick={() => setOpen(false)}>Admin Dashboard</Link>}
-                <Link to="/my-account" onClick={() => setOpen(false)}>My Account</Link>
-                <Link to="/my-account" onClick={() => setOpen(false)}>My Bookings</Link>
-                <Link to="/mentor" onClick={() => setOpen(false)}>Mentor Portal</Link>
-                <Link to="/profile" onClick={() => setOpen(false)}>Profile Settings</Link>
-                <button className="text-left" onClick={() => { setOpen(false); void logout(); }}>Logout</button>
-              </>
-            )}
+
           </nav>
         )}
       </header>

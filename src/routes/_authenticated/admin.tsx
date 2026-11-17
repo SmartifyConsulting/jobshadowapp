@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { BrandLogo } from "@/components/BrandLogo";
 import { accountInitial, alphabetInitial } from "@/lib/alphabet";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
-import { SITE_NAV } from "@/components/SiteLayout";
+import { SITE_NAV, SiteAccountMenu } from "@/components/SiteLayout";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
@@ -98,7 +98,7 @@ function AdminPage() {
           <nav aria-label="Website navigation" className="flex flex-wrap items-center gap-x-5 gap-y-2">
             {SITE_NAV.map((item) => <Link key={item.to} to={item.to} activeOptions={{ exact: item.to === "/" }} activeProps={{ className: "border-cta" }} className="border-b-4 border-transparent py-2 text-sm font-semibold transition hover:border-accent">{item.label}</Link>)}
           </nav>
-          <button onClick={() => supabase.auth.signOut().then(() => (window.location.href = "/"))} className="text-sm font-medium hover:underline">Logout</button>
+          <SiteAccountMenu />
         </header>
         <main className="p-0">
           {admin.isLoading ? (
