@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { PlayCircle, ChevronDown, Search } from "lucide-react";
+import { PlayCircle, ChevronDown, Search, Bell } from "lucide-react";
 import { SiteLayout } from "@/components/SiteLayout";
 import { YouTube } from "@/components/YouTube";
 import { supabase } from "@/integrations/supabase/client";
@@ -86,7 +86,7 @@ function Roles() {
         <a href="#roles-list" className="mt-6 inline-block rounded-2xl bg-cta px-7 py-3 text-sm font-bold uppercase tracking-wide text-cta-foreground transition hover:brightness-110">Browse Roles</a>
         <div className="mx-auto mt-6 max-w-2xl text-sm">
           <p>Need to easily identify your <strong>most suited career orientation</strong>, <strong>tertiary qualification</strong> and <strong>school subject requirements</strong> for this ideal career?</p>
-          <p className="mt-3">Why not <strong>book a job shadow</strong> and get a <strong>10% discount on an online career guidance tool</strong>.</p>
+          <p className="mt-3">Why not <strong>book a job shadow</strong> and get a <strong>10% discount on an online Career Guidance Tool</strong>.</p>
           <p className="mt-3">This is an online self-evaluation process which is <strong>easily accessible</strong>, identifies your interests and skills to <strong>best match your personality type</strong>, with <strong>immediate feedback</strong> via a report card to your inbox the moment you are done!</p>
           <p className="mt-3">Please <strong>email</strong> <a href={`mailto:${CONTACT_EMAIL}?subject=Career%20Guidance%20Tool`} className="font-bold">{CONTACT_EMAIL}</a> if you are interested and we will send you a promo code and the link to access the <strong>Career Guidance Tool.</strong></p>
         </div>
@@ -104,7 +104,7 @@ function Roles() {
           />
         </div>
         <p className="mx-auto mt-3 max-w-xl text-center text-xs text-primary-foreground/70">
-          "None available" roles don't currently have a host — <a href={`mailto:${CONTACT_EMAIL}?subject=Role%20availability`} className="font-bold underline">email us</a> about any of these and we'll let you know when one opens up.
+          Tap the bell on a role with no host to be notified when one becomes available.
         </p>
       </div>
 
@@ -125,27 +125,44 @@ function Roles() {
               <ChevronDown className={`h-6 w-6 shrink-0 transition ${fieldOpen ? "rotate-180" : ""}`} />
             </button>
             {fieldOpen && (
-              <div className="divide-y divide-border bg-background text-foreground">
-                {roles.map((r) => {
-                  const count = mentorCounts.get(r.title.trim().toLowerCase()) ?? 0;
-                  return (
-                    <div key={r.slug} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-                      <div className="flex-1">
-                        <p className="flex items-center gap-2 text-sm font-semibold">
-                          {r.title}{r.video && <PlayCircle className="h-4 w-4" aria-label="Has video" />}
-                        </p>
-                        {r.summary.split("\n").map((p, i) => <p key={i} className="mt-1 text-sm text-muted-foreground">{p}</p>)}
-                        {r.video && <div className="mt-3 max-w-xl"><YouTube id={r.video} title={r.title} /></div>}
-                        {count > 0 && (
-                          <Link to="/auth" className="mt-3 inline-block rounded-full bg-cta px-5 py-2 text-xs font-semibold uppercase tracking-wider text-cta-foreground">Book this Job Shadow</Link>
+              <div className="bg-background text-foreground">
+                <div className="hidden items-center justify-between gap-6 border-b border-border px-5 py-2 sm:flex">
+                  <span />
+                  <span className="shrink-0 text-xs font-bold uppercase tracking-wide text-muted-foreground">Host</span>
+                </div>
+                <div className="divide-y divide-border">
+                  {roles.map((r) => {
+                    const count = mentorCounts.get(r.title.trim().toLowerCase()) ?? 0;
+                    return (
+                      <div key={r.slug} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                        <div className="flex-1">
+                          <p className="flex items-center gap-2 text-sm font-semibold">
+                            {r.title}{r.video && <PlayCircle className="h-4 w-4" aria-label="Has video" />}
+                          </p>
+                          {r.summary.split("\n").map((p, i) => <p key={i} className="mt-1 text-sm text-muted-foreground">{p}</p>)}
+                          {r.video && <div className="mt-3 max-w-xl"><YouTube id={r.video} title={r.title} /></div>}
+                          {count > 0 && (
+                            <Link to="/auth" className="mt-3 inline-block rounded-full bg-cta px-5 py-2 text-xs font-semibold uppercase tracking-wider text-cta-foreground">Book this Job Shadow</Link>
+                          )}
+                        </div>
+                        {count > 0 ? (
+                          <span className="shrink-0 self-start rounded-full bg-cta px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-cta-foreground">
+                            {count} mentor{count === 1 ? "" : "s"} available
+                          </span>
+                        ) : (
+                          <a
+                            href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`Notify me — ${r.title}`)}&body=${encodeURIComponent(`Please let me know when a host becomes available for ${r.title}.`)}`}
+                            aria-label={`Notify me when a host is available for ${r.title}`}
+                            title="Notify me when a host is available"
+                            className="grid h-8 w-8 shrink-0 place-items-center self-start rounded-full bg-muted text-muted-foreground transition hover:bg-cta hover:text-cta-foreground"
+                          >
+                            <Bell className="h-4 w-4" />
+                          </a>
                         )}
                       </div>
-                      <span className={`shrink-0 self-start rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide ${count > 0 ? "bg-cta text-cta-foreground" : "bg-muted text-muted-foreground"}`}>
-                        {count > 0 ? `${count} mentor${count === 1 ? "" : "s"} available` : "None available"}
-                      </span>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>
