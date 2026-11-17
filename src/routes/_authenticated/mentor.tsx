@@ -232,7 +232,7 @@ function HostSettings() {
       _max_shadows_per_month: maxMonth ? Number(maxMonth) : null,
       _buffer_days: bufferDays ? Number(bufferDays) : null,
       _blackout_dates: blackoutDates.map(toUsDate),
-    });
+    } as never);
     setBusy(false);
     if (error) return setErr(error.message);
     setSaved(true);

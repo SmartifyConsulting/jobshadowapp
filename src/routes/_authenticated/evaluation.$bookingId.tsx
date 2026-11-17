@@ -76,7 +76,7 @@ function EvaluationBody({ bookingId, ctx }: { bookingId: string; ctx: { career: 
       _booking: bookingId, _role: ctx.viewer_role, _ratings: ratings,
       _continue: continueText || null, _stop: stopText || null, _start: startText || null,
       _extra: extraText || null, _comments: comments || null,
-    });
+    } as never);
     setBusy(false);
     if (error) return setErr(error.message);
     setDone(true);
