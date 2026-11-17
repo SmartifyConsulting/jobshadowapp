@@ -52,6 +52,7 @@ export type Database = {
           internship_notes: string | null
           internship_preapproved: boolean
           location: string | null
+          mode: string | null
           paid_at: string | null
           reminder_sent_at: string | null
           sector: string | null
@@ -76,6 +77,7 @@ export type Database = {
           internship_notes?: string | null
           internship_preapproved?: boolean
           location?: string | null
+          mode?: string | null
           paid_at?: string | null
           reminder_sent_at?: string | null
           sector?: string | null
@@ -100,6 +102,7 @@ export type Database = {
           internship_notes?: string | null
           internship_preapproved?: boolean
           location?: string | null
+          mode?: string | null
           paid_at?: string | null
           reminder_sent_at?: string | null
           sector?: string | null
@@ -156,6 +159,7 @@ export type Database = {
           mentor_name: string | null
           mentor_phone: string | null
           mentor_position: string | null
+          mode: string | null
           period: string | null
           sector: string | null
           total_days: number | null
@@ -191,6 +195,7 @@ export type Database = {
           mentor_name?: string | null
           mentor_phone?: string | null
           mentor_position?: string | null
+          mode?: string | null
           period?: string | null
           sector?: string | null
           total_days?: number | null
@@ -226,6 +231,7 @@ export type Database = {
           mentor_name?: string | null
           mentor_phone?: string | null
           mentor_position?: string | null
+          mode?: string | null
           period?: string | null
           sector?: string | null
           total_days?: number | null
@@ -563,6 +569,7 @@ export type Database = {
           id: number
           location: string
           max_applicants: number
+          mode: string
           sector: string
         }[]
       }
@@ -586,6 +593,7 @@ export type Database = {
           description: string
           id: number
           location: string
+          mode: string
           sector: string
         }[]
       }

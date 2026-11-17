@@ -44,7 +44,7 @@ const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string
     { key: "backup_mentor_name", label: "Backup mentor" }, { key: "backup_mentor_phone", label: "Backup mentor phone" }, { key: "backup_mentor_email", label: "Backup mentor email" },
     { key: "hr_contact_name", label: "HR contact name" }, { key: "hr_contact_phone", label: "HR contact phone" }, { key: "hr_contact_email", label: "HR contact email" },
     { key: "dates", label: "Dates" }, { key: "max_applicants", label: "Places", field: "number" }, { key: "amount", label: "Price (R)", field: "number" },
-    { key: "active", label: "Active", field: "checkbox" }, { key: "logo_path", label: "Logo" } ] },
+    { key: "active", label: "Active", field: "checkbox" }, { key: "mode", label: "Type" }, { key: "logo_path", label: "Logo" } ] },
   { id: "vouchers", label: "Vouchers", icon: ShoppingCart, table: "vouchers", singular: "Vouchers", cols: [
     { key: "id", label: "#" }, { key: "name", label: "Name" }, { key: "code", label: "Code" },
     { key: "discount", label: "Discount", field: "number" }, { key: "available_from", label: "From", field: "date" },
@@ -468,7 +468,7 @@ function CreateRole({ onDone, onCancel }: { onDone: () => void; onCancel: () => 
     if (!vals["company"] || !vals["career"]) { setErr("Company and Career are required."); return; }
     setBusy(true);
     setErr(null);
-    const patch: Record<string, unknown> = { ...vals, amount: Number(vals["amount"]) || ROLE_TYPES[type]!.amount, active };
+    const patch: Record<string, unknown> = { ...vals, amount: Number(vals["amount"]) || ROLE_TYPES[type]!.amount, active, mode: ROLE_TYPES[type]!.label };
     if (patch["max_applicants"]) patch["max_applicants"] = Number(patch["max_applicants"]);
     const { error } = await supabase.from("companies").insert(patch as never);
     setBusy(false);
@@ -794,6 +794,15 @@ function EditRecord({ title, table, cols, row, onDone, onCancel }: { title: stri
               />
             ) : table === "companies" && c.key === "logo_path" ? (
               <LogoUpload key={c.key} companyId={row["id"]} value={(vals[c.key] as string) ?? ""} onChange={(v) => setVals({ ...vals, logo_path: v })} />
+            ) : table === "companies" && c.key === "mode" ? (
+              <label key={c.key} className="block text-sm">
+                {c.label}
+                <select value={(vals["mode"] as string) ?? ""} onChange={(e) => setVals({ ...vals, mode: e.target.value })} className="mt-1 w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none focus:border-primary-foreground [&>option]:text-foreground">
+                  <option value="">—</option>
+                  <option value="Face-to-Face">Face-to-Face</option>
+                  <option value="Online Interview">Online Interview</option>
+                </select>
+              </label>
             ) : (
               <label key={c.key} className="block text-sm">
                 {c.label}

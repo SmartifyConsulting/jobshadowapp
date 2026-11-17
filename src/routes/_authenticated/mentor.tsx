@@ -21,7 +21,7 @@ export const Route = createFileRoute("/_authenticated/mentor")({
 type Placement = {
   id: number; company: string; career: string; sector: string; location: string; dates: string | null;
   active: boolean; max_applicants: number | null; days_per_shadow: number | null;
-  arrival_time: string | null; collection_time: string | null; description: string | null;
+  arrival_time: string | null; collection_time: string | null; description: string | null; mode: string | null;
 };
 type MentorBooking = {
   id: string; company: string; career: string; location: string; shadow_date: string; status: string;
@@ -158,7 +158,7 @@ function PlacementCard({ placement }: { placement: Placement }) {
     <div className="rounded-lg border bg-card p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className="font-semibold">{placement.career} — {placement.company}</p>
+          <p className="font-semibold">{placement.career} — {placement.company}{placement.mode ? ` (${placement.mode})` : ""}</p>
           <p className="text-sm text-muted-foreground">{placement.sector} · {placement.location}</p>
         </div>
         <span className={`rounded-full px-3 py-1 text-xs font-semibold ${placement.active ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"}`}>

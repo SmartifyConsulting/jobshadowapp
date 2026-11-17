@@ -248,7 +248,7 @@ function Bookings() {
         <div key={b.id} className="rounded-lg border bg-card p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <p className="font-semibold">{b.career} · {b.company}</p>
+              <p className="font-semibold">{b.career} · {b.company}{b.mode ? ` (${b.mode})` : ""}</p>
               <p className="text-sm text-muted-foreground">{b.sector} · {b.location} · {b.shadow_date}</p>
             </div>
             <span className="rounded-full bg-accent px-3 py-1 text-xs font-semibold text-accent-foreground">{STATUS[b.status] ?? b.status}</span>
@@ -274,7 +274,7 @@ function Bookings() {
   );
 }
 
-type Placement = { id: number; company: string; sector: string; career: string; location: string; availability: string; amount: number; days_per_shadow: number | null; arrival_time: string | null; collection_time: string | null; description: string | null };
+type Placement = { id: number; company: string; sector: string; career: string; location: string; availability: string; amount: number; days_per_shadow: number | null; arrival_time: string | null; collection_time: string | null; description: string | null; mode: string | null };
 
 function NewBooking() {
   const qc = useQueryClient();
@@ -326,7 +326,7 @@ function NewBooking() {
     if (!chosen || !effectiveDate) return setMsg("Choose a career and a date.");
     if (duplicate && !confirmDupe) return;
     const { error } = await supabase.from("bookings").insert({
-      company_id: chosen.id, company: chosen.company, sector: chosen.sector, career: chosen.career, location: chosen.location,
+      company_id: chosen.id, company: chosen.company, sector: chosen.sector, career: chosen.career, location: chosen.location, mode: chosen.mode,
       shadow_date: effectiveDate, base_amount: base, voucher_code: voucher?.code ?? null, discount: voucher?.discount ?? 0, amount_due: due,
       ad_hoc_requested: requestingDate, ad_hoc_note: requestingDate ? (requestNote || null) : null,
     } as never);
@@ -343,7 +343,8 @@ function NewBooking() {
   const titles = ["Sector", "Career", "Host", "Placement Details", "Date & Pay"];
   const hostLabel = (p: Placement, i: number) => {
     const sameLocation = hosts.filter((h) => h.location === p.location);
-    return sameLocation.length > 1 ? `${p.location} (Option ${sameLocation.indexOf(p) + 1})` : p.location || `Host ${i + 1}`;
+    const base = sameLocation.length > 1 ? `${p.location} (Option ${sameLocation.indexOf(p) + 1})` : p.location || `Host ${i + 1}`;
+    return p.mode ? `${base} — ${p.mode}` : base;
   };
   const STEP_BG = ["bg-teal text-teal-foreground", "bg-cta text-cta-foreground", "bg-teal text-teal-foreground", "bg-cta text-cta-foreground", "bg-teal text-teal-foreground"];
   const canContinue = (step === 1 && !!sector) || (step === 2 && !!career) || (step === 3 && !!chosen) || step === 4;
@@ -388,6 +389,7 @@ function NewBooking() {
           )}
           {step === 4 && chosen && (
             <dl className="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
+              <div><dt className="font-semibold">Type</dt><dd>{chosen.mode || "TBC"}</dd></div>
               <div><dt className="font-semibold">Location</dt><dd>{chosen.location}</dd></div>
               <div><dt className="font-semibold">Days per shadow</dt><dd>{chosen.days_per_shadow ?? 1}</dd></div>
               <div><dt className="font-semibold">Arrival time</dt><dd>{chosen.arrival_time || "TBC"}</dd></div>
