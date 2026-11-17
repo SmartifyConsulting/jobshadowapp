@@ -27,6 +27,7 @@ import { Route as SendToAFriendRouteImport } from './routes/send-to-a-friend'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedMentorRouteImport } from './routes/_authenticated/mentor'
 import { Route as AuthenticatedMyAccountRouteImport } from './routes/_authenticated/my-account'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedIndemnityBookingIdRouteImport } from './routes/_authenticated/indemnity.$bookingId'
 import { Route as ApiPublicEmailDispatchRouteImport } from './routes/api/public/email-dispatch'
 
@@ -119,6 +120,11 @@ const AuthenticatedMyAccountRoute = AuthenticatedMyAccountRouteImport.update({
   path: '/my-account',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedIndemnityBookingIdRoute =
   AuthenticatedIndemnityBookingIdRouteImport.update({
     id: '/indemnity/$bookingId',
@@ -149,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRoute
   '/mentor': typeof AuthenticatedMentorRoute
   '/my-account': typeof AuthenticatedMyAccountRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/indemnity/$bookingId': typeof AuthenticatedIndemnityBookingIdRoute
   '/api/public/email-dispatch': typeof ApiPublicEmailDispatchRoute
 }
@@ -170,6 +177,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminRoute
   '/mentor': typeof AuthenticatedMentorRoute
   '/my-account': typeof AuthenticatedMyAccountRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/indemnity/$bookingId': typeof AuthenticatedIndemnityBookingIdRoute
   '/api/public/email-dispatch': typeof ApiPublicEmailDispatchRoute
 }
@@ -193,6 +201,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/mentor': typeof AuthenticatedMentorRoute
   '/_authenticated/my-account': typeof AuthenticatedMyAccountRoute
+  '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/indemnity/$bookingId': typeof AuthenticatedIndemnityBookingIdRoute
   '/api/public/email-dispatch': typeof ApiPublicEmailDispatchRoute
 }
@@ -216,6 +225,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/mentor'
     | '/my-account'
+    | '/profile'
     | '/indemnity/$bookingId'
     | '/api/public/email-dispatch'
   fileRoutesByTo: FileRoutesByTo
@@ -237,6 +247,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/mentor'
     | '/my-account'
+    | '/profile'
     | '/indemnity/$bookingId'
     | '/api/public/email-dispatch'
   id:
@@ -259,6 +270,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/mentor'
     | '/_authenticated/my-account'
+    | '/_authenticated/profile'
     | '/_authenticated/indemnity/$bookingId'
     | '/api/public/email-dispatch'
   fileRoutesById: FileRoutesById
@@ -410,6 +422,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMyAccountRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/indemnity/$bookingId': {
       id: '/_authenticated/indemnity/$bookingId'
       path: '/indemnity/$bookingId'
@@ -431,6 +450,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedMentorRoute: typeof AuthenticatedMentorRoute
   AuthenticatedMyAccountRoute: typeof AuthenticatedMyAccountRoute
+  AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedIndemnityBookingIdRoute: typeof AuthenticatedIndemnityBookingIdRoute
 }
 
@@ -438,6 +458,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedMentorRoute: AuthenticatedMentorRoute,
   AuthenticatedMyAccountRoute: AuthenticatedMyAccountRoute,
+  AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedIndemnityBookingIdRoute: AuthenticatedIndemnityBookingIdRoute,
 }
 

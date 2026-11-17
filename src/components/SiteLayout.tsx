@@ -27,9 +27,11 @@ function useSession() {
     queryKey: ["site-session"],
     queryFn: async () => {
       const { data: u } = await supabase.auth.getUser();
-      if (!u.user) return { user: null, isAdmin: false };
-      const { data } = await supabase.from("user_roles").select("role").eq("user_id", u.user.id).eq("role", "admin");
-      return { user: u.user, isAdmin: (data?.length ?? 0) > 0 };
+      if (!u.user) return { user: null, isAdmin: false, avatarUrl: null as string | null, displayName: null as string | null };
+      const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", u.user.id);
+      const { data: profile } = await supabase.from("profiles").select("avatar_path, display_name").eq("user_id", u.user.id).maybeSingle();
+      const avatarUrl = profile?.avatar_path ? supabase.storage.from("avatars").getPublicUrl(profile.avatar_path).data.publicUrl : null;
+      return { user: u.user, isAdmin: (roles ?? []).some((r) => r.role === "admin"), avatarUrl, displayName: profile?.display_name ?? null };
     },
   });
 }
@@ -45,7 +47,8 @@ export function SiteLayout({ children, hideLogo }: { children: ReactNode; hideLo
   const { data: session } = useSession();
   const user = session?.user ?? null;
   const isAdmin = session?.isAdmin ?? false;
-  const displayName = (user?.user_metadata?.["name"] as string | undefined) || user?.email || "Account";
+  const displayName = session?.displayName || (user?.user_metadata?.["name"] as string | undefined) || user?.email || "Account";
+  const avatarUrl = session?.avatarUrl ?? null;
 
   async function logout() {
     await supabase.auth.signOut();
@@ -78,13 +81,19 @@ export function SiteLayout({ children, hideLogo }: { children: ReactNode; hideLo
             ))}
             {user && (
               <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-1 text-sm font-semibold">
-                  <span className="max-w-48 truncate">{displayName}</span> <ChevronDown className="h-4 w-4 shrink-0" />
+                <DropdownMenuTrigger className="flex items-center gap-2 text-sm font-semibold">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="" className="h-7 w-7 rounded-full object-cover" />
+                  ) : (
+                    <span className="grid h-7 w-7 place-items-center rounded-full bg-primary-foreground/20 text-xs uppercase">{displayName.slice(0, 1)}</span>
+                  )}
+                  <span className="max-w-32 truncate">{displayName}</span> <ChevronDown className="h-4 w-4 shrink-0" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem asChild><Link to="/my-account">My Account</Link></DropdownMenuItem>
                   <DropdownMenuItem asChild><Link to="/my-account">My Bookings</Link></DropdownMenuItem>
                   <DropdownMenuItem asChild><Link to="/mentor">Mentor Portal</Link></DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link to="/profile">Profile Settings</Link></DropdownMenuItem>
                   <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -108,6 +117,7 @@ export function SiteLayout({ children, hideLogo }: { children: ReactNode; hideLo
                 <Link to="/my-account" onClick={() => setOpen(false)}>My Account</Link>
                 <Link to="/my-account" onClick={() => setOpen(false)}>My Bookings</Link>
                 <Link to="/mentor" onClick={() => setOpen(false)}>Mentor Portal</Link>
+                <Link to="/profile" onClick={() => setOpen(false)}>Profile Settings</Link>
                 <button className="text-left" onClick={() => { setOpen(false); void logout(); }}>Logout</button>
               </>
             )}
