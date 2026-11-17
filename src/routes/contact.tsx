@@ -78,11 +78,21 @@ function Contact() {
   return (
     <SiteLayout>
       <section className="bg-primary px-5 py-14 text-primary-foreground">
-        <div className="mx-auto grid max-w-6xl gap-10 md:grid-cols-2">
+        <div className="mx-auto grid max-w-6xl items-start gap-10 md:grid-cols-2">
           <div>
-            <h1 className="font-display text-3xl uppercase leading-tight md:text-4xl">{PARTNER_HERO.title}</h1>
+            <h1 className="whitespace-pre-line font-display text-3xl uppercase leading-tight md:text-4xl">{PARTNER_HERO.title.replace(". ", ".\n")}</h1>
             <p className="mt-4 text-sm text-primary-foreground/80">{PARTNER_HERO.sub}</p>
-            <div className="mt-8 space-y-4">
+          </div>
+          <div className="md:text-right">
+            <p className="font-display text-lg text-primary-foreground">If You Just Want To Say Hi</p>
+            <p className="mt-2 font-display text-2xl uppercase text-primary-foreground">Please Contact Us</p>
+            <div className="mt-3 flex flex-wrap items-center gap-3 md:justify-end">
+              <a href={'mailto:' + CONTACT_EMAIL} className="text-sm font-semibold text-cta hover:underline">{CONTACT_EMAIL}</a>
+              <a href="https://www.facebook.com/JobShadowBookings" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="grid h-9 w-9 place-items-center rounded-full bg-primary-foreground text-primary"><Facebook className="h-4 w-4" /></a>
+              <a href="https://www.instagram.com/jobshadowbookings" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="grid h-9 w-9 place-items-center rounded-full bg-primary-foreground text-primary"><Instagram className="h-4 w-4" /></a>
+            </div>
+          </div>
+          <div className="space-y-4">
               {PARTNER_BLOCKS.map((b) => (
                 <div key={b.type} className={"rounded-xl border border-foreground/10 p-5 " + BLOCKS[b.type].color}>
                   <h2 className="font-display text-xl">{b.title}</h2>
@@ -93,16 +103,11 @@ function Contact() {
                   <Link to="/contact" search={{ type: b.type }} className="mt-4 inline-block rounded-full bg-primary px-5 py-2 text-xs font-bold uppercase tracking-wide text-primary-foreground">{b.cta}</Link>
                 </div>
               ))}
-            </div>
           </div>
 
           <div className="rounded-xl border border-primary-foreground/20 bg-primary-foreground/5 p-6">
             <h2 className="font-display text-2xl uppercase">{copy?.heading ?? "Send Us A Message"}</h2>
-            <div className="mt-3 flex flex-wrap items-center gap-3">
-              <a href={'mailto:' + CONTACT_EMAIL} className="text-sm font-semibold text-cta hover:underline">{CONTACT_EMAIL}</a>
-              <a href="https://www.facebook.com/JobShadowBookings" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="grid h-9 w-9 place-items-center rounded-full bg-primary-foreground text-primary"><Facebook className="h-4 w-4" /></a>
-              <a href="https://www.instagram.com/jobshadowbookings" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="grid h-9 w-9 place-items-center rounded-full bg-primary-foreground text-primary"><Instagram className="h-4 w-4" /></a>
-            </div>
+
             {sent ? (
               <p className="mt-6 text-sm">Your email app should now be open with your application ready to send.</p>
             ) : (
