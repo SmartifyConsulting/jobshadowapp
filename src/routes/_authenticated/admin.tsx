@@ -54,8 +54,8 @@ const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string
     { key: "email", label: "Email" }, { key: "contact", label: "Contact" }, { key: "school", label: "School" },
     { key: "company", label: "Company" }, { key: "career", label: "Career" }, { key: "dates", label: "Dates" },
     { key: "paid", label: "Paid", field: "checkbox" }, { key: "indemnity", label: "Indemnity", field: "checkbox" }, { key: "cancelled", label: "Cancelled", field: "checkbox" } ] },
-  { id: "companies", label: "Companies", icon: FileText, table: "companies", singular: "Jobs", cols: [
-    { key: "id", label: "ID" }, { key: "company", label: "Company" }, { key: "career", label: "Career" },
+  { id: "companies", label: "Companies", icon: FileText, table: "companies", singular: "Companies", cols: [
+    { key: "company", label: "Company" }, { key: "career", label: "Career" },
     { key: "sector", label: "Sector" }, { key: "location", label: "Location" }, { key: "mentor_name", label: "Mentor" },
     { key: "mentor_email", label: "Mentor email" }, { key: "mentor_phone", label: "Mentor phone" },
     { key: "mentor_position", label: "Mentor position" },
@@ -346,12 +346,12 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
         </div>
         {table === "careers" ? (
           <div className="mt-6 space-y-2">
-            {[...new Set(rows.map((r) => alphabetInitial(fmt(r["name"]))))].sort((a, b) => a === "#" ? 1 : b === "#" ? -1 : a.localeCompare(b)).map((group, gi) => {
+            {[...new Set(rows.map((r) => alphabetInitial(fmt(r["name"]))))].sort((a, b) => a === "#" ? 1 : b === "#" ? -1 : a.localeCompare(b)).map((group) => {
               const groupRows = rows.filter((r) => alphabetInitial(fmt(r["name"])) === group);
               return (
-                <Accordion key={group} type="multiple" className="overflow-hidden rounded-lg border-[8px] border-ivory bg-ivory">
+                <Accordion key={group} type="multiple" className="overflow-hidden rounded-lg border-[4px] border-ivory bg-ivory">
                   <AccordionItem value={group} className="border-none">
-                    <AccordionTrigger className={`justify-start gap-3 px-5 py-3 text-left hover:no-underline [&>svg]:ml-auto ${BAND_COLORS[gi % BAND_COLORS.length]}`}>
+                    <AccordionTrigger className="justify-start gap-3 bg-ivory px-5 py-3 text-left text-foreground hover:no-underline [&>svg]:ml-auto">
                       <span className="font-display text-xl uppercase">{group}</span>
                       <span className="text-xs opacity-80">{groupRows.length} {groupRows.length === 1 ? title.replace(/s$/, "") : title}</span>
                     </AccordionTrigger>
