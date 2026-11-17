@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { requestPasswordReset } from "@/lib/password-reset.functions";
 import { SiteLayout } from "@/components/SiteLayout";
 
 export const Route = createFileRoute("/forgot-password")({
@@ -22,7 +22,7 @@ function Page() {
   const [sent, setSent] = useState(false);
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password` });
+    await requestPasswordReset({ data: { email, origin: window.location.origin } });
     setSent(true);
   }
   return (
