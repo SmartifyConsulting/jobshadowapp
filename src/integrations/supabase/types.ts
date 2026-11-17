@@ -14,6 +14,28 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_log: {
+        Row: { id: string; created_at: string; actor_user_id: string | null; resource_type: string; record_id: string; action: string }
+        Insert: { id?: string; created_at?: string; actor_user_id?: string | null; resource_type: string; record_id: string; action: string }
+        Update: Partial<Database["public"]["Tables"]["activity_log"]["Insert"]>
+        Relationships: []
+      }
+      ai_token_ledger: {
+        Row: {
+          id: string; created_at: string; actor_user_id: string | null; feature: string; provider: string; model: string; request_id: string | null
+          input_tokens: number | null; cached_input_tokens: number | null; output_tokens: number | null; total_tokens: number | null
+          cost_usd: number | null; cost_source: string; input_rate_per_million: number | null; cached_rate_per_million: number | null; output_rate_per_million: number | null
+          succeeded: boolean; error_code: string | null
+        }
+        Insert: {
+          id?: string; created_at?: string; actor_user_id?: string | null; feature: string; provider: string; model: string; request_id?: string | null
+          input_tokens?: number | null; cached_input_tokens?: number | null; output_tokens?: number | null; total_tokens?: number | null
+          cost_usd?: number | null; cost_source?: string; input_rate_per_million?: number | null; cached_rate_per_million?: number | null; output_rate_per_million?: number | null
+          succeeded: boolean; error_code?: string | null
+        }
+        Update: Partial<Database["public"]["Tables"]["ai_token_ledger"]["Insert"]>
+        Relationships: []
+      }
       booking_settings: {
         Row: {
           blackout_dates: string[]

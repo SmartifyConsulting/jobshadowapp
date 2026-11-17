@@ -1,3 +1,8 @@
+import { CreateAccountDialog } from "@/components/CreateAccountDialog";
+import { VoucherEditor } from "@/components/VoucherEditor";
+import { NamedCsvUpload } from "@/components/NamedCsvUpload";
+import { ApplicationsList } from "@/components/ApplicationsList";
+import { AdminLedgerReport } from "@/components/AdminLedgerReport";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Fragment, useEffect, useMemo, useState } from "react";
@@ -16,7 +21,6 @@ import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
 import { sendQueuedEmails } from "@/lib/email.functions";
 import { getAccounts, updateAccount, removeAccount } from "@/lib/users.functions";
-import { mapCsvColumns } from "@/lib/csv-import.functions";
 import { extractCompanyIndemnity } from "@/lib/indemnity-ai.functions";
 import { confirmAction, notify } from "@/lib/dialogs";
 import type { AccountRow } from "@/lib/users.server";
@@ -50,7 +54,7 @@ const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string
     { key: "email", label: "Email" }, { key: "contact", label: "Contact" }, { key: "school", label: "School" },
     { key: "company", label: "Company" }, { key: "career", label: "Career" }, { key: "dates", label: "Dates" },
     { key: "paid", label: "Paid", field: "checkbox" }, { key: "indemnity", label: "Indemnity", field: "checkbox" }, { key: "cancelled", label: "Cancelled", field: "checkbox" } ] },
-  { id: "companies", label: "Companies", icon: FileText, table: "companies", singular: "Jobs", csvUpload: true, cols: [
+  { id: "companies", label: "Companies", icon: FileText, table: "companies", singular: "Jobs", cols: [
     { key: "id", label: "ID" }, { key: "company", label: "Company" }, { key: "career", label: "Career" },
     { key: "sector", label: "Sector" }, { key: "location", label: "Location" }, { key: "mentor_name", label: "Mentor" },
     { key: "mentor_email", label: "Mentor email" }, { key: "mentor_phone", label: "Mentor phone" },
@@ -61,8 +65,8 @@ const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string
     { key: "active", label: "Active", field: "checkbox" }, { key: "mode", label: "Type" }, { key: "logo_path", label: "Logo" },
     { key: "allow_weekends", label: "Allow weekends", field: "checkbox" }, { key: "allow_off_season", label: "Allow Nov–Jan (off-season)", field: "checkbox" },
     { key: "custom_indemnity_text", label: "Indemnity form" } ] },
-  { id: "sectors", label: "Sectors", icon: FileText, table: "sectors", singular: "Sectors", cols: [{ key: "name", label: "Sector Name" }, { key: "_student_count", label: "Students" }] },
-  { id: "careers", label: "Careers", icon: Briefcase, table: "careers", singular: "Careers", cols: [{ key: "name", label: "Career Name" }, { key: "_student_count", label: "Students" }] },
+  { id: "sectors", label: "Sectors", icon: FileText, table: "sectors", singular: "Sectors", csvUpload: true, cols: [{ key: "name", label: "Sector Name" }, { key: "_student_count", label: "Students" }] },
+  { id: "careers", label: "Careers", icon: Briefcase, table: "careers", singular: "Careers", csvUpload: true, cols: [{ key: "name", label: "Career Name" }, { key: "_student_count", label: "Students" }] },
   { id: "reports", label: "Reports", icon: FileText, table: "reports", singular: "Reports", custom: true, cols: [] },
   { id: "vouchers", label: "Vouchers", icon: ShoppingCart, table: "vouchers", singular: "Vouchers", cols: [
     { key: "id", label: "#" }, { key: "name", label: "Name" }, { key: "code", label: "Code" },
@@ -92,13 +96,13 @@ function AdminPage() {
   if (!section) return null;
 
   return (
-    <div className="flex min-h-screen flex-col bg-muted/40">
+    <div className="admin-portal flex min-h-screen flex-col bg-muted/40">
       <SiteHeader />
       <div className="flex min-w-0 flex-1">
       <aside className="w-60 shrink-0 border-r border-primary/20 bg-accent text-accent-foreground shadow-warm">
         <p className="px-5 pb-3 pt-6 text-xs font-bold uppercase tracking-widest text-foreground/70">Admin Portal</p>
         <nav className="space-y-1 px-3 pb-6">
-          {TABLES.map((t) => (
+          {TABLES.filter((t) => !["sectors", "vouchers"].includes(t.id)).map((t) => (
             <button key={t.id} onClick={() => setActive(t.id)} className={`flex w-full items-center gap-3 rounded-md border-l-2 px-3 py-2.5 text-left text-sm font-medium transition ${active === t.id ? "border-primary bg-primary/10 text-foreground" : "border-transparent text-foreground/85 hover:bg-primary/5 hover:text-foreground"}`}>
               <t.icon className="h-4 w-4" /> {t.label}
             </button>
@@ -113,6 +117,10 @@ function AdminPage() {
             <p className="p-8">Your account doesn't have admin access. Ask JobShadow to grant it.</p>
           ) : section.id === "users" ? (
             <AdminUsers key={section.id} />
+          ) : section.id === "careers" ? (
+            <CareersAndSectors />
+          ) : section.id === "apps" ? (
+            <ApplicationsScreen />
           ) : section.id === "reports" ? (
             <AdminReports />
           ) : section.id === "emails" ? (
@@ -166,9 +174,6 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
   const [showSpam, setShowSpam] = useState(false);
   const [newName, setNewName] = useState("");
   const [addBusy, setAddBusy] = useState(false);
-  const [uploadBusy, setUploadBusy] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
-  const mapCsvColumnsFn = useServerFn(mapCsvColumns);
   const isUsers = table === "legacy_users";
   const isNameOnly = table === "sectors" || table === "careers";
 
@@ -270,53 +275,6 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
     qc.invalidateQueries({ queryKey: ["admin", table] });
   }
 
-  function coerce(field: Col["field"] | undefined, raw: string | null) {
-    if (raw === null || raw === "") return null;
-    if (field === "number") { const n = Number(raw); return Number.isFinite(n) ? n : null; }
-    if (field === "checkbox") return /^(1|true|yes|y)$/i.test(raw.trim());
-    return raw;
-  }
-
-  async function uploadCsv(file: File) {
-    setUploadBusy(true);
-    setUploadStatus(null);
-    try {
-      const text = await file.text();
-      const [headerLine, ...lines] = text.trim().split(/\r?\n/);
-      const headers = (headerLine ?? "").split(",").map((h) => h.trim());
-      const rawRows = lines.filter(Boolean).map((line) => line.split(",").map((v) => v.trim()));
-      if (rawRows.length === 0) return;
-
-      setUploadStatus("Matching columns…");
-      const mapping = await mapCsvColumnsFn({
-        data: { headers, sampleRows: rawRows.slice(0, 3), targetColumns: cols.map((c) => ({ key: c.key, label: c.label, field: c.field })) },
-      });
-
-      const records = rawRows.map((vals) => {
-        const rec: Record<string, unknown> = {};
-        headers.forEach((h, i) => {
-          const targetKey = mapping[h];
-          if (!targetKey) return;
-          const col = cols.find((c) => c.key === targetKey);
-          rec[targetKey] = coerce(col?.field, vals[i] ?? null);
-        });
-        return rec;
-      }).filter((r) => r["id"] !== undefined && r["id"] !== null);
-
-      const unmapped = headers.filter((h) => !mapping[h]);
-      if (records.length === 0) {
-        setUploadStatus("Couldn't match any rows — make sure the file has an ID column.");
-        return;
-      }
-      const { error } = await (supabase.from(table as "careers") as any).upsert(records);
-      if (error) return setUploadStatus(error.message);
-      setUploadStatus(`Imported ${records.length} row${records.length === 1 ? "" : "s"}.${unmapped.length ? ` Skipped unmatched columns: ${unmapped.join(", ")}.` : ""}`);
-      qc.invalidateQueries({ queryKey: ["admin", table] });
-    } finally {
-      setUploadBusy(false);
-    }
-  }
-
   if (editing) {
     const onDone = () => { setEditing(null); qc.invalidateQueries({ queryKey: ["admin", table] }); };
     const onCancel = () => setEditing(null);
@@ -340,27 +298,7 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
           ))}
         </div>
       )}
-      {csvUpload && (
-        <div className="grid border-b border-foreground/10 sm:grid-cols-2">
-          <div>
-            <div className="border-b border-border bg-background px-6 py-5 text-foreground"><h2 className="text-xl font-medium">Upload New Jobs</h2></div>
-            <div className="bg-background px-6 py-5 text-foreground">
-              <p className="mb-2 text-xs opacity-80">Column headers don't need to match exactly — AI matches them to the right fields automatically.</p>
-              <input type="file" accept=".csv" disabled={uploadBusy} onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadCsv(f); e.target.value = ""; }} className="block text-xs disabled:opacity-50" />
-              <button disabled={uploadBusy} className="mt-3 rounded-md bg-teal/20 hover:bg-teal/30 px-4 py-2 text-sm font-medium uppercase text-foreground disabled:opacity-50">{uploadBusy ? "Processing…" : "Upload File"}</button>
-              {uploadStatus && <p className="mt-2 text-xs font-medium">{uploadStatus}</p>}
-            </div>
-          </div>
-          <div>
-            <div className="border-b border-border bg-background px-6 py-5 text-foreground"><h2 className="text-xl font-medium">Update Jobs</h2></div>
-            <div className="bg-background px-6 py-5 text-foreground">
-              <p className="mb-2 text-xs opacity-80">Column headers don't need to match exactly — AI matches them to the right fields automatically.</p>
-              <input type="file" accept=".csv" disabled={uploadBusy} onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadCsv(f); e.target.value = ""; }} className="block text-xs disabled:opacity-50" />
-              <button disabled={uploadBusy} className="mt-3 rounded-md bg-teal/20 hover:bg-teal/30 px-4 py-2 text-sm font-medium uppercase text-foreground disabled:opacity-50">{uploadBusy ? "Processing…" : "Upload File"}</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {csvUpload && (table === "careers" || table === "sectors") && <NamedCsvUpload table={table} />}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border bg-background px-6 py-6 text-foreground">
         <h1 className="text-2xl font-medium">{title} {!isLoading && `(${rows.length})`}</h1>
         {dateCompanyFilter && (
@@ -406,7 +344,7 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
             </label>
           )}
         </div>
-        {isNameOnly ? (
+        {table === "careers" ? (
           <div className="mt-6 space-y-2">
             {[...new Set(rows.map((r) => alphabetInitial(fmt(r["name"]))))].sort((a, b) => a === "#" ? 1 : b === "#" ? -1 : a.localeCompare(b)).map((group, gi) => {
               const groupRows = rows.filter((r) => alphabetInitial(fmt(r["name"])) === group);
@@ -783,9 +721,9 @@ function UserCards({ rows, selectedId, busyId, onSelect, onEdit, onDelete, onVer
   onSelect: (id: string) => void; onEdit: (account: AccountRow) => void;
   onDelete: (id: string, label: string) => void; onVerify: (id: string, verified: boolean) => void;
 }) {
-  return <div className="grid gap-3 border-t border-border bg-muted/20 p-3 sm:grid-cols-2 2xl:grid-cols-3">{rows.map((a) => {
+  return <div className="grid gap-3 border-t border-border bg-ivory p-3 sm:grid-cols-2 2xl:grid-cols-3">{rows.map((a) => {
     const label = a.display_name || a.full_name || a.email || a.id;
-    return <article key={a.id} className={'min-w-0 rounded-md border bg-background p-4 ' + (selectedId === a.id ? 'border-primary/40' : 'border-border')}>
+    return <article key={a.id} className={'min-w-0 rounded-md border bg-ivory p-4 ' + (selectedId === a.id ? 'border-primary/40' : 'border-border')}>
       <button className="max-w-full truncate text-left text-sm font-medium hover:text-primary" onClick={() => onSelect(a.id)}>{label}</button>
       <div className="my-2 flex flex-wrap gap-1">{a.roles.map((role) => <span key={role} className="rounded bg-teal/15 px-1.5 py-0.5 text-[10px]">{ROLE_LABELS[role]}</span>)}{a.is_spam && <span className="text-[10px] text-destructive">Spam</span>}</div>
       <div className="space-y-1 text-xs text-muted-foreground"><p className="truncate" title={a.email ?? undefined}>{a.email || 'No email'}</p><p>{a.contact_no || 'No phone'}</p><p className="truncate" title={a.school ?? undefined}>{a.school || 'No school'}</p><p>ID / passport: {a.id_number || '—'}</p><p>Joined {new Date(a.created_at).toLocaleDateString()}</p></div>
@@ -813,6 +751,8 @@ export function AdminUsers() {
   const [editing, setEditing] = useState<AccountRow | null>(null);
   const [openGroups, setOpenGroups] = useState<string[]>([]);
   const [expandedApplicationUser, setExpandedApplicationUser] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [roleTab, setRoleTab] = useState<AccountRow["role"]>("user");
   const [showSpam, setShowSpam] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [letter, setLetter] = useState<string | null>(null);
@@ -860,26 +800,29 @@ export function AdminUsers() {
     const s = q.toLowerCase().trim();
     return (accounts.data ?? [])
       .filter((a) => {
+        if (!a.roles.includes(roleTab)) return false;
         if (!showSpam && a.is_spam) return false;
         if (s && ![a.email, a.display_name, a.full_name, a.contact_no, a.school, a.id_number, ...a.roles.map((role) => ROLE_LABELS[role]), ...a.applications.flatMap((application) => [application.company, application.career, application.dates])].some((v) => (v ?? "").toLowerCase().includes(s))) return false;
         if (letter && accountInitial(a) !== letter) return false;
         return true;
       })
       .sort((a, b) => (a.display_name || a.full_name || a.email || "").localeCompare(b.display_name || b.full_name || b.email || ""));
-  }, [accounts.data, q, showSpam, letter]);
+  }, [accounts.data, q, showSpam, letter, roleTab]);
 
   const letterCounts = useMemo(() => {
     const counts = new Map<string, number>();
     (accounts.data ?? []).forEach((a) => {
+      if (!a.roles.includes(roleTab)) return;
       if (!showSpam && a.is_spam) return;
       const first = accountInitial(a);
       if (first) counts.set(first, (counts.get(first) ?? 0) + 1);
     });
     return counts;
-  }, [accounts.data, showSpam]);
+  }, [accounts.data, showSpam, roleTab]);
 
   return (
     <div>
+      {createOpen && <CreateAccountDialog role={roleTab} label={ROLE_LABELS[roleTab]} onClose={() => setCreateOpen(false)} />}
       <Dialog open={!!editing} onOpenChange={(open) => { if (!open && busyId !== editing?.id) setEditing(null); }}>
         <DialogContent className="max-h-[90vh] overflow-auto">
           <DialogHeader><DialogTitle>Edit user</DialogTitle></DialogHeader>
@@ -892,14 +835,18 @@ export function AdminUsers() {
           </form>}
         </DialogContent>
       </Dialog>
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-primary px-6 py-4 text-primary-foreground">
-        <h1 className="font-sans text-lg font-medium">Users {!accounts.isLoading && `(${rows.length})`}</h1>
-        <div role="group" aria-label="Users view" className="flex rounded border border-primary-foreground/30 p-0.5">
-          {([['table', List, 'Table'], ['cards', LayoutGrid, 'Cards']] as const).map(([value, Icon, label]) => <button key={value} onClick={() => setView(value)} aria-pressed={view === value} className={'flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs transition ' + (view === value ? 'bg-background text-primary' : 'hover:bg-primary-foreground/10')}><Icon className="h-3.5 w-3.5" />{label}</button>)}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-ivory px-6 py-6 text-foreground">
+        <h1 className="text-2xl font-medium">Users {!accounts.isLoading && `(${rows.length})`}</h1>
+        <Button onClick={() => setCreateOpen(true)}>Add {ROLE_LABELS[roleTab]}</Button>
+        <div role="group" aria-label="Users view" className="flex rounded border border-border p-0.5">
+          {([['table', List, 'Table'], ['cards', LayoutGrid, 'Cards']] as const).map(([value, Icon, label]) => <button key={value} onClick={() => setView(value)} aria-pressed={view === value} className={'flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs transition ' + (view === value ? 'bg-background text-primary' : 'hover:bg-primary/5')}><Icon className="h-3.5 w-3.5" />{label}</button>)}
         </div>
       </div>
+      <Tabs value={roleTab} onValueChange={(value) => { setRoleTab(value as AccountRow["role"]); setLetter(null); setOpenGroups([]); setSelectedId(null); }}>
+        <div className="overflow-x-auto border-b border-border bg-ivory px-6 py-3"><TabsList aria-label="User types" className="h-auto">{([["user", "Students"], ["mentor", "Hosts"], ["school", "Schools"], ["hr_admin", "HR Admin"], ["admin", "Admin"]] as const).map(([role, name]) => <TabsTrigger key={role} value={role} className="min-h-11">{name} ({(accounts.data ?? []).filter((user) => user.roles.includes(role) && (showSpam || !user.is_spam)).length})</TabsTrigger>)}</TabsList></div>
+      <TabsContent value={roleTab} className="mt-0">
       <div className="flex flex-col items-start xl:flex-row">
-      <div className={'min-w-0 w-full flex-1 px-4 py-4 text-foreground ' + (view === 'table' ? 'bg-cta' : 'bg-muted/30')}>
+      <div className={'min-w-0 w-full flex-1 px-4 py-4 text-foreground ' + 'bg-ivory'}>
         <div className="flex flex-wrap gap-1.5">
           <button
             type="button" aria-pressed={letter === null} onClick={() => { setLetter(null); setOpenGroups([]); }}
@@ -938,7 +885,7 @@ export function AdminUsers() {
         ) : (
           <Accordion type="multiple" value={openGroups} onValueChange={setOpenGroups} className="mt-5 space-y-2">
             {[...new Set(rows.map((a) => accountInitial(a)))].sort((a, b) => a === "#" ? 1 : b === "#" ? -1 : a.localeCompare(b)).map((group) => (
-              <AccordionItem key={group} value={group} className="group overflow-hidden rounded-md border-[8px] border-ivory bg-cta">
+              <AccordionItem key={group} value={group} className="group overflow-hidden rounded-md border-[8px] border-ivory bg-ivory">
                 <AccordionTrigger className="justify-start gap-3 px-4 py-2.5 text-sm hover:no-underline [&>svg]:ml-auto"><span className="w-5 font-medium text-primary">{group}</span><span className="text-xs text-muted-foreground">{rows.filter((a) => (accountInitial(a)) === group).length} users</span></AccordionTrigger>
                 <AccordionContent className="pb-0">{view === "cards" ? <UserCards rows={rows.filter((a) => (accountInitial(a)) === group)} selectedId={selectedId} busyId={busyId} onSelect={setSelectedId} onEdit={(a) => setEditing({ ...a, roles: [...a.roles] })} onDelete={deleteAccountRow} onVerify={setIdVerified} /> : <div className="overflow-x-auto border-t border-border [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-track]:bg-muted">
                   <table className="w-full min-w-[820px] text-left text-xs">
@@ -983,6 +930,8 @@ export function AdminUsers() {
       </div>
       {selectedAccount && <UserDetailPanel account={selectedAccount} onClose={() => setSelectedId(null)} onEdit={() => setEditing({ ...selectedAccount, roles: [...selectedAccount.roles] })} />}
       </div>
+      </TabsContent>
+      </Tabs>
     </div>
   );
 }
@@ -1108,6 +1057,26 @@ const BOOKING_EXPORT_COLS: { key: string; label: string }[] = [
   { key: "amount_due", label: "Amount due" }, { key: "paid_at", label: "Paid status" }, { key: "indemnity_received", label: "Indemnity status" }, { key: "created_at", label: "Booked on" },
 ];
 
+function CareersAndSectors() {
+  return <Tabs defaultValue="careers" className="bg-ivory">
+    <div className="overflow-x-auto border-b border-border px-6 py-3"><TabsList aria-label="Career management"><TabsTrigger value="sectors" className="min-h-11">Sectors</TabsTrigger><TabsTrigger value="careers" className="min-h-11">Careers</TabsTrigger></TabsList></div>
+    {(["sectors", "careers"] as const).map((id) => { const config = TABLES.find((entry) => entry.id === id)!; return <TabsContent key={id} value={id} className="mt-0"><DataTable title={config.singular} table={config.table} cols={config.cols} csvUpload /></TabsContent>; })}
+  </Tabs>;
+}
+
+function ApplicationsScreen() {
+  const qc = useQueryClient();
+  const [editing, setEditing] = useState<Record<string, unknown> | null>(null);
+  const refresh = () => { setEditing(null); void qc.invalidateQueries({ queryKey: ["admin", "combined-applications"] }); void qc.invalidateQueries({ queryKey: ["admin", "accounts"] }); };
+  async function remove(row: Record<string, unknown>) {
+    if (!(await confirmAction("Delete this imported application? The user account and any live bookings are kept.", { danger: true, confirmLabel: "Delete application" }))) return;
+    const result = await supabase.from("legacy_applications").delete().eq("id", Number(row["id"]));
+    if (result.error) return notify(result.error.message, "error");
+    refresh();
+  }
+  return editing ? <ApplicationEditPanel table="legacy_applications" row={editing} onDone={refresh} onCancel={() => setEditing(null)} /> : <ApplicationsList onEditImported={setEditing} onDeleteImported={remove} />;
+}
+
 function AdminReports() {
   return <div className="bg-background">
     <div className="border-b border-border px-6 py-5"><h1 className="text-2xl">Reports</h1></div>
@@ -1115,14 +1084,23 @@ function AdminReports() {
       <div className="overflow-x-auto border-b border-border px-6 py-3"><TabsList aria-label="Admin reports" className="h-auto justify-start">{["Bookings", "Vouchers", "Activity Log", "Token Ledger"].map((label) => <TabsTrigger key={label} value={label.toLowerCase().replaceAll(' ', '-')} className="min-h-11">{label}</TabsTrigger>)}</TabsList></div>
       <TabsContent value="bookings" className="mt-0"><LiveBookings /></TabsContent>
       <TabsContent value="vouchers" className="mt-0"><VoucherReport /></TabsContent>
-      <TabsContent value="activity-log" className="m-6 rounded-lg border border-border bg-ivory p-5"><h2 className="text-xl">Activity Log</h2><p className="mt-2 text-sm">Activity tracking is awaiting setup. The app does not currently store an audit history.</p></TabsContent>
-      <TabsContent value="token-ledger" className="m-6 rounded-lg border border-border bg-ivory p-5"><h2 className="text-xl">Token Ledger</h2><p className="mt-2 text-sm">AI usage tracking is awaiting setup. Token counts and costs will be recorded for future requests once it is enabled.</p></TabsContent>
+      <TabsContent value="activity-log" className="mt-0"><AdminLedgerReport table="activity_log" /></TabsContent>
+      <TabsContent value="token-ledger" className="mt-0"><AdminLedgerReport table="ai_token_ledger" /></TabsContent>
     </Tabs>
   </div>;
 }
 
 function VoucherReport() {
   const [search, setSearch] = useState("");
+  const [editing, setEditing] = useState<Record<string, unknown> | null>(null);
+  const qc = useQueryClient();
+  const refresh = () => { setEditing(null); void qc.invalidateQueries({ queryKey: ["admin", "voucher-report"] }); void qc.invalidateQueries({ queryKey: ["admin", "vouchers"] }); };
+  async function removeVoucher(row: Record<string, unknown>) {
+    if (!(await confirmAction("Delete this voucher? Existing bookings keep their recorded discount.", { danger: true, confirmLabel: "Delete voucher" }))) return;
+    const result = await supabase.from("vouchers").delete().eq("id", Number(row["id"]));
+    if (result.error) return notify(result.error.message, "error");
+    refresh();
+  }
   const report = useQuery({
     queryKey: ["admin", "voucher-report"],
     queryFn: async () => {
@@ -1140,12 +1118,13 @@ function VoucherReport() {
   const columns: Col[] = [{ key: "name", label: "Name" }, { key: "code", label: "Code" }, { key: "discount", label: "Discount" }, { key: "available_from", label: "From" }, { key: "available_until", label: "Until" }, { key: "usage_limit", label: "Usage limit" }, { key: "bookings", label: "All bookings" }, { key: "paid_bookings", label: "Paid bookings" }, { key: "cancelled_bookings", label: "Cancelled bookings" }];
   const all = (report.data ?? []) as Record<string, unknown>[];
   const rows = all.filter((row) => [row["name"], row["code"]].some((value) => String(value ?? "").toLowerCase().includes(search.toLowerCase().trim())));
-  return <section className="p-6">
-    <div className="flex flex-wrap items-center justify-between gap-4"><h2 className="text-2xl">Vouchers ({rows.length})</h2><Button disabled={report.isPending || !!report.error} onClick={() => exportCsv("Voucher report", completeExportColumns(columns, all), all)} variant="outline">Export all</Button></div>
+  return <section className="bg-ivory p-6">
+    {editing && <VoucherEditor voucher={editing} known={all} onDone={refresh} onCancel={() => setEditing(null)} />}
+    <div className="flex flex-wrap items-center justify-between gap-4"><h2 className="text-2xl">Vouchers ({rows.length})</h2><Button disabled={report.isPending || !!report.error} onClick={() => setEditing({})}>Add voucher</Button><Button disabled={report.isPending || !!report.error} onClick={() => exportCsv("Voucher report", completeExportColumns(columns, all), all)} variant="outline">Export all</Button></div>
     <label className="mt-4 block max-w-sm text-sm">Search<input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Voucher name or code" className="mt-1 w-full rounded border border-input bg-background px-3 py-2" /></label>
     <p className="mt-2 text-xs text-muted-foreground">Counts include all matching bookings; paid and cancelled counts are shown separately.</p>
-    <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[850px] text-left text-xs"><thead><tr>{columns.map((column) => <th key={column.key} className="whitespace-nowrap border-b border-border px-3 py-2 font-medium">{column.label}</th>)}</tr></thead><tbody>
-      {report.isPending ? <tr><td colSpan={columns.length} className="p-4">Loading…</td></tr> : report.error ? <tr><td colSpan={columns.length} role="alert" className="p-4 text-destructive">{report.error.message}</td></tr> : !rows.length ? <tr><td colSpan={columns.length} className="p-4">No vouchers match this search.</td></tr> : rows.map((row) => <tr key={String(row["id"])}>{columns.map((column) => <td key={column.key} className="border-b border-border px-3 py-2">{fmt(row[column.key]) || '—'}</td>)}</tr>)}
+    <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[850px] text-left text-xs"><thead><tr>{columns.map((column) => <th key={column.key} className="whitespace-nowrap border-b border-border px-3 py-2 font-medium">{column.label}</th>)}<th className="px-3 py-2 font-medium">Actions</th></tr></thead><tbody>
+      {report.isPending ? <tr><td colSpan={columns.length + 1} className="p-4">Loading…</td></tr> : report.error ? <tr><td colSpan={columns.length + 1} role="alert" className="p-4 text-destructive">{report.error.message}</td></tr> : !rows.length ? <tr><td colSpan={columns.length + 1} className="p-4">No vouchers match this search.</td></tr> : rows.map((row) => <tr key={String(row["id"])}>{columns.map((column) => <td key={column.key} className="border-b border-border px-3 py-2">{fmt(row[column.key]) || '—'}</td>)}<td className="px-3 py-2"><div className="flex gap-2"><button onClick={() => setEditing(row)} aria-label={'Edit voucher ' + String(row['code'] ?? row['id'])} className="rounded border border-border px-2 py-1">Edit</button><button onClick={() => void removeVoucher(row)} aria-label={'Delete voucher ' + String(row['code'] ?? row['id'])} className="rounded px-2 py-1 text-destructive">Delete</button></div></td></tr>)}
     </tbody></table></div>
   </section>;
 }

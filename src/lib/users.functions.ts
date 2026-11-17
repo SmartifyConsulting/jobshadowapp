@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { deleteAccount, listAccounts, editAccount, type AccountRow } from "./users.server";
+import { deleteAccount, listAccounts, editAccount, createAccountSilently, type AccountRow } from "./users.server";
 
 export const getAccounts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -9,6 +9,15 @@ export const getAccounts = createServerFn({ method: "GET" })
     const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (!isAdmin) throw new Error("Forbidden");
     return listAccounts();
+  });
+
+export const createAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(z.object({ email: z.string().trim().email().max(255), name: z.string().trim().min(1).max(200), role: z.enum(["user", "mentor", "school", "hr_admin", "admin"]) }))
+  .handler(async ({ context, data }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    if (!isAdmin) throw new Error("Forbidden");
+    return createAccountSilently(data.email, data.name, data.role);
   });
 
 export const updateAccount = createServerFn({ method: "POST" })

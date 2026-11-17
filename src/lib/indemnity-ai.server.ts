@@ -1,3 +1,4 @@
+import { trackedAiFetch } from "./ai-usage.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 /** Downloads an admin-uploaded company indemnity document from storage and asks an LLM to
@@ -28,7 +29,7 @@ export async function extractIndemnityClauses(storagePath: string): Promise<stri
     ? [{ type: "text", text: prompt }, { type: "file", file: { filename: "indemnity.pdf", file_data: dataUrl } }]
     : [{ type: "text", text: prompt }, { type: "image_url", image_url: { url: dataUrl } }];
 
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+  const res = await trackedAiFetch({ feature: "indemnity_extraction", provider: "openai", model: "gpt-4o" }, "https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({ model: "gpt-4o", temperature: 0, messages: [{ role: "user", content }] }),

@@ -127,3 +127,25 @@ export async function deleteAccount(userId: string) {
   const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
   if (error) throw new Error(error.message);
 }
+
+/** Admin account creation deliberately sends no invitation, confirmation or password email. */
+export async function createAccountSilently(email: string, name: string, role: AccountRow["role"]) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const created = await supabaseAdmin.auth.admin.createUser({ email, email_confirm: false, user_metadata: { name, display_name: name } });
+  if (created.error || !created.data.user) throw new Error(created.error?.message ?? "Unable to create account.");
+  const id = created.data.user.id;
+  try {
+    const profile = await supabaseAdmin.from("profiles").upsert({ user_id: id, display_name: name });
+    if (profile.error) throw profile.error;
+    const removed = await supabaseAdmin.from("user_roles").delete().eq("user_id", id);
+    if (removed.error) throw removed.error;
+    const assigned = await supabaseAdmin.from("user_roles").insert({ user_id: id, role });
+    if (assigned.error) throw assigned.error;
+    return { id, email, emailSent: false };
+  } catch (error) {
+    // Deleting an auth account also reconciles legacy applications by email.
+    // Keep the unconfirmed account for repair rather than risk deleting imported history.
+    const reason = error && typeof error === "object" && "message" in error ? String(error.message) : "Setup failed";
+    throw new Error(`The account was created without email, but setup is incomplete: ${reason}. Refresh Users and edit this account to finish setup.`);
+  }
+}

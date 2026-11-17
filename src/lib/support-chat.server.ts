@@ -1,3 +1,4 @@
+import { trackedAiFetch } from "./ai-usage.server";
 import { SUPPORT_KNOWLEDGE } from "./support-knowledge";
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
@@ -28,7 +29,7 @@ export async function answerSupportQuestion(history: ChatMessage[], message: str
   ];
 
   try {
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    const res = await trackedAiFetch({ feature: "support_chat", provider: "openai", model: "gpt-4o-mini" }, "https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify({ model: "gpt-4o-mini", temperature: 0.3, messages }),

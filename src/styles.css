@@ -224,6 +224,12 @@
   mix-blend-mode: multiply;
 }
 
+/* Shared surface for every Admin list, regardless of its data source. */
+.admin-portal main table,
+.admin-portal main [data-slot="admin-list"] {
+  background-color: var(--ivory);
+}
+
 /* Home reference artwork: geometry and colours only, with shared type and controls. */
 .home-reference {
   --primary: oklch(0.555476 0.221758 19.0106);

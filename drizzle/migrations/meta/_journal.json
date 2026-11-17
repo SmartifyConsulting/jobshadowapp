@@ -358,6 +358,13 @@
       "when": 1794944100000,
       "tag": "0050_weekend_season_rules_and_hr_email",
       "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1794955300492,
+      "tag": "0052_admin_reporting_ledgers",
+      "breakpoints": true
     }
   ]
 }

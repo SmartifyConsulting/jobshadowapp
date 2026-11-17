@@ -5,22 +5,25 @@ import type { AccountRow } from "@/lib/users.server";
 
 vi.mock("@tanstack/react-router", () => ({ createFileRoute: () => (options: unknown) => ({ options }) }));
 vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
-vi.mock("@/lib/users.functions", () => ({ getAccounts: vi.fn(), updateAccount: vi.fn(), removeAccount: vi.fn() }));
+vi.mock("@/lib/users.functions", () => ({ getAccounts: vi.fn(), updateAccount: vi.fn(), removeAccount: vi.fn(), createAccount: vi.fn() }));
 vi.mock("@/lib/email.functions", () => ({ sendQueuedEmails: vi.fn() }));
+vi.mock("@/lib/career-ai.functions", () => ({ draftCareerDescription: vi.fn() }));
 vi.mock("@/lib/csv-import.functions", () => ({ mapCsvColumns: vi.fn() }));
+vi.mock("@/components/SiteLayout", () => ({ SiteHeader: () => null, SiteFooter: () => null }));
+vi.mock("@/lib/indemnity-ai.functions", () => ({ extractCompanyIndemnity: vi.fn() }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
 import { AdminUsers } from "@/routes/_authenticated/admin";
 import { accountInitial, alphabetInitial } from "@/lib/alphabet";
 
 const account = (id: string, name: string): AccountRow => ({
-  id, email: id + "@example.com", created_at: "2026-11-01T00:00:00Z", role: "mentor", roles: ["mentor"],
+  id, email: id + "@example.com", created_at: "2026-11-01T00:00:00Z", role: "mentor", roles: ["user", "mentor"],
   display_name: name, full_name: null, avatar_path: null, contact_no: null, school: null, id_number: null,
   applications: [], id_file_path: null, photo_path: null, id_verified: null, has_profile: false,
   has_scholar_profile: false, is_spam: false, booking_count: 0,
 });
-function mount() {
+function mount(extra: AccountRow[] = []) {
   const client = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity, retry: false } } });
-  client.setQueryData(["admin", "accounts"], [account("alice", "Alice Brown"), account("bob", "Bob Adams")]);
+  client.setQueryData(["admin", "accounts"], [account("alice", "Alice Brown"), account("bob", "Bob Adams"), ...extra]);
   render(<QueryClientProvider client={client}><AdminUsers /></QueryClientProvider>);
   return client;
 }
@@ -51,6 +54,19 @@ describe("User alphabet chips", () => {
     expect(screen.getByRole("heading", { name: "Users (2)" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "B" }));
     expect(screen.getByRole("button", { name: "Bob Adams" })).toBeVisible();
+    client.clear();
+  });
+  it("filters role tabs without dropping multi-role accounts", () => {
+    const school = { ...account("school", "School Contact"), role: "school" as const, roles: ["school" as const] };
+    const client = mount([school]);
+    expect(screen.getByRole("heading", { name: "Users (2)" })).toBeVisible();
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Hosts (2)" }), { button: 0 });
+    fireEvent.click(screen.getByRole("button", { name: "A" }));
+    expect(screen.getByRole("button", { name: "View details for Alice Brown" })).toBeVisible();
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Schools (1)" }), { button: 0 });
+    expect(screen.getByRole("heading", { name: "Users (1)" })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "S" }));
+    expect(screen.getByRole("button", { name: "View details for School Contact" })).toBeVisible();
     client.clear();
   });
   it("uses consistent initials for accents, whitespace and email-only accounts", () => {

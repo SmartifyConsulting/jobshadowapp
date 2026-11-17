@@ -1,3 +1,4 @@
+import { trackedAiFetch } from "./ai-usage.server";
 export type CsvTargetColumn = { key: string; label: string; field?: "text" | "number" | "date" | "checkbox" | undefined };
 
 /** Asks an LLM to map messy/arbitrary CSV headers onto the known target
@@ -20,7 +21,7 @@ ${sampleRows.slice(0, 3).map((r) => JSON.stringify(r)).join("\n")}
 For each spreadsheet header, choose the single best-matching target field key, or null if nothing matches well. Respond with ONLY a JSON object mapping each exact header string to a target key or null, e.g. {"Company Name": "company", "Random Column": null}.`;
 
   try {
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    const res = await trackedAiFetch({ feature: "csv_column_mapping", provider: "openai", model: "gpt-4o-mini" }, "https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify({

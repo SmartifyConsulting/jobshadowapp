@@ -13,3 +13,5 @@
 - Keep HR contact aliases synchronized in the database so existing notification functions and new admin edits use the same contact data.
 - Reconcile legacy rows on account/profile deletion in database lifecycle triggers, not client-only cleanup, so every deletion path is covered.
 - Expose the public availability notice through a narrow RPC, not direct settings-table access, to keep administrator settings private.
+
+- During development, never send emails to users, including invitations, confirmations, password resets or queued notifications. Use mocked email/auth services in tests. Create accounts silently without triggering emails when account CRUD is required.
