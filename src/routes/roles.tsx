@@ -103,6 +103,9 @@ function Roles() {
             className="w-full rounded-full border border-primary-foreground/30 bg-primary-foreground/10 py-2.5 pl-10 pr-4 text-sm text-primary-foreground placeholder:text-primary-foreground/60 outline-none focus:border-primary-foreground/60"
           />
         </div>
+        <p className="mx-auto mt-3 max-w-xl text-center text-xs text-primary-foreground/70">
+          "None available" roles don't currently have a host — <a href={`mailto:${CONTACT_EMAIL}?subject=Role%20availability`} className="font-bold underline">email us</a> about any of these and we'll let you know when one opens up.
+        </p>
       </div>
 
       {grouped.length === 0 && (
@@ -133,12 +136,8 @@ function Roles() {
                         </p>
                         {r.summary.split("\n").map((p, i) => <p key={i} className="mt-1 text-sm text-muted-foreground">{p}</p>)}
                         {r.video && <div className="mt-3 max-w-xl"><YouTube id={r.video} title={r.title} /></div>}
-                        {count > 0 ? (
+                        {count > 0 && (
                           <Link to="/auth" className="mt-3 inline-block rounded-full bg-cta px-5 py-2 text-xs font-semibold uppercase tracking-wider text-cta-foreground">Book this Job Shadow</Link>
-                        ) : (
-                          <p className="mt-3 text-sm text-muted-foreground">
-                            No host is currently available for this role. <a href={`mailto:${CONTACT_EMAIL}?subject=Interested%20in%20${encodeURIComponent(r.title)}`} className="font-bold underline">Email us</a> and we'll let you know when one opens up.
-                          </p>
                         )}
                       </div>
                       <span className={`shrink-0 self-start rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide ${count > 0 ? "bg-cta text-cta-foreground" : "bg-muted text-muted-foreground"}`}>
