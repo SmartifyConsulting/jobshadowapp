@@ -53,7 +53,7 @@ function Roles() {
   const grouped = useMemo(() => {
     const m = new Map<string, typeof ROLES>();
     filteredRoles.forEach((r) => m.set(r.field, [...(m.get(r.field) ?? []), r]));
-    return [...m.entries()];
+    return [...m.entries()].map(([f, roles]) => [f, [...roles].sort((a, b) => a.title.localeCompare(b.title))] as const);
   }, [filteredRoles]);
 
   const isFieldOpen = (f: string) => (search.trim() ? true : openFields.has(f));
