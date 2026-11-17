@@ -7,6 +7,8 @@ import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
 import { sendQueuedEmails } from "@/lib/email.functions";
+import { getAccounts, updateAccountRole } from "@/lib/users.functions";
+import type { AccountRow } from "@/lib/users.server";
 import { renderEmailHtml } from "@/lib/email-template";
 import { completeExportColumns, fetchAllRows, joinApplicationContacts, toCsv } from "@/lib/admin-export";
 
@@ -28,6 +30,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 type Field = "text" | "number" | "date" | "checkbox";
 type Col = { key: string; label: string; field?: Field };
 const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string; singular: string; cols: Col[]; csvUpload?: boolean; dateCompanyFilter?: boolean; indemnityEdit?: boolean; custom?: boolean }[] = [
+  { id: "accounts", label: "User Accounts", icon: UsersIcon, table: "profiles", singular: "Accounts", custom: true, cols: [] },
   { id: "scholars", label: "Scholars", icon: GraduationCap, table: "scholar_profiles", singular: "Scholars", custom: true, cols: [] },
   { id: "emails", label: "Email Archive", icon: FileText, table: "email_outbox", singular: "Emails", custom: true, cols: [] },
   { id: "settings", label: "Booking Settings", icon: FileText, table: "booking_settings", singular: "Settings", custom: true, cols: [] },
@@ -96,6 +99,8 @@ function AdminPage() {
             <p className="p-8">Loading…</p>
           ) : !admin.data ? (
             <p className="p-8">Your account doesn't have admin access. Ask JobShadow to grant it.</p>
+          ) : section.id === "accounts" ? (
+            <AdminAccounts key={section.id} />
           ) : section.id === "scholars" ? (
             <ScholarVerification key={section.id} />
           ) : section.id === "emails" ? (
@@ -530,6 +535,85 @@ async function downloadDoc(path: string | null) {
   a.download = path.split("/").pop() ?? path;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+const ROLE_LABELS: Record<AccountRow["role"], string> = { user: "Student", mentor: "Mentor", hr_admin: "HR Admin", admin: "Admin" };
+
+function AdminAccounts() {
+  const qc = useQueryClient();
+  const getAccountsFn = useServerFn(getAccounts);
+  const updateRoleFn = useServerFn(updateAccountRole);
+  const accounts = useQuery({ queryKey: ["admin", "accounts"], queryFn: () => getAccountsFn() });
+  const [q, setQ] = useState("");
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  async function changeRole(userId: string, role: AccountRow["role"]) {
+    setBusyId(userId);
+    try {
+      await updateRoleFn({ data: { userId, role } });
+      qc.invalidateQueries({ queryKey: ["admin", "accounts"] });
+    } catch (e) {
+      window.alert((e as Error).message);
+    }
+    setBusyId(null);
+  }
+
+  const rows = useMemo(() => {
+    const s = q.toLowerCase().trim();
+    return (accounts.data ?? []).filter((a) => !s || [a.email, a.display_name].some((v) => (v ?? "").toLowerCase().includes(s)));
+  }, [accounts.data, q]);
+
+  return (
+    <div>
+      <div className="bg-foreground px-6 py-6 text-background"><h1 className="text-2xl font-semibold">User Accounts {!accounts.isLoading && `(${rows.length})`}</h1></div>
+      <div className="px-6 py-6">
+        <label className="block max-w-sm text-sm">
+          Search
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name or email" className="mt-1 w-full border-b border-foreground/30 bg-transparent px-1 py-1 outline-none" />
+        </label>
+        {accounts.isLoading ? (
+          <p className="mt-6">Loading…</p>
+        ) : accounts.error ? (
+          <p className="mt-6 text-destructive">{(accounts.error as Error).message}</p>
+        ) : (
+          <div className="mt-6 divide-y divide-border">
+            {rows.map((a) => {
+              const avatarUrl = a.avatar_path ? supabase.storage.from("avatars").getPublicUrl(a.avatar_path).data.publicUrl : null;
+              return (
+                <div key={a.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                  <div className="flex items-center gap-3">
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt="" className="h-9 w-9 rounded-full object-cover" />
+                    ) : (
+                      <div className="grid h-9 w-9 place-items-center rounded-full bg-muted text-xs font-semibold uppercase text-muted-foreground">
+                        {(a.display_name || a.email || "?").slice(0, 1)}
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm font-semibold">{a.display_name || a.email || a.id}</p>
+                      {a.display_name && <p className="text-xs text-muted-foreground">{a.email}</p>}
+                      <p className="text-xs text-muted-foreground">Joined {new Date(a.created_at).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                  <select
+                    value={a.role}
+                    disabled={busyId === a.id}
+                    onChange={(e) => changeRole(a.id, e.target.value as AccountRow["role"])}
+                    className="rounded border border-input bg-background px-2 py-1 text-sm disabled:opacity-50"
+                  >
+                    {(Object.keys(ROLE_LABELS) as AccountRow["role"][]).map((r) => (
+                      <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                    ))}
+                  </select>
+                </div>
+              );
+            })}
+            {rows.length === 0 && <p className="py-6 text-sm text-muted-foreground">No accounts match "{q}".</p>}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function ScholarVerification() {
