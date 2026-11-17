@@ -15,6 +15,7 @@ const CTA: Record<string, { label: string; path: string }> = {
   mentor_evaluation_request: { label: "Open Mentor Portal", path: "/mentor" },
   ad_hoc_date_request: { label: "Review in Admin", path: "/admin" },
   hr_application_complete: { label: "Visit Job Shadow", path: "/" },
+  password_reset: { label: "Reset password", path: "/reset-password" },
 };
 
 export function escapeHtml(s: string) {
@@ -27,7 +28,7 @@ function linkify(s: string) {
     .replace(/\b(info@jobshadow\.co\.za)\b/g, `<a href="mailto:$1" style="color:${BRAND.red};font-weight:bold">$1</a>`);
 }
 
-export function renderEmailHtml(opts: { template: string; subject: string; body: string }) {
+export function renderEmailHtml(opts: { template: string; subject: string; body: string; ctaUrl?: string }) {
   const title = opts.subject.replace(/^JobShadow:\s*/i, "");
   const paras = opts.body
     .split(/\n{2,}|(?<=\.)\s+(?=[A-Z][a-z]+:)/)
@@ -38,7 +39,7 @@ export function renderEmailHtml(opts: { template: string; subject: string; body:
   const cta = CTA[opts.template];
   const button = cta
     ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:22px 0 6px"><tr><td style="background:${BRAND.green}">
-<a href="${SITE_URL}${cta.path}" style="display:inline-block;padding:13px 26px;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;color:#ffffff;text-decoration:none">${escapeHtml(cta.label)}</a></td></tr></table>`
+<a href="${escapeHtml(opts.ctaUrl ?? SITE_URL + cta.path)}" style="display:inline-block;padding:13px 26px;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;color:#ffffff;text-decoration:none">${escapeHtml(cta.label)}</a></td></tr></table>`
     : "";
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(opts.subject)}</title></head>
 <body style="margin:0;padding:0;background:#f4f4f4;font-family:'Work Sans',Arial,sans-serif">
