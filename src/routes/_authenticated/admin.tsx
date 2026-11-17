@@ -1,9 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { Users as UsersIcon, FileText, ShoppingCart, Briefcase, GraduationCap, Pencil, Trash2, IdCard, Image as ImageIcon, Download, BadgeCheck, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BrandLogo } from "@/components/BrandLogo";
+import { SITE_NAV } from "@/components/SiteLayout";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
@@ -77,22 +78,25 @@ function AdminPage() {
   if (!section) return null;
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <aside className="w-60 shrink-0 bg-[#E81C45] text-background">
+    <div className="flex min-h-screen bg-muted/40">
+      <aside className="w-60 shrink-0 border-r border-border bg-background text-foreground">
         <div className="flex items-center justify-center px-5 py-6">
           <BrandLogo className="h-[11.2rem] w-[11.2rem]" />
         </div>
-        <nav className="space-y-1 px-3">
+        <nav className="space-y-1 px-3 pb-6">
           {TABLES.map((t) => (
-            <button key={t.id} onClick={() => setActive(t.id)} className={`flex w-full items-center gap-3 rounded px-3 py-2 text-left text-sm font-medium transition ${active === t.id ? "bg-background/10" : "hover:bg-background/5"}`}>
+            <button key={t.id} onClick={() => setActive(t.id)} className={`flex w-full items-center gap-3 rounded-md border-l-2 px-3 py-2.5 text-left text-sm font-medium transition ${active === t.id ? "border-primary bg-primary/5 text-primary" : "border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"}`}>
               <t.icon className="h-4 w-4" /> {t.label}
             </button>
           ))}
         </nav>
       </aside>
-      <div className="flex-1">
-        <header className="flex items-center justify-end bg-[#E81C45] px-6 py-4 text-background">
-          <button onClick={() => supabase.auth.signOut().then(() => (window.location.href = "/"))} className="text-sm font-semibold hover:underline">Logout</button>
+      <div className="min-w-0 flex-1">
+        <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-border bg-background px-6 py-4 text-foreground">
+          <nav aria-label="Website navigation" className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            {SITE_NAV.map((item) => <Link key={item.to} to={item.to} className="text-sm transition hover:text-primary">{item.label}</Link>)}
+          </nav>
+          <button onClick={() => supabase.auth.signOut().then(() => (window.location.href = "/"))} className="text-sm font-medium hover:underline">Logout</button>
         </header>
         <main className="p-0">
           {admin.isLoading ? (
@@ -311,42 +315,42 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
   return (
     <div>
       {alphabetField && (
-        <div className="flex flex-wrap gap-1.5 bg-teal/90 px-6 py-4" aria-label={`Filter ${title} alphabetically`}>
-          <button type="button" onClick={() => setLetter(null)} aria-pressed={letter === null} className={`rounded-full px-2.5 py-1 text-xs font-bold uppercase transition ${letter === null ? "bg-primary text-primary-foreground" : "bg-background/60 text-foreground hover:bg-background/80"}`}>All</button>
+        <div className="flex flex-wrap gap-1.5 bg-background px-6 py-4" aria-label={`Filter ${title} alphabetically`}>
+          <button type="button" onClick={() => setLetter(null)} aria-pressed={letter === null} className={`rounded-md px-2.5 py-1.5 text-xs font-medium uppercase transition ${letter === null ? "bg-primary text-primary-foreground" : "bg-muted/70 text-foreground hover:bg-teal/20"}`}>All</button>
           {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((ch) => (
-            <button key={ch} type="button" onClick={() => setLetter(letter === ch ? null : ch)} disabled={!letterCounts.has(ch)} aria-pressed={letter === ch} className={`rounded-full px-2.5 py-1 text-xs font-bold uppercase transition ${letter === ch ? "bg-primary text-primary-foreground" : !letterCounts.has(ch) ? "bg-background/30 text-foreground/40" : "bg-background/60 text-foreground hover:bg-background/80"}`}>{ch}</button>
+            <button key={ch} type="button" onClick={() => setLetter(letter === ch ? null : ch)} disabled={!letterCounts.has(ch)} aria-pressed={letter === ch} className={`rounded-md px-2.5 py-1.5 text-xs font-medium uppercase transition ${letter === ch ? "bg-primary text-primary-foreground" : !letterCounts.has(ch) ? "bg-muted/30 text-muted-foreground/50" : "bg-muted/70 text-foreground hover:bg-teal/20"}`}>{ch}</button>
           ))}
         </div>
       )}
       {csvUpload && (
         <div className="grid border-b border-foreground/10 sm:grid-cols-2">
           <div>
-            <div className="bg-[#E81C45] px-6 py-5 text-background"><h2 className="text-xl font-semibold">Upload New Jobs</h2></div>
-            <div className="bg-teal/90 px-6 py-5 text-teal-foreground">
+            <div className="border-b border-border bg-background px-6 py-5 text-foreground"><h2 className="text-xl font-medium">Upload New Jobs</h2></div>
+            <div className="bg-background px-6 py-5 text-foreground">
               <p className="mb-2 text-xs opacity-80">Column headers don't need to match exactly — AI matches them to the right fields automatically.</p>
               <input type="file" accept=".csv" disabled={uploadBusy} onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadCsv(f); e.target.value = ""; }} className="block text-xs disabled:opacity-50" />
-              <button disabled={uploadBusy} className="mt-3 bg-cta px-4 py-2 text-sm font-bold uppercase text-cta-foreground disabled:opacity-50">{uploadBusy ? "Processing…" : "Upload File"}</button>
-              {uploadStatus && <p className="mt-2 text-xs font-semibold">{uploadStatus}</p>}
+              <button disabled={uploadBusy} className="mt-3 rounded-md bg-teal/20 hover:bg-teal/30 px-4 py-2 text-sm font-medium uppercase text-foreground disabled:opacity-50">{uploadBusy ? "Processing…" : "Upload File"}</button>
+              {uploadStatus && <p className="mt-2 text-xs font-medium">{uploadStatus}</p>}
             </div>
           </div>
           <div>
-            <div className="bg-[#E81C45] px-6 py-5 text-background"><h2 className="text-xl font-semibold">Update Jobs</h2></div>
-            <div className="bg-teal/90 px-6 py-5 text-teal-foreground">
+            <div className="border-b border-border bg-background px-6 py-5 text-foreground"><h2 className="text-xl font-medium">Update Jobs</h2></div>
+            <div className="bg-background px-6 py-5 text-foreground">
               <p className="mb-2 text-xs opacity-80">Column headers don't need to match exactly — AI matches them to the right fields automatically.</p>
               <input type="file" accept=".csv" disabled={uploadBusy} onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadCsv(f); e.target.value = ""; }} className="block text-xs disabled:opacity-50" />
-              <button disabled={uploadBusy} className="mt-3 bg-cta px-4 py-2 text-sm font-bold uppercase text-cta-foreground disabled:opacity-50">{uploadBusy ? "Processing…" : "Upload File"}</button>
+              <button disabled={uploadBusy} className="mt-3 rounded-md bg-teal/20 hover:bg-teal/30 px-4 py-2 text-sm font-medium uppercase text-foreground disabled:opacity-50">{uploadBusy ? "Processing…" : "Upload File"}</button>
             </div>
           </div>
         </div>
       )}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-[#E81C45] px-6 py-6 text-background">
-        <h1 className="text-2xl font-semibold">{title} {!isLoading && `(${rows.length})`}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border bg-background px-6 py-6 text-foreground">
+        <h1 className="text-2xl font-medium">{title} {!isLoading && `(${rows.length})`}</h1>
         {dateCompanyFilter && (
           <div className="flex flex-wrap items-end gap-4">
-            <label className="text-sm">From<input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="block border-b border-background/50 bg-transparent px-1 py-1 outline-none" /></label>
-            <label className="text-sm">To<input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="block border-b border-background/50 bg-transparent px-1 py-1 outline-none" /></label>
+            <label className="text-sm">From<input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="block border-b border-input bg-transparent px-1 py-1 outline-none" /></label>
+            <label className="text-sm">To<input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="block border-b border-input bg-transparent px-1 py-1 outline-none" /></label>
             <label className="text-sm">Select company
-              <select value={company} onChange={(e) => setCompany(e.target.value)} className="block border-b border-background/50 bg-transparent px-1 py-1 outline-none">
+              <select value={company} onChange={(e) => setCompany(e.target.value)} className="block border-b border-input bg-transparent px-1 py-1 outline-none">
                 {companies.map((c) => <option key={c} value={c} className="text-foreground">{c}</option>)}
               </select>
             </label>
@@ -354,7 +358,7 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
         )}
         <div className="flex items-center gap-3">
           {table === "companies" && (
-            <Button onClick={() => setCreating(true)} className="bg-cta px-4 py-2 text-sm font-bold uppercase text-cta-foreground">Add New Role</Button>
+            <Button onClick={() => setCreating(true)} className="rounded-md bg-teal/20 hover:bg-teal/30 px-4 py-2 text-sm font-medium uppercase text-foreground">Add New Role</Button>
           )}
           {isNameOnly && (
             <div className="flex items-center gap-2">
@@ -362,20 +366,20 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 placeholder={`New ${title.replace(/s$/, "")} name`}
-                className="border-b border-background/50 bg-transparent px-1 py-1 text-sm text-background outline-none placeholder:text-background/60"
+                className="border-b border-input bg-transparent px-1 py-1 text-sm text-foreground outline-none placeholder:text-muted-foreground"
               />
-              <Button onClick={addNamed} disabled={addBusy || !newName.trim()} className="bg-cta px-4 py-2 text-sm font-bold uppercase text-cta-foreground disabled:opacity-50">Add</Button>
+              <Button onClick={addNamed} disabled={addBusy || !newName.trim()} className="rounded-md bg-teal/20 hover:bg-teal/30 px-4 py-2 text-sm font-medium uppercase text-foreground disabled:opacity-50">Add</Button>
             </div>
           )}
-          <Button onClick={exportAll} disabled={isLoading || exporting} className="bg-cta px-4 py-2 text-sm font-bold uppercase text-cta-foreground">{exporting ? "Exporting…" : "Export"}</Button>
+          <Button onClick={exportAll} disabled={isLoading || exporting} className="rounded-md bg-teal/20 hover:bg-teal/30 px-4 py-2 text-sm font-medium uppercase text-foreground">{exporting ? "Exporting…" : "Export"}</Button>
         </div>
       </div>
-      <div className="bg-teal/90 px-6 py-6 text-teal-foreground">
-        {exportError && <p role="alert" className="mb-4 text-sm font-semibold">{exportError}</p>}
+      <div className="bg-background px-6 py-6 text-foreground">
+        {exportError && <p role="alert" className="mb-4 text-sm font-medium">{exportError}</p>}
         <div className="flex flex-wrap items-end gap-6">
           <label className="block max-w-sm text-sm">
             Search Table
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Input Value" className="mt-1 w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none placeholder:text-primary-foreground/60" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Input Value" className="mt-1 w-full border-b border-input bg-transparent px-1 py-1 outline-none placeholder:text-muted-foreground" />
           </label>
           {isUsers && (
             <label className="flex items-center gap-2 text-sm">
@@ -387,7 +391,7 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
         <div className="mt-6 overflow-x-auto">
           <table className={`w-full min-w-[700px] text-left ${table === "companies" ? "text-xs" : "text-sm"}`}>
             <thead>
-              <tr className="border-b border-primary-foreground/30 font-semibold">
+              <tr className="border-b border-border font-medium">
                 {cols.map((c) => <th key={c.key} className={`whitespace-nowrap ${table === "companies" ? "px-2 py-1" : "px-3 py-2"}`}>{c.label}</th>)}
                 <th className={table === "companies" ? "px-2 py-1" : "px-3 py-2"}>Actions</th>
               </tr>
@@ -396,12 +400,12 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
               {isLoading ? (
                 <tr><td className="px-3 py-4" colSpan={cols.length + 1}>Loading…</td></tr>
               ) : rows.map((r) => (
-                <tr key={String(r["id"])} className="border-b border-primary-foreground/10">
+                <tr key={String(r["id"])} className="border-b border-border/60">
                   {cols.map((c) => <td key={c.key} className={`align-top ${table === "companies" ? "px-2 py-1" : "px-3 py-2"}`}>{fmt(r[c.key])}</td>)}
                   <td className={table === "companies" ? "px-2 py-1" : "px-3 py-2"}>
                     <div className="flex gap-1.5">
-                      <button onClick={() => setEditing(r)} className="rounded bg-sky-500 p-1 text-white" aria-label="Edit"><Pencil className="h-3 w-3" /></button>
-                      <button onClick={() => remove(r)} className="rounded bg-destructive p-1 text-white" aria-label="Delete"><Trash2 className="h-3 w-3" /></button>
+                      <button onClick={() => setEditing(r)} className="rounded border border-border p-1.5 text-muted-foreground transition hover:text-primary" aria-label="Edit"><Pencil className="h-3 w-3" /></button>
+                      <button onClick={() => remove(r)} className="rounded p-1.5 text-muted-foreground transition hover:bg-destructive/5 hover:text-destructive" aria-label="Delete"><Trash2 className="h-3 w-3" /></button>
                     </div>
                   </td>
                 </tr>
@@ -455,29 +459,29 @@ function ApplicationEditPanel({ table, row, onDone, onCancel }: { table: string;
 
   return (
     <div>
-      <div className="flex items-center justify-between bg-[#E81C45] px-6 py-5 text-background">
-        <h1 className="text-xl font-semibold">Edit Application #{String(row["id"])}</h1>
-        <button onClick={onCancel} className="text-sm font-semibold hover:underline">Back to list</button>
+      <div className="flex items-center justify-between border-b border-border bg-background px-6 py-5 text-foreground">
+        <h1 className="text-xl font-medium">Edit Application #{String(row["id"])}</h1>
+        <button onClick={onCancel} className="text-sm font-medium hover:underline">Back to list</button>
       </div>
       <div className="grid gap-px bg-foreground/10 sm:grid-cols-2">
         <div>
-          <div className="bg-[#E81C45] px-6 py-5 text-background"><h2 className="text-xl font-semibold">Edit Application #{String(row["id"])}</h2></div>
-          <div className="bg-teal/90 px-6 py-5 text-teal-foreground">
+          <div className="border-b border-border bg-background px-6 py-5 text-foreground"><h2 className="text-xl font-medium">Edit Application #{String(row["id"])}</h2></div>
+          <div className="bg-background px-6 py-5 text-foreground">
             {filename && <p className="text-sm">{filename}</p>}
             <input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="mt-2 block text-xs" />
-            {err && <p className="mt-2 text-sm font-semibold">{err}</p>}
+            {err && <p className="mt-2 text-sm font-medium">{err}</p>}
             <div className="mt-3 flex gap-2">
-              <button onClick={upload} disabled={busy || !file} className="bg-cta px-4 py-2 text-sm font-bold uppercase text-cta-foreground disabled:opacity-50">Update</button>
-              <button onClick={download} disabled={!filename} className="bg-cta px-4 py-2 text-sm font-bold uppercase text-cta-foreground disabled:opacity-50">Download File</button>
+              <button onClick={upload} disabled={busy || !file} className="rounded-md bg-teal/20 hover:bg-teal/30 px-4 py-2 text-sm font-medium uppercase text-foreground disabled:opacity-50">Update</button>
+              <button onClick={download} disabled={!filename} className="rounded-md bg-teal/20 hover:bg-teal/30 px-4 py-2 text-sm font-medium uppercase text-foreground disabled:opacity-50">Download File</button>
             </div>
           </div>
         </div>
         <div>
-          <div className="bg-[#E81C45] px-6 py-5 text-background"><h2 className="text-xl font-semibold">Resend Mails</h2></div>
-          <div className="bg-teal/90 px-6 py-5 text-teal-foreground">
+          <div className="border-b border-border bg-background px-6 py-5 text-foreground"><h2 className="text-xl font-medium">Resend Mails</h2></div>
+          <div className="bg-background px-6 py-5 text-foreground">
             <div className="flex flex-col gap-2">
               {RESEND_TEMPLATES.map((t, i) => (
-                <button key={t} onClick={() => setNotice(`"${t}" is queued to resend (no email service connected in this build).`)} className="bg-cta px-4 py-2 text-left text-xs font-bold uppercase tracking-wide text-cta-foreground">
+                <button key={t} onClick={() => setNotice(`"${t}" is queued to resend (no email service connected in this build).`)} className="rounded-md bg-teal/20 hover:bg-teal/30 px-4 py-2 text-left text-xs font-medium uppercase tracking-wide text-foreground">
                   {i + 1}. {t}
                 </button>
               ))}
@@ -525,8 +529,8 @@ function CanonicalSelect({ table, label, value, onChange }: { table: "careers" |
       <label className="block text-sm">
         {label}
         <div className="mt-1 flex gap-2">
-          <input autoFocus value={newVal} onChange={(e) => setNewVal(e.target.value)} className="w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none focus:border-primary-foreground" />
-          <button type="button" onClick={addNew} disabled={busy || !newVal.trim()} className="shrink-0 bg-cta px-3 py-1 text-xs font-bold uppercase text-cta-foreground disabled:opacity-50">Add</button>
+          <input autoFocus value={newVal} onChange={(e) => setNewVal(e.target.value)} className="w-full border-b border-input bg-transparent px-1 py-1 outline-none focus:border-primary" />
+          <button type="button" onClick={addNew} disabled={busy || !newVal.trim()} className="shrink-0 rounded-md bg-teal/20 hover:bg-teal/30 px-3 py-1 text-xs font-medium uppercase text-foreground disabled:opacity-50">Add</button>
           <button type="button" onClick={() => { setAdding(false); setNewVal(""); }} className="shrink-0 text-xs underline">Cancel</button>
         </div>
       </label>
@@ -539,7 +543,7 @@ function CanonicalSelect({ table, label, value, onChange }: { table: "careers" |
       <select
         value={(options.data ?? []).includes(value) ? value : ""}
         onChange={(e) => (e.target.value === "__add__" ? setAdding(true) : onChange(e.target.value))}
-        className="mt-1 w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 text-primary-foreground outline-none focus:border-primary-foreground"
+        className="mt-1 w-full border-b border-input bg-transparent px-1 py-1 text-foreground outline-none focus:border-primary"
       >
         <option value="" className="text-foreground">Select…</option>
         {options.data?.map((n) => <option key={n} value={n} className="text-foreground">{n}</option>)}
@@ -583,14 +587,14 @@ function CreateRole({ onDone, onCancel }: { onDone: () => void; onCancel: () => 
 
   return (
     <div>
-      <div className="flex items-center justify-between bg-[#E81C45] px-6 py-5 text-background">
-        <h1 className="text-xl font-semibold">Add New Role</h1>
-        <button onClick={onCancel} className="text-sm font-semibold hover:underline">Back to list</button>
+      <div className="flex items-center justify-between border-b border-border bg-background px-6 py-5 text-foreground">
+        <h1 className="text-xl font-medium">Add New Role</h1>
+        <button onClick={onCancel} className="text-sm font-medium hover:underline">Back to list</button>
       </div>
-      <div className="bg-teal/90 px-6 py-6 text-teal-foreground">
+      <div className="bg-background px-6 py-6 text-foreground">
         <label className="block max-w-sm text-sm">
           Shadow type
-          <select value={type} onChange={(e) => setType_(Number(e.target.value))} className="mt-1 block w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 text-primary-foreground outline-none">
+          <select value={type} onChange={(e) => setType_(Number(e.target.value))} className="mt-1 block w-full border-b border-input bg-transparent px-1 py-1 text-foreground outline-none">
             {ROLE_TYPES.map((t, i) => <option key={t.label} value={i} className="text-foreground">{t.label} (R{t.amount})</option>)}
           </select>
         </label>
@@ -600,20 +604,20 @@ function CreateRole({ onDone, onCancel }: { onDone: () => void; onCancel: () => 
           {fields.map((f) => (
             <label key={f.key} className="block text-sm">
               {f.label}
-              <input value={vals[f.key] ?? ""} onChange={(e) => setVals({ ...vals, [f.key]: e.target.value })} className="mt-1 w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none focus:border-primary-foreground" />
+              <input value={vals[f.key] ?? ""} onChange={(e) => setVals({ ...vals, [f.key]: e.target.value })} className="mt-1 w-full border-b border-input bg-transparent px-1 py-1 outline-none focus:border-primary" />
             </label>
           ))}
           <label className="block text-sm">
             Price (R)
-            <input type="number" value={vals["amount"] ?? ""} onChange={(e) => setVals({ ...vals, amount: e.target.value })} className="mt-1 w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none focus:border-primary-foreground" />
+            <input type="number" value={vals["amount"] ?? ""} onChange={(e) => setVals({ ...vals, amount: e.target.value })} className="mt-1 w-full border-b border-input bg-transparent px-1 py-1 outline-none focus:border-primary" />
           </label>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
             Active (visible for booking)
           </label>
         </div>
-        {err && <p className="mt-4 text-sm font-semibold">{err}</p>}
-        <button onClick={save} disabled={busy} className="mt-6 bg-cta px-5 py-2.5 text-sm font-bold uppercase text-cta-foreground">Create</button>
+        {err && <p className="mt-4 text-sm font-medium">{err}</p>}
+        <button onClick={save} disabled={busy} className="mt-6 rounded-md bg-teal/20 hover:bg-teal/30 px-5 py-2.5 text-sm font-medium uppercase text-foreground">Create</button>
       </div>
     </div>
   );
@@ -639,11 +643,11 @@ function UserDocument({ path, kind, verified = false }: { path: string | null; k
   });
   const Icon = kind === "id" ? IdCard : ImageIcon;
   return <div className="flex items-center gap-1">
-    <span className="relative rounded-md border border-foreground/20 bg-background/70 p-2" title={kind === "id" ? "ID document" : "Photo"}>
-      <Icon aria-hidden="true" className="h-5 w-5" /><span className="sr-only">{kind === "id" ? "ID document" : "Photo"}</span>
-      {verified && <BadgeCheck aria-label="ID verified" className="absolute -right-2 -top-2 h-4 w-4 fill-[#E81C45] text-white" />}
+    <span className="relative rounded p-1 text-muted-foreground" title={kind === "id" ? "ID document" : "Photo"}>
+      <Icon aria-hidden="true" className="h-4 w-4" /><span className="sr-only">{kind === "id" ? "ID document" : "Photo"}</span>
+      {verified && <BadgeCheck aria-label="ID verified" className="absolute -right-1 -top-1 h-3.5 w-3.5 fill-[#E81C45] text-white" />}
     </span>
-    {file.data === true && <button onClick={() => downloadDoc(path)} aria-label={kind === "id" ? "Download ID scan" : "Download photo"} title={kind === "id" ? "Download ID scan" : "Download photo"} className="rounded p-1.5 hover:bg-background/70"><Download className="h-4 w-4" /></button>}
+    {file.data === true && <button onClick={() => downloadDoc(path)} aria-label={kind === "id" ? "Download ID scan" : "Download photo"} title={kind === "id" ? "Download ID scan" : "Download photo"} className="rounded p-1 text-muted-foreground transition hover:bg-muted hover:text-primary"><Download className="h-4 w-4" /></button>}
   </div>;
 }
 
@@ -658,6 +662,7 @@ function AdminUsers() {
   const [q, setQ] = useState("");
   const [editing, setEditing] = useState<AccountRow | null>(null);
   const [openGroups, setOpenGroups] = useState<string[]>([]);
+  const [expandedApplicationUser, setExpandedApplicationUser] = useState<string | null>(null);
   const [showSpam, setShowSpam] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [letter, setLetter] = useState<string | null>(null);
@@ -744,12 +749,12 @@ function AdminUsers() {
           </form>}
         </DialogContent>
       </Dialog>
-      <div className="bg-[#E81C45] px-6 py-6 text-background"><h1 className="text-2xl font-semibold">Users {!accounts.isLoading && `(${rows.length})`}</h1></div>
-      <div className="bg-teal/90 px-6 py-6 text-teal-foreground">
+      <div className="border-b border-border bg-background px-6 py-6 text-foreground"><h1 className="text-2xl font-medium">Users {!accounts.isLoading && `(${rows.length})`}</h1></div>
+      <div className="bg-muted/30 px-6 py-5 text-foreground">
         <div className="flex flex-wrap gap-1.5">
           <button
             onClick={() => setLetter(null)}
-            className={`rounded-full px-2.5 py-1 text-xs font-bold uppercase transition ${letter === null ? "bg-primary text-primary-foreground" : "bg-background/60 text-foreground hover:bg-background/80"}`}
+            className={`rounded-md px-2.5 py-1.5 text-xs font-medium uppercase transition ${letter === null ? "bg-primary text-primary-foreground" : "bg-muted/70 text-foreground hover:bg-teal/20"}`}
           >
             All
           </button>
@@ -760,7 +765,7 @@ function AdminUsers() {
                 key={ch}
                 onClick={() => { setLetter(letter === ch ? null : ch); setOpenGroups([ch]); }}
                 disabled={count === 0}
-                className={`rounded-full px-2.5 py-1 text-xs font-bold uppercase transition ${letter === ch ? "bg-primary text-primary-foreground" : count === 0 ? "bg-background/30 text-foreground/40" : "bg-background/60 text-foreground hover:bg-background/80"}`}
+                className={`rounded-md px-2.5 py-1.5 text-xs font-medium uppercase transition ${letter === ch ? "bg-primary text-primary-foreground" : count === 0 ? "bg-muted/30 text-muted-foreground/50" : "bg-muted/70 text-foreground hover:bg-teal/20"}`}
               >
                 {ch}
               </button>
@@ -770,7 +775,7 @@ function AdminUsers() {
         <div className="mt-4 flex flex-wrap items-end gap-6">
           <label className="block max-w-sm text-sm">
             Search
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name, email, school, company or career" className="mt-1 w-full border-b border-foreground/30 bg-transparent px-1 py-1 outline-none" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name, email, school, company or career" className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none" />
           </label>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={showSpam} onChange={(e) => setShowSpam(e.target.checked)} />
@@ -782,82 +787,48 @@ function AdminUsers() {
         ) : accounts.error ? (
           <p className="mt-6 text-destructive">{(accounts.error as Error).message}</p>
         ) : (
-          <div className="mt-6 space-y-3">
+          <div className="mt-5 space-y-2">
             {[...new Set(rows.map((a) => /^[A-Z]/.test(surnameOf(a)) ? surnameOf(a).charAt(0) : "#"))].sort((a, b) => a === "#" ? 1 : b === "#" ? -1 : a.localeCompare(b)).map((group) => (
-              <details key={group} open={openGroups.includes(group)} onToggle={(event) => { const open = event.currentTarget.open; setOpenGroups((current) => open ? [...new Set([...current, group])] : current.filter((item) => item !== group)); }} className="group rounded-lg border border-foreground/15 bg-background/50">
-                <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3 text-sm font-semibold [&::-webkit-details-marker]:hidden"><span className="text-lg">{group}</span><span className="text-muted-foreground">{rows.filter((a) => (/^[A-Z]/.test(surnameOf(a)) ? surnameOf(a).charAt(0) : "#") === group).length} users</span><ChevronDown className="ml-auto h-4 w-4 transition group-open:rotate-180" /></summary>
-                {openGroups.includes(group) && <div className="divide-y divide-foreground/10 px-4">
-            {rows.filter((a) => (/^[A-Z]/.test(surnameOf(a)) ? surnameOf(a).charAt(0) : "#") === group).map((a) => {
-              const avatarUrl = a.avatar_path ? supabase.storage.from("avatars").getPublicUrl(a.avatar_path).data.publicUrl : null;
-              return (
-                <div key={a.id} className="py-3">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    {avatarUrl ? (
-                      <img src={avatarUrl} alt="" className="h-9 w-9 rounded-full object-cover" />
-                    ) : (
-                      <div className="grid h-9 w-9 place-items-center rounded-full bg-muted text-xs font-semibold uppercase text-muted-foreground">
-                        {(a.display_name || a.full_name || a.email || "?").slice(0, 1)}
-                      </div>
-                    )}
-                    <div>
-                      <p className="text-sm font-semibold">
-                        {a.display_name || a.full_name || a.email || a.id}
-
-                        {a.is_spam && <span className="ml-2 rounded-full bg-destructive/20 px-2 py-0.5 text-[10px] font-bold uppercase text-destructive">Spam</span>}
-                      </p>
-                      <div className="my-1 flex flex-wrap gap-1.5">{a.roles.map((role) => <span key={role} className="rounded border border-foreground/20 px-1.5 py-0.5 text-[11px] font-medium leading-none text-foreground/80">{ROLE_LABELS[role]}</span>)}</div>
-                      {(a.display_name || a.full_name) && <p className="text-xs text-muted-foreground">{a.email}</p>}
-                      <p className="text-xs text-muted-foreground">
-                        Joined {new Date(a.created_at).toLocaleDateString()} · {a.booking_count} booking{a.booking_count === 1 ? "" : "s"}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <label className="flex items-center gap-2 text-xs" title={a.id_verified === null ? "No scholar profile to verify" : undefined}>
-                      <input type="checkbox" checked={a.id_verified === true} disabled={a.id_verified === null || busyId === a.id} onChange={(e) => setIdVerified(a.id, e.target.checked)} aria-label={`ID verified for ${a.display_name || a.full_name || a.email || a.id}`} />
-                      ID verified
-                    </label>
-                    <UserDocument path={a.id_file_path} kind="id" verified={a.id_verified === true} />
-                    <UserDocument path={a.photo_path} kind="photo" />
-                    <button onClick={() => setEditing({ ...a, roles: [...a.roles] })} disabled={busyId === a.id} className="flex items-center gap-1.5 rounded border border-foreground/20 bg-background/70 px-2.5 py-1.5 text-xs font-semibold" aria-label={'Edit ' + (a.display_name || a.full_name || a.email)}><Pencil className="h-3.5 w-3.5" />Edit</button>
-                    <button
-                      onClick={() => deleteAccountRow(a.id, a.display_name || a.full_name || a.email || a.id)}
-                      disabled={busyId === a.id}
-                      className="rounded bg-destructive p-1.5 text-white disabled:opacity-50"
-                      aria-label="Delete account"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                  </div>
-                  <dl className="mt-3 grid gap-x-6 gap-y-2 text-xs sm:grid-cols-3">
-                    <div><dt className="font-semibold">Phone</dt><dd className="break-words">{a.contact_no || "—"}</dd></div>
-                    <div><dt className="font-semibold">School</dt><dd className="break-words">{a.school || "—"}</dd></div>
-                    <div><dt className="font-semibold">ID / passport number</dt><dd className="break-words">{a.id_number || "—"}</dd></div>
-                  </dl>
-                  {a.applications.length > 0 ? (
-                    <details className="mt-3 rounded border border-foreground/20 bg-background/40 p-3">
-                      <summary className="cursor-pointer text-sm font-semibold">Applications ({a.applications.length})</summary>
-                      <div className="mt-3 overflow-x-auto">
-                        <table className="w-full min-w-[650px] text-left text-xs">
-                          <thead><tr>{["ID", "Company", "Career", "Dates", "Paid", "Indemnity", "Cancelled"].map((heading) => <th key={heading} className="px-2 py-2 font-semibold">{heading}</th>)}</tr></thead>
-                          <tbody>{a.applications.map((application) => (
-                            <tr key={`${application.source}-${application.id}`} className="border-t border-foreground/15">
-                              <td className="px-2 py-2">{application.source} #{application.id}</td>
-                              <td className="px-2 py-2">{application.company || "—"}</td>
-                              <td className="px-2 py-2">{application.career || "—"}</td>
-                              <td className="px-2 py-2">{application.dates || "—"}</td>
-                              {[application.paid, application.indemnity, application.cancelled].map((value, index) => <td key={index} className="px-2 py-2">{value === null ? "Not recorded" : value ? "Yes" : "No"}</td>)}
-                            </tr>
-                          ))}</tbody>
-                        </table>
-                      </div>
-                    </details>
-                  ) : <p className="mt-3 text-xs text-muted-foreground">No applications recorded.</p>}
-                </div>
-              );
-            })}
+              <details key={group} open={openGroups.includes(group)} onToggle={(event) => { const open = event.currentTarget.open; setOpenGroups((current) => open ? [...new Set([...current, group])] : current.filter((item) => item !== group)); }} className="group overflow-hidden rounded-md border border-border bg-background">
+                <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-2.5 text-sm [&::-webkit-details-marker]:hidden"><span className="w-5 font-medium text-primary">{group}</span><span className="text-xs text-muted-foreground">{rows.filter((a) => (/^[A-Z]/.test(surnameOf(a)) ? surnameOf(a).charAt(0) : "#") === group).length} users</span><ChevronDown className="ml-auto h-3.5 w-3.5 text-muted-foreground transition group-open:rotate-180" /></summary>
+                {openGroups.includes(group) && <div className="overflow-x-auto border-t border-border">
+                  <table className="w-full min-w-[1120px] text-left text-xs">
+                    <thead className="bg-muted/50 text-muted-foreground"><tr>{["Name", "User type", "Email", "Phone", "School", "ID / passport", "Documents", "Applications", "Actions"].map((heading) => <th key={heading} className="whitespace-nowrap px-3 py-2 font-normal">{heading}</th>)}</tr></thead>
+                    <tbody>
+                    {rows.filter((a) => (/^[A-Z]/.test(surnameOf(a)) ? surnameOf(a).charAt(0) : "#") === group).map((a) => {
+                      const avatarUrl = a.avatar_path ? supabase.storage.from("avatars").getPublicUrl(a.avatar_path).data.publicUrl : null;
+                      const label = a.display_name || a.full_name || a.email || a.id;
+                      return <Fragment key={a.id}>
+                        <tr className="border-t border-border/60 transition-colors hover:bg-muted/30">
+                          <td className="px-3 py-2.5"><div className="flex items-center gap-2" title={'Joined ' + new Date(a.created_at).toLocaleDateString()}>
+                            {avatarUrl ? <img src={avatarUrl} alt="" className="h-7 w-7 shrink-0 rounded-full object-cover" /> : <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-teal/15 text-[11px] uppercase">{label.slice(0, 1)}</span>}
+                            <span className="max-w-40 truncate font-medium" title={label}>{label}</span>
+                            {a.is_spam && <span className="text-[10px] text-destructive">Spam</span>}
+                          </div></td>
+                          <td className="px-3 py-2.5"><div className="flex gap-1">{a.roles.map((role) => <span key={role} className="whitespace-nowrap rounded bg-muted px-1.5 py-1 text-[10px] text-foreground">{ROLE_LABELS[role]}</span>)}</div></td>
+                          <td className="px-3 py-2.5"><span className="block max-w-44 truncate" title={a.email ?? undefined}>{a.email || '—'}</span></td>
+                          <td className="whitespace-nowrap px-3 py-2.5">{a.contact_no || '—'}</td>
+                          <td className="px-3 py-2.5"><span className="block max-w-32 truncate" title={a.school ?? undefined}>{a.school || '—'}</span></td>
+                          <td className="whitespace-nowrap px-3 py-2.5">{a.id_number || '—'}</td>
+                          <td className="px-3 py-2.5"><div className="flex items-center gap-2">
+                            <label className="flex items-center" title={a.id_verified === null ? 'No scholar profile to verify' : 'ID verified'}><input type="checkbox" className="accent-primary" checked={a.id_verified === true} disabled={a.id_verified === null || busyId === a.id} onChange={(e) => setIdVerified(a.id, e.target.checked)} aria-label={'ID verified for ' + label} /></label>
+                            <UserDocument path={a.id_file_path} kind="id" verified={a.id_verified === true} />
+                            <UserDocument path={a.photo_path} kind="photo" />
+                          </div></td>
+                          <td className="px-3 py-2.5"><button disabled={!a.applications.length} aria-expanded={expandedApplicationUser === a.id} aria-controls={'applications-' + a.id} onClick={() => setExpandedApplicationUser(expandedApplicationUser === a.id ? null : a.id)} className="flex items-center gap-2 whitespace-nowrap rounded px-1.5 py-1 text-xs hover:bg-muted disabled:text-muted-foreground" title={a.booking_count + ' bookings'}>{a.applications.length}<ChevronDown className={'h-3 w-3 transition ' + (expandedApplicationUser === a.id ? 'rotate-180' : '')} /><span className="sr-only">Applications for {label}</span></button></td>
+                          <td className="px-3 py-2.5"><div className="flex items-center gap-1.5">
+                            <button onClick={() => setEditing({ ...a, roles: [...a.roles] })} disabled={busyId === a.id} className="flex items-center gap-1.5 rounded border border-border px-2 py-1.5 text-xs transition hover:border-primary/30 hover:text-primary disabled:opacity-50" aria-label={'Edit ' + label}><Pencil className="h-3.5 w-3.5" />Edit</button>
+                            <button onClick={() => deleteAccountRow(a.id, label)} disabled={busyId === a.id} className="rounded p-1.5 text-muted-foreground transition hover:bg-destructive/5 hover:text-destructive disabled:opacity-50" aria-label={'Delete account for ' + label}><Trash2 className="h-3.5 w-3.5" /></button>
+                          </div></td>
+                        </tr>
+                        {expandedApplicationUser === a.id && <tr id={'applications-' + a.id}><td colSpan={9} className="border-t border-border bg-muted/30 px-5 py-3">
+                          <div className="mb-2 flex justify-between text-xs text-muted-foreground"><span>Applications for {label}</span><span>{a.booking_count} bookings · Joined {new Date(a.created_at).toLocaleDateString()}</span></div>
+                          <table className="w-full text-left text-xs"><thead><tr>{["ID", "Company", "Career", "Dates", "Paid", "Indemnity", "Cancelled"].map((heading) => <th key={heading} className="px-2 py-2 font-medium">{heading}</th>)}</tr></thead><tbody>{a.applications.map((application) => <tr key={application.source + '-' + application.id} className="border-t border-border/70"><td className="px-2 py-2">{application.source} #{application.id}</td><td className="px-2 py-2">{application.company || '—'}</td><td className="px-2 py-2">{application.career || '—'}</td><td className="px-2 py-2">{application.dates || '—'}</td>{[application.paid, application.indemnity, application.cancelled].map((value, index) => <td key={index} className="px-2 py-2">{value === null ? 'Not recorded' : value ? 'Yes' : 'No'}</td>)}</tr>)}</tbody></table>
+                        </td></tr>}
+                      </Fragment>;
+                    })}
+                    </tbody>
+                  </table>
                 </div>}
               </details>
             ))}
@@ -898,15 +869,15 @@ function EmailArchive() {
 
   return (
     <div>
-      <div className="bg-[#E81C45] px-6 py-6 text-background"><h1 className="text-2xl font-semibold">Email Archive {!emails.isLoading && `(${rows.length})`}</h1></div>
-      <div className="bg-teal/90 px-6 py-6 text-teal-foreground">
+      <div className="border-b border-border bg-background px-6 py-6 text-foreground"><h1 className="text-2xl font-medium">Email Archive {!emails.isLoading && `(${rows.length})`}</h1></div>
+      <div className="bg-background px-6 py-6 text-foreground">
         <label className="block max-w-sm text-sm">
           Search
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Recipient, subject, template or status" className="mt-1 w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Recipient, subject, template or status" className="mt-1 w-full border-b border-input bg-transparent px-1 py-1 outline-none" />
         </label>
         <div className="mt-4 flex flex-wrap gap-2">
-          <button onClick={() => flush(false)} disabled={sending} className="bg-cta px-4 py-2 text-xs font-bold uppercase tracking-wide text-cta-foreground disabled:opacity-50">Send queued emails now</button>
-          <button onClick={() => flush(true)} disabled={sending} className="bg-primary px-4 py-2 text-xs font-bold uppercase tracking-wide text-primary-foreground disabled:opacity-50">Retry failed emails</button>
+          <button onClick={() => flush(false)} disabled={sending} className="rounded-md bg-teal/20 hover:bg-teal/30 px-4 py-2 text-xs font-medium uppercase tracking-wide text-foreground disabled:opacity-50">Send queued emails now</button>
+          <button onClick={() => flush(true)} disabled={sending} className="bg-primary px-4 py-2 text-xs font-medium uppercase tracking-wide text-primary-foreground disabled:opacity-50">Retry failed emails</button>
         </div>
         {sendMsg && <p className="mt-2 text-sm break-words">{sendMsg}</p>}
         <div className="mt-6 space-y-2">
@@ -916,7 +887,7 @@ function EmailArchive() {
             <p>No emails found.</p>
           ) : (
             rows.map((e) => (
-              <details key={e.id} className="rounded-lg border border-primary-foreground/20 bg-background/10 p-3 text-sm">
+              <details key={e.id} className="rounded-lg border border-border bg-background/10 p-3 text-sm">
                 <summary className="cursor-pointer">
                   <strong>{e.subject}</strong> → {e.recipient || "(no address on file)"} · {e.template} · {e.status} · {new Date(e.created_at).toLocaleString()}
                 </summary>
@@ -965,22 +936,22 @@ function BookingSettings() {
 
   return (
     <div>
-      <div className="bg-[#E81C45] px-6 py-6 text-background"><h1 className="text-2xl font-semibold">Booking Settings</h1></div>
-      <div className="max-w-xl space-y-5 bg-teal/90 px-6 py-6 text-teal-foreground">
+      <div className="border-b border-border bg-background px-6 py-6 text-foreground"><h1 className="text-2xl font-medium">Booking Settings</h1></div>
+      <div className="max-w-xl space-y-5 bg-background px-6 py-6 text-foreground">
         <label className="block text-sm">
           Minimum lead time (days before a shadow date a booking is allowed)
-          <input type="number" value={minLead} onChange={(e) => setMinLead(e.target.value)} className="mt-1 w-full max-w-xs border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none" />
+          <input type="number" value={minLead} onChange={(e) => setMinLead(e.target.value)} className="mt-1 w-full max-w-xs border-b border-input bg-transparent px-1 py-1 outline-none" />
         </label>
         <label className="block text-sm">
           Blackout dates (comma separated, MM/DD/YYYY - no bookings allowed on these dates)
-          <textarea value={blackout} onChange={(e) => setBlackout(e.target.value)} placeholder="12/15/2026, 12/16/2026" className="mt-1 w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none" />
+          <textarea value={blackout} onChange={(e) => setBlackout(e.target.value)} placeholder="12/15/2026, 12/16/2026" className="mt-1 w-full border-b border-input bg-transparent px-1 py-1 outline-none" />
         </label>
         <label className="block text-sm">
           "No mentors available" message (shown on /roles and the booking wizard whenever nothing is bookable)
-          <textarea value={noAvailMsg} onChange={(e) => setNoAvailMsg(e.target.value)} className="mt-1 w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none" />
+          <textarea value={noAvailMsg} onChange={(e) => setNoAvailMsg(e.target.value)} className="mt-1 w-full border-b border-input bg-transparent px-1 py-1 outline-none" />
         </label>
-        {err && <p className="text-sm font-semibold">{err}</p>}
-        <button onClick={save} disabled={busy || settings.isLoading} className="bg-cta px-5 py-2.5 text-sm font-bold uppercase text-cta-foreground disabled:opacity-50">{saved ? "Saved" : "Save"}</button>
+        {err && <p className="text-sm font-medium">{err}</p>}
+        <button onClick={save} disabled={busy || settings.isLoading} className="rounded-md bg-teal/20 hover:bg-teal/30 px-5 py-2.5 text-sm font-medium uppercase text-foreground disabled:opacity-50">{saved ? "Saved" : "Save"}</button>
       </div>
     </div>
   );
@@ -1031,11 +1002,11 @@ function EditRecord({ title, table, cols, row, onDone, onCancel }: { title: stri
 
   return (
     <div>
-      <div className="flex items-center justify-between bg-[#E81C45] px-6 py-5 text-background">
-        <h1 className="text-xl font-semibold">Edit {title.replace(/s$/, "")} #{String(row["id"])}</h1>
-        <button onClick={onCancel} className="text-sm font-semibold hover:underline">Back to list</button>
+      <div className="flex items-center justify-between border-b border-border bg-background px-6 py-5 text-foreground">
+        <h1 className="text-xl font-medium">Edit {title.replace(/s$/, "")} #{String(row["id"])}</h1>
+        <button onClick={onCancel} className="text-sm font-medium hover:underline">Back to list</button>
       </div>
-      <div className="bg-teal/90 px-6 py-6 text-teal-foreground">
+      <div className="bg-background px-6 py-6 text-foreground">
         <div className="grid gap-5 sm:grid-cols-3">
           {editable.map((c) =>
             table === "companies" && (c.key === "career" || c.key === "sector") ? (
@@ -1051,7 +1022,7 @@ function EditRecord({ title, table, cols, row, onDone, onCancel }: { title: stri
             ) : table === "companies" && c.key === "mode" ? (
               <label key={c.key} className="block text-sm">
                 {c.label}
-                <select value={(vals["mode"] as string) ?? ""} onChange={(e) => setVals({ ...vals, mode: e.target.value })} className="mt-1 w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none focus:border-primary-foreground [&>option]:text-foreground">
+                <select value={(vals["mode"] as string) ?? ""} onChange={(e) => setVals({ ...vals, mode: e.target.value })} className="mt-1 w-full border-b border-input bg-transparent px-1 py-1 outline-none focus:border-primary [&>option]:text-foreground">
                   <option value="">—</option>
                   <option value="Face-to-Face">Face-to-Face</option>
                   <option value="Online Interview">Online Interview</option>
@@ -1069,15 +1040,15 @@ function EditRecord({ title, table, cols, row, onDone, onCancel }: { title: stri
                     type={c.field === "number" ? "number" : c.field === "date" ? "date" : "text"}
                     value={(vals[c.key] as string) ?? ""}
                     onChange={(e) => setVals({ ...vals, [c.key]: e.target.value })}
-                    className="mt-1 w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none focus:border-primary-foreground"
+                    className="mt-1 w-full border-b border-input bg-transparent px-1 py-1 outline-none focus:border-primary"
                   />
                 )}
               </label>
             )
           )}
         </div>
-        {err && <p className="mt-4 text-sm font-semibold">{err}</p>}
-        <button onClick={save} disabled={busy} className="mt-6 bg-cta px-5 py-2.5 text-sm font-bold uppercase text-cta-foreground">Update</button>
+        {err && <p className="mt-4 text-sm font-medium">{err}</p>}
+        <button onClick={save} disabled={busy} className="mt-6 rounded-md bg-teal/20 hover:bg-teal/30 px-5 py-2.5 text-sm font-medium uppercase text-foreground">Update</button>
       </div>
     </div>
   );

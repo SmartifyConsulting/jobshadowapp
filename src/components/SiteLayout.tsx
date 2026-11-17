@@ -6,7 +6,7 @@ import { BrandLogo } from "@/components/BrandLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
-const NAV = [
+export const SITE_NAV = [
   { to: "/", label: "Home" },
   { to: "/about", label: "About" },
   { to: "/real-stories", label: "Real Stories" },
@@ -65,7 +65,7 @@ export function SiteLayout({ children, hideLogo }: { children: ReactNode; hideLo
             </Link>
           )}
           <nav className={`hidden items-center gap-4 lg:flex ${hideLogo ? "lg:relative lg:left-[2%] lg:mx-auto" : "lg:ml-auto"}`}>
-            {NAV.map((n) => (
+            {SITE_NAV.map((n) => (
               <Link
                 key={n.to}
                 to={n.to}
@@ -110,7 +110,7 @@ export function SiteLayout({ children, hideLogo }: { children: ReactNode; hideLo
         </div>
         {open && (
           <nav className="flex flex-col gap-3 border-t border-primary-foreground/20 px-5 py-4 font-semibold lg:hidden">
-            {NAV.map((n) => <Link key={n.to} to={n.to} onClick={() => setOpen(false)}>{n.label}</Link>)}
+            {SITE_NAV.map((n) => <Link key={n.to} to={n.to} onClick={() => setOpen(false)}>{n.label}</Link>)}
             {isAdmin && ADMIN_NAV.map((n) => <Link key={n.label} to={n.to} onClick={() => setOpen(false)}>{n.label}</Link>)}
             {user && (
               <>
