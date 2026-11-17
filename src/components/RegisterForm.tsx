@@ -1,3 +1,4 @@
+import { SIGNUP_AUDIENCES } from "@/lib/audiences";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Turnstile } from "@/components/Turnstile";
@@ -54,10 +55,7 @@ export function RegisterForm({ compact }: { compact?: boolean }) {
           className={`${input} [&>option]:text-foreground ${compact ? "" : "sm:col-span-2 sm:max-w-md"}`}
         >
           <option value="">I am signing up as…</option>
-          <option value="student">Student</option>
-          <option value="host">Host</option>
-          <option value="hr_admin">HR Admin</option>
-          <option value="school">School</option>
+          {SIGNUP_AUDIENCES.map(({ label, value }) => <option key={value} value={value}>{label}</option>)}
         </select>
         <input required aria-label="First name" placeholder="First name" autoComplete="given-name" value={firstName} onChange={(e) => setFirstName(e.target.value)} className={input} />
         <input required aria-label="Last name" placeholder="Last name" autoComplete="family-name" value={lastName} onChange={(e) => setLastName(e.target.value)} className={input} />
@@ -81,7 +79,7 @@ export function RegisterForm({ compact }: { compact?: boolean }) {
       <button
         type="submit"
         disabled={busy || (captchaRequired && !captchaToken)}
-        className={compact ? "mt-1 rounded-full bg-cta px-5 py-2 text-xs font-bold uppercase tracking-wide text-cta-foreground disabled:opacity-50" : "mt-6 rounded-full bg-primary px-6 py-3 text-sm font-bold uppercase tracking-wide text-primary-foreground disabled:opacity-50"}
+        className={compact ? "mt-1 rounded-none bg-cta px-5 py-2 text-xs font-bold uppercase tracking-wide text-cta-foreground disabled:opacity-50" : "mt-6 rounded-none bg-primary px-6 py-3 text-sm font-bold uppercase tracking-wide text-primary-foreground disabled:opacity-50"}
       >
         {busy ? "Registering…" : "Register"}
       </button>

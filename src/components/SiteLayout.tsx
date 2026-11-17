@@ -12,7 +12,7 @@ export const SITE_NAV = [
   { to: "/about", label: "About" },
   { to: "/real-stories", label: "Real Stories" },
   { to: "/how-to", label: "How To" },
-  { to: "/roles", label: "Careers" },
+  { to: "/roles", label: "Sectors and Careers" },
   { to: "/send-to-a-friend", label: "Share" },
   { to: "/contact", label: "Contact Us" },
 ] as const;
@@ -154,7 +154,7 @@ export function SiteFooter({ hideExperienceLink = false }: { hideExperienceLink?
         <div className="text-sm">
           <p className="font-display text-base text-accent">Explore</p>
           <ul className="mt-1 space-y-0.5 opacity-90">
-            <li><Link to="/roles">Careers</Link></li>
+            <li><Link to="/roles">Sectors and Careers</Link></li>
             <li><Link to="/auth">Book a Job Shadow</Link></li>
             <li><Link to="/how-to">How To</Link></li>
             <li><Link to="/send-to-a-friend">Share</Link></li>

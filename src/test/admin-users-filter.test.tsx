@@ -12,7 +12,7 @@ vi.mock("@/lib/csv-import.functions", () => ({ mapCsvColumns: vi.fn() }));
 vi.mock("@/components/SiteLayout", () => ({ SiteHeader: () => null, SiteFooter: () => null }));
 vi.mock("@/lib/indemnity-ai.functions", () => ({ extractCompanyIndemnity: vi.fn() }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
-import { AdminUsers } from "@/routes/_authenticated/admin";
+import { AdminUsers, Route } from "@/routes/_authenticated/admin";
 import { accountInitial, alphabetInitial } from "@/lib/alphabet";
 
 const account = (id: string, name: string): AccountRow => ({
@@ -73,5 +73,30 @@ describe("User alphabet chips", () => {
     expect(alphabetInitial("  Émilie")).toBe("E");
     expect(accountInitial({ display_name: " ", full_name: null, email: "alice@example.com" })).toBe("A");
     expect(alphabetInitial(null)).toBe("#");
+  });
+});
+
+
+describe("Booking status chips", () => {
+  it("filters actual rows and resets to All", () => {
+    const client = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity, retry: false } } });
+    client.setQueryData(["is-admin"], true);
+    client.setQueryData(["admin", "combined-applications"], []);
+    client.setQueryData(["admin", "live-bookings"], [
+      { id: "one", student_name: "Alice Confirmed", status: "confirmed", shadow_date: "2026-12-01" },
+      { id: "two", student_name: "Bob Awaiting", status: "awaiting_payment", shadow_date: "2026-12-02" },
+    ]);
+    const Page = Route.options.component as () => React.JSX.Element;
+    render(<QueryClientProvider client={client}><Page /></QueryClientProvider>);
+    fireEvent.click(screen.getByRole("button", { name: "Bookings" }));
+    expect(screen.getByText("Alice Confirmed")).toBeVisible();
+    expect(screen.getByText("Bob Awaiting")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Confirmed 1" }));
+    expect(screen.getByText("Alice Confirmed")).toBeVisible();
+    expect(screen.queryByText("Bob Awaiting")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Confirmed 1" })).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(screen.getByRole("button", { name: "All 2" }));
+    expect(screen.getByText("Bob Awaiting")).toBeVisible();
+    client.clear();
   });
 });

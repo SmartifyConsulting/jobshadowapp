@@ -1,3 +1,4 @@
+import { CONTACT_AUDIENCES } from "@/lib/audiences";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Check, Facebook, Instagram } from "lucide-react";
@@ -31,7 +32,6 @@ const FORM_COPY: Record<NonNullable<ContactType>, { heading: string; orgLabel: s
   sponsor: { heading: "Sponsor A Learner", orgLabel: "Organisation / your name", subject: "New sponsor application" },
 };
 
-const CONTACT_AUDIENCES = ["Learner", "Parent / guardian", "School representative", "Host / company representative", "Sponsor", "Other"] as const;
 
 const BLOCKS = {
   school: { color: "bg-teal text-teal-foreground", text: <>If you are a school and want to include job shadow as <strong>part of your life orientation program</strong></> },

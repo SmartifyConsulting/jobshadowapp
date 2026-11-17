@@ -59,7 +59,7 @@ function InlineSignIn() {
       <PasswordInput required placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className={input} />
       {msg && <p aria-live="polite" className="text-xs font-semibold text-accent">{msg}</p>}
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <button type="submit" disabled={busy} className="rounded-full bg-cta px-5 py-2 text-xs font-bold uppercase tracking-wide text-cta-foreground disabled:opacity-50">
+        <button type="submit" disabled={busy} className="rounded-none bg-cta px-5 py-2 text-xs font-bold uppercase tracking-wide text-cta-foreground disabled:opacity-50">
           {busy ? "Signing in…" : "Sign In"}
         </button>
         <Link to="/forgot-password" className="text-xs font-semibold underline">Forgot password?</Link>
@@ -112,7 +112,7 @@ function Home() {
                 type="button"
                 onClick={() => { setShowSignUp((v) => !v); setShowSignIn(false); }}
                 aria-pressed={showSignUp}
-                className={`w-full rounded-full border px-4 py-2 text-sm font-semibold uppercase tracking-wide transition ${showSignUp ? "border-cta bg-cta text-cta-foreground shadow-warm" : "border-primary-foreground/40 hover:bg-primary-foreground/10"}`}
+                className={`w-full rounded-none border px-4 py-2 text-sm font-semibold uppercase tracking-wide transition ${showSignUp ? "border-cta bg-cta text-cta-foreground shadow-warm" : "border-primary-foreground/40 hover:bg-primary-foreground/10"}`}
               >
                 Sign Up
               </button>
@@ -123,7 +123,7 @@ function Home() {
                 type="button"
                 onClick={() => { setShowSignIn((v) => !v); setShowSignUp(false); }}
                 aria-pressed={showSignIn}
-                className={`w-full rounded-full border px-4 py-2 text-sm font-semibold uppercase tracking-wide transition ${showSignIn ? "border-cta bg-cta text-cta-foreground shadow-warm" : "border-primary-foreground/40 hover:bg-primary-foreground/10"}`}
+                className={`w-full rounded-none border px-4 py-2 text-sm font-semibold uppercase tracking-wide transition ${showSignIn ? "border-cta bg-cta text-cta-foreground shadow-warm" : "border-primary-foreground/40 hover:bg-primary-foreground/10"}`}
               >
                 Sign In
               </button>

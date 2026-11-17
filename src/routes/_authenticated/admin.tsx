@@ -66,7 +66,7 @@ const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string
     { key: "allow_weekends", label: "Allow weekends", field: "checkbox" }, { key: "allow_off_season", label: "Allow Nov–Jan (off-season)", field: "checkbox" },
     { key: "custom_indemnity_text", label: "Indemnity form" } ] },
   { id: "sectors", label: "Sectors", icon: FileText, table: "sectors", singular: "Sectors", csvUpload: true, cols: [{ key: "name", label: "Sector Name" }, { key: "_student_count", label: "Students" }] },
-  { id: "careers", label: "Careers", icon: Briefcase, table: "careers", singular: "Careers", csvUpload: true, cols: [{ key: "name", label: "Career Name" }, { key: "_student_count", label: "Students" }] },
+  { id: "careers", label: "Sectors and Careers", icon: Briefcase, table: "careers", singular: "Careers", csvUpload: true, cols: [{ key: "name", label: "Career Name" }, { key: "_student_count", label: "Students" }] },
   { id: "reports", label: "Reports", icon: FileText, table: "reports", singular: "Reports", custom: true, cols: [] },
   { id: "vouchers", label: "Vouchers", icon: ShoppingCart, table: "vouchers", singular: "Vouchers", cols: [
     { key: "id", label: "#" }, { key: "name", label: "Name" }, { key: "code", label: "Code" },
@@ -846,7 +846,7 @@ export function AdminUsers() {
         <div className="overflow-x-auto border-b border-border bg-ivory px-6 py-3"><TabsList aria-label="User types" className="h-auto">{([["user", "Students"], ["mentor", "Hosts"], ["school", "Schools"], ["hr_admin", "HR Admin"], ["admin", "Admin"]] as const).map(([role, name]) => <TabsTrigger key={role} value={role} className="min-h-11">{name} ({(accounts.data ?? []).filter((user) => user.roles.includes(role) && (showSpam || !user.is_spam)).length})</TabsTrigger>)}</TabsList></div>
       <TabsContent value={roleTab} className="mt-0">
       <div className="flex flex-col items-start xl:flex-row">
-      <div className={'min-w-0 w-full flex-1 px-4 py-4 text-foreground ' + 'bg-ivory'}>
+      <div className={'min-w-0 w-full flex-1 px-4 py-2 text-foreground ' + 'bg-ivory'}>
         <div className="flex flex-wrap gap-1.5">
           <button
             type="button" aria-pressed={letter === null} onClick={() => { setLetter(null); setOpenGroups([]); }}
@@ -868,7 +868,7 @@ export function AdminUsers() {
             );
           })}
         </div>
-        <div className="mt-4 flex flex-wrap items-end gap-6">
+        <div className="mt-2 flex flex-wrap items-end gap-4">
           <label className="block max-w-sm text-sm">
             Search
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name, email, school, company or career" className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none" />
@@ -883,10 +883,10 @@ export function AdminUsers() {
         ) : accounts.error ? (
           <p className="mt-6 text-destructive">{(accounts.error as Error).message}</p>
         ) : (
-          <Accordion type="multiple" value={openGroups} onValueChange={setOpenGroups} className="mt-5 space-y-2">
+          <Accordion type="multiple" value={openGroups} onValueChange={setOpenGroups} className="mt-3 space-y-0">
             {[...new Set(rows.map((a) => accountInitial(a)))].sort((a, b) => a === "#" ? 1 : b === "#" ? -1 : a.localeCompare(b)).map((group) => (
-              <AccordionItem key={group} value={group} className="group overflow-hidden rounded-md border-[8px] border-ivory bg-ivory">
-                <AccordionTrigger className="justify-start gap-3 px-4 py-2.5 text-sm hover:no-underline [&>svg]:ml-auto"><span className="w-5 font-medium text-primary">{group}</span><span className="text-xs text-muted-foreground">{rows.filter((a) => (accountInitial(a)) === group).length} users</span></AccordionTrigger>
+              <AccordionItem key={group} value={group} className="group overflow-hidden rounded-md border-[4px] border-ivory bg-ivory">
+                <AccordionTrigger className="justify-start gap-3 px-3 py-1.5 text-sm hover:no-underline [&>svg]:ml-auto"><span className="w-5 font-medium text-primary">{group}</span><span className="text-xs text-muted-foreground">{rows.filter((a) => (accountInitial(a)) === group).length} users</span></AccordionTrigger>
                 <AccordionContent className="pb-0">{view === "cards" ? <UserCards rows={rows.filter((a) => (accountInitial(a)) === group)} selectedId={selectedId} busyId={busyId} onSelect={setSelectedId} onEdit={(a) => setEditing({ ...a, roles: [...a.roles] })} onDelete={deleteAccountRow} onVerify={setIdVerified} /> : <div className="overflow-x-auto border-t border-border [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-track]:bg-muted">
                   <table className="w-full min-w-[820px] text-left text-xs">
                     <thead className="bg-background/40 text-foreground"><tr>{["Name", "User type", "Documents", "Applications", "Actions"].map((heading) => <th key={heading} className="whitespace-nowrap px-3 py-2 font-normal">{heading}</th>)}</tr></thead>
@@ -896,7 +896,7 @@ export function AdminUsers() {
                       const label = a.display_name || a.full_name || a.email || a.id;
                       return <Fragment key={a.id}>
                         <tr className={'border-t border-warm-divider transition-colors hover:bg-teal/5 ' + (selectedId === a.id ? 'bg-teal/10' : '')}>
-                          <td className="px-3 py-2.5"><div className="flex items-center gap-2" title={'Joined ' + new Date(a.created_at).toLocaleDateString()}>
+                          <td className="px-3 py-1.5"><div className="flex items-center gap-2" title={'Joined ' + new Date(a.created_at).toLocaleDateString()}>
                             {avatarUrl ? <img src={avatarUrl} alt="" className="h-7 w-7 shrink-0 rounded-full object-cover" /> : <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-teal/15 text-[11px] uppercase">{label.slice(0, 1)}</span>}
                             <button onClick={() => setSelectedId(a.id)} className="max-w-40 truncate text-left font-medium hover:text-primary" title={label} aria-label={'View details for ' + label}>{label}</button>
                             {a.is_spam && <span className="text-[10px] text-destructive">Spam</span>}
@@ -909,7 +909,7 @@ export function AdminUsers() {
                           </div></td>
                           <td className="px-3 py-2.5"><button disabled={!a.applications.length} aria-expanded={expandedApplicationUser === a.id} aria-controls={'applications-' + a.id} onClick={() => setExpandedApplicationUser(expandedApplicationUser === a.id ? null : a.id)} className="flex items-center gap-2 whitespace-nowrap rounded px-1.5 py-1 text-xs hover:bg-muted disabled:text-muted-foreground" title={a.booking_count + ' bookings'}>{a.applications.length}<ChevronDown className={'h-3 w-3 transition ' + (expandedApplicationUser === a.id ? 'rotate-180' : '')} /><span className="sr-only">Applications for {label}</span></button></td>
                           <td className="px-3 py-2.5"><div className="flex items-center gap-1.5">
-                            <button onClick={() => setEditing({ ...a, roles: [...a.roles] })} disabled={busyId === a.id} className="flex items-center gap-1.5 rounded border border-border px-2 py-1.5 text-xs transition hover:border-primary/30 hover:text-primary disabled:opacity-50" aria-label={'Edit ' + label}><Pencil className="h-3.5 w-3.5" />Edit</button>
+                            <button onClick={() => setEditing({ ...a, roles: [...a.roles] })} disabled={busyId === a.id} className="flex items-center gap-1.5 rounded border border-border px-2 py-1 text-xs transition hover:border-primary/30 hover:text-primary disabled:opacity-50" aria-label={'Edit ' + label}><Pencil className="h-3.5 w-3.5" />Edit</button>
                             <button onClick={() => deleteAccountRow(a.id, label)} disabled={busyId === a.id} className="rounded p-1.5 text-muted-foreground transition hover:bg-destructive/5 hover:text-destructive disabled:opacity-50" aria-label={'Delete account for ' + label}><Trash2 className="h-3.5 w-3.5" /></button>
                           </div></td>
                         </tr>
@@ -1199,13 +1199,11 @@ function LiveBookings() {
             Search
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Student, career, company, mentor, HR, date" className="mt-1 w-full border-b border-input bg-transparent px-1 py-1 outline-none" />
           </label>
-          <label className="block text-sm">
-            Status
-            <select value={status} onChange={(e) => setStatus(e.target.value)} className="mt-1 block border-b border-input bg-transparent px-1 py-1 outline-none [&>option]:text-foreground">
-              <option value="">All</option>
-              {Object.entries(BOOKING_STATUS_LABELS).map(([k, label]) => <option key={k} value={k}>{label}</option>)}
-            </select>
-          </label>
+          <div role="group" aria-label="Filter bookings by status" className="flex flex-wrap gap-1.5">
+            {[["", "All"], ...Object.entries(BOOKING_STATUS_LABELS)].map(([key, label]) => <button key={key} type="button" aria-pressed={status === key} onClick={() => setStatus(key!)} className={"rounded-full border px-3 py-1.5 text-xs font-medium transition " + (status === key ? "border-primary bg-primary text-primary-foreground" : "border-border bg-ivory text-foreground hover:bg-teal/15")}>
+              {label} <span className="ml-1 opacity-70">{(bookings.data ?? []).filter((booking) => !key || booking["status"] === key).length}</span>
+            </button>)}
+          </div>
         </div>
         <div className="mt-6 overflow-x-auto [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-track]:bg-muted">
           <table className="w-full min-w-[1100px] text-left text-xs">

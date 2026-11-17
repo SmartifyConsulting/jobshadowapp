@@ -286,3 +286,9 @@
     min-height: 112px;
   }
 }
+
+/* Equal coloured halves occupy all available Share-page content height. */
+.sharing-page > main {
+  display: grid;
+  grid-template-rows: repeat(2, minmax(min-content, 1fr));
+}
