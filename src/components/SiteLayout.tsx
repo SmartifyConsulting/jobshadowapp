@@ -65,7 +65,10 @@ export function SiteAccountMenu() {
   return <AccountMenu displayName={name} avatarUrl={session.avatarUrl} isAdmin={session.isAdmin} logout={() => { void supabase.auth.signOut().then(() => navigate({ to: "/" })); }} />;
 }
 
-export function SiteLayout({ children, headerLogo, className = "" }: { children: ReactNode; headerLogo?: ReactNode; className?: string }) {
+/** The full public-site header (logo, nav, social icons, account menu) — shared verbatim by
+ * SiteLayout and the Admin/Host Portal shells, so those "look and feel" the same as every
+ * other screen instead of reimplementing a slimmer version that drifts out of sync. */
+export function SiteHeader({ headerLogo }: { headerLogo?: ReactNode }) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { data: session } = useSession();
@@ -80,42 +83,50 @@ export function SiteLayout({ children, headerLogo, className = "" }: { children:
   }
 
   return (
-    <div className={`flex min-h-screen flex-col ${className}`}>
-      <header className="sticky top-0 z-40 bg-brand-deep text-primary-foreground shadow-warm">
-        <div className="relative mx-auto flex max-w-7xl items-center justify-center gap-6 px-5 lg:justify-between">
-          <Link to="/" aria-label="JobShadow home" className={`flex shrink-0 items-end ${headerLogo ? "h-24 lg:h-28" : "h-28 lg:h-32"}`}>
-            {headerLogo ?? <HeaderLogo className="h-24 w-auto lg:h-28" />}
-          </Link>
-          <nav className="hidden min-w-0 flex-1 flex-wrap items-center justify-end gap-4 lg:ml-auto lg:flex">
-            {SITE_NAV.map((n) => (
-              <Link
-                key={n.to}
-                to={n.to}
-                activeOptions={{ exact: n.to === "/" }}
-                className="border-b-4 border-transparent py-2 text-sm font-semibold transition hover:border-accent"
-                activeProps={{ className: "border-cta" }}
-              >
-                {n.label}
-              </Link>
+    <header className="sticky top-0 z-40 bg-brand-deep text-primary-foreground shadow-warm">
+      <div className="relative mx-auto flex max-w-7xl items-center justify-center gap-6 px-5 lg:justify-between">
+        <Link to="/" aria-label="JobShadow home" className={`flex shrink-0 items-end ${headerLogo ? "h-24 lg:h-28" : "h-28 lg:h-32"}`}>
+          {headerLogo ?? <HeaderLogo className="h-24 w-auto lg:h-28" />}
+        </Link>
+        <nav className="hidden min-w-0 flex-1 flex-wrap items-center justify-end gap-4 lg:ml-auto lg:flex">
+          {SITE_NAV.map((n) => (
+            <Link
+              key={n.to}
+              to={n.to}
+              activeOptions={{ exact: n.to === "/" }}
+              className="border-b-4 border-transparent py-2 text-sm font-semibold transition hover:border-accent"
+              activeProps={{ className: "border-cta" }}
+            >
+              {n.label}
+            </Link>
+          ))}
+          <div className="ml-2 flex gap-2">
+            {SOCIAL.map((s) => (
+              <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label} className="grid h-8 w-8 place-items-center rounded-full bg-primary-foreground text-primary transition hover:bg-accent">
+                <s.icon className="h-4 w-4" />
+              </a>
             ))}
-            <div className="ml-2 flex gap-2">
-              {SOCIAL.map((s) => (
-                <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label} className="grid h-8 w-8 place-items-center rounded-full bg-primary-foreground text-primary transition hover:bg-accent">
-                  <s.icon className="h-4 w-4" />
-                </a>
-              ))}
-            </div>
-            {user && <AccountMenu displayName={displayName} avatarUrl={avatarUrl} isAdmin={isAdmin} logout={logout} />}
-          </nav>
-          <div className="absolute right-5 flex items-center gap-3 lg:hidden">{user && <AccountMenu displayName={displayName} avatarUrl={avatarUrl} isAdmin={isAdmin} logout={logout} />}<button className="rounded p-2" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button></div>
-        </div>
-        {open && (
-          <nav className="flex flex-col gap-3 border-t border-primary-foreground/20 px-5 py-4 font-semibold lg:hidden">
-            {SITE_NAV.map((n) => <Link key={n.to} to={n.to} onClick={() => setOpen(false)}>{n.label}</Link>)}
+          </div>
+          {user && <AccountMenu displayName={displayName} avatarUrl={avatarUrl} isAdmin={isAdmin} logout={logout} />}
+        </nav>
+        <div className="absolute right-5 flex items-center gap-3 lg:hidden">{user && <AccountMenu displayName={displayName} avatarUrl={avatarUrl} isAdmin={isAdmin} logout={logout} />}<button className="rounded p-2" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button></div>
+      </div>
+      {open && (
+        <nav className="flex flex-col gap-3 border-t border-primary-foreground/20 px-5 py-4 font-semibold lg:hidden">
+          {SITE_NAV.map((n) => <Link key={n.to} to={n.to} onClick={() => setOpen(false)}>{n.label}</Link>)}
+        </nav>
+      )}
+    </header>
+  );
+}
 
-          </nav>
-        )}
-      </header>
+export function SiteLayout({ children, headerLogo, className = "" }: { children: ReactNode; headerLogo?: ReactNode; className?: string }) {
+  const { data: session } = useSession();
+  const isAdmin = session?.isAdmin ?? false;
+
+  return (
+    <div className={`flex min-h-screen flex-col ${className}`}>
+      <SiteHeader headerLogo={headerLogo} />
       <main className="flex flex-1 flex-col">{children}</main>
       <footer className="bg-brand-deep text-primary-foreground">
         <div className="mx-auto grid max-w-7xl gap-6 px-5 py-6 md:grid-cols-4">

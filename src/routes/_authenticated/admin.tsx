@@ -3,13 +3,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { Users as UsersIcon, FileText, ShoppingCart, Briefcase, GraduationCap, Pencil, Trash2, IdCard, Image as ImageIcon, Download, BadgeCheck, ChevronDown, LayoutGrid, List, X, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { HeaderLogo } from "@/components/BrandLogo";
 import { RichText } from "@/components/RichText";
 import { draftCareerDescription } from "@/lib/career-ai.functions";
 import { accountInitial, alphabetInitial } from "@/lib/alphabet";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Calendar } from "@/components/ui/calendar";
-import { SITE_NAV, SiteAccountMenu } from "@/components/SiteLayout";
+import { SiteHeader } from "@/components/SiteLayout";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
@@ -90,11 +89,11 @@ function AdminPage() {
   if (!section) return null;
 
   return (
-    <div className="flex min-h-screen bg-muted/40">
+    <div className="flex min-h-screen flex-col bg-muted/40">
+      <SiteHeader />
+      <div className="flex min-w-0 flex-1">
       <aside className="w-60 shrink-0 border-r border-primary/20 bg-brand-deep text-primary-foreground shadow-warm">
-        <div className="flex items-end justify-center px-5 pb-4 pt-6">
-          <HeaderLogo className="h-24 w-auto lg:h-28" />
-        </div>
+        <p className="px-5 pb-3 pt-6 text-xs font-bold uppercase tracking-widest text-primary-foreground/70">Admin Portal</p>
         <nav className="space-y-1 px-3 pb-6">
           {TABLES.map((t) => (
             <button key={t.id} onClick={() => setActive(t.id)} className={`flex w-full items-center gap-3 rounded-md border-l-2 px-3 py-2.5 text-left text-sm font-medium transition ${active === t.id ? "border-primary-foreground bg-primary-foreground/15 text-primary-foreground" : "border-transparent text-primary-foreground/85 hover:bg-primary-foreground/10 hover:text-primary-foreground"}`}>
@@ -104,12 +103,6 @@ function AdminPage() {
         </nav>
       </aside>
       <div className="min-w-0 flex-1">
-        <header className="sticky top-0 z-40 flex flex-wrap items-center justify-end gap-x-6 gap-y-3 bg-brand-deep px-6 py-4 text-primary-foreground shadow-warm">
-          <nav aria-label="Website navigation" className="ml-auto flex flex-wrap items-center justify-end gap-x-5 gap-y-2">
-            {SITE_NAV.map((item) => <Link key={item.to} to={item.to} activeOptions={{ exact: item.to === "/" }} activeProps={{ className: "border-cta" }} className="border-b-4 border-transparent py-2 text-sm font-semibold transition hover:border-accent">{item.label}</Link>)}
-          </nav>
-          <SiteAccountMenu />
-        </header>
         <main className="p-0">
           {admin.isLoading ? (
             <p className="p-8">Loading…</p>
@@ -129,6 +122,7 @@ function AdminPage() {
             <DataTable key={section.id} title={section.singular} table={section.table} cols={section.cols} csvUpload={section.csvUpload} dateCompanyFilter={section.dateCompanyFilter} indemnityEdit={section.indemnityEdit} />
           )}
         </main>
+      </div>
       </div>
     </div>
   );
