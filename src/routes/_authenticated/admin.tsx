@@ -30,7 +30,6 @@ export const Route = createFileRoute("/_authenticated/admin")({
 type Field = "text" | "number" | "date" | "checkbox";
 type Col = { key: string; label: string; field?: Field };
 const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string; singular: string; cols: Col[]; csvUpload?: boolean; dateCompanyFilter?: boolean; indemnityEdit?: boolean; custom?: boolean }[] = [
-  { id: "accounts", label: "User Accounts", icon: UsersIcon, table: "profiles", singular: "Accounts", custom: true, cols: [] },
   { id: "scholars", label: "Scholars", icon: GraduationCap, table: "scholar_profiles", singular: "Scholars", custom: true, cols: [] },
   { id: "emails", label: "Email Archive", icon: FileText, table: "email_outbox", singular: "Emails", custom: true, cols: [] },
   { id: "settings", label: "Booking Settings", icon: FileText, table: "booking_settings", singular: "Settings", custom: true, cols: [] },
@@ -54,8 +53,7 @@ const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string
     { key: "available_until", label: "Until", field: "date" }, { key: "usage_limit", label: "Limit", field: "number" } ] },
   { id: "sectors", label: "Sectors", icon: FileText, table: "sectors", singular: "Sectors", cols: [{ key: "id", label: "#" }, { key: "name", label: "Sector Name" }, { key: "_student_count", label: "Students" }] },
   { id: "careers", label: "Careers", icon: Briefcase, table: "careers", singular: "Careers", cols: [{ key: "id", label: "#" }, { key: "name", label: "Career Name" }, { key: "_student_count", label: "Students" }] },
-  { id: "users", label: "Users", icon: GraduationCap, table: "legacy_users", singular: "Users", cols: [
-    { key: "id", label: "Id" }, { key: "name", label: "Name" }, { key: "email", label: "Email" }, { key: "has_profile", label: "Profile" } ] },
+  { id: "users", label: "Users", icon: GraduationCap, table: "legacy_users", singular: "Users", custom: true, cols: [] },
 ];
 
 function useIsAdmin() {
@@ -99,8 +97,8 @@ function AdminPage() {
             <p className="p-8">Loading…</p>
           ) : !admin.data ? (
             <p className="p-8">Your account doesn't have admin access. Ask JobShadow to grant it.</p>
-          ) : section.id === "accounts" ? (
-            <AdminAccounts key={section.id} />
+          ) : section.id === "users" ? (
+            <AdminUsers key={section.id} />
           ) : section.id === "scholars" ? (
             <ScholarVerification key={section.id} />
           ) : section.id === "emails" ? (
@@ -329,11 +327,11 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
           )}
         </div>
         <div className="mt-6 overflow-x-auto">
-          <table className="w-full min-w-[700px] text-left text-sm">
+          <table className={`w-full min-w-[700px] text-left ${table === "companies" ? "text-xs" : "text-sm"}`}>
             <thead>
               <tr className="border-b border-primary-foreground/30 font-semibold">
-                {cols.map((c) => <th key={c.key} className="whitespace-nowrap px-3 py-2">{c.label}</th>)}
-                <th className="px-3 py-2">Actions</th>
+                {cols.map((c) => <th key={c.key} className={`whitespace-nowrap ${table === "companies" ? "px-2 py-1" : "px-3 py-2"}`}>{c.label}</th>)}
+                <th className={table === "companies" ? "px-2 py-1" : "px-3 py-2"}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -341,11 +339,11 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
                 <tr><td className="px-3 py-4" colSpan={cols.length + 1}>Loading…</td></tr>
               ) : rows.map((r) => (
                 <tr key={String(r["id"])} className="border-b border-primary-foreground/10">
-                  {cols.map((c) => <td key={c.key} className="px-3 py-2 align-top">{fmt(r[c.key])}</td>)}
-                  <td className="px-3 py-2">
-                    <div className="flex gap-2">
-                      <button onClick={() => setEditing(r)} className="rounded bg-sky-500 p-1.5 text-white" aria-label="Edit"><Pencil className="h-3.5 w-3.5" /></button>
-                      <button onClick={() => remove(r)} className="rounded bg-destructive p-1.5 text-white" aria-label="Delete"><Trash2 className="h-3.5 w-3.5" /></button>
+                  {cols.map((c) => <td key={c.key} className={`align-top ${table === "companies" ? "px-2 py-1" : "px-3 py-2"}`}>{fmt(r[c.key])}</td>)}
+                  <td className={table === "companies" ? "px-2 py-1" : "px-3 py-2"}>
+                    <div className="flex gap-1.5">
+                      <button onClick={() => setEditing(r)} className="rounded bg-sky-500 p-1 text-white" aria-label="Edit"><Pencil className="h-3 w-3" /></button>
+                      <button onClick={() => remove(r)} className="rounded bg-destructive p-1 text-white" aria-label="Delete"><Trash2 className="h-3 w-3" /></button>
                     </div>
                   </td>
                 </tr>
@@ -583,13 +581,14 @@ async function downloadDoc(path: string | null) {
 
 const ROLE_LABELS: Record<AccountRow["role"], string> = { user: "Student", mentor: "Mentor", hr_admin: "HR Admin", admin: "Admin" };
 
-function AdminAccounts() {
+function AdminUsers() {
   const qc = useQueryClient();
   const getAccountsFn = useServerFn(getAccounts);
   const updateRoleFn = useServerFn(updateAccountRole);
   const removeAccountFn = useServerFn(removeAccount);
   const accounts = useQuery({ queryKey: ["admin", "accounts"], queryFn: () => getAccountsFn() });
   const [q, setQ] = useState("");
+  const [showSpam, setShowSpam] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   async function changeRole(userId: string, role: AccountRow["role"]) {
@@ -617,17 +616,27 @@ function AdminAccounts() {
 
   const rows = useMemo(() => {
     const s = q.toLowerCase().trim();
-    return (accounts.data ?? []).filter((a) => !s || [a.email, a.display_name].some((v) => (v ?? "").toLowerCase().includes(s)));
-  }, [accounts.data, q]);
+    return (accounts.data ?? []).filter((a) => {
+      if (!showSpam && a.is_spam) return false;
+      if (s && ![a.email, a.display_name, a.full_name].some((v) => (v ?? "").toLowerCase().includes(s))) return false;
+      return true;
+    });
+  }, [accounts.data, q, showSpam]);
 
   return (
     <div>
-      <div className="bg-[#E81C45] px-6 py-6 text-background"><h1 className="text-2xl font-semibold">User Accounts {!accounts.isLoading && `(${rows.length})`}</h1></div>
+      <div className="bg-[#E81C45] px-6 py-6 text-background"><h1 className="text-2xl font-semibold">Users {!accounts.isLoading && `(${rows.length})`}</h1></div>
       <div className="px-6 py-6">
-        <label className="block max-w-sm text-sm">
-          Search
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name or email" className="mt-1 w-full border-b border-foreground/30 bg-transparent px-1 py-1 outline-none" />
-        </label>
+        <div className="flex flex-wrap items-end gap-6">
+          <label className="block max-w-sm text-sm">
+            Search
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name or email" className="mt-1 w-full border-b border-foreground/30 bg-transparent px-1 py-1 outline-none" />
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={showSpam} onChange={(e) => setShowSpam(e.target.checked)} />
+            Show spam-flagged accounts
+          </label>
+        </div>
         {accounts.isLoading ? (
           <p className="mt-6">Loading…</p>
         ) : accounts.error ? (
@@ -643,16 +652,21 @@ function AdminAccounts() {
                       <img src={avatarUrl} alt="" className="h-9 w-9 rounded-full object-cover" />
                     ) : (
                       <div className="grid h-9 w-9 place-items-center rounded-full bg-muted text-xs font-semibold uppercase text-muted-foreground">
-                        {(a.display_name || a.email || "?").slice(0, 1)}
+                        {(a.display_name || a.full_name || a.email || "?").slice(0, 1)}
                       </div>
                     )}
                     <div>
-                      <p className="text-sm font-semibold">{a.display_name || a.email || a.id}</p>
-                      {a.display_name && <p className="text-xs text-muted-foreground">{a.email}</p>}
+                      <p className="text-sm font-semibold">
+                        {a.display_name || a.full_name || a.email || a.id}
+                        {a.is_spam && <span className="ml-2 rounded-full bg-destructive/20 px-2 py-0.5 text-[10px] font-bold uppercase text-destructive">Spam</span>}
+                      </p>
+                      {(a.display_name || a.full_name) && <p className="text-xs text-muted-foreground">{a.email}</p>}
                       <p className="text-xs text-muted-foreground">Joined {new Date(a.created_at).toLocaleDateString()}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button onClick={() => downloadDoc(a.id_file_path)} disabled={!a.id_file_path} className="bg-cta px-3 py-1.5 text-xs font-bold uppercase text-cta-foreground disabled:opacity-50">Download ID scan</button>
+                    <button onClick={() => downloadDoc(a.photo_path)} disabled={!a.photo_path} className="bg-cta px-3 py-1.5 text-xs font-bold uppercase text-cta-foreground disabled:opacity-50">Download photo</button>
                     <select
                       value={a.role}
                       disabled={busyId === a.id}
@@ -664,7 +678,7 @@ function AdminAccounts() {
                       ))}
                     </select>
                     <button
-                      onClick={() => deleteAccountRow(a.id, a.display_name || a.email || a.id)}
+                      onClick={() => deleteAccountRow(a.id, a.display_name || a.full_name || a.email || a.id)}
                       disabled={busyId === a.id}
                       className="rounded bg-destructive p-1.5 text-white disabled:opacity-50"
                       aria-label="Delete account"
@@ -675,7 +689,7 @@ function AdminAccounts() {
                 </div>
               );
             })}
-            {rows.length === 0 && <p className="py-6 text-sm text-muted-foreground">No accounts match "{q}".</p>}
+            {rows.length === 0 && <p className="py-6 text-sm text-muted-foreground">No users match "{q}".</p>}
           </div>
         )}
       </div>

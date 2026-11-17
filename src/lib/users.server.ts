@@ -5,6 +5,11 @@ export type AccountRow = {
   role: "user" | "mentor" | "hr_admin" | "admin";
   display_name: string | null;
   avatar_path: string | null;
+  full_name: string | null;
+  id_file_path: string | null;
+  photo_path: string | null;
+  has_profile: boolean;
+  is_spam: boolean;
 };
 
 const ROLE_PRIORITY = ["admin", "hr_admin", "mentor"] as const;
@@ -22,21 +27,39 @@ export async function listAccounts(): Promise<AccountRow[]> {
     page += 1;
   }
 
-  const [{ data: roles }, { data: profiles }] = await Promise.all([
+  const [{ data: roles }, { data: profiles }, { data: scholars }, { data: legacy }] = await Promise.all([
     supabaseAdmin.from("user_roles").select("user_id, role"),
     supabaseAdmin.from("profiles").select("user_id, display_name, avatar_path"),
+    supabaseAdmin.from("scholar_profiles").select("user_id, full_name, id_file_path, photo_path"),
+    supabaseAdmin.from("legacy_users").select("email, has_profile, is_spam"),
   ]);
 
   const roleByUser = new Map<string, string[]>();
   (roles ?? []).forEach((r) => roleByUser.set(r.user_id, [...(roleByUser.get(r.user_id) ?? []), r.role]));
   const profileByUser = new Map((profiles ?? []).map((p) => [p.user_id, p]));
+  const scholarByUser = new Map((scholars ?? []).map((s) => [s.user_id, s]));
+  const legacyByEmail = new Map((legacy ?? []).map((l) => [(l.email ?? "").trim().toLowerCase(), l]));
 
   return users
     .map((u) => {
       const userRoles = roleByUser.get(u.id) ?? [];
       const role = (ROLE_PRIORITY.find((r) => userRoles.includes(r)) ?? "user") as AccountRow["role"];
       const profile = profileByUser.get(u.id);
-      return { id: u.id, email: u.email, created_at: u.created_at, role, display_name: profile?.display_name ?? null, avatar_path: profile?.avatar_path ?? null };
+      const scholar = scholarByUser.get(u.id);
+      const legacyRow = u.email ? legacyByEmail.get(u.email.trim().toLowerCase()) : undefined;
+      return {
+        id: u.id,
+        email: u.email,
+        created_at: u.created_at,
+        role,
+        display_name: profile?.display_name ?? null,
+        avatar_path: profile?.avatar_path ?? null,
+        full_name: scholar?.full_name ?? null,
+        id_file_path: scholar?.id_file_path ?? null,
+        photo_path: scholar?.photo_path ?? null,
+        has_profile: legacyRow?.has_profile ?? false,
+        is_spam: legacyRow?.is_spam ?? false,
+      };
     })
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
 }
