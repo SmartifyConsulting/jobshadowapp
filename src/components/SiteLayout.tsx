@@ -16,11 +16,6 @@ const NAV = [
   { to: "/contact", label: "Contact Us" },
 ] as const;
 
-const GUEST_NAV = [
-  { to: "/register", label: "Register" },
-  { to: "/auth", label: "Log in" },
-] as const;
-
 const ADMIN_NAV = [
   { to: "/admin", label: "Companies" },
   { to: "/admin", label: "Vouchers" },
@@ -79,9 +74,6 @@ export function SiteLayout({ children }: { children: ReactNode }) {
             {isAdmin && ADMIN_NAV.map((n) => (
               <Link key={n.label} to={n.to} className="border-b-4 border-transparent py-2 text-sm font-semibold transition hover:border-accent">{n.label}</Link>
             ))}
-            {!user && GUEST_NAV.map((n) => (
-              <Link key={n.to} to={n.to} className="border-b-4 border-transparent py-2 text-sm font-semibold transition hover:border-accent" activeProps={{ className: "border-cta" }}>{n.label}</Link>
-            ))}
             {user && (
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-1 text-sm font-semibold">
@@ -109,7 +101,6 @@ export function SiteLayout({ children }: { children: ReactNode }) {
           <nav className="flex flex-col gap-3 border-t border-primary-foreground/20 px-5 py-4 font-semibold xl:hidden">
             {NAV.map((n) => <Link key={n.to} to={n.to} onClick={() => setOpen(false)}>{n.label}</Link>)}
             {isAdmin && ADMIN_NAV.map((n) => <Link key={n.label} to={n.to} onClick={() => setOpen(false)}>{n.label}</Link>)}
-            {!user && GUEST_NAV.map((n) => <Link key={n.to} to={n.to} onClick={() => setOpen(false)}>{n.label}</Link>)}
             {user && (
               <>
                 <Link to="/my-account" onClick={() => setOpen(false)}>My Account</Link>
