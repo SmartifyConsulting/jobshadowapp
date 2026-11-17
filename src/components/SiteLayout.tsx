@@ -116,21 +116,21 @@ export function SiteLayout({ children, hideLogo }: { children: ReactNode; hideLo
       </header>
       <main className="flex-1">{children}</main>
       <footer className="bg-brand-deep text-primary-foreground">
-        <div className="mx-auto grid max-w-7xl gap-8 px-5 py-12 md:grid-cols-4">
+        <div className="mx-auto grid max-w-7xl gap-6 px-5 py-6 md:grid-cols-4">
           <div className="md:col-span-2">
-            <p className="max-w-sm font-display text-2xl leading-snug">Be sure about the career and life you choose with Job Shadow.</p>
-            <a href="mailto:info@jobshadow.co.za" className="mt-2 inline-block text-sm font-bold text-accent hover:underline">info@jobshadow.co.za</a>
-            <div className="mt-4 flex gap-2">
+            <p className="max-w-sm font-display text-lg leading-snug">Be sure about the career and life you choose with Job Shadow.</p>
+            <a href="mailto:info@jobshadow.co.za" className="mt-1 inline-block text-sm font-bold text-accent hover:underline">info@jobshadow.co.za</a>
+            <div className="mt-2 flex gap-2">
               {SOCIAL.map((s) => (
-                <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label} className="grid h-9 w-9 place-items-center rounded-full bg-primary-foreground text-primary hover:bg-accent">
+                <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label} className="grid h-8 w-8 place-items-center rounded-full bg-primary-foreground text-primary hover:bg-accent">
                   <s.icon className="h-4 w-4" />
                 </a>
               ))}
             </div>
           </div>
           <div className="text-sm">
-            <p className="font-display text-lg text-accent">Explore</p>
-            <ul className="mt-2 space-y-1 opacity-90">
+            <p className="font-display text-base text-accent">Explore</p>
+            <ul className="mt-1 space-y-0.5 opacity-90">
               <li><Link to="/roles">Job Roles</Link></li>
               <li><Link to="/auth">Book a Job Shadow</Link></li>
               <li><Link to="/how-to">How To</Link></li>
@@ -139,8 +139,8 @@ export function SiteLayout({ children, hideLogo }: { children: ReactNode; hideLo
             </ul>
           </div>
           <div className="text-sm">
-            <p className="font-display text-lg text-accent">Get involved</p>
-            <ul className="mt-2 space-y-1 opacity-90">
+            <p className="font-display text-base text-accent">Get involved</p>
+            <ul className="mt-1 space-y-0.5 opacity-90">
               <li><Link to="/contact">Sponsor a learner</Link></li>
               <li><Link to="/contact">Hosting contact</Link></li>
               <li><Link to="/contact">School contact</Link></li>
@@ -149,9 +149,9 @@ export function SiteLayout({ children, hideLogo }: { children: ReactNode; hideLo
           </div>
         </div>
         <div className="border-t border-primary-foreground/20">
-          <div className="mx-auto flex max-w-7xl items-center justify-between gap-5 px-5 py-3">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-5 px-5 py-2">
             <p className="text-xs opacity-80">© JobShadow {new Date().getFullYear()}</p>
-            <BrandLogo loading="lazy" className="h-24 w-24" />
+            <BrandLogo loading="lazy" className="h-12 w-12" />
           </div>
         </div>
       </footer>

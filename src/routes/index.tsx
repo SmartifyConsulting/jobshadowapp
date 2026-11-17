@@ -1,5 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { SiteLayout } from "@/components/SiteLayout";
+import { supabase } from "@/integrations/supabase/client";
 import arrow from "@/assets/yellow-arrow.png.asset.json";
 
 export const Route = createFileRoute("/")({
@@ -28,7 +30,44 @@ const ORG_JSON_LD = JSON.stringify({
   sameAs: ["https://www.facebook.com/JobShadowBookings", "https://www.instagram.com/jobshadowbookings"],
 });
 
+function InlineSignIn() {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [msg, setMsg] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setMsg(null);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setBusy(false);
+    if (error) return setMsg(/email.*not.*confirmed/i.test(error.message) ? "Please confirm your email first — check your inbox." : "Email or password is incorrect.");
+    const { data: u } = await supabase.auth.getUser();
+    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: u.user!.id, _role: "admin" });
+    navigate({ to: isAdmin ? "/admin" : "/my-account" });
+  }
+
+  const input = "w-full rounded-full border border-primary-foreground/40 bg-primary-foreground/10 px-4 py-2 text-sm text-primary-foreground placeholder:text-primary-foreground/60 outline-none focus:border-primary-foreground/70";
+
+  return (
+    <form onSubmit={submit} className="col-span-2 mt-2 grid gap-2 text-left">
+      <input type="email" required placeholder="EMAIL" value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
+      <input type="password" required placeholder="PASSWORD" value={password} onChange={(e) => setPassword(e.target.value)} className={input} />
+      {msg && <p aria-live="polite" className="text-xs font-semibold text-accent">{msg}</p>}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <button type="submit" disabled={busy} className="rounded-full bg-cta px-5 py-2 text-xs font-bold uppercase tracking-wide text-cta-foreground disabled:opacity-50">
+          {busy ? "Signing in…" : "Sign In"}
+        </button>
+        <Link to="/forgot-password" className="text-xs font-semibold underline">Forgot password?</Link>
+      </div>
+    </form>
+  );
+}
+
 function Home() {
+  const [showSignIn, setShowSignIn] = useState(false);
   return (
     <SiteLayout hideLogo>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ORG_JSON_LD }} />
@@ -55,10 +94,15 @@ function Home() {
             </div>
             <div className="flex flex-col items-center gap-2">
               <p className="text-xs font-semibold uppercase tracking-wider opacity-80">Returning?</p>
-              <Link to="/auth" className="w-full rounded-full border border-primary-foreground/40 px-4 py-2 text-sm font-semibold uppercase tracking-wide transition hover:bg-primary-foreground/10">
+              <button
+                type="button"
+                onClick={() => setShowSignIn((v) => !v)}
+                className="w-full rounded-full border border-primary-foreground/40 px-4 py-2 text-sm font-semibold uppercase tracking-wide transition hover:bg-primary-foreground/10"
+              >
                 Sign In
-              </Link>
+              </button>
             </div>
+            {showSignIn && <InlineSignIn />}
           </div>
         </div>
       </section>
