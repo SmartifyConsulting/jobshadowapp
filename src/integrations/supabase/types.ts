@@ -22,11 +22,13 @@ export type Database = {
           id: number
           max_advance_days: number
           max_pending_requests: number
+          mentor_reminder_days: number[]
           min_lead_days: number
           no_availability_message: string
           request_expiry_hours: number
           reschedule_allowed: boolean
           reschedule_min_notice_days: number
+          scholar_reminder_days: number[]
           waitlist_expiry_hours: number
         }
         Insert: {
@@ -36,11 +38,13 @@ export type Database = {
           id?: number
           max_advance_days?: number
           max_pending_requests?: number
+          mentor_reminder_days?: number[]
           min_lead_days?: number
           no_availability_message?: string
           request_expiry_hours?: number
           reschedule_allowed?: boolean
           reschedule_min_notice_days?: number
+          scholar_reminder_days?: number[]
           waitlist_expiry_hours?: number
         }
         Update: {
@@ -50,11 +54,13 @@ export type Database = {
           id?: number
           max_advance_days?: number
           max_pending_requests?: number
+          mentor_reminder_days?: number[]
           min_lead_days?: number
           no_availability_message?: string
           request_expiry_hours?: number
           reschedule_allowed?: boolean
           reschedule_min_notice_days?: number
+          scholar_reminder_days?: number[]
           waitlist_expiry_hours?: number
         }
         Relationships: []
@@ -109,9 +115,11 @@ export type Database = {
           internship_notes: string | null
           internship_preapproved: boolean
           location: string | null
+          mentor_reminders_sent: number[]
           mode: string | null
           paid_at: string | null
           reminder_sent_at: string | null
+          scholar_reminders_sent: number[]
           sector: string | null
           shadow_date: string
           status: string
@@ -137,9 +145,11 @@ export type Database = {
           internship_notes?: string | null
           internship_preapproved?: boolean
           location?: string | null
+          mentor_reminders_sent?: number[]
           mode?: string | null
           paid_at?: string | null
           reminder_sent_at?: string | null
+          scholar_reminders_sent?: number[]
           sector?: string | null
           shadow_date: string
           status?: string
@@ -165,9 +175,11 @@ export type Database = {
           internship_notes?: string | null
           internship_preapproved?: boolean
           location?: string | null
+          mentor_reminders_sent?: number[]
           mode?: string | null
           paid_at?: string | null
           reminder_sent_at?: string | null
+          scholar_reminders_sent?: number[]
           sector?: string | null
           shadow_date?: string
           status?: string

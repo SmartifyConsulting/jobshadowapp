@@ -176,6 +176,27 @@ function toUsDate(d: Date): string {
   return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
 }
 
+function DatesPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const dates = value.split(",").map((s) => s.trim()).filter(Boolean).map(parseUsDate).filter((d): d is Date => d !== null);
+  function set(next: Date[]) {
+    onChange(next.map(toUsDate).join(", "));
+  }
+  return (
+    <div className="flex flex-wrap items-start gap-4">
+      <Calendar mode="multiple" selected={dates} onSelect={(d) => set(d ?? [])} disabled={{ before: new Date() }} className="rounded-md border bg-background" />
+      <div className="flex flex-wrap gap-1.5">
+        {dates.length === 0 && <span className="text-xs text-muted-foreground">No dates set.</span>}
+        {dates.map((d, i) => (
+          <span key={i} className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs">
+            {toUsDate(d)}
+            <button type="button" onClick={() => set(dates.filter((_, idx) => idx !== i))} aria-label={`Remove ${toUsDate(d)}`} className="text-muted-foreground hover:text-destructive"><X className="h-3 w-3" /></button>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function HostSettings() {
   const qc = useQueryClient();
   const settings = useQuery({
@@ -391,9 +412,10 @@ function PlacementCard({ placement }: { placement: Placement }) {
         </div>
       ) : (
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <label className="text-sm">Dates (comma separated)
-            <input value={vals.dates} onChange={(e) => setVals({ ...vals, dates: e.target.value })} className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none" />
-          </label>
+          <div className="sm:col-span-2">
+            <p className="text-sm">Available dates</p>
+            <div className="mt-2"><DatesPicker value={vals.dates} onChange={(v) => setVals({ ...vals, dates: v })} /></div>
+          </div>
           <label className="text-sm">Places
             <input type="number" value={vals.max_applicants} onChange={(e) => setVals({ ...vals, max_applicants: e.target.value })} className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none" />
           </label>

@@ -641,7 +641,7 @@ function CreateRole({ onDone, onCancel }: { onDone: () => void; onCancel: () => 
     { key: "mentor_name", label: "Mentor name" }, { key: "mentor_phone", label: "Mentor phone" }, { key: "mentor_email", label: "Mentor email" },
     { key: "hr_contact_name", label: "HR contact name" }, { key: "hr_contact_phone", label: "HR contact phone" }, { key: "hr_contact_email", label: "HR contact email" },
     { key: "backup_mentor_name", label: "Backup mentor name" }, { key: "backup_mentor_phone", label: "Backup mentor phone" }, { key: "backup_mentor_email", label: "Backup mentor email" },
-    { key: "dates", label: "Dates" }, { key: "max_applicants", label: "Places" },
+    { key: "max_applicants", label: "Places" },
   ];
 
   async function save() {
@@ -686,6 +686,10 @@ function CreateRole({ onDone, onCancel }: { onDone: () => void; onCancel: () => 
             <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
             Active (visible for booking)
           </label>
+          <div className="sm:col-span-3">
+            <p className="text-sm">Dates</p>
+            <div className="mt-2"><DatesPicker value={vals["dates"] ?? ""} onChange={(v) => setVals({ ...vals, dates: v })} /></div>
+          </div>
         </div>
         {err && <p className="mt-4 text-sm font-medium">{err}</p>}
         <button onClick={save} disabled={busy} className="mt-6 rounded-md bg-teal/20 hover:bg-teal/30 px-5 py-2.5 text-sm font-medium uppercase text-foreground">Create</button>
@@ -1030,6 +1034,7 @@ type BookingSettingsRow = {
   max_advance_days: number; documentation_deadline_days: number; cancellation_cutoff_days: number;
   reschedule_allowed: boolean; reschedule_min_notice_days: number; max_pending_requests: number;
   waitlist_expiry_hours: number; request_expiry_hours: number;
+  scholar_reminder_days: number[]; mentor_reminder_days: number[];
 };
 
 function parseUsDate(s: string): Date | null {
@@ -1040,6 +1045,30 @@ function parseUsDate(s: string): Date | null {
 }
 function toUsDate(d: Date): string {
   return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
+}
+
+/** Replaces the old comma-separated "MM/DD/YYYY, MM/DD/YYYY" dates field with a calendar
+ * multi-select, so admins/hosts can pick available dates instead of typing them. Stores and
+ * reads the same comma-separated string format other code (booking flow, triggers) expects. */
+function DatesPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const dates = value.split(",").map((s) => s.trim()).filter(Boolean).map(parseUsDate).filter((d): d is Date => d !== null);
+  function set(next: Date[]) {
+    onChange(next.map(toUsDate).join(", "));
+  }
+  return (
+    <div className="flex flex-wrap items-start gap-4">
+      <Calendar mode="multiple" selected={dates} onSelect={(d) => set(d ?? [])} disabled={{ before: new Date() }} className="rounded-md border border-warm-divider bg-background" />
+      <div className="flex flex-wrap gap-1.5">
+        {dates.length === 0 && <span className="text-xs text-muted-foreground">No dates set.</span>}
+        {dates.map((d, i) => (
+          <span key={i} className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs">
+            {toUsDate(d)}
+            <button type="button" onClick={() => set(dates.filter((_, idx) => idx !== i))} aria-label={`Remove ${toUsDate(d)}`} className="text-muted-foreground hover:text-destructive"><X className="h-3 w-3" /></button>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function NumberField({ label, hint, value, onChange, suffix }: { label: string; hint?: string; value: string; onChange: (v: string) => void; suffix?: string }) {
@@ -1053,6 +1082,10 @@ function NumberField({ label, hint, value, onChange, suffix }: { label: string; 
       {hint && <p className="mt-1 max-w-md text-xs text-muted-foreground">{hint}</p>}
     </label>
   );
+}
+
+function parseIntList(s: string): number[] {
+  return [...new Set(s.split(",").map((v) => Number(v.trim())).filter((n) => Number.isFinite(n) && n >= 0))].sort((a, b) => b - a);
 }
 
 const NOT_ENFORCED_HINT = "Stored, but not yet enforced anywhere in the app — that needs a workflow (host response tracking, waitlist, or self-service cancel/reschedule) this project doesn't have yet.";
@@ -1078,6 +1111,8 @@ function BookingSettings() {
       cancellation_cutoff_days: String(s.cancellation_cutoff_days), reschedule_min_notice_days: String(s.reschedule_min_notice_days),
       waitlist_expiry_hours: String(s.waitlist_expiry_hours), max_pending_requests: String(s.max_pending_requests),
       no_availability_message: s.no_availability_message ?? "",
+      scholar_reminder_days: (s.scholar_reminder_days ?? []).join(", "),
+      mentor_reminder_days: (s.mentor_reminder_days ?? []).join(", "),
     });
     setBlackoutDates((s.blackout_dates ?? []).map(parseUsDate).filter((d): d is Date => d !== null));
   }, [settings.data]);
@@ -1098,6 +1133,8 @@ function BookingSettings() {
       reschedule_min_notice_days: Number(f("reschedule_min_notice_days")) || 0,
       waitlist_expiry_hours: Number(f("waitlist_expiry_hours")) || 0,
       max_pending_requests: Number(f("max_pending_requests")) || 0,
+      scholar_reminder_days: parseIntList(f("scholar_reminder_days")),
+      mentor_reminder_days: parseIntList(f("mentor_reminder_days")),
       blackout_dates: blackoutDates.map(toUsDate),
       no_availability_message: f("no_availability_message"),
     }).eq("id", 1);
@@ -1164,14 +1201,16 @@ function BookingSettings() {
                 "No mentors available" message <span className="text-xs text-muted-foreground">(shown on /roles and the booking wizard whenever nothing is bookable)</span>
                 <textarea value={f("no_availability_message")} onChange={(e) => set("no_availability_message")(e.target.value)} className="mt-1 w-full border-b border-input bg-transparent px-1 py-1 outline-none" />
               </label>
-              <div>
-                <p className="text-sm">Reminder schedule</p>
-                <p className="mt-1 max-w-md text-xs text-muted-foreground">
-                  Scholars and guardians are reminded 2 days before a confirmed shadow, and again the afternoon before
-                  with a packing reminder (ID, signed indemnity form(s), questionnaire). These are fixed schedules in
-                  the database, not configurable from here yet.
-                </p>
-              </div>
+              <label className="block text-sm">
+                Scholar reminders <span className="text-xs text-muted-foreground">(days before the shadow date, comma separated — e.g. "2, 1")</span>
+                <input value={f("scholar_reminder_days")} onChange={(e) => set("scholar_reminder_days")(e.target.value)} placeholder="2, 1" className="mt-1 w-full max-w-xs border-b border-input bg-transparent px-1 py-1 outline-none" />
+                <p className="mt-1 max-w-md text-xs text-muted-foreground">The lowest day (e.g. 1 = the day before) gets the packing-list wording (ID, signed indemnity form(s), questionnaire); any other day gets a general reminder.</p>
+              </label>
+              <label className="block text-sm">
+                Host reminders <span className="text-xs text-muted-foreground">(days before the shadow date, comma separated)</span>
+                <input value={f("mentor_reminder_days")} onChange={(e) => set("mentor_reminder_days")(e.target.value)} placeholder="1" className="mt-1 w-full max-w-xs border-b border-input bg-transparent px-1 py-1 outline-none" />
+                <p className="mt-1 max-w-md text-xs text-muted-foreground">Every host reminder includes the stand-in / contact-manager notice.</p>
+              </label>
             </AccordionContent>
           </AccordionItem>
         </Accordion>
@@ -1284,6 +1323,11 @@ function EditRecord({ title, table, cols, row, onDone, onCancel }: { title: stri
               <LogoUpload key={c.key} companyId={row["id"]} value={(vals[c.key] as string) ?? ""} onChange={(v) => setVals({ ...vals, logo_path: v })} />
             ) : table === "companies" && c.key === "custom_indemnity_text" ? (
               <CompanyIndemnityUpload key={c.key} companyId={row["id"]} value={(vals[c.key] as string) ?? ""} onChange={(v) => setVals({ ...vals, custom_indemnity_text: v })} />
+            ) : table === "companies" && c.key === "dates" ? (
+              <div key={c.key} className="sm:col-span-3">
+                <p className="text-sm">{c.label}</p>
+                <div className="mt-2"><DatesPicker value={(vals[c.key] as string) ?? ""} onChange={(v) => setVals({ ...vals, dates: v })} /></div>
+              </div>
             ) : table === "companies" && c.key === "mode" ? (
               <label key={c.key} className="block text-sm">
                 {c.label}

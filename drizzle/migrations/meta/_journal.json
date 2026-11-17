@@ -330,6 +330,13 @@
       "when": 1794943700000,
       "tag": "0046_host_availability_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1794943800000,
+      "tag": "0047_configurable_reminders",
+      "breakpoints": true
     }
   ]
 }
