@@ -94,8 +94,8 @@ function AdminPage() {
         </nav>
       </aside>
       <div className="min-w-0 flex-1">
-        <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 bg-primary px-6 py-4 text-primary-foreground">
-          <nav aria-label="Website navigation" className="flex flex-wrap items-center gap-x-5 gap-y-2">
+        <header className="flex flex-wrap items-center justify-end gap-x-6 gap-y-3 bg-primary px-6 py-4 text-primary-foreground">
+          <nav aria-label="Website navigation" className="ml-auto flex flex-wrap items-center justify-end gap-x-5 gap-y-2">
             {SITE_NAV.map((item) => <Link key={item.to} to={item.to} activeOptions={{ exact: item.to === "/" }} activeProps={{ className: "border-cta" }} className="border-b-4 border-transparent py-2 text-sm font-semibold transition hover:border-accent">{item.label}</Link>)}
           </nav>
           <SiteAccountMenu />

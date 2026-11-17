@@ -3,14 +3,19 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteLayout } from "@/components/SiteLayout";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UserCircle, IdCard, CalendarCheck, Mail } from "lucide-react";
+import { AccountPanel, Emails } from "@/components/account/AccountSections";
 
+type Tab = "profile" | "account" | "bookings";
 export const Route = createFileRoute("/_authenticated/profile")({
+  validateSearch: (s: Record<string, unknown>): { tab?: Tab | undefined } => ({ tab: ["profile", "account", "bookings"].includes(s["tab"] as string) ? (s["tab"] as Tab) : undefined }),
   head: () => ({
     meta: [
-      { title: "Profile Settings | JobShadow" },
-      { name: "description", content: "Manage your JobShadow profile photo and display name." },
-      { property: "og:title", content: "Profile Settings | JobShadow" },
-      { property: "og:description", content: "Manage your JobShadow profile photo and display name." },
+      { title: "Profile | JobShadow" },
+      { name: "description", content: "Your JobShadow profile, scholar details and bookings." },
+      { property: "og:title", content: "Profile | JobShadow" },
+      { property: "og:description", content: "Your JobShadow profile, scholar details and bookings." },
       { property: "og:type", content: "website" },
       { name: "robots", content: "noindex" },
     ],
@@ -23,6 +28,8 @@ function useUser() {
 }
 
 function ProfileSettings() {
+  const { tab } = Route.useSearch();
+  const navigate = Route.useNavigate();
   const qc = useQueryClient();
   const { data: user } = useUser();
   const profile = useQuery({
@@ -71,10 +78,22 @@ function ProfileSettings() {
 
   return (
     <SiteLayout>
-      <div className="bg-primary px-5 py-6 text-primary-foreground">
-        <h1 className="mx-auto max-w-5xl text-xl font-bold md:text-2xl">Profile Settings</h1>
-      </div>
-      <section className="mx-auto max-w-5xl space-y-8 px-5 py-8">
+      <section className="bg-muted/40">
+        <div className="mx-auto max-w-3xl space-y-4 px-5 py-8">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Profile</h1>
+            <p className="text-xs text-muted-foreground">Manage your details, scholar account and bookings.</p>
+          </div>
+          <Tabs value={tab ?? "profile"} onValueChange={(v) => navigate({ search: { tab: v as Tab }, replace: true })} className="w-full">
+            <TabsList className="flex w-full flex-wrap justify-start rounded-lg bg-primary/90">
+              <TabsTrigger value="profile" className="data-[state=active]:bg-card data-[state=active]:text-foreground text-primary-foreground text-xs gap-1.5"><UserCircle className="h-3.5 w-3.5" />Profile</TabsTrigger>
+              <TabsTrigger value="account" className="data-[state=active]:bg-card data-[state=active]:text-foreground text-primary-foreground text-xs gap-1.5"><IdCard className="h-3.5 w-3.5" />My Account</TabsTrigger>
+              <TabsTrigger value="bookings" className="data-[state=active]:bg-card data-[state=active]:text-foreground text-primary-foreground text-xs gap-1.5"><CalendarCheck className="h-3.5 w-3.5" />My Bookings</TabsTrigger>
+            </TabsList>
+            <TabsContent value="profile" className="mt-4">
+              <div className="rounded-xl border border-primary bg-card p-4 shadow-sm space-y-6">
+                <div className="flex items-center gap-3"><UserCircle className="h-4 w-4 text-primary" /><h2 className="text-sm font-semibold">Profile</h2></div>
+
         <div className="flex items-center gap-5">
           {avatarUrl ? (
             <img src={avatarUrl} alt="" className="h-20 w-20 rounded-full object-cover" />
@@ -112,6 +131,26 @@ function ProfileSettings() {
           <button onClick={saveName} disabled={busy} className="mt-4 rounded-full bg-primary px-5 py-2 text-xs font-bold uppercase tracking-wide text-primary-foreground disabled:opacity-50">
             {saved ? "Saved" : "Save"}
           </button>
+        </div>
+      
+              </div>
+            </TabsContent>
+            <TabsContent value="account" className="mt-4">
+              <div className="rounded-xl border border-primary bg-card p-4 shadow-sm space-y-4">
+                <div className="flex items-center gap-3"><IdCard className="h-4 w-4 text-primary" /><h2 className="text-sm font-semibold">My Account</h2></div>
+                <AccountPanel />
+              </div>
+            </TabsContent>
+            <TabsContent value="bookings" className="mt-4 space-y-4">
+              <div className="rounded-xl border border-primary bg-teal p-4 text-teal-foreground shadow-sm">
+                <AccountPanel withBookings />
+              </div>
+              <div className="rounded-xl border border-primary bg-card p-4 shadow-sm">
+                <div className="mb-3 flex items-center gap-3"><Mail className="h-4 w-4 text-primary" /><h2 className="text-sm font-semibold">Notifications</h2></div>
+                <Emails />
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </section>
     </SiteLayout>

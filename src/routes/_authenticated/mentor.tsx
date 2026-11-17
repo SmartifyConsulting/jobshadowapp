@@ -1,15 +1,18 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { CalendarDays, Briefcase, MessageSquare, ChevronLeft, ChevronRight } from "lucide-react";
+import { BrandLogo } from "@/components/BrandLogo";
+import { SITE_NAV, SiteAccountMenu } from "@/components/SiteLayout";
+import { bookingDayKey, countByDay, filterHostBookings } from "@/lib/host-bookings";
 import { supabase } from "@/integrations/supabase/client";
-import { SiteLayout } from "@/components/SiteLayout";
 
 export const Route = createFileRoute("/_authenticated/mentor")({
   head: () => ({
     meta: [
-      { title: "Mentor Portal | JobShadow" },
+      { title: "Host Portal | JobShadow" },
       { name: "description", content: "Manage your Job Shadow placements and bookings." },
-      { property: "og:title", content: "Mentor Portal | JobShadow" },
+      { property: "og:title", content: "Host Portal | JobShadow" },
       { property: "og:description", content: "Manage your Job Shadow placements and bookings." },
       { property: "og:type", content: "website" },
       { name: "robots", content: "noindex" },
@@ -31,7 +34,20 @@ type MentorBooking = {
 
 const STATUS: Record<string, string> = { awaiting_payment: "Awaiting payment", indemnity_required: "Paid – indemnity needed", confirmed: "Confirmed", completed: "Completed" };
 
+type Section = "calendar" | "shadows" | "messages";
+const MENU: { id: Section; label: string; icon: typeof CalendarDays }[] = [
+  { id: "calendar", label: "Calendar", icon: CalendarDays },
+  { id: "shadows", label: "Job Shadows", icon: Briefcase },
+  { id: "messages", label: "Messages", icon: MessageSquare },
+];
+
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 function MentorPortal() {
+  const [active, setActive] = useState<Section>("calendar");
   const placements = useQuery({
     queryKey: ["mentor-placements"],
     queryFn: async () => ((await supabase.rpc("list_mentor_placements")).data ?? []) as Placement[],
@@ -40,35 +56,129 @@ function MentorPortal() {
     queryKey: ["mentor-bookings"],
     queryFn: async () => ((await supabase.rpc("list_mentor_bookings")).data ?? []) as MentorBooking[],
   });
+  const all = bookings.data ?? [];
 
   return (
-    <SiteLayout>
-      <div className="bg-primary px-5 py-6 text-primary-foreground">
-        <h1 className="mx-auto max-w-5xl text-xl font-bold md:text-2xl">Mentor Portal</h1>
+    <div className="flex min-h-screen flex-col bg-muted/40 md:flex-row">
+      <aside className="shrink-0 bg-primary text-primary-foreground md:w-60">
+        <div className="hidden items-center justify-center px-5 py-6 md:flex">
+          <Link to="/" aria-label="JobShadow home"><BrandLogo className="h-40 w-40" /></Link>
+        </div>
+        <p className="px-6 pt-4 text-xs font-bold uppercase tracking-widest text-primary-foreground/70 md:pt-0">Host Portal</p>
+        <nav className="flex gap-1 overflow-x-auto px-3 py-3 md:block md:space-y-1">
+          {MENU.map((m) => (
+            <button key={m.id} onClick={() => setActive(m.id)} aria-pressed={active === m.id} className={`flex shrink-0 items-center gap-3 rounded-md border-l-2 px-3 py-2.5 text-left text-sm font-medium transition md:w-full ${active === m.id ? "border-primary-foreground bg-primary-foreground/15" : "border-transparent text-primary-foreground/85 hover:bg-primary-foreground/10"}`}>
+              <m.icon className="h-4 w-4" /> {m.label}
+            </button>
+          ))}
+        </nav>
+      </aside>
+      <div className="min-w-0 flex-1">
+        <header className="flex flex-wrap items-center justify-end gap-x-6 gap-y-3 bg-primary px-6 py-4 text-primary-foreground">
+          <nav aria-label="Website navigation" className="ml-auto hidden flex-wrap items-center justify-end gap-x-5 gap-y-2 lg:flex">
+            {SITE_NAV.map((item) => <Link key={item.to} to={item.to} className="border-b-4 border-transparent py-2 text-sm font-semibold transition hover:border-accent">{item.label}</Link>)}
+          </nav>
+          <SiteAccountMenu />
+        </header>
+        <main className="space-y-6 p-6">
+          {bookings.isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
+          {active === "calendar" && <HostCalendar bookings={all} />}
+          {active === "shadows" && <JobShadows bookings={all} placements={placements.data ?? []} loadingPlacements={placements.isLoading} />}
+          {active === "messages" && <HostMessages />}
+        </main>
       </div>
-      <section className="mx-auto max-w-5xl space-y-10 px-5 py-8">
-        <div>
-          <h2 className="font-display text-2xl">My Placements</h2>
-          {placements.isLoading && <p className="mt-2 text-sm text-muted-foreground">Loading…</p>}
-          {!placements.isLoading && placements.data?.length === 0 && (
-            <p className="mt-2 text-sm text-muted-foreground">No placements are linked to this email. Contact the JobShadow admin if this looks wrong.</p>
-          )}
-          <div className="mt-4 space-y-4">
-            {placements.data?.map((p) => <PlacementCard key={p.id} placement={p} />)}
-          </div>
+    </div>
+  );
+}
+
+function HostCalendar({ bookings }: { bookings: MentorBooking[] }) {
+  const now = new Date();
+  const [month, setMonth] = useState({ y: now.getFullYear(), m: now.getMonth() });
+  const [day, setDay] = useState<string | null>(null);
+  const counts = useMemo(() => countByDay(bookings), [bookings]);
+  const first = new Date(month.y, month.m, 1);
+  const lead = (first.getDay() + 6) % 7;
+  const days = new Date(month.y, month.m + 1, 0).getDate();
+  const cells = [...Array(lead).fill(null), ...Array.from({ length: days }, (_, i) => i + 1)];
+  const key = (d: number) => `${month.y}-${String(month.m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  const shift = (n: number) => { const d = new Date(month.y, month.m + n, 1); setMonth({ y: d.getFullYear(), m: d.getMonth() }); setDay(null); };
+  const today = todayKey();
+  const selected = day ? bookings.filter((b) => bookingDayKey(b.shadow_date) === day && b.status !== "cancelled") : [];
+  return (
+    <section className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Calendar</h1>
+        <div className="flex items-center gap-2">
+          <button onClick={() => shift(-1)} aria-label="Previous month" className="grid h-9 w-9 place-items-center rounded-full border bg-card"><ChevronLeft className="h-4 w-4" /></button>
+          <span className="min-w-36 text-center text-sm font-semibold">{first.toLocaleString("en-ZA", { month: "long", year: "numeric" })}</span>
+          <button onClick={() => shift(1)} aria-label="Next month" className="grid h-9 w-9 place-items-center rounded-full border bg-card"><ChevronRight className="h-4 w-4" /></button>
         </div>
-        <div>
-          <h2 className="font-display text-2xl">Upcoming Bookings</h2>
-          {bookings.isLoading && <p className="mt-2 text-sm text-muted-foreground">Loading…</p>}
-          {!bookings.isLoading && bookings.data?.length === 0 && (
-            <p className="mt-2 text-sm text-muted-foreground">No bookings yet.</p>
-          )}
-          <div className="mt-4 space-y-3">
-            {bookings.data?.map((b) => <BookingCard key={b.id} booking={b} />)}
-          </div>
+      </div>
+      <div className="grid grid-cols-7 gap-1 rounded-xl border bg-card p-3 text-center text-xs">
+        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => <div key={d} className="py-1 font-semibold text-muted-foreground">{d}</div>)}
+        {cells.map((d, i) => d === null ? <div key={`e${i}`} /> : (
+          <button key={d} onClick={() => setDay(key(d))} className={`relative min-h-16 rounded-md border p-1 text-left transition hover:bg-muted ${day === key(d) ? "border-primary" : "border-transparent"} ${key(d) === today ? "bg-accent/30" : ""}`}>
+            <span className="text-sm">{d}</span>
+            {(counts.get(key(d)) ?? 0) > 0 && (
+              <span className="absolute bottom-1 right-1 rounded-full bg-cta px-2 py-0.5 text-[10px] font-bold text-cta-foreground">
+                {counts.get(key(d))} student{counts.get(key(d)) === 1 ? "" : "s"}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+      {day && (
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold">Booked on {day}</h2>
+          {selected.length === 0 ? <p className="text-sm text-muted-foreground">No students booked on this day.</p> : selected.map((b) => <BookingCard key={b.id} booking={b} />)}
         </div>
-      </section>
-    </SiteLayout>
+      )}
+    </section>
+  );
+}
+
+function JobShadows({ bookings, placements, loadingPlacements }: { bookings: MentorBooking[]; placements: Placement[]; loadingPlacements: boolean }) {
+  const [filter, setFilter] = useState<"upcoming" | "pending" | "all">("upcoming");
+  const rows = filterHostBookings(bookings, filter, todayKey());
+  return (
+    <section className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold">Job Shadows</h1>
+        <div className="flex rounded-full border bg-card p-1 text-xs font-semibold">
+          {(["upcoming", "pending", "all"] as const).map((f) => (
+            <button key={f} onClick={() => setFilter(f)} aria-pressed={filter === f} className={`rounded-full px-4 py-1.5 capitalize ${filter === f ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>{f}</button>
+          ))}
+        </div>
+      </div>
+      <div className="space-y-3">
+        {rows.length === 0 ? <p className="text-sm text-muted-foreground">No job shadows here.</p> : rows.map((b) => <BookingCard key={b.id} booking={b} />)}
+      </div>
+      <div>
+        <h2 className="text-lg font-semibold">My Placements</h2>
+        {loadingPlacements && <p className="mt-2 text-sm text-muted-foreground">Loading…</p>}
+        {!loadingPlacements && placements.length === 0 && <p className="mt-2 text-sm text-muted-foreground">No placements are linked to this email. Contact the JobShadow admin if this looks wrong.</p>}
+        <div className="mt-4 space-y-4">{placements.map((p) => <PlacementCard key={p.id} placement={p} />)}</div>
+      </div>
+    </section>
+  );
+}
+
+function HostMessages() {
+  const q = useQuery({
+    queryKey: ["emails"],
+    queryFn: async () => (await supabase.from("email_outbox").select("*").order("created_at", { ascending: false })).data ?? [],
+  });
+  return (
+    <section className="space-y-3">
+      <h1 className="text-2xl font-bold">Messages</h1>
+      {q.data?.length === 0 && <p className="text-sm text-muted-foreground">No messages yet.</p>}
+      {q.data?.map((m) => (
+        <details key={m.id} className="rounded-lg border bg-card p-4">
+          <summary className="cursor-pointer text-sm"><strong>{m.subject}</strong> <span className="text-muted-foreground">· {new Date(m.created_at).toLocaleString("en-ZA")}</span></summary>
+          <p className="mt-2 whitespace-pre-line text-sm">{m.body}</p>
+        </details>
+      ))}
+    </section>
   );
 }
 

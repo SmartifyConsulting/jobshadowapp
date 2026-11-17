@@ -43,11 +43,9 @@ function AccountMenu({ displayName, avatarUrl, isAdmin, logout }: { displayName:
     <DropdownMenuContent align="end" className="max-w-[calc(100vw-2rem)]">
       <DropdownMenuLabel className="max-w-xs break-words">{displayName}</DropdownMenuLabel>
       <DropdownMenuSeparator />
-      {isAdmin && <DropdownMenuItem asChild><Link to="/admin">Admin Dashboard</Link></DropdownMenuItem>}
-      <DropdownMenuItem asChild><Link to="/my-account">My Account</Link></DropdownMenuItem>
-      <DropdownMenuItem asChild><Link to="/my-account">My Bookings</Link></DropdownMenuItem>
-      <DropdownMenuItem asChild><Link to="/mentor">Mentor Portal</Link></DropdownMenuItem>
-      <DropdownMenuItem asChild><Link to="/profile">Profile Settings</Link></DropdownMenuItem>
+      {isAdmin && <DropdownMenuItem asChild><Link to="/admin">Admin</Link></DropdownMenuItem>}
+      <DropdownMenuItem asChild><Link to="/mentor">Host Portal</Link></DropdownMenuItem>
+      <DropdownMenuItem asChild><Link to="/profile">Profile</Link></DropdownMenuItem>
       <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>;

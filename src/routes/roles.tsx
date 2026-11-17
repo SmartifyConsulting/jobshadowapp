@@ -125,7 +125,7 @@ function Roles() {
               <ChevronDown className={`h-6 w-6 shrink-0 transition ${fieldOpen ? "rotate-180" : ""}`} />
             </button>
             {fieldOpen && (
-              <div className="bg-[#E5C61E] text-foreground">
+              <div className="bg-muted text-foreground">
                 <div className="hidden items-center justify-between gap-6 border-b border-border px-5 py-2 sm:flex">
                   <span />
                   <span className="shrink-0 text-xs font-bold uppercase tracking-wide text-muted-foreground">Host</span>
@@ -154,14 +154,7 @@ function Roles() {
                             <span className="rounded-full bg-muted px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
                               None available
                             </span>
-                            <a
-                              href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`Notify me — ${r.title}`)}&body=${encodeURIComponent(`Please let me know when a host becomes available for ${r.title}.`)}`}
-                              aria-label={`Notify me when a host is available for ${r.title}`}
-                              title="Notify me when a host is available"
-                              className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground transition hover:bg-cta hover:text-cta-foreground"
-                            >
-                              <Bell className="h-4 w-4" />
-                            </a>
+                            <NotifyBell career={r.title} />
                           </div>
                         )}
                       </div>
@@ -174,5 +167,39 @@ function Roles() {
         );
       })}
     </SiteLayout>
+  );
+}
+
+function NotifyBell({ career }: { career: string }) {
+  const [state, setState] = useState<"idle" | "ask" | "busy" | "done">("idle");
+  const [email, setEmail] = useState("");
+  const [err, setErr] = useState<string | null>(null);
+  async function subscribe(addr: string) {
+    setState("busy"); setErr(null);
+    const { error } = await supabase.from("role_notify_subscriptions").insert({ career, email: addr.trim().toLowerCase() });
+    if (error) { setErr("Please enter a valid email address."); setState("ask"); return; }
+    setState("done");
+  }
+  async function click() {
+    if (state === "done") return;
+    const { data } = await supabase.auth.getUser();
+    if (data.user?.email) return subscribe(data.user.email);
+    setState("ask");
+  }
+  return (
+    <div className="flex flex-col items-end gap-2">
+      <button type="button" onClick={click} aria-label={`Notify me when a host is available for ${career}`} title="Notify me when a host is available"
+        className={`grid h-8 w-8 shrink-0 place-items-center rounded-full transition ${state === "done" ? "bg-cta text-cta-foreground" : "bg-card text-muted-foreground hover:bg-cta hover:text-cta-foreground"}`}>
+        <Bell className="h-4 w-4" />
+      </button>
+      {state === "ask" && (
+        <form onSubmit={(e) => { e.preventDefault(); void subscribe(email); }} className="flex items-center gap-2">
+          <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Your email" className="w-44 rounded-full border border-border bg-card px-3 py-1 text-xs outline-none" />
+          <button className="rounded-full bg-cta px-3 py-1 text-xs font-bold text-cta-foreground">Notify me</button>
+        </form>
+      )}
+      {err && <p className="text-xs text-destructive">{err}</p>}
+      {state === "done" && <p role="status" className="max-w-[14rem] text-right text-xs font-semibold">You will be notified when a host becomes available.</p>}
+    </div>
   );
 }
