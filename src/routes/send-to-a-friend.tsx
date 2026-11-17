@@ -19,8 +19,7 @@ export const Route = createFileRoute("/send-to-a-friend")({
 });
 
 const schema = z.object({
-  yourName: z.string().trim().min(1, "Please enter your name").max(100),
-  yourEmail: z.string().trim().email("Enter a valid email").max(255),
+  recipientFirstName: z.string().trim().min(1, "Please enter the recipient's first name").max(100),
   to: z.string().trim().email("Enter a valid email").max(255),
   message: z.string().trim().min(1, "Please add a message").max(800),
 });
@@ -30,7 +29,7 @@ const DEFAULT_MESSAGE = "Yo bruh,\nI found this lit site that gives you the chan
 const SHARE_ICONS = [Mail, Facebook, Twitter, Linkedin] as const;
 
 function SendToFriend() {
-  const [f, setF] = useState({ yourName: "", yourEmail: "", to: "", message: "" });
+  const [f, setF] = useState({ recipientFirstName: "", to: "", message: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const submit = (e: React.FormEvent) => {
@@ -42,7 +41,8 @@ function SendToFriend() {
       return;
     }
     setErrors({});
-    window.location.href = `mailto:${encodeURIComponent(r.data.to)}?subject=${encodeURIComponent(`${r.data.yourName} thinks you'd like Job Shadow`)}&body=${encodeURIComponent(r.data.message)}`;
+    const body = `Hi ${r.data.recipientFirstName},\n\n${r.data.message}`;
+    window.location.href = `mailto:${encodeURIComponent(r.data.to)}?subject=${encodeURIComponent("A friend thinks you'd like Job Shadow")}&body=${encodeURIComponent(body)}`;
   };
 
   const input = "mt-1 w-full border-b border-current/40 bg-transparent px-1 py-2 text-sm placeholder:text-current/70 outline-none focus:border-primary-foreground";
@@ -66,9 +66,8 @@ function SendToFriend() {
               </span>
             ))}
           </div>
-          <div className="mt-10 grid gap-6 border-b border-current/40 pb-6 sm:grid-cols-3">
-            <label><span className="text-xs uppercase tracking-wide opacity-80">Your name</span><input className={input} value={f.yourName} onChange={(e) => setF({ ...f, yourName: e.target.value })} />{err("yourName")}</label>
-            <label><span className="text-xs uppercase tracking-wide opacity-80">Your email</span><input className={input} type="email" value={f.yourEmail} onChange={(e) => setF({ ...f, yourEmail: e.target.value })} />{err("yourEmail")}</label>
+          <div className="mt-10 grid gap-6 border-b border-current/40 pb-6 sm:grid-cols-2">
+            <label><span className="text-xs uppercase tracking-wide opacity-80">Recipient's first name</span><input className={input} value={f.recipientFirstName} onChange={(e) => setF({ ...f, recipientFirstName: e.target.value })} />{err("recipientFirstName")}</label>
             <label><span className="text-xs uppercase tracking-wide opacity-80">Recipient email</span><input className={input} type="email" value={f.to} onChange={(e) => setF({ ...f, to: e.target.value })} />{err("to")}</label>
           </div>
           <textarea
