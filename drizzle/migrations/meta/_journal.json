@@ -302,6 +302,13 @@
       "when": 1794943300000,
       "tag": "0042_richer_mentor_application_email",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1794943400000,
+      "tag": "0043_digital_signing",
+      "breakpoints": true
     }
   ]
 }

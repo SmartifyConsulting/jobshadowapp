@@ -719,6 +719,10 @@ export type Database = {
       normalize_career_name: { Args: { _n: string }; Returns: string }
       release_expired_booking_holds: { Args: never; Returns: undefined }
       send_shadow_reminders: { Args: never; Returns: undefined }
+      set_company_indemnity_path: {
+        Args: { _booking: string; _path: string }
+        Returns: undefined
+      }
       set_indemnity_path: {
         Args: { _booking: string; _path: string }
         Returns: undefined
