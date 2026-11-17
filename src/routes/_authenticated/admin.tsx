@@ -79,8 +79,8 @@ function AdminPage() {
   return (
     <div className="flex min-h-screen bg-background">
       <aside className="w-60 shrink-0 bg-[#E81C45] text-background">
-        <div className="flex justify-center px-5 py-6">
-          <BrandLogo className="h-28 w-28" />
+        <div className="flex items-center justify-center px-5 py-6">
+          <BrandLogo className="h-[11.2rem] w-[11.2rem]" />
         </div>
         <nav className="space-y-1 px-3">
           {TABLES.map((t) => (
