@@ -61,7 +61,7 @@ export function SiteAccountMenu() {
   return <AccountMenu displayName={name} avatarUrl={session.avatarUrl} isAdmin={session.isAdmin} logout={() => { void supabase.auth.signOut().then(() => navigate({ to: "/" })); }} />;
 }
 
-export function SiteLayout({ children, hideLogo }: { children: ReactNode; hideLogo?: boolean }) {
+export function SiteLayout({ children, headerLogo }: { children: ReactNode; headerLogo?: ReactNode }) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { data: session } = useSession();
@@ -77,14 +77,12 @@ export function SiteLayout({ children, hideLogo }: { children: ReactNode; hideLo
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className={hideLogo ? "absolute inset-x-0 top-0 z-40 pt-5 text-primary-foreground" : "sticky top-0 z-40 bg-brand-deep text-primary-foreground shadow-warm"}>
+      <header className="sticky top-0 z-40 bg-brand-deep text-primary-foreground shadow-warm">
         <div className="relative mx-auto flex max-w-7xl items-center justify-center gap-6 px-5 lg:justify-between">
-          {!hideLogo && (
-            <Link to="/" aria-label="JobShadow home" className="shrink-0">
-              <BrandLogo className="h-24 w-24 lg:h-28 lg:w-28" />
-            </Link>
-          )}
-          <nav className={`hidden items-center gap-4 lg:flex ${hideLogo ? "lg:ml-auto lg:max-w-[78%] lg:flex-wrap lg:justify-end" : "lg:ml-auto"}`}>
+          <Link to="/" aria-label="JobShadow home" className="flex h-24 shrink-0 items-center lg:h-28">
+            {headerLogo ?? <BrandLogo className="h-24 w-24 lg:h-28 lg:w-28" />}
+          </Link>
+          <nav className="hidden min-w-0 flex-1 flex-wrap items-center justify-end gap-4 lg:ml-auto lg:flex">
             {SITE_NAV.map((n) => (
               <Link
                 key={n.to}
@@ -96,7 +94,6 @@ export function SiteLayout({ children, hideLogo }: { children: ReactNode; hideLo
                 {n.label}
               </Link>
             ))}
-            {user && <AccountMenu displayName={displayName} avatarUrl={avatarUrl} isAdmin={isAdmin} logout={logout} />}
             <div className="ml-2 flex gap-2">
               {SOCIAL.map((s) => (
                 <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label} className="grid h-8 w-8 place-items-center rounded-full bg-primary-foreground text-primary transition hover:bg-accent">
@@ -104,6 +101,7 @@ export function SiteLayout({ children, hideLogo }: { children: ReactNode; hideLo
                 </a>
               ))}
             </div>
+            {user && <AccountMenu displayName={displayName} avatarUrl={avatarUrl} isAdmin={isAdmin} logout={logout} />}
           </nav>
           <div className="absolute right-5 flex items-center gap-3 lg:hidden">{user && <AccountMenu displayName={displayName} avatarUrl={avatarUrl} isAdmin={isAdmin} logout={logout} />}<button className="rounded p-2" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button></div>
         </div>

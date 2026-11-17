@@ -82,17 +82,14 @@ function Home() {
   }
 
   return (
-    <SiteLayout hideLogo>
+    <SiteLayout headerLogo={<img src="/assets/jobshadow-logo-flat.png" alt="Job Shadow" width={359} height={195} className="h-auto w-[17.5vw] min-w-24 self-start" fetchPriority="high" />}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ORG_JSON_LD }} />
       <section
         className="relative overflow-hidden bg-primary text-primary-foreground"
         style={{ backgroundImage: "radial-gradient(ellipse at top left, #ff1648 0%, transparent 65%), linear-gradient(135deg, #e81c44, #aa0027)" }}
       >
-        <Link to="/" aria-label="JobShadow home" className="absolute left-[3%] top-5 z-10 block w-[17.5%] min-w-24">
-          <img src="/assets/jobshadow-logo-flat.png" alt="Job Shadow" width={359} height={195} className="h-auto w-full" fetchPriority="high" />
-        </Link>
         <img src={arrow.url} alt="" aria-hidden width={326} height={1080} className="pointer-events-none absolute -bottom-4 right-[4%] hidden h-[110%] w-auto md:block" />
-        <div className="relative mx-auto flex max-w-5xl flex-col items-center px-5 pb-32 pt-40 text-center sm:pt-44 md:pt-56">
+        <div className="relative mx-auto flex max-w-5xl flex-col items-center px-5 pb-32 pt-16 text-center sm:pt-20 md:pt-24">
           <h1 className="max-w-3xl font-display text-[clamp(2.5rem,5.5vw,5rem)] uppercase leading-[1.05]">
             Be sure about the career and life you choose
             <span className="mt-4 block text-[0.8em] text-accent">with Job Shadow.</span>
