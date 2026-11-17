@@ -183,6 +183,13 @@
       "when": 1794510700000,
       "tag": "0025_explicit_shadow_mode",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1794916306270,
+      "tag": "0026_restore_booking_fields_and_availability_message",
+      "breakpoints": true
     }
   ]
 }
