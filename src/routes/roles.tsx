@@ -122,7 +122,7 @@ function Roles() {
               <ChevronDown className={`h-6 w-6 shrink-0 transition ${fieldOpen ? "rotate-180" : ""}`} />
             </button>
             {fieldOpen && (
-              <div className="divide-y divide-primary-foreground/10 bg-primary text-primary-foreground">
+              <div className="divide-y divide-border bg-background text-foreground">
                 {roles.map((r) => {
                   const count = mentorCounts.get(r.title.trim().toLowerCase()) ?? 0;
                   return (
@@ -131,17 +131,17 @@ function Roles() {
                         <p className="flex items-center gap-2 text-sm font-semibold">
                           {r.title}{r.video && <PlayCircle className="h-4 w-4" aria-label="Has video" />}
                         </p>
-                        {r.summary.split("\n").map((p, i) => <p key={i} className="mt-1 text-sm text-primary-foreground/80">{p}</p>)}
+                        {r.summary.split("\n").map((p, i) => <p key={i} className="mt-1 text-sm text-muted-foreground">{p}</p>)}
                         {r.video && <div className="mt-3 max-w-xl"><YouTube id={r.video} title={r.title} /></div>}
                         {count > 0 ? (
                           <Link to="/auth" className="mt-3 inline-block rounded-full bg-cta px-5 py-2 text-xs font-semibold uppercase tracking-wider text-cta-foreground">Book this Job Shadow</Link>
                         ) : (
-                          <p className="mt-3 text-sm text-primary-foreground/70">
+                          <p className="mt-3 text-sm text-muted-foreground">
                             No host is currently available for this role. <a href={`mailto:${CONTACT_EMAIL}?subject=Interested%20in%20${encodeURIComponent(r.title)}`} className="font-bold underline">Email us</a> and we'll let you know when one opens up.
                           </p>
                         )}
                       </div>
-                      <span className={`shrink-0 self-start rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide ${count > 0 ? "bg-cta text-cta-foreground" : "bg-primary-foreground/15 text-primary-foreground/70"}`}>
+                      <span className={`shrink-0 self-start rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide ${count > 0 ? "bg-cta text-cta-foreground" : "bg-muted text-muted-foreground"}`}>
                         {count > 0 ? `${count} mentor${count === 1 ? "" : "s"} available` : "None available"}
                       </span>
                     </div>
