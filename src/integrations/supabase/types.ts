@@ -19,16 +19,19 @@ export type Database = {
           blackout_dates: string[]
           id: number
           min_lead_days: number
+          no_availability_message: string
         }
         Insert: {
           blackout_dates?: string[]
           id?: number
           min_lead_days?: number
+          no_availability_message?: string
         }
         Update: {
           blackout_dates?: string[]
           id?: number
           min_lead_days?: number
+          no_availability_message?: string
         }
         Relationships: []
       }
@@ -505,6 +508,10 @@ export type Database = {
       }
       complete_and_request_evaluations: { Args: never; Returns: undefined }
       confirm_test_payment: { Args: { _booking: string }; Returns: undefined }
+      get_no_availability_message: {
+        Args: never
+        Returns: string
+      }
       get_booking_company_details: {
         Args: { _booking: string }
         Returns: {

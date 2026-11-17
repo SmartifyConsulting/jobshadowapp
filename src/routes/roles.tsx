@@ -31,6 +31,10 @@ function Roles() {
     queryKey: ["placements"],
     queryFn: async () => ((await supabase.rpc("list_placements")).data ?? []) as { career: string }[],
   });
+  const noAvailabilityMessage = useQuery({
+    queryKey: ["no-availability-message"],
+    queryFn: async () => (await supabase.rpc("get_no_availability_message")).data,
+  });
   const bookableCareers = useMemo(
     () => new Set((placements.data ?? []).map((p) => p.career.trim().toLowerCase())),
     [placements.data]
@@ -50,6 +54,12 @@ function Roles() {
           <span className="font-display text-2xl uppercase">Job Roles</span>
         </div>
       </div>
+
+      {!placements.isLoading && bookableCareers.size === 0 && noAvailabilityMessage.data && (
+        <div className="bg-accent px-5 py-4 text-center text-sm font-semibold text-accent-foreground">
+          {noAvailabilityMessage.data}
+        </div>
+      )}
 
       <section className="bg-teal px-5 pb-10 pt-12 text-center text-teal-foreground">
         <h2 className="font-display text-2xl md:text-3xl">Already have an idea of your dream career?</h2>

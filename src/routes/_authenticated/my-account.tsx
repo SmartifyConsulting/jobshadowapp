@@ -286,6 +286,10 @@ function NewBooking() {
     queryKey: ["bookings"],
     queryFn: async () => (await supabase.from("bookings").select("*").order("created_at", { ascending: false })).data ?? [],
   });
+  const noAvailabilityMessage = useQuery({
+    queryKey: ["no-availability-message"],
+    queryFn: async () => (await supabase.rpc("get_no_availability_message")).data,
+  });
   const [sector, setSector] = useState("");
   const [career, setCareer] = useState("");
   const [step, setStep] = useState(1);
@@ -343,6 +347,15 @@ function NewBooking() {
   };
   const STEP_BG = ["bg-teal text-teal-foreground", "bg-cta text-cta-foreground", "bg-teal text-teal-foreground", "bg-cta text-cta-foreground", "bg-teal text-teal-foreground"];
   const canContinue = (step === 1 && !!sector) || (step === 2 && !!career) || (step === 3 && !!chosen) || step === 4;
+
+  if (!placements.isLoading && sectors.length === 0) {
+    return (
+      <div className="-mx-6 bg-accent px-6 py-8 text-center text-accent-foreground">
+        <h2 className="font-display text-2xl">Book a Job Shadow</h2>
+        <p className="mt-3">{noAvailabilityMessage.data ?? "Our mentors are not available right now. Please check back closer to the time to see availability."}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="-mx-6">

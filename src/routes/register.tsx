@@ -18,6 +18,8 @@ export const Route = createFileRoute("/register")({
   component: RegisterPage,
 });
 
+const WHERE_HEAR_OPTIONS = ["School", "Friend or family", "Internet / Social media", "Other"];
+
 function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -49,7 +51,7 @@ function RegisterPage() {
     setMsg(error ? error.message : "Check your email to confirm your account, then log in.");
   }
 
-  const input = "mt-1 w-full border-b border-current/60 bg-transparent px-1 py-2 text-sm uppercase tracking-wide placeholder:text-current/70 outline-none focus:border-primary-foreground";
+  const input = "mt-1 w-full border-b border-current/60 bg-transparent px-1 py-2 text-sm tracking-wide placeholder:text-current/70 outline-none focus:border-primary-foreground";
 
   return (
     <SiteLayout>
@@ -65,7 +67,10 @@ function RegisterPage() {
             <input type="email" required placeholder="EMAIL ADDRESS" value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
             <input type="password" required placeholder="PASSWORD" value={password} onChange={(e) => setPassword(e.target.value)} className={input} />
             <input type="password" required placeholder="REPEAT PASSWORD" value={confirm} onChange={(e) => setConfirm(e.target.value)} className={input} />
-            <input aria-label="Where did you hear about Job Shadow?" placeholder="HOW DID YOU HEAR ABOUT US?" value={whereHear} onChange={(e) => setWhereHear(e.target.value)} className={`${input} sm:col-span-2 sm:max-w-md`} />
+            <select aria-label="Where did you hear about Job Shadow?" value={whereHear} onChange={(e) => setWhereHear(e.target.value)} className={`${input} sm:col-span-2 sm:max-w-md [&>option]:text-foreground`}>
+              <option value="">HOW DID YOU HEAR ABOUT US?</option>
+              {WHERE_HEAR_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+            </select>
           </div>
           <Turnstile onVerify={setCaptchaToken} />
           {msg && <p aria-live="polite" className="mt-4 max-w-md text-sm">{msg}</p>}

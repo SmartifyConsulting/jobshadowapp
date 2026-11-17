@@ -684,6 +684,7 @@ function BookingSettings() {
   });
   const [minLead, setMinLead] = useState("3");
   const [blackout, setBlackout] = useState("");
+  const [noAvailMsg, setNoAvailMsg] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -692,6 +693,7 @@ function BookingSettings() {
     if (!settings.data) return;
     setMinLead(String(settings.data.min_lead_days));
     setBlackout((settings.data.blackout_dates ?? []).join(", "));
+    setNoAvailMsg(settings.data.no_availability_message ?? "");
   }, [settings.data]);
 
   async function save() {
@@ -699,11 +701,12 @@ function BookingSettings() {
     setErr(null);
     setSaved(false);
     const dates = blackout.split(",").map((d) => d.trim()).filter(Boolean);
-    const { error } = await (supabase.from("booking_settings") as any).update({ min_lead_days: Number(minLead) || 0, blackout_dates: dates }).eq("id", 1);
+    const { error } = await (supabase.from("booking_settings") as any).update({ min_lead_days: Number(minLead) || 0, blackout_dates: dates, no_availability_message: noAvailMsg }).eq("id", 1);
     setBusy(false);
     if (error) return setErr(error.message);
     setSaved(true);
     qc.invalidateQueries({ queryKey: ["admin", "booking_settings"] });
+    qc.invalidateQueries({ queryKey: ["booking-settings"] });
   }
 
   return (
@@ -717,6 +720,10 @@ function BookingSettings() {
         <label className="block text-sm">
           Blackout dates (comma separated, MM/DD/YYYY - no bookings allowed on these dates)
           <textarea value={blackout} onChange={(e) => setBlackout(e.target.value)} placeholder="12/15/2026, 12/16/2026" className="mt-1 w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none" />
+        </label>
+        <label className="block text-sm">
+          "No mentors available" message (shown on /roles and the booking wizard whenever nothing is bookable)
+          <textarea value={noAvailMsg} onChange={(e) => setNoAvailMsg(e.target.value)} className="mt-1 w-full border-b border-primary-foreground/50 bg-transparent px-1 py-1 outline-none" />
         </label>
         {err && <p className="text-sm font-semibold">{err}</p>}
         <button onClick={save} disabled={busy || settings.isLoading} className="bg-cta px-5 py-2.5 text-sm font-bold uppercase text-cta-foreground disabled:opacity-50">{saved ? "Saved" : "Save"}</button>
