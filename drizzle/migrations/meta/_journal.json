@@ -295,6 +295,13 @@
       "when": 1794943200000,
       "tag": "0041_day_before_reminder",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1794943300000,
+      "tag": "0042_richer_mentor_application_email",
+      "breakpoints": true
     }
   ]
 }
