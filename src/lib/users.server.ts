@@ -49,3 +49,9 @@ export async function setAccountRole(userId: string, role: AccountRow["role"]) {
   const ins = await supabaseAdmin.from("user_roles").insert({ user_id: userId, role });
   if (ins.error) throw new Error(ins.error.message);
 }
+
+export async function deleteAccount(userId: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+  if (error) throw new Error(error.message);
+}

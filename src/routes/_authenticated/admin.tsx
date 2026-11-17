@@ -7,7 +7,7 @@ import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
 import { sendQueuedEmails } from "@/lib/email.functions";
-import { getAccounts, updateAccountRole } from "@/lib/users.functions";
+import { getAccounts, updateAccountRole, removeAccount } from "@/lib/users.functions";
 import type { AccountRow } from "@/lib/users.server";
 import { renderEmailHtml } from "@/lib/email-template";
 import { completeExportColumns, fetchAllRows, joinApplicationContacts, toCsv } from "@/lib/admin-export";
@@ -52,8 +52,8 @@ const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string
     { key: "id", label: "#" }, { key: "name", label: "Name" }, { key: "code", label: "Code" },
     { key: "discount", label: "Discount", field: "number" }, { key: "available_from", label: "From", field: "date" },
     { key: "available_until", label: "Until", field: "date" }, { key: "usage_limit", label: "Limit", field: "number" } ] },
-  { id: "sectors", label: "Sectors", icon: FileText, table: "sectors", singular: "Sectors", cols: [{ key: "id", label: "#" }, { key: "name", label: "Sector Name" }] },
-  { id: "careers", label: "Careers", icon: Briefcase, table: "careers", singular: "Careers", cols: [{ key: "id", label: "#" }, { key: "name", label: "Career Name" }] },
+  { id: "sectors", label: "Sectors", icon: FileText, table: "sectors", singular: "Sectors", cols: [{ key: "id", label: "#" }, { key: "name", label: "Sector Name" }, { key: "_student_count", label: "Students" }] },
+  { id: "careers", label: "Careers", icon: Briefcase, table: "careers", singular: "Careers", cols: [{ key: "id", label: "#" }, { key: "name", label: "Career Name" }, { key: "_student_count", label: "Students" }] },
   { id: "users", label: "Users", icon: GraduationCap, table: "legacy_users", singular: "Users", cols: [
     { key: "id", label: "Id" }, { key: "name", label: "Name" }, { key: "email", label: "Email" }, { key: "has_profile", label: "Profile" } ] },
 ];
@@ -78,7 +78,7 @@ function AdminPage() {
 
   return (
     <div className="flex min-h-screen bg-background">
-      <aside className="w-60 shrink-0 bg-foreground text-background">
+      <aside className="w-60 shrink-0 bg-[#E81C45] text-background">
         <div className="flex justify-center px-5 py-6">
           <BrandLogo className="h-28 w-28" />
         </div>
@@ -91,7 +91,7 @@ function AdminPage() {
         </nav>
       </aside>
       <div className="flex-1">
-        <header className="flex items-center justify-end bg-foreground px-6 py-4 text-background">
+        <header className="flex items-center justify-end bg-[#E81C45] px-6 py-4 text-background">
           <button onClick={() => supabase.auth.signOut().then(() => (window.location.href = "/"))} className="text-sm font-semibold hover:underline">Logout</button>
         </header>
         <main className="p-0">
@@ -143,7 +143,23 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
   const [showSpam, setShowSpam] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [addBusy, setAddBusy] = useState(false);
   const isUsers = table === "legacy_users";
+  const isNameOnly = table === "sectors" || table === "careers";
+
+  async function addNamed() {
+    const name = newName.trim();
+    if (!name) return;
+    setAddBusy(true);
+    const { data: maxRow } = await supabase.from(table as "careers").select("id").order("id", { ascending: false }).limit(1).maybeSingle();
+    const nextId = ((maxRow?.id as number | undefined) ?? 0) + 1;
+    const { error } = await (supabase.from(table as "careers") as any).insert({ id: nextId, name });
+    setAddBusy(false);
+    if (error) return window.alert(error.message);
+    setNewName("");
+    qc.invalidateQueries({ queryKey: ["admin", table] });
+  }
   async function loadAll(source: string) {
     return fetchAllRows(async (from, to) => {
       let query = supabase.from(source as "careers").select("*").order("id", { ascending: false });
@@ -159,17 +175,20 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
     try {
       let all = await loadAll(table);
       if (table === "legacy_applications") all = joinApplicationContacts(all, await loadAll("companies"));
-      exportCsv(title, completeExportColumns(cols, all), all);
+      exportCsv(title, completeExportColumns(cols.filter((c) => !c.key.startsWith("_")), all), all);
     } catch (error) {
       setExportError(error instanceof Error ? error.message : "Unable to export records. Please try again.");
     } finally {
       setExporting(false);
     }
   }
+  const isNameSorted = table === "sectors" || table === "careers";
   const { data, isLoading } = useQuery({
     queryKey: ["admin", table, showSpam],
     queryFn: async () => {
-      let query = supabase.from(table as "careers").select("*").order("id", { ascending: false });
+      let query = isNameSorted
+        ? supabase.from(table as "careers").select("*").order("name", { ascending: true })
+        : supabase.from(table as "careers").select("*").order("id", { ascending: false });
       if (table === "legacy_users" && !showSpam) query = (query as any).eq("is_spam", false);
       const rows: Record<string, unknown>[] = [];
       for (let from = 0; ; from += 1000) {
@@ -177,6 +196,20 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
         if (error) throw error;
         rows.push(...(data as Record<string, unknown>[]));
         if (!data || data.length < 1000) break;
+      }
+      if (isNameSorted) {
+        const field = table === "sectors" ? "sector" : "career";
+        const counts = new Map<string, number>();
+        for (let from = 0; ; from += 1000) {
+          const { data: bookingRows, error } = await supabase.from("bookings").select(field).range(from, from + 999);
+          if (error) throw error;
+          (bookingRows ?? []).forEach((b: Record<string, unknown>) => {
+            const v = (b[field] as string | null)?.trim().toLowerCase();
+            if (v) counts.set(v, (counts.get(v) ?? 0) + 1);
+          });
+          if (!bookingRows || bookingRows.length < 1000) break;
+        }
+        rows.forEach((r) => { r["_student_count"] = counts.get(String(r["name"]).trim().toLowerCase()) ?? 0; });
       }
       return rows;
     },
@@ -235,14 +268,14 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
       {csvUpload && (
         <div className="grid border-b border-foreground/10 sm:grid-cols-2">
           <div>
-            <div className="bg-foreground px-6 py-5 text-background"><h2 className="text-xl font-semibold">Upload New Jobs</h2></div>
+            <div className="bg-[#E81C45] px-6 py-5 text-background"><h2 className="text-xl font-semibold">Upload New Jobs</h2></div>
             <div className="bg-teal/90 px-6 py-5 text-teal-foreground">
               <input type="file" accept=".csv" onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadCsv(f); }} className="block text-xs" />
               <button className="mt-3 bg-cta px-4 py-2 text-sm font-bold uppercase text-cta-foreground">Upload File</button>
             </div>
           </div>
           <div>
-            <div className="bg-foreground px-6 py-5 text-background"><h2 className="text-xl font-semibold">Update Jobs</h2></div>
+            <div className="bg-[#E81C45] px-6 py-5 text-background"><h2 className="text-xl font-semibold">Update Jobs</h2></div>
             <div className="bg-teal/90 px-6 py-5 text-teal-foreground">
               <input type="file" accept=".csv" onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadCsv(f); }} className="block text-xs" />
               <button className="mt-3 bg-cta px-4 py-2 text-sm font-bold uppercase text-cta-foreground">Upload File</button>
@@ -250,7 +283,7 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
           </div>
         </div>
       )}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-foreground px-6 py-6 text-background">
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-[#E81C45] px-6 py-6 text-background">
         <h1 className="text-2xl font-semibold">{title} {!isLoading && `(${rows.length})`}</h1>
         {dateCompanyFilter && (
           <div className="flex flex-wrap items-end gap-4">
@@ -266,6 +299,17 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
         <div className="flex items-center gap-3">
           {table === "companies" && (
             <Button onClick={() => setCreating(true)} className="bg-cta px-4 py-2 text-sm font-bold uppercase text-cta-foreground">Add New Role</Button>
+          )}
+          {isNameOnly && (
+            <div className="flex items-center gap-2">
+              <input
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder={`New ${title.replace(/s$/, "")} name`}
+                className="border-b border-background/50 bg-transparent px-1 py-1 text-sm text-background outline-none placeholder:text-background/60"
+              />
+              <Button onClick={addNamed} disabled={addBusy || !newName.trim()} className="bg-cta px-4 py-2 text-sm font-bold uppercase text-cta-foreground disabled:opacity-50">Add</Button>
+            </div>
           )}
           <Button onClick={exportAll} disabled={isLoading || exporting} className="bg-cta px-4 py-2 text-sm font-bold uppercase text-cta-foreground">{exporting ? "Exporting…" : "Export"}</Button>
         </div>
@@ -355,13 +399,13 @@ function ApplicationEditPanel({ table, row, onDone, onCancel }: { table: string;
 
   return (
     <div>
-      <div className="flex items-center justify-between bg-foreground px-6 py-5 text-background">
+      <div className="flex items-center justify-between bg-[#E81C45] px-6 py-5 text-background">
         <h1 className="text-xl font-semibold">Edit Application #{String(row["id"])}</h1>
         <button onClick={onCancel} className="text-sm font-semibold hover:underline">Back to list</button>
       </div>
       <div className="grid gap-px bg-foreground/10 sm:grid-cols-2">
         <div>
-          <div className="bg-foreground px-6 py-5 text-background"><h2 className="text-xl font-semibold">Edit Application #{String(row["id"])}</h2></div>
+          <div className="bg-[#E81C45] px-6 py-5 text-background"><h2 className="text-xl font-semibold">Edit Application #{String(row["id"])}</h2></div>
           <div className="bg-teal/90 px-6 py-5 text-teal-foreground">
             {filename && <p className="text-sm">{filename}</p>}
             <input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="mt-2 block text-xs" />
@@ -373,7 +417,7 @@ function ApplicationEditPanel({ table, row, onDone, onCancel }: { table: string;
           </div>
         </div>
         <div>
-          <div className="bg-foreground px-6 py-5 text-background"><h2 className="text-xl font-semibold">Resend Mails</h2></div>
+          <div className="bg-[#E81C45] px-6 py-5 text-background"><h2 className="text-xl font-semibold">Resend Mails</h2></div>
           <div className="bg-teal/90 px-6 py-5 text-teal-foreground">
             <div className="flex flex-col gap-2">
               {RESEND_TEMPLATES.map((t, i) => (
@@ -483,7 +527,7 @@ function CreateRole({ onDone, onCancel }: { onDone: () => void; onCancel: () => 
 
   return (
     <div>
-      <div className="flex items-center justify-between bg-foreground px-6 py-5 text-background">
+      <div className="flex items-center justify-between bg-[#E81C45] px-6 py-5 text-background">
         <h1 className="text-xl font-semibold">Add New Role</h1>
         <button onClick={onCancel} className="text-sm font-semibold hover:underline">Back to list</button>
       </div>
@@ -543,6 +587,7 @@ function AdminAccounts() {
   const qc = useQueryClient();
   const getAccountsFn = useServerFn(getAccounts);
   const updateRoleFn = useServerFn(updateAccountRole);
+  const removeAccountFn = useServerFn(removeAccount);
   const accounts = useQuery({ queryKey: ["admin", "accounts"], queryFn: () => getAccountsFn() });
   const [q, setQ] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -558,6 +603,18 @@ function AdminAccounts() {
     setBusyId(null);
   }
 
+  async function deleteAccountRow(userId: string, label: string) {
+    if (!window.confirm(`Permanently delete the account for ${label}? This removes their login and all linked data. This cannot be undone.`)) return;
+    setBusyId(userId);
+    try {
+      await removeAccountFn({ data: { userId } });
+      qc.invalidateQueries({ queryKey: ["admin", "accounts"] });
+    } catch (e) {
+      window.alert((e as Error).message);
+    }
+    setBusyId(null);
+  }
+
   const rows = useMemo(() => {
     const s = q.toLowerCase().trim();
     return (accounts.data ?? []).filter((a) => !s || [a.email, a.display_name].some((v) => (v ?? "").toLowerCase().includes(s)));
@@ -565,7 +622,7 @@ function AdminAccounts() {
 
   return (
     <div>
-      <div className="bg-foreground px-6 py-6 text-background"><h1 className="text-2xl font-semibold">User Accounts {!accounts.isLoading && `(${rows.length})`}</h1></div>
+      <div className="bg-[#E81C45] px-6 py-6 text-background"><h1 className="text-2xl font-semibold">User Accounts {!accounts.isLoading && `(${rows.length})`}</h1></div>
       <div className="px-6 py-6">
         <label className="block max-w-sm text-sm">
           Search
@@ -595,16 +652,26 @@ function AdminAccounts() {
                       <p className="text-xs text-muted-foreground">Joined {new Date(a.created_at).toLocaleDateString()}</p>
                     </div>
                   </div>
-                  <select
-                    value={a.role}
-                    disabled={busyId === a.id}
-                    onChange={(e) => changeRole(a.id, e.target.value as AccountRow["role"])}
-                    className="rounded border border-input bg-background px-2 py-1 text-sm disabled:opacity-50"
-                  >
-                    {(Object.keys(ROLE_LABELS) as AccountRow["role"][]).map((r) => (
-                      <option key={r} value={r}>{ROLE_LABELS[r]}</option>
-                    ))}
-                  </select>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={a.role}
+                      disabled={busyId === a.id}
+                      onChange={(e) => changeRole(a.id, e.target.value as AccountRow["role"])}
+                      className="rounded border border-input bg-background px-2 py-1 text-sm disabled:opacity-50"
+                    >
+                      {(Object.keys(ROLE_LABELS) as AccountRow["role"][]).map((r) => (
+                        <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => deleteAccountRow(a.id, a.display_name || a.email || a.id)}
+                      disabled={busyId === a.id}
+                      className="rounded bg-destructive p-1.5 text-white disabled:opacity-50"
+                      aria-label="Delete account"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
               );
             })}
@@ -666,7 +733,7 @@ function ScholarVerification() {
 
   return (
     <div>
-      <div className="bg-foreground px-6 py-6 text-background"><h1 className="text-2xl font-semibold">Scholars ({profiles.data?.length ?? 0})</h1></div>
+      <div className="bg-[#E81C45] px-6 py-6 text-background"><h1 className="text-2xl font-semibold">Scholars ({profiles.data?.length ?? 0})</h1></div>
       <div className="space-y-4 bg-teal/90 px-6 py-6 text-teal-foreground">
         {profiles.data?.length === 0 && <p>No scholar profiles yet.</p>}
         {profiles.data?.map((p) => {
@@ -764,7 +831,7 @@ function EmailArchive() {
 
   return (
     <div>
-      <div className="bg-foreground px-6 py-6 text-background"><h1 className="text-2xl font-semibold">Email Archive {!emails.isLoading && `(${rows.length})`}</h1></div>
+      <div className="bg-[#E81C45] px-6 py-6 text-background"><h1 className="text-2xl font-semibold">Email Archive {!emails.isLoading && `(${rows.length})`}</h1></div>
       <div className="bg-teal/90 px-6 py-6 text-teal-foreground">
         <label className="block max-w-sm text-sm">
           Search
@@ -831,7 +898,7 @@ function BookingSettings() {
 
   return (
     <div>
-      <div className="bg-foreground px-6 py-6 text-background"><h1 className="text-2xl font-semibold">Booking Settings</h1></div>
+      <div className="bg-[#E81C45] px-6 py-6 text-background"><h1 className="text-2xl font-semibold">Booking Settings</h1></div>
       <div className="max-w-xl space-y-5 bg-teal/90 px-6 py-6 text-teal-foreground">
         <label className="block text-sm">
           Minimum lead time (days before a shadow date a booking is allowed)
@@ -883,7 +950,7 @@ function EditRecord({ title, table, cols, row, onDone, onCancel }: { title: stri
   const [vals, setVals] = useState<Record<string, unknown>>(row);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const editable = cols.filter((c) => c.key !== "id");
+  const editable = cols.filter((c) => c.key !== "id" && !c.key.startsWith("_"));
 
   async function save() {
     setBusy(true);
@@ -897,7 +964,7 @@ function EditRecord({ title, table, cols, row, onDone, onCancel }: { title: stri
 
   return (
     <div>
-      <div className="flex items-center justify-between bg-foreground px-6 py-5 text-background">
+      <div className="flex items-center justify-between bg-[#E81C45] px-6 py-5 text-background">
         <h1 className="text-xl font-semibold">Edit {title.replace(/s$/, "")} #{String(row["id"])}</h1>
         <button onClick={onCancel} className="text-sm font-semibold hover:underline">Back to list</button>
       </div>
