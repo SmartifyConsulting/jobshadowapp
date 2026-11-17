@@ -329,7 +329,7 @@ function NewBooking() {
       company_id: chosen.id, company: chosen.company, sector: chosen.sector, career: chosen.career, location: chosen.location, mode: chosen.mode,
       shadow_date: effectiveDate, base_amount: base, voucher_code: voucher?.code ?? null, discount: voucher?.discount ?? 0, amount_due: due,
       ad_hoc_requested: requestingDate, ad_hoc_note: requestingDate ? (requestNote || null) : null,
-    } as never);
+    });
     if (error) return setMsg(error.message);
     setRequestingDate(false); setRequestedDate(""); setRequestNote("");
     setPid(null); setDate(""); setVoucher(null); setCode(""); setConfirmDupe(false);

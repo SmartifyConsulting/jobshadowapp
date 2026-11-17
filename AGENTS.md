@@ -12,3 +12,4 @@
 - Keep admin full-dataset export and company-code contact joining in `src/lib/admin-export.ts`; exports must not depend on filtered or paginated UI rows.
 - Keep HR contact aliases synchronized in the database so existing notification functions and new admin edits use the same contact data.
 - Reconcile legacy rows on account/profile deletion in database lifecycle triggers, not client-only cleanup, so every deletion path is covered.
+- Expose the public availability notice through a narrow RPC, not direct settings-table access, to keep administrator settings private.

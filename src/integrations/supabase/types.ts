@@ -514,10 +514,6 @@ export type Database = {
       }
       complete_and_request_evaluations: { Args: never; Returns: undefined }
       confirm_test_payment: { Args: { _booking: string }; Returns: undefined }
-      get_no_availability_message: {
-        Args: never
-        Returns: string
-      }
       get_booking_company_details: {
         Args: { _booking: string }
         Returns: {
@@ -527,6 +523,7 @@ export type Database = {
           location: string
         }[]
       }
+      get_no_availability_message: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -597,6 +594,7 @@ export type Database = {
           sector: string
         }[]
       }
+      release_expired_booking_holds: { Args: never; Returns: undefined }
       send_shadow_reminders: { Args: never; Returns: undefined }
       set_indemnity_path: {
         Args: { _booking: string; _path: string }
