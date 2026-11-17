@@ -42,11 +42,11 @@ function Home() {
             Be sure about the career and life you choose
             <span className="mt-4 block text-[0.8em] text-accent">with Job Shadow.</span>
           </h1>
-          <Link to="/auth" className="mt-12 rounded-full bg-cta px-9 py-4 text-lg font-semibold uppercase tracking-[0.2em] text-cta-foreground shadow-warm transition hover:-translate-y-0.5 hover:brightness-110">
+          <Link to="/auth" className="mt-12 rounded-2xl bg-cta px-9 py-4 text-lg font-semibold uppercase tracking-[0.2em] text-cta-foreground shadow-warm transition hover:-translate-y-0.5 hover:brightness-110">
             Book Job Shadow
           </Link>
 
-          <div className="mt-10 grid w-full max-w-md grid-cols-2 gap-4 rounded-lg border border-primary-foreground/20 bg-primary-foreground/5 p-5 backdrop-blur-sm">
+          <div className="mt-10 grid w-full max-w-md grid-cols-2 gap-4 rounded-2xl border border-primary-foreground/30 bg-black/15 p-5 backdrop-blur-sm">
             <div className="flex flex-col items-center gap-2">
               <p className="text-xs font-semibold uppercase tracking-wider opacity-80">New here?</p>
               <Link to="/register" className="w-full rounded-full border border-primary-foreground/40 px-4 py-2 text-sm font-semibold uppercase tracking-wide transition hover:bg-primary-foreground/10">

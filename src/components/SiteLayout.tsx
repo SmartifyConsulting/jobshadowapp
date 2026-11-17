@@ -54,7 +54,7 @@ export function SiteLayout({ children, hideLogo }: { children: ReactNode; hideLo
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-40 bg-brand-deep text-primary-foreground shadow-warm">
+      <header className={hideLogo ? "absolute inset-x-0 top-0 z-40 text-primary-foreground" : "sticky top-0 z-40 bg-brand-deep text-primary-foreground shadow-warm"}>
         <div className="relative mx-auto flex max-w-7xl items-center justify-center gap-6 px-5 lg:justify-between">
           {!hideLogo && (
             <Link to="/" aria-label="JobShadow home" className="shrink-0">
