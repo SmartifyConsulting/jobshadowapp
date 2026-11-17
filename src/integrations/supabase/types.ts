@@ -380,6 +380,36 @@ export type Database = {
         }
         Relationships: []
       }
+      role_descriptions: {
+        Row: {
+          created_at: string
+          field: string
+          id: number
+          summary: string
+          title: string
+          updated_at: string
+          video: string | null
+        }
+        Insert: {
+          created_at?: string
+          field: string
+          id?: number
+          summary?: string
+          title: string
+          updated_at?: string
+          video?: string | null
+        }
+        Update: {
+          created_at?: string
+          field?: string
+          id?: number
+          summary?: string
+          title?: string
+          updated_at?: string
+          video?: string | null
+        }
+        Relationships: []
+      }
       role_notify_subscriptions: {
         Row: {
           career: string
@@ -664,7 +694,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user" | "mentor"
+      app_role: "admin" | "user" | "mentor" | "hr_admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -792,7 +822,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user", "mentor"],
+      app_role: ["admin", "user", "mentor", "hr_admin"],
     },
   },
 } as const

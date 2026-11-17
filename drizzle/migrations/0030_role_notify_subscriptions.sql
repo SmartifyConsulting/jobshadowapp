@@ -1,38 +1,39 @@
--- Lets a visitor ask to be emailed when a mentor becomes available for a
--- role with none currently, instead of emailing JobShadow directly.
-create table public.role_notify_subscriptions (
-  id uuid primary key default gen_random_uuid(),
-  career text not null,
-  email text not null,
-  created_at timestamptz not null default now(),
-  notified_at timestamptz
-);
-grant insert on public.role_notify_subscriptions to anon, authenticated;
-grant all on public.role_notify_subscriptions to service_role;
-alter table public.role_notify_subscriptions enable row level security;
-
-create policy "anyone can subscribe" on public.role_notify_subscriptions for insert to anon, authenticated with check (true);
-create policy "admins manage subscriptions" on public.role_notify_subscriptions for all to authenticated using (public.has_role(auth.uid(),'admin')) with check (public.has_role(auth.uid(),'admin'));
-
--- Avoid duplicate pending subscriptions for the same career/email.
-create unique index role_notify_pending_unique on public.role_notify_subscriptions (lower(career), lower(email)) where notified_at is null;
-
-create or replace function public.notify_role_subscribers() returns trigger
-language plpgsql security definer set search_path = public as $$
-declare sub record;
-begin
-  if new.active and (tg_op = 'INSERT' or coalesce(old.active, false) = false) then
-    for sub in select * from public.role_notify_subscriptions where notified_at is null and lower(career) = lower(new.career) loop
-      insert into public.email_outbox(template, recipient, subject, body) values (
-        'role_now_available', sub.email, format('A mentor is now available for %s', new.career),
-        format('Good news! A mentor is now available for the %s role on Job Shadow. You can book your job shadow now: https://jobshadow.co.za/roles', new.career)
-      );
-      update public.role_notify_subscriptions set notified_at = now() where id = sub.id;
-    end loop;
-  end if;
-  return new;
-end $$;
-
-drop trigger if exists notify_role_subscribers on public.companies;
-create trigger notify_role_subscribers after insert or update of active on public.companies
-  for each row execute function public.notify_role_subscribers();
+-- The content of this migration cannot be applied: its tables/policies already exist in the database (applied earlier outside the migration history).
+-- -- Lets a visitor ask to be emailed when a mentor becomes available for a
+-- -- role with none currently, instead of emailing JobShadow directly.
+-- create table public.role_notify_subscriptions (
+--   id uuid primary key default gen_random_uuid(),
+--   career text not null,
+--   email text not null,
+--   created_at timestamptz not null default now(),
+--   notified_at timestamptz
+-- );
+-- grant insert on public.role_notify_subscriptions to anon, authenticated;
+-- grant all on public.role_notify_subscriptions to service_role;
+-- alter table public.role_notify_subscriptions enable row level security;
+-- 
+-- create policy "anyone can subscribe" on public.role_notify_subscriptions for insert to anon, authenticated with check (true);
+-- create policy "admins manage subscriptions" on public.role_notify_subscriptions for all to authenticated using (public.has_role(auth.uid(),'admin')) with check (public.has_role(auth.uid(),'admin'));
+-- 
+-- -- Avoid duplicate pending subscriptions for the same career/email.
+-- create unique index role_notify_pending_unique on public.role_notify_subscriptions (lower(career), lower(email)) where notified_at is null;
+-- 
+-- create or replace function public.notify_role_subscribers() returns trigger
+-- language plpgsql security definer set search_path = public as $$
+-- declare sub record;
+-- begin
+--   if new.active and (tg_op = 'INSERT' or coalesce(old.active, false) = false) then
+--     for sub in select * from public.role_notify_subscriptions where notified_at is null and lower(career) = lower(new.career) loop
+--       insert into public.email_outbox(template, recipient, subject, body) values (
+--         'role_now_available', sub.email, format('A mentor is now available for %s', new.career),
+--         format('Good news! A mentor is now available for the %s role on Job Shadow. You can book your job shadow now: https://jobshadow.co.za/roles', new.career)
+--       );
+--       update public.role_notify_subscriptions set notified_at = now() where id = sub.id;
+--     end loop;
+--   end if;
+--   return new;
+-- end $$;
+-- 
+-- drop trigger if exists notify_role_subscribers on public.companies;
+-- create trigger notify_role_subscribers after insert or update of active on public.companies
+--   for each row execute function public.notify_role_subscribers();

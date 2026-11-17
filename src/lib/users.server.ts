@@ -46,8 +46,6 @@ export async function setAccountRole(userId: string, role: AccountRow["role"]) {
   const del = await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
   if (del.error) throw new Error(del.error.message);
   if (role === "user") return;
-  // The HR admin role isn't in the live database yet (its migration hasn't been applied).
-  if (role === "hr_admin") throw new Error("The HR admin role is not available yet.");
   const ins = await supabaseAdmin.from("user_roles").insert({ user_id: userId, role });
   if (ins.error) throw new Error(ins.error.message);
 }
