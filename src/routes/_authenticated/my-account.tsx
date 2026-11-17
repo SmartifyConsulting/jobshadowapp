@@ -452,9 +452,9 @@ function NewBooking() {
       <div className="flex gap-2 bg-primary px-6 py-5">
         {step > 1 && <button type="button" onClick={() => setStep(step - 1)} className="bg-primary-foreground/20 px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-primary-foreground">Back to Step {step - 1}</button>}
         {step < 5 ? (
-          <button type="button" onClick={() => setStep(step + 1)} disabled={!canContinue} className="bg-cta px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-cta-foreground disabled:opacity-50">Continue to Step {step + 1}</button>
+          <button type="button" onClick={() => setStep(step + 1)} disabled={!canContinue} className="rounded-full bg-cta px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-cta-foreground disabled:opacity-50">Continue to Step {step + 1}</button>
         ) : (
-          <button type="button" onClick={async () => { await book(); setStep(1); setSector(""); setCareer(""); }} disabled={!chosen || !(requestingDate ? requestedDate : date) || (!!duplicate && !confirmDupe)} className="bg-cta px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-cta-foreground disabled:opacity-50">{requestingDate ? "Submit date request" : "Pay with PayFast"}</button>
+          <button type="button" onClick={async () => { await book(); setStep(1); setSector(""); setCareer(""); }} disabled={!chosen || !(requestingDate ? requestedDate : date) || (!!duplicate && !confirmDupe)} className="rounded-full bg-cta px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-cta-foreground disabled:opacity-50">{requestingDate ? "Submit date request" : "Pay with PayFast"}</button>
         )}
       </div>
     </div>

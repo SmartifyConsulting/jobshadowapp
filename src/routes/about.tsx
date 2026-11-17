@@ -21,15 +21,10 @@ export const Route = createFileRoute("/about")({
 function About() {
   return (
     <SiteLayout>
-      <div className="bg-primary text-primary-foreground">
-        <div className="mx-auto max-w-7xl px-5 pb-10 pt-6">
-          <h1 className="font-display text-5xl uppercase md:text-6xl">About</h1>
-        </div>
-        <div className="bg-cta text-cta-foreground">
-          <div className="mx-auto flex max-w-7xl items-center gap-3 px-5 py-4">
-            <ChevronDown className="h-6 w-6" />
-            <span className="font-display text-2xl uppercase">About</span>
-          </div>
+      <div className="bg-cta text-cta-foreground">
+        <div className="mx-auto flex max-w-7xl items-center gap-3 px-5 py-4">
+          <ChevronDown className="h-6 w-6" />
+          <span className="font-display text-2xl uppercase">About</span>
         </div>
       </div>
       <section className="bg-primary px-5 pb-14 pt-10 text-center text-primary-foreground">

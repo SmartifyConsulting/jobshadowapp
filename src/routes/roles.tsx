@@ -93,7 +93,7 @@ function Roles() {
                       {r.video && <div className="max-w-xl"><YouTube id={r.video} title={r.title} /></div>}
                       {r.summary.split("\n").map((p, i) => <p key={i}>{p}</p>)}
                       {bookableCareers.has(r.title.trim().toLowerCase()) ? (
-                        <Link to="/auth" className="inline-block bg-cta px-5 py-2 font-semibold uppercase tracking-wider text-cta-foreground">Book this Job Shadow</Link>
+                        <Link to="/auth" className="inline-block rounded-full bg-cta px-5 py-2 font-semibold uppercase tracking-wider text-cta-foreground">Book this Job Shadow</Link>
                       ) : (
                         <p className="text-primary-foreground/70">
                           No host is currently available for this role. <a href={`mailto:${CONTACT_EMAIL}?subject=Interested%20in%20${encodeURIComponent(r.title)}`} className="font-bold underline">Email us</a> and we'll let you know when one opens up.

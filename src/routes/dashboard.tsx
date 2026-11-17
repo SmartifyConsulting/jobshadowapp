@@ -66,7 +66,7 @@ function Dashboard() {
       <section className="bg-primary px-5 py-6 text-primary-foreground">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
           <h1 className="text-2xl font-bold">Your Bookings</h1>
-          <Link to="/apply" className="bg-cta px-5 py-3 text-sm font-bold uppercase tracking-wide text-cta-foreground">Book a Job Shadow</Link>
+          <Link to="/apply" className="rounded-full bg-cta px-5 py-3 text-sm font-bold uppercase tracking-wide text-cta-foreground">Book a Job Shadow</Link>
         </div>
       </section>
       <section className="overflow-x-auto bg-background px-5 py-6">
