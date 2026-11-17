@@ -33,29 +33,31 @@ function ShareStorySection() {
     setSent(true);
   };
 
-  const input = "mt-1 w-full border-b border-current/40 bg-transparent px-1 py-2 text-sm outline-none focus:border-primary-foreground";
-  const err = (k: string) => errors[k] && <span className="mt-1 block text-xs text-accent">{errors[k]}</span>;
+  const input = "mt-1 w-full border-b border-current/40 bg-transparent px-1 py-1.5 text-sm outline-none focus:border-primary";
+  const err = (k: string) => errors[k] && <span className="mt-1 block text-xs text-destructive">{errors[k]}</span>;
   const label = "text-xs uppercase tracking-wide opacity-80";
 
   return (
     <>
-      <section id="share-your-story" aria-labelledby="share-your-story-title" className="bg-primary px-5 py-14 text-primary-foreground">
-        <div className="mx-auto grid max-w-6xl items-start gap-10 md:grid-cols-2">
+      <section id="share-your-story" aria-labelledby="share-your-story-title" className="bg-accent px-5 py-6 text-accent-foreground sm:py-8">
+        <div className="mx-auto grid max-w-6xl items-start gap-6 md:grid-cols-2">
           <div>
             <h1 id="share-your-story-title" className="font-display text-3xl uppercase leading-tight md:text-4xl">Share your experience with us</h1>
-            <p className="mt-4 text-sm text-primary-foreground/80">Did a Job Shadow help you decide on your career? Tell us about your day — your story helps other scholars choose with confidence.</p>
+            <p className="mt-4 text-sm text-foreground/80">Did a Job Shadow help you decide on your career? Tell us about your day — your story helps other scholars choose with confidence.</p>
           </div>
-          <div className="rounded-xl border border-primary-foreground/20 bg-primary-foreground/5 p-6">
+          <div className="rounded-xl border border-foreground/20 bg-background/20 p-4 sm:p-5">
             <h2 className="font-display text-2xl uppercase">Your Story</h2>
             {sent ? (
-              <p className="mt-6 text-sm">Thank you! Your email app should now be open with your story ready to send.</p>
+              <p className="mt-4 text-sm">Thank you! Your email app should now be open with your story ready to send.</p>
             ) : (
-              <form onSubmit={submit} className="mt-6 grid gap-4">
+              <form onSubmit={submit} className="mt-4 grid gap-3">
+                {(!signedInName || !signedInEmail) && <div className="grid gap-3 sm:grid-cols-2">
                 {!signedInName && <label><span className={label}>Your name</span><input className={input} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />{err("name")}</label>}
                 {!signedInEmail && <label><span className={label}>Your email</span><input type="email" className={input} value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />{err("email")}</label>}
+                </div>}
                 <label><span className={label}>Career you shadowed (optional)</span><input className={input} value={f.career} onChange={(e) => setF({ ...f, career: e.target.value })} /></label>
-                <label><span className={label}>Your experience</span><textarea rows={6} className={input} value={f.story} onChange={(e) => setF({ ...f, story: e.target.value })} />{err("story")}</label>
-                <button className="mt-2 justify-self-start rounded-full bg-cta px-6 py-3 text-sm font-bold uppercase tracking-wide text-cta-foreground">Send</button>
+                <label><span className={label}>Your experience</span><textarea rows={3} className={input} value={f.story} onChange={(e) => setF({ ...f, story: e.target.value })} />{err("story")}</label>
+                <button className="mt-2 justify-self-start rounded-full bg-cta px-6 py-2.5 text-sm font-bold uppercase tracking-wide text-cta-foreground">Send</button>
               </form>
             )}
           </div>
@@ -92,31 +94,33 @@ function SendToFriendSection() {
     window.location.href = `mailto:${encodeURIComponent(r.data.to)}?subject=${encodeURIComponent("A friend thinks you'd like Job Shadow")}&body=${encodeURIComponent(body)}`;
   };
 
-  const input = "mt-1 w-full border-b border-current/40 bg-transparent px-1 py-2 text-sm placeholder:text-current/70 outline-none focus:border-primary-foreground";
-  const err = (k: string) => errors[k] && <span className="mt-1 block text-xs text-accent">{errors[k]}</span>;
+  const input = "mt-1 w-full border-b border-current/40 bg-transparent px-1 py-1.5 text-sm placeholder:text-current/70 outline-none focus:border-primary";
+  const err = (k: string) => errors[k] && <span className="mt-1 block text-xs text-destructive">{errors[k]}</span>;
 
   return (
     <>
-      <section id="send-to-friend" aria-labelledby="send-to-friend-title" className="border-t border-primary-foreground/20 bg-primary px-5 py-14 text-primary-foreground">
-        <div className="mx-auto grid max-w-6xl items-start gap-10 md:grid-cols-2">
+      <section id="send-to-friend" aria-labelledby="send-to-friend-title" className="border-t border-foreground/15 bg-[#7CCCC8] px-5 py-6 text-teal-foreground sm:py-8">
+        <div className="mx-auto grid max-w-6xl items-start gap-6 md:grid-cols-2">
           <div>
             <h2 id="send-to-friend-title" className="font-display text-3xl uppercase leading-tight md:text-4xl">Send To A Friend</h2>
-            <p className="mt-4 text-sm text-primary-foreground/80">Know someone who should try a job before they study for it? Tell them about Job Shadow.</p>
-            <p className="mt-8 text-xs uppercase tracking-wide opacity-80">Or share it here</p>
+            <p className="mt-4 text-sm text-foreground/80">Know someone who should try a job before they study for it? Tell them about Job Shadow.</p>
+            <p className="mt-4 text-xs uppercase tracking-wide opacity-80">Or share it here</p>
             <div className="mt-3 flex gap-3">
               {SHARE_ICONS.map((Icon, i) => (
                 <span key={i} className="grid h-9 w-9 place-items-center rounded-full bg-primary-foreground text-primary"><Icon className="h-4 w-4" /></span>
               ))}
             </div>
-            <a href="#share-your-story" className="mt-4 inline-block text-sm font-semibold text-accent hover:underline">Share your experience with us</a>
+            <a href="#share-your-story" className="mt-4 inline-block text-sm font-semibold text-primary hover:underline">Share your experience with us</a>
           </div>
-          <div className="rounded-xl border border-primary-foreground/20 bg-primary-foreground/5 p-6">
+          <div className="rounded-xl border border-foreground/20 bg-background/20 p-4 sm:p-5">
             <h2 className="font-display text-2xl uppercase">Your Message</h2>
-            <form onSubmit={submit} className="mt-6 grid gap-4">
+            <form onSubmit={submit} className="mt-4 grid gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
               <label><span className="text-xs uppercase tracking-wide opacity-80">Recipient's first name</span><input className={input} value={f.recipientFirstName} onChange={(e) => setF({ ...f, recipientFirstName: e.target.value })} />{err("recipientFirstName")}</label>
               <label><span className="text-xs uppercase tracking-wide opacity-80">Recipient email</span><input className={input} type="email" value={f.to} onChange={(e) => setF({ ...f, to: e.target.value })} />{err("to")}</label>
-              <label><span className="text-xs uppercase tracking-wide opacity-80">Message</span><textarea rows={5} className={input} placeholder={DEFAULT_MESSAGE} value={f.message} onChange={(e) => setF({ ...f, message: e.target.value })} />{err("message")}</label>
-              <button className="mt-2 justify-self-start rounded-full bg-cta px-6 py-3 text-sm font-bold uppercase tracking-wide text-cta-foreground">Send</button>
+              </div>
+              <label><span className="text-xs uppercase tracking-wide opacity-80">Message</span><textarea rows={3} className={input} placeholder={DEFAULT_MESSAGE} value={f.message} onChange={(e) => setF({ ...f, message: e.target.value })} />{err("message")}</label>
+              <button className="mt-2 justify-self-start rounded-full bg-cta px-6 py-2.5 text-sm font-bold uppercase tracking-wide text-cta-foreground">Send</button>
             </form>
           </div>
         </div>
