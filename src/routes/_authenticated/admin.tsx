@@ -590,6 +590,14 @@ function AdminUsers() {
   const [q, setQ] = useState("");
   const [showSpam, setShowSpam] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [letter, setLetter] = useState<string | null>(null);
+
+  function surnameOf(a: AccountRow) {
+    const name = (a.display_name || a.full_name || "").trim();
+    if (!name) return "";
+    const parts = name.split(/\s+/);
+    return (parts[parts.length - 1] ?? "").toUpperCase();
+  }
 
   async function changeRole(userId: string, role: AccountRow["role"]) {
     setBusyId(userId);
@@ -619,15 +627,47 @@ function AdminUsers() {
     return (accounts.data ?? []).filter((a) => {
       if (!showSpam && a.is_spam) return false;
       if (s && ![a.email, a.display_name, a.full_name].some((v) => (v ?? "").toLowerCase().includes(s))) return false;
+      if (letter && surnameOf(a).charAt(0) !== letter) return false;
       return true;
     });
-  }, [accounts.data, q, showSpam]);
+  }, [accounts.data, q, showSpam, letter]);
+
+  const letterCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    (accounts.data ?? []).forEach((a) => {
+      if (!showSpam && a.is_spam) return;
+      const first = surnameOf(a).charAt(0);
+      if (first) counts.set(first, (counts.get(first) ?? 0) + 1);
+    });
+    return counts;
+  }, [accounts.data, showSpam]);
 
   return (
     <div>
       <div className="bg-[#E81C45] px-6 py-6 text-background"><h1 className="text-2xl font-semibold">Users {!accounts.isLoading && `(${rows.length})`}</h1></div>
       <div className="px-6 py-6">
-        <div className="flex flex-wrap items-end gap-6">
+        <div className="flex flex-wrap gap-1.5">
+          <button
+            onClick={() => setLetter(null)}
+            className={`rounded-full px-2.5 py-1 text-xs font-bold uppercase transition ${letter === null ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70"}`}
+          >
+            All
+          </button>
+          {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((ch) => {
+            const count = letterCounts.get(ch) ?? 0;
+            return (
+              <button
+                key={ch}
+                onClick={() => setLetter(letter === ch ? null : ch)}
+                disabled={count === 0}
+                className={`rounded-full px-2.5 py-1 text-xs font-bold uppercase transition ${letter === ch ? "bg-primary text-primary-foreground" : count === 0 ? "bg-muted/40 text-muted-foreground/40" : "bg-muted text-muted-foreground hover:bg-muted/70"}`}
+              >
+                {ch}
+              </button>
+            );
+          })}
+        </div>
+        <div className="mt-4 flex flex-wrap items-end gap-6">
           <label className="block max-w-sm text-sm">
             Search
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name or email" className="mt-1 w-full border-b border-foreground/30 bg-transparent px-1 py-1 outline-none" />
