@@ -345,14 +345,14 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
           )}
         </div>
         {table === "careers" ? (
-          <div className="mt-6 space-y-2">
-            {[...new Set(rows.map((r) => alphabetInitial(fmt(r["name"]))))].sort((a, b) => a === "#" ? 1 : b === "#" ? -1 : a.localeCompare(b)).map((group) => {
+          <div className="mt-4 space-y-0">
+            {[...new Set(rows.map((r) => alphabetInitial(fmt(r["name"]))))].sort((a, b) => a === "#" ? 1 : b === "#" ? -1 : a.localeCompare(b)).map((group, index) => {
               const groupRows = rows.filter((r) => alphabetInitial(fmt(r["name"])) === group);
               return (
-                <Accordion key={group} type="multiple" className="overflow-hidden rounded-lg border-[4px] border-ivory bg-ivory">
+                <Accordion key={group} type="multiple" className="overflow-hidden border-x-[4px] border-b-[4px] border-ivory bg-ivory">
                   <AccordionItem value={group} className="border-none">
-                    <AccordionTrigger className="justify-start gap-3 bg-ivory px-5 py-3 text-left text-foreground hover:no-underline [&>svg]:ml-auto">
-                      <span className="font-display text-xl uppercase">{group}</span>
+                    <AccordionTrigger className={`min-h-11 justify-start gap-3 px-3 py-1.5 text-left hover:no-underline [&>svg]:ml-auto ${BAND_COLORS[index % BAND_COLORS.length]}`}>
+                      <span className="font-display text-lg uppercase">{group}</span>
                       <span className="text-xs opacity-80">{groupRows.length} {groupRows.length === 1 ? title.replace(/s$/, "") : title}</span>
                     </AccordionTrigger>
                     <AccordionContent className="bg-ivory pb-0 text-foreground">
@@ -362,12 +362,12 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
                           const descOpen = openDesc.has(rid);
                           return (
                             <Fragment key={rid}>
-                              <div className="flex items-center justify-between gap-3 px-5 py-3">
+                              <div className="flex items-center justify-between gap-3 px-4 py-1.5 odd:bg-ivory even:bg-pale-lime/40">
                                 <div className="flex min-w-0 items-center gap-2">
                                   {table === "careers" && (
                                     <button type="button" aria-expanded={descOpen} aria-label={descOpen ? "Hide description" : "Show description"} onClick={() => setOpenDesc((prev) => { const n = new Set(prev); n.has(rid) ? n.delete(rid) : n.add(rid); return n; })} className="grid h-5 w-5 shrink-0 place-items-center rounded border border-warm-divider text-xs font-bold text-muted-foreground hover:text-primary">{descOpen ? "−" : "+"}</button>
                                   )}
-                                  <span className="truncate text-sm font-medium">{fmt(r["name"])}</span>
+                                  <div className="min-w-0"><span className="block truncate text-sm font-medium leading-tight">{fmt(r["name"])}</span>{!descOpen && r["description"] ? <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{String(r["description"]).replace(/\*\*/g, "").split("\n")[0]}</p> : null}</div>
                                   <span className="shrink-0 text-xs text-muted-foreground">{fmt(r["_student_count"])} students</span>
                                 </div>
                                 <div className="flex shrink-0 gap-1.5">

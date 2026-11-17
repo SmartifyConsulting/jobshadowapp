@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { CONTACT_EMAIL, ROLES } from "@/lib/data";
 import { notify } from "@/lib/dialogs";
 
+const CATEGORY_BANDS = ["bg-cta text-cta-foreground", "bg-accent text-accent-foreground", "bg-teal text-teal-foreground", "bg-primary text-primary-foreground"] as const;
+
 export const Route = createFileRoute("/roles")({
   validateSearch: (s: Record<string, unknown>): { q?: string | undefined } => ({ q: typeof s["q"] === "string" ? (s["q"] as string) : undefined }),
   head: () => ({
@@ -26,7 +28,7 @@ export const Route = createFileRoute("/roles")({
 function Roles() {
   const qc = useQueryClient();
   const { data: session } = useSiteSession();
-  const [openFields, setOpenFields] = useState<Set<string>>(new Set());
+  const [openFields, setOpenFields] = useState<Set<string>>(new Set(ROLES[0] ? [ROLES[0].field] : []));
   const [search, setSearch] = useState("");
   const [openRoles, setOpenRoles] = useState<Set<string>>(new Set());
   const [favouritesOnly, setFavouritesOnly] = useState(false);
@@ -155,21 +157,21 @@ function Roles() {
         )}
       </div>
 
-      <div className="bg-primary pb-10 pt-2">
+      <div className="bg-ivory py-1">
       {grouped.length === 0 && (
-        <p className="px-5 pb-10 text-center text-sm text-primary-foreground/70">No careers match “{search}”.</p>
+        <p className="px-5 py-4 text-center text-sm text-muted-foreground">No careers match “{search}”.</p>
       )}
 
-      {grouped.map(([f, roles]) => {
+      {grouped.map(([f, roles], index) => {
         const fieldOpen = isFieldOpen(f);
         return (
-          <div key={f} className="mx-auto mt-4 w-full max-w-6xl overflow-hidden rounded-lg border-[4px] border-ivory bg-ivory">
+          <div key={f} className="mx-auto w-full max-w-6xl overflow-hidden border-x-[4px] border-b-[4px] border-ivory bg-ivory">
             <button
               onClick={() => toggleField(f)}
               aria-expanded={fieldOpen}
-              className="flex min-h-14 w-full items-center justify-between gap-3 bg-ivory px-5 py-4 text-left text-foreground"
+              className={`flex min-h-11 w-full items-center justify-between gap-3 px-3 py-1.5 text-left ${CATEGORY_BANDS[index % CATEGORY_BANDS.length]}`}
             >
-              <h2 className="font-display text-2xl uppercase">{f}</h2>
+              <h2 className="font-display text-lg uppercase">{f}</h2>
               <ChevronDown className={`h-6 w-6 shrink-0 transition ${fieldOpen ? "rotate-180" : ""}`} />
             </button>
             {fieldOpen && (
@@ -179,11 +181,11 @@ function Roles() {
                     const count = mentorCounts.get(r.title.trim().toLowerCase()) ?? 0;
                     const open = openRoles.has(r.slug);
                     return (
-                      <div key={r.slug} className="px-4 py-3 transition-colors hover:bg-pale-lime">
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-                          <button type="button" onClick={() => toggleRole(r.slug)} aria-expanded={open} className="flex flex-1 items-center gap-3 text-left">
+                      <div key={r.slug} className="px-4 py-1.5 transition-colors odd:bg-ivory even:bg-pale-lime/40 hover:bg-pale-lime">
+                        <div className="flex items-start justify-between gap-3">
+                          <button type="button" onClick={() => toggleRole(r.slug)} aria-expanded={open} className="flex min-w-0 flex-1 items-center gap-3 text-left">
                             <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-warm-divider bg-card text-charcoal">{open ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}</span>
-                            <span className="flex items-center gap-2 text-sm font-semibold text-charcoal">{r.title}{r.video && <PlayCircle className="h-4 w-4" aria-label="Has video" />}</span>
+                            <span className="min-w-0"><span className="flex items-center gap-2 text-sm font-semibold leading-tight text-charcoal">{r.title}{r.video && <PlayCircle className="h-4 w-4" aria-label="Has video" />}</span>{!open && <span className="mt-0.5 block text-xs leading-snug text-soft-grey">{r.summary.split("\n")[0]}</span>}</span>
                           </button>
                           <div className="flex shrink-0 items-center gap-2 self-start sm:self-center">
                             <button
@@ -225,7 +227,6 @@ function Roles() {
         );
       })}
       </div>
-      <div className="h-10" />
     </SiteLayout>
   );
 }
