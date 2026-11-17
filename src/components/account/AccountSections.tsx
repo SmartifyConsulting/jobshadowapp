@@ -251,6 +251,9 @@ export function Bookings() {
                 </label>
               </>
             )}
+            {b.status === "completed" && (
+              <Link to="/evaluation/$bookingId" params={{ bookingId: b.id }} className="rounded bg-primary px-3 py-1.5 text-xs font-bold uppercase text-primary-foreground">Evaluate this job shadow</Link>
+            )}
           </div>
         </div>
       ))}

@@ -65,6 +65,45 @@ export type Database = {
         }
         Relationships: []
       }
+      evaluations: {
+        Row: {
+          booking_id: string
+          comments_text: string | null
+          continue_text: string | null
+          created_at: string
+          extra_text: string | null
+          id: string
+          ratings: number[]
+          role: string
+          start_text: string | null
+          stop_text: string | null
+        }
+        Insert: {
+          booking_id: string
+          comments_text?: string | null
+          continue_text?: string | null
+          created_at?: string
+          extra_text?: string | null
+          id?: string
+          ratings: number[]
+          role: string
+          start_text?: string | null
+          stop_text?: string | null
+        }
+        Update: {
+          booking_id?: string
+          comments_text?: string | null
+          continue_text?: string | null
+          created_at?: string
+          extra_text?: string | null
+          id?: string
+          ratings?: number[]
+          role?: string
+          start_text?: string | null
+          stop_text?: string | null
+        }
+        Relationships: []
+      }
       host_settings: {
         Row: {
           blackout_dates: string[]
@@ -722,6 +761,29 @@ export type Database = {
           _max_shadows_per_month: number | null
           _max_shadows_per_week: number | null
           _paused: boolean
+        }
+        Returns: undefined
+      }
+      get_evaluation_context: {
+        Args: { _booking: string }
+        Returns: {
+          already_submitted: boolean
+          career: string
+          company: string
+          shadow_date: string
+          viewer_role: string
+        }[]
+      }
+      submit_evaluation: {
+        Args: {
+          _booking: string
+          _comments: string | null
+          _continue: string | null
+          _extra: string | null
+          _ratings: number[]
+          _role: string
+          _start: string | null
+          _stop: string | null
         }
         Returns: undefined
       }

@@ -66,6 +66,7 @@ const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string
     { key: "available_until", label: "Until", field: "date" }, { key: "usage_limit", label: "Limit", field: "number" } ] },
   { id: "settings", label: "Booking Settings", icon: FileText, table: "booking_settings", singular: "Settings", custom: true, cols: [] },
   { id: "emails", label: "Email Archive", icon: FileText, table: "email_outbox", singular: "Emails", custom: true, cols: [] },
+  { id: "evaluations", label: "Evaluations", icon: FileText, table: "evaluations", singular: "Evaluations", custom: true, cols: [] },
 ];
 
 function useIsAdmin() {
@@ -116,6 +117,8 @@ function AdminPage() {
             <AdminUsers key={section.id} />
           ) : section.id === "emails" ? (
             <EmailArchive key={section.id} />
+          ) : section.id === "evaluations" ? (
+            <Evaluations key={section.id} />
           ) : section.id === "settings" ? (
             <BookingSettings key={section.id} />
           ) : (
@@ -1024,6 +1027,55 @@ function EmailArchive() {
             ))
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+type EvaluationRow = { id: string; booking_id: string; role: "scholar" | "mentor"; ratings: number[]; continue_text: string | null; stop_text: string | null; start_text: string | null; extra_text: string | null; comments_text: string | null; created_at: string };
+
+function Evaluations() {
+  const evals = useQuery({
+    queryKey: ["admin", "evaluations"],
+    queryFn: async () => ((await supabase.from("evaluations").select("*").order("created_at", { ascending: false })).data ?? []) as EvaluationRow[],
+  });
+  const bookingIds = useMemo(() => [...new Set((evals.data ?? []).map((e) => e.booking_id))], [evals.data]);
+  const bookings = useQuery({
+    queryKey: ["admin", "evaluations-bookings", bookingIds],
+    enabled: bookingIds.length > 0,
+    queryFn: async () => {
+      const { data } = await supabase.from("bookings").select("id, career, company, shadow_date").in("id", bookingIds);
+      return new Map((data ?? []).map((b) => [b.id, b]));
+    },
+  });
+
+  return (
+    <div>
+      <div className="border-b border-border bg-background px-6 py-6 text-foreground"><h1 className="text-2xl font-medium">Evaluations {!evals.isLoading && `(${evals.data?.length ?? 0})`}</h1></div>
+      <div className="bg-background px-6 py-6 text-foreground">
+        {evals.isLoading ? <p>Loading…</p> : (evals.data?.length ?? 0) === 0 ? <p>No evaluations submitted yet.</p> : (
+          <div className="space-y-2">
+            {evals.data!.map((e) => {
+              const b = bookings.data?.get(e.booking_id);
+              const avg = e.ratings.length ? (e.ratings.reduce((a, c) => a + c, 0) / e.ratings.length).toFixed(1) : "—";
+              return (
+                <details key={e.id} className="rounded-lg border border-border bg-background/10 p-3 text-sm">
+                  <summary className="cursor-pointer">
+                    <strong>{e.role === "mentor" ? "Host" : "Scholar"} evaluation</strong> — {b ? `${b.career} at ${b.company}, ${b.shadow_date}` : `booking #${e.booking_id}`} · avg rating {avg}/6 · {new Date(e.created_at).toLocaleDateString()}
+                  </summary>
+                  <div className="mt-3 space-y-2">
+                    <p className="text-xs text-muted-foreground">Ratings: {e.ratings.join(", ")}</p>
+                    {e.continue_text && <p><strong>Continue:</strong> {e.continue_text}</p>}
+                    {e.stop_text && <p><strong>Stop:</strong> {e.stop_text}</p>}
+                    {e.start_text && <p><strong>Start:</strong> {e.start_text}</p>}
+                    {e.extra_text && <p><strong>Additional:</strong> {e.extra_text}</p>}
+                    {e.comments_text && <p><strong>Comments:</strong> {e.comments_text}</p>}
+                  </div>
+                </details>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -338,6 +338,9 @@ function BookingCard({ booking }: { booking: MentorBooking }) {
       <p className="mt-2 text-sm">
         Contact: {booking.scholar_contact ?? "—"} · Indemnity: {booking.indemnity_received ? "Received" : "Outstanding"}
       </p>
+      {booking.status === "completed" && (
+        <Link to="/evaluation/$bookingId" params={{ bookingId: booking.id }} className="mt-2 inline-block rounded bg-primary px-3 py-1.5 text-xs font-bold uppercase text-primary-foreground">Evaluate this placement</Link>
+      )}
       <div className="mt-3 border-t border-foreground/10 pt-3">
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={preapproved} onChange={(e) => setPreapproved(e.target.checked)} />

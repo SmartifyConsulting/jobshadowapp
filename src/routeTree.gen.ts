@@ -29,6 +29,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedMentorRouteImport } from './routes/_authenticated/mentor'
 import { Route as AuthenticatedMyAccountRouteImport } from './routes/_authenticated/my-account'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
+import { Route as AuthenticatedEvaluationBookingIdRouteImport } from './routes/_authenticated/evaluation.$bookingId'
 import { Route as AuthenticatedIndemnityBookingIdRouteImport } from './routes/_authenticated/indemnity.$bookingId'
 import { Route as ApiPublicEmailDispatchRouteImport } from './routes/api/public/email-dispatch'
 
@@ -131,6 +132,12 @@ const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedEvaluationBookingIdRoute =
+  AuthenticatedEvaluationBookingIdRouteImport.update({
+    id: '/evaluation/$bookingId',
+    path: '/evaluation/$bookingId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedIndemnityBookingIdRoute =
   AuthenticatedIndemnityBookingIdRouteImport.update({
     id: '/indemnity/$bookingId',
@@ -163,6 +170,7 @@ export interface FileRoutesByFullPath {
   '/mentor': typeof AuthenticatedMentorRoute
   '/my-account': typeof AuthenticatedMyAccountRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/evaluation/$bookingId': typeof AuthenticatedEvaluationBookingIdRoute
   '/indemnity/$bookingId': typeof AuthenticatedIndemnityBookingIdRoute
   '/api/public/email-dispatch': typeof ApiPublicEmailDispatchRoute
 }
@@ -186,6 +194,7 @@ export interface FileRoutesByTo {
   '/mentor': typeof AuthenticatedMentorRoute
   '/my-account': typeof AuthenticatedMyAccountRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/evaluation/$bookingId': typeof AuthenticatedEvaluationBookingIdRoute
   '/indemnity/$bookingId': typeof AuthenticatedIndemnityBookingIdRoute
   '/api/public/email-dispatch': typeof ApiPublicEmailDispatchRoute
 }
@@ -211,6 +220,7 @@ export interface FileRoutesById {
   '/_authenticated/mentor': typeof AuthenticatedMentorRoute
   '/_authenticated/my-account': typeof AuthenticatedMyAccountRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/evaluation/$bookingId': typeof AuthenticatedEvaluationBookingIdRoute
   '/_authenticated/indemnity/$bookingId': typeof AuthenticatedIndemnityBookingIdRoute
   '/api/public/email-dispatch': typeof ApiPublicEmailDispatchRoute
 }
@@ -236,6 +246,7 @@ export interface FileRouteTypes {
     | '/mentor'
     | '/my-account'
     | '/profile'
+    | '/evaluation/$bookingId'
     | '/indemnity/$bookingId'
     | '/api/public/email-dispatch'
   fileRoutesByTo: FileRoutesByTo
@@ -259,6 +270,7 @@ export interface FileRouteTypes {
     | '/mentor'
     | '/my-account'
     | '/profile'
+    | '/evaluation/$bookingId'
     | '/indemnity/$bookingId'
     | '/api/public/email-dispatch'
   id:
@@ -283,6 +295,7 @@ export interface FileRouteTypes {
     | '/_authenticated/mentor'
     | '/_authenticated/my-account'
     | '/_authenticated/profile'
+    | '/_authenticated/evaluation/$bookingId'
     | '/_authenticated/indemnity/$bookingId'
     | '/api/public/email-dispatch'
   fileRoutesById: FileRoutesById
@@ -449,6 +462,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProfileRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/evaluation/$bookingId': {
+      id: '/_authenticated/evaluation/$bookingId'
+      path: '/evaluation/$bookingId'
+      fullPath: '/evaluation/$bookingId'
+      preLoaderRoute: typeof AuthenticatedEvaluationBookingIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/indemnity/$bookingId': {
       id: '/_authenticated/indemnity/$bookingId'
       path: '/indemnity/$bookingId'
@@ -471,6 +491,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMentorRoute: typeof AuthenticatedMentorRoute
   AuthenticatedMyAccountRoute: typeof AuthenticatedMyAccountRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedEvaluationBookingIdRoute: typeof AuthenticatedEvaluationBookingIdRoute
   AuthenticatedIndemnityBookingIdRoute: typeof AuthenticatedIndemnityBookingIdRoute
 }
 
@@ -479,6 +500,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMentorRoute: AuthenticatedMentorRoute,
   AuthenticatedMyAccountRoute: AuthenticatedMyAccountRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedEvaluationBookingIdRoute: AuthenticatedEvaluationBookingIdRoute,
   AuthenticatedIndemnityBookingIdRoute: AuthenticatedIndemnityBookingIdRoute,
 }
 
