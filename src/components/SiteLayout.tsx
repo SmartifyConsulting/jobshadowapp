@@ -54,14 +54,14 @@ export function SiteLayout({ children, hideLogo }: { children: ReactNode; hideLo
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className={hideLogo ? "absolute inset-x-0 top-0 z-40 text-primary-foreground" : "sticky top-0 z-40 bg-brand-deep text-primary-foreground shadow-warm"}>
+      <header className={hideLogo ? "absolute inset-x-0 top-0 z-40 pt-5 text-primary-foreground" : "sticky top-0 z-40 bg-brand-deep text-primary-foreground shadow-warm"}>
         <div className="relative mx-auto flex max-w-7xl items-center justify-center gap-6 px-5 lg:justify-between">
           {!hideLogo && (
             <Link to="/" aria-label="JobShadow home" className="shrink-0">
               <BrandLogo className="h-24 w-24 lg:h-28 lg:w-28" />
             </Link>
           )}
-          <nav className={`hidden items-center gap-4 lg:flex ${hideLogo ? "lg:mx-auto" : "lg:ml-auto"}`}>
+          <nav className={`hidden items-center gap-4 lg:flex ${hideLogo ? "lg:relative lg:left-[4%] lg:mx-auto" : "lg:ml-auto"}`}>
             {NAV.map((n) => (
               <Link
                 key={n.to}
