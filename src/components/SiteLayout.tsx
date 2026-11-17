@@ -5,6 +5,7 @@ import { Menu, X, Facebook, Instagram } from "lucide-react";
 import { BrandLogo, HeaderLogo } from "@/components/BrandLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { SupportChatWidget } from "@/components/SupportChatWidget";
 
 export const SITE_NAV = [
   { to: "/", label: "Home" },
@@ -25,11 +26,12 @@ function useSession() {
     queryKey: ["site-session"],
     queryFn: async () => {
       const { data: u } = await supabase.auth.getUser();
-      if (!u.user) return { user: null, isAdmin: false, avatarUrl: null as string | null, displayName: null as string | null };
+      if (!u.user) return { user: null, isAdmin: false, roles: [] as string[], avatarUrl: null as string | null, displayName: null as string | null };
       const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", u.user.id);
       const { data: profile } = await supabase.from("profiles").select("avatar_path, display_name").eq("user_id", u.user.id).maybeSingle();
       const avatarUrl = profile?.avatar_path ? supabase.storage.from("avatars").getPublicUrl(profile.avatar_path).data.publicUrl : null;
-      return { user: u.user, isAdmin: (roles ?? []).some((r) => r.role === "admin"), avatarUrl, displayName: profile?.display_name ?? null };
+      const roleNames = (roles ?? []).map((r) => r.role);
+      return { user: u.user, isAdmin: roleNames.includes("admin"), roles: roleNames, avatarUrl, displayName: profile?.display_name ?? null };
     },
   });
 }
@@ -156,6 +158,7 @@ export function SiteLayout({ children, headerLogo, className = "" }: { children:
           </div>
         </div>
       </footer>
+      <SupportChatWidget viewerRole={isAdmin ? "admin" : session?.roles?.[0]} />
     </div>
   );
 }
