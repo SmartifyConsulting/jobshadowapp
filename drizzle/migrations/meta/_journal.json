@@ -148,6 +148,13 @@
       "when": 1794510200000,
       "tag": "0020_resilient_email_outbox_enqueue",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1794510300000,
+      "tag": "0021_disable_redundant_email_trigger",
+      "breakpoints": true
     }
   ]
 }
