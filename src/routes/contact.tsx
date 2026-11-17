@@ -33,11 +33,11 @@ const FORM_COPY: Record<NonNullable<ContactType>, { heading: string; orgLabel: s
 
 const CONTACT_AUDIENCES = ["Learner", "Parent / guardian", "School representative", "Host / company representative", "Sponsor", "Other"] as const;
 
-const BLOCKS = [
-  { color: "bg-teal text-teal-foreground", text: <>If you are a school and want to include job shadow as <strong>part of your life orientation program</strong></> },
-  { color: "bg-accent text-accent-foreground", text: <>if you are a company who would like to be <strong>a part of our hosting</strong> program</> },
-  { color: "bg-cta text-cta-foreground", text: <>if you are a company who would like to <strong>sponsor learners</strong> as part of your CSI Initiatives</> },
-];
+const BLOCKS = {
+  school: { color: "bg-teal text-teal-foreground", text: <>If you are a school and want to include job shadow as <strong>part of your life orientation program</strong></> },
+  host: { color: "bg-accent text-accent-foreground", text: <>if you are a company who would like to be <strong>a part of our hosting</strong> program</> },
+  sponsor: { color: "bg-cta text-cta-foreground", text: <>if you are a company who would like to <strong>sponsor learners</strong> as part of your CSI Initiatives</> },
+};
 
 function Contact() {
   const { type } = Route.useSearch();
@@ -77,21 +77,6 @@ function Contact() {
 
   return (
     <SiteLayout>
-      <section className="grid bg-primary text-primary-foreground md:grid-cols-[1fr_1fr_1fr_1.1fr]">
-        {BLOCKS.map((b, i) => (
-          <div key={i} className={`${b.color} px-6 py-10 text-sm`}>{b.text}</div>
-        ))}
-        <div className="flex flex-col justify-center gap-4 px-6 py-10">
-          <p className="text-right font-display text-lg">If You Just Want To Say Hi</p>
-          <p className="text-right font-display text-2xl uppercase">Please Contact Us</p>
-          <a href={`mailto:${CONTACT_EMAIL}`} className="text-right font-semibold text-cta hover:underline">{CONTACT_EMAIL}</a>
-          <div className="mt-2 flex justify-end gap-2">
-            <a href="https://www.facebook.com/JobShadowBookings" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="grid h-9 w-9 place-items-center rounded-full bg-primary-foreground text-primary"><Facebook className="h-4 w-4" /></a>
-            <a href="https://www.instagram.com/jobshadowbookings" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="grid h-9 w-9 place-items-center rounded-full bg-primary-foreground text-primary"><Instagram className="h-4 w-4" /></a>
-          </div>
-        </div>
-      </section>
-
       <section className="bg-primary px-5 py-14 text-primary-foreground">
         <div className="mx-auto grid max-w-6xl gap-10 md:grid-cols-2">
           <div>
@@ -99,12 +84,13 @@ function Contact() {
             <p className="mt-4 text-sm text-primary-foreground/80">{PARTNER_HERO.sub}</p>
             <div className="mt-8 space-y-4">
               {PARTNER_BLOCKS.map((b) => (
-                <div key={b.type} className="rounded-xl border border-primary-foreground/20 bg-primary-foreground/5 p-5">
+                <div key={b.type} className={"rounded-xl border border-foreground/10 p-5 " + BLOCKS[b.type].color}>
                   <h2 className="font-display text-xl">{b.title}</h2>
+                  <p className="mt-3 text-sm">{BLOCKS[b.type].text}</p>
                   <ul className="mt-3 space-y-2">
-                    {b.points.map((p) => <li key={p} className="flex gap-2 text-xs"><Check className="h-3.5 w-3.5 shrink-0 text-accent" />{p}</li>)}
+                    {b.points.map((p) => <li key={p} className="flex gap-2 text-xs"><Check className="h-3.5 w-3.5 shrink-0 text-current" />{p}</li>)}
                   </ul>
-                  <Link to="/contact" search={{ type: b.type }} className="mt-4 inline-block rounded-full bg-cta px-5 py-2 text-xs font-bold uppercase tracking-wide text-cta-foreground">{b.cta}</Link>
+                  <Link to="/contact" search={{ type: b.type }} className="mt-4 inline-block rounded-full bg-primary px-5 py-2 text-xs font-bold uppercase tracking-wide text-primary-foreground">{b.cta}</Link>
                 </div>
               ))}
             </div>
@@ -112,7 +98,11 @@ function Contact() {
 
           <div className="rounded-xl border border-primary-foreground/20 bg-primary-foreground/5 p-6">
             <h2 className="font-display text-2xl uppercase">{copy?.heading ?? "Send Us A Message"}</h2>
-            {!copy && <p className="mt-3 text-sm text-primary-foreground/80">If you just want to say hi, please send us a message below.</p>}
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <a href={'mailto:' + CONTACT_EMAIL} className="text-sm font-semibold text-cta hover:underline">{CONTACT_EMAIL}</a>
+              <a href="https://www.facebook.com/JobShadowBookings" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="grid h-9 w-9 place-items-center rounded-full bg-primary-foreground text-primary"><Facebook className="h-4 w-4" /></a>
+              <a href="https://www.instagram.com/jobshadowbookings" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="grid h-9 w-9 place-items-center rounded-full bg-primary-foreground text-primary"><Instagram className="h-4 w-4" /></a>
+            </div>
             {sent ? (
               <p className="mt-6 text-sm">Your email app should now be open with your application ready to send.</p>
             ) : (
