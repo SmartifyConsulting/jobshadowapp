@@ -43,6 +43,7 @@ type Col = { key: string; label: string; field?: Field };
 const BAND_COLORS = ["bg-cta text-cta-foreground", "bg-accent text-accent-foreground", "bg-teal text-teal-foreground", "bg-primary text-primary-foreground"];
 const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string; singular: string; cols: Col[]; csvUpload?: boolean; dateCompanyFilter?: boolean; indemnityEdit?: boolean; custom?: boolean }[] = [
   { id: "users", label: "Users", icon: GraduationCap, table: "legacy_users", singular: "Users", custom: true, cols: [] },
+  { id: "bookings", label: "Bookings", icon: UsersIcon, table: "bookings", singular: "Bookings", custom: true, cols: [] },
   { id: "apps", label: "Applications", icon: UsersIcon, table: "legacy_applications", singular: "Applications", dateCompanyFilter: true, indemnityEdit: true, cols: [
     { key: "id", label: "ID" }, { key: "name", label: "Name" }, { key: "id_number", label: "ID No." },
     { key: "email", label: "Email" }, { key: "contact", label: "Contact" }, { key: "school", label: "School" },
@@ -120,6 +121,8 @@ function AdminPage() {
             <EmailArchive key={section.id} />
           ) : section.id === "evaluations" ? (
             <Evaluations key={section.id} />
+          ) : section.id === "bookings" ? (
+            <LiveBookings key={section.id} />
           ) : section.id === "settings" ? (
             <BookingSettings key={section.id} />
           ) : (
@@ -1088,6 +1091,127 @@ function Evaluations() {
             })}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+const BOOKING_STATUS_LABELS: Record<string, string> = { awaiting_payment: "Awaiting payment", indemnity_required: "Paid – indemnity needed", confirmed: "Confirmed", completed: "Completed", cancelled: "Cancelled" };
+const BOOKING_EXPORT_COLS: { key: string; label: string }[] = [
+  { key: "shadow_date", label: "Shadow date" }, { key: "status", label: "Status" },
+  { key: "career", label: "Career" }, { key: "company", label: "Company" }, { key: "sector", label: "Sector" }, { key: "location", label: "Location" }, { key: "mode", label: "Mode" },
+  { key: "student_name", label: "Student name" }, { key: "student_contact", label: "Student contact" }, { key: "student_id_number", label: "Student ID number" }, { key: "student_school", label: "School" }, { key: "student_career_interests", label: "Career interests" }, { key: "student_dietary", label: "Dietary" },
+  { key: "guardian_name", label: "Parent/guardian name" }, { key: "guardian_contact", label: "Parent/guardian contact" }, { key: "guardian_email", label: "Parent/guardian email" },
+  { key: "mentor_name", label: "Mentor name" }, { key: "mentor_position", label: "Mentor position" }, { key: "mentor_phone", label: "Mentor phone" }, { key: "mentor_email", label: "Mentor email" },
+  { key: "hr_contact_name", label: "HR contact name" }, { key: "hr_contact_phone", label: "HR contact phone" }, { key: "hr_contact_email", label: "HR contact email" },
+  { key: "amount_due", label: "Amount due" }, { key: "paid_at", label: "Paid status" }, { key: "indemnity_received", label: "Indemnity status" }, { key: "created_at", label: "Booked on" },
+];
+
+function LiveBookings() {
+  const [q, setQ] = useState("");
+  const [status, setStatus] = useState("");
+  const [exporting, setExporting] = useState(false);
+  const bookings = useQuery({
+    queryKey: ["admin", "live-bookings"],
+    queryFn: async () => {
+      const b = await fetchAllRows(async (from, to) => {
+        const { data, error } = await supabase.from("bookings").select("*").order("created_at", { ascending: false }).range(from, to);
+        if (error) throw error;
+        return data ?? [];
+      });
+      const [{ data: profiles }, { data: companies }] = await Promise.all([
+        supabase.from("scholar_profiles").select("user_id, full_name, contact_no, id_number, school, career_interests, dietary, guardian_name, guardian_contact, guardian_email"),
+        supabase.from("companies").select("id, mentor_name, mentor_position, mentor_phone, mentor_email, hr_contact_name, hr_contact_phone, hr_contact_email"),
+      ]);
+      const byUser = new Map((profiles ?? []).map((p) => [p.user_id, p]));
+      const byCompany = new Map((companies ?? []).map((c) => [c.id, c]));
+      return b.map((row) => {
+        const p = byUser.get(row["user_id"] as string);
+        const c = byCompany.get(row["company_id"] as number);
+        return {
+          ...row,
+          student_name: p?.full_name ?? "", student_contact: p?.contact_no ?? "", student_id_number: p?.id_number ?? "",
+          student_school: p?.school ?? "", student_career_interests: p?.career_interests ?? "", student_dietary: p?.dietary ?? "",
+          guardian_name: p?.guardian_name ?? "", guardian_contact: p?.guardian_contact ?? "", guardian_email: p?.guardian_email ?? "",
+          mentor_name: c?.mentor_name ?? "", mentor_position: c?.mentor_position ?? "", mentor_phone: c?.mentor_phone ?? "", mentor_email: c?.mentor_email ?? "",
+          hr_contact_name: c?.hr_contact_name ?? "", hr_contact_phone: c?.hr_contact_phone ?? "", hr_contact_email: c?.hr_contact_email ?? "",
+          indemnity_received: row["indemnity_received"] ? "Received" : "Outstanding",
+          paid_at: row["paid_at"] ? "Paid" : "Not paid",
+        } as Record<string, unknown>;
+      });
+    },
+  });
+
+  const rows = useMemo(() => {
+    const s = q.toLowerCase().trim();
+    return (bookings.data ?? []).filter((r) => {
+      if (status && r["status"] !== status) return false;
+      if (!s) return true;
+      return ["student_name", "career", "company", "mentor_name", "hr_contact_name", "shadow_date"].some((k) => String(r[k] ?? "").toLowerCase().includes(s));
+    });
+  }, [bookings.data, q, status]);
+
+  function exportCsvNow() {
+    setExporting(true);
+    try {
+      const csv = toCsv(BOOKING_EXPORT_COLS, rows);
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "bookings.csv"; a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  return (
+    <div>
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border bg-background px-6 py-6 text-foreground">
+        <h1 className="text-2xl font-medium">Bookings {!bookings.isLoading && `(${rows.length})`}</h1>
+        <Button onClick={exportCsvNow} disabled={bookings.isLoading || exporting} className="rounded-md bg-teal/20 hover:bg-teal/30 px-4 py-2 text-sm font-medium uppercase text-foreground">{exporting ? "Exporting…" : "Export CSV"}</Button>
+      </div>
+      <div className="bg-background px-6 py-6 text-foreground">
+        <div className="flex flex-wrap items-end gap-6">
+          <label className="block max-w-sm text-sm">
+            Search
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Student, career, company, mentor, HR, date" className="mt-1 w-full border-b border-input bg-transparent px-1 py-1 outline-none" />
+          </label>
+          <label className="block text-sm">
+            Status
+            <select value={status} onChange={(e) => setStatus(e.target.value)} className="mt-1 block border-b border-input bg-transparent px-1 py-1 outline-none [&>option]:text-foreground">
+              <option value="">All</option>
+              {Object.entries(BOOKING_STATUS_LABELS).map(([k, label]) => <option key={k} value={k}>{label}</option>)}
+            </select>
+          </label>
+        </div>
+        <div className="mt-6 overflow-x-auto [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-track]:bg-muted">
+          <table className="w-full min-w-[1100px] text-left text-xs">
+            <thead>
+              <tr className="border-b border-border font-medium">
+                {["Date", "Status", "Career", "Company", "Student", "School", "Mentor", "HR contact"].map((h) => <th key={h} className="whitespace-nowrap px-3 py-2">{h}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {bookings.isLoading ? (
+                <tr><td className="px-3 py-4" colSpan={8}>Loading…</td></tr>
+              ) : rows.length === 0 ? (
+                <tr><td className="px-3 py-4" colSpan={8}>No bookings found.</td></tr>
+              ) : rows.map((r) => (
+                <tr key={String(r["id"])} className="border-b border-warm-divider">
+                  <td className="whitespace-nowrap px-3 py-2">{String(r["shadow_date"])}</td>
+                  <td className="whitespace-nowrap px-3 py-2">{BOOKING_STATUS_LABELS[String(r["status"])] ?? String(r["status"])}</td>
+                  <td className="px-3 py-2">{String(r["career"] ?? "")}</td>
+                  <td className="px-3 py-2">{String(r["company"] ?? "")}</td>
+                  <td className="px-3 py-2">{String(r["student_name"] ?? "")}</td>
+                  <td className="px-3 py-2">{String(r["student_school"] ?? "")}</td>
+                  <td className="px-3 py-2">{String(r["mentor_name"] ?? "")}</td>
+                  <td className="px-3 py-2">{String(r["hr_contact_name"] ?? "")}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
