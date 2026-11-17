@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { RichText } from "@/components/RichText";
 import { draftCareerDescription } from "@/lib/career-ai.functions";
 import { accountInitial, alphabetInitial } from "@/lib/alphabet";
+import { withCareerDescriptions } from "@/lib/career-descriptions";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Calendar } from "@/components/ui/calendar";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
@@ -92,11 +93,11 @@ function AdminPage() {
     <div className="flex min-h-screen flex-col bg-muted/40">
       <SiteHeader />
       <div className="flex min-w-0 flex-1">
-      <aside className="w-60 shrink-0 border-r border-primary/20 bg-brand-deep text-primary-foreground shadow-warm">
-        <p className="px-5 pb-3 pt-6 text-xs font-bold uppercase tracking-widest text-primary-foreground/70">Admin Portal</p>
+      <aside className="w-60 shrink-0 border-r border-primary/20 bg-accent text-accent-foreground shadow-warm">
+        <p className="px-5 pb-3 pt-6 text-xs font-bold uppercase tracking-widest text-foreground/70">Admin Portal</p>
         <nav className="space-y-1 px-3 pb-6">
           {TABLES.map((t) => (
-            <button key={t.id} onClick={() => setActive(t.id)} className={`flex w-full items-center gap-3 rounded-md border-l-2 px-3 py-2.5 text-left text-sm font-medium transition ${active === t.id ? "border-primary-foreground bg-primary-foreground/15 text-primary-foreground" : "border-transparent text-primary-foreground/85 hover:bg-primary-foreground/10 hover:text-primary-foreground"}`}>
+            <button key={t.id} onClick={() => setActive(t.id)} className={`flex w-full items-center gap-3 rounded-md border-l-2 px-3 py-2.5 text-left text-sm font-medium transition ${active === t.id ? "border-primary bg-primary/10 text-foreground" : "border-transparent text-foreground/85 hover:bg-primary/5 hover:text-foreground"}`}>
               <t.icon className="h-4 w-4" /> {t.label}
             </button>
           ))}
@@ -193,6 +194,7 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
     setExportError(null);
     try {
       let all = await loadAll(table);
+      if (table === "careers") all = withCareerDescriptions(all);
       if (table === "legacy_applications") all = joinApplicationContacts(all, await loadAll("companies"));
       exportCsv(title, completeExportColumns(cols.filter((c) => !c.key.startsWith("_")), all), all);
     } catch (error) {
@@ -230,7 +232,7 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
         }
         rows.forEach((r) => { r["_student_count"] = counts.get(String(r["name"]).trim().toLowerCase()) ?? 0; });
       }
-      return rows;
+      return table === "careers" ? withCareerDescriptions(rows) : rows;
     },
   });
   const companies = useMemo(() => ["All companies", ...new Set((data ?? []).map((r) => fmt(r["company"])).filter(Boolean))], [data]);

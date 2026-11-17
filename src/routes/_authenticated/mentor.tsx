@@ -64,11 +64,11 @@ function MentorPortal() {
     <div className="flex min-h-screen flex-col bg-muted/40">
       <SiteHeader />
       <div className="flex min-w-0 flex-1 flex-col md:flex-row">
-      <aside className="shrink-0 bg-brand-deep text-primary-foreground shadow-warm md:w-60">
-        <p className="px-6 pt-4 text-xs font-bold uppercase tracking-widest text-primary-foreground/70 md:pt-6">Host Portal</p>
+      <aside className="shrink-0 bg-cta text-cta-foreground shadow-warm md:w-60">
+        <p className="px-6 pt-4 text-xs font-bold uppercase tracking-widest text-foreground/70 md:pt-6">Host Portal</p>
         <nav className="flex gap-1 overflow-x-auto px-3 py-3 md:block md:space-y-1">
           {MENU.map((m) => (
-            <button key={m.id} onClick={() => setActive(m.id)} aria-pressed={active === m.id} className={`flex shrink-0 items-center gap-3 rounded-md border-l-2 px-3 py-2.5 text-left text-sm font-medium transition md:w-full ${active === m.id ? "border-primary-foreground bg-primary-foreground/15" : "border-transparent text-primary-foreground/85 hover:bg-primary-foreground/10"}`}>
+            <button key={m.id} onClick={() => setActive(m.id)} aria-pressed={active === m.id} className={`flex shrink-0 items-center gap-3 rounded-md border-l-2 px-3 py-2.5 text-left text-sm font-medium transition md:w-full ${active === m.id ? "border-primary bg-primary/10" : "border-transparent text-foreground/85 hover:bg-primary/5"}`}>
               <m.icon className="h-4 w-4" /> {m.label}
             </button>
           ))}
