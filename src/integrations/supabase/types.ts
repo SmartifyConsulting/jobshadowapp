@@ -59,6 +59,36 @@ export type Database = {
         }
         Relationships: []
       }
+      host_settings: {
+        Row: {
+          blackout_dates: string[]
+          buffer_days: number | null
+          max_shadows_per_month: number | null
+          max_shadows_per_week: number | null
+          mentor_email: string
+          paused: boolean
+          updated_at: string
+        }
+        Insert: {
+          blackout_dates?: string[]
+          buffer_days?: number | null
+          max_shadows_per_month?: number | null
+          max_shadows_per_week?: number | null
+          mentor_email: string
+          paused?: boolean
+          updated_at?: string
+        }
+        Update: {
+          blackout_dates?: string[]
+          buffer_days?: number | null
+          max_shadows_per_month?: number | null
+          max_shadows_per_week?: number | null
+          mentor_email?: string
+          paused?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           ad_hoc_note: string | null
@@ -668,6 +698,20 @@ export type Database = {
           custom_indemnity_text: string
           location: string
         }[]
+      }
+      get_my_host_settings: {
+        Args: never
+        Returns: Database["public"]["Tables"]["host_settings"]["Row"]
+      }
+      update_my_host_settings: {
+        Args: {
+          _blackout_dates: string[]
+          _buffer_days: number | null
+          _max_shadows_per_month: number | null
+          _max_shadows_per_week: number | null
+          _paused: boolean
+        }
+        Returns: undefined
       }
       get_no_availability_message: { Args: never; Returns: string }
       has_role: {

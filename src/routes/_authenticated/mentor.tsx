@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { CalendarDays, Briefcase, MessageSquare, ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { CalendarDays, Briefcase, MessageSquare, ChevronLeft, ChevronRight, Settings as SettingsIcon, X } from "lucide-react";
 import { HeaderLogo } from "@/components/BrandLogo";
 import { SITE_NAV, SiteAccountMenu } from "@/components/SiteLayout";
 import { bookingDayKey, countByDay, filterHostBookings } from "@/lib/host-bookings";
 import { supabase } from "@/integrations/supabase/client";
+import { Calendar } from "@/components/ui/calendar";
 
 export const Route = createFileRoute("/_authenticated/mentor")({
   head: () => ({
@@ -34,11 +35,12 @@ type MentorBooking = {
 
 const STATUS: Record<string, string> = { awaiting_payment: "Awaiting payment", indemnity_required: "Paid – indemnity needed", confirmed: "Confirmed", completed: "Completed" };
 
-type Section = "calendar" | "shadows" | "messages";
+type Section = "calendar" | "shadows" | "messages" | "settings";
 const MENU: { id: Section; label: string; icon: typeof CalendarDays }[] = [
   { id: "calendar", label: "Calendar", icon: CalendarDays },
   { id: "shadows", label: "Job Shadows", icon: Briefcase },
   { id: "messages", label: "Messages", icon: MessageSquare },
+  { id: "settings", label: "Settings", icon: SettingsIcon },
 ];
 
 function todayKey() {
@@ -85,6 +87,7 @@ function MentorPortal() {
           {active === "calendar" && <HostCalendar bookings={all} />}
           {active === "shadows" && <JobShadows bookings={all} placements={placements.data ?? []} loadingPlacements={placements.isLoading} />}
           {active === "messages" && <HostMessages />}
+          {active === "settings" && <HostSettings />}
         </main>
       </div>
     </div>
@@ -159,6 +162,109 @@ function JobShadows({ bookings, placements, loadingPlacements }: { bookings: Men
         {!loadingPlacements && placements.length === 0 && <p className="mt-2 text-sm text-muted-foreground">No placements are linked to this email. Contact the JobShadow admin if this looks wrong.</p>}
         <div className="mt-4 space-y-4">{placements.map((p) => <PlacementCard key={p.id} placement={p} />)}</div>
       </div>
+    </section>
+  );
+}
+
+function parseUsDate(s: string): Date | null {
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(s.trim());
+  if (!m) return null;
+  const d = new Date(Number(m[3]), Number(m[1]) - 1, Number(m[2]));
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+function toUsDate(d: Date): string {
+  return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
+}
+
+function HostSettings() {
+  const qc = useQueryClient();
+  const settings = useQuery({
+    queryKey: ["host-settings"],
+    queryFn: async () => (await supabase.rpc("get_my_host_settings")).data,
+  });
+  const [paused, setPaused] = useState(false);
+  const [maxWeek, setMaxWeek] = useState("");
+  const [maxMonth, setMaxMonth] = useState("");
+  const [bufferDays, setBufferDays] = useState("");
+  const [blackoutDates, setBlackoutDates] = useState<Date[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    if (!settings.data) return;
+    const s = settings.data;
+    setPaused(s.paused);
+    setMaxWeek(s.max_shadows_per_week != null ? String(s.max_shadows_per_week) : "");
+    setMaxMonth(s.max_shadows_per_month != null ? String(s.max_shadows_per_month) : "");
+    setBufferDays(s.buffer_days != null ? String(s.buffer_days) : "");
+    setBlackoutDates((s.blackout_dates ?? []).map(parseUsDate).filter((d): d is Date => d !== null));
+  }, [settings.data]);
+
+  async function save() {
+    setBusy(true);
+    setErr(null);
+    setSaved(false);
+    const { error } = await supabase.rpc("update_my_host_settings", {
+      _paused: paused,
+      _max_shadows_per_week: maxWeek ? Number(maxWeek) : null,
+      _max_shadows_per_month: maxMonth ? Number(maxMonth) : null,
+      _buffer_days: bufferDays ? Number(bufferDays) : null,
+      _blackout_dates: blackoutDates.map(toUsDate),
+    });
+    setBusy(false);
+    if (error) return setErr(error.message);
+    setSaved(true);
+    qc.invalidateQueries({ queryKey: ["host-settings"] });
+  }
+
+  return (
+    <section className="max-w-2xl space-y-6">
+      <h1 className="text-2xl font-bold">Settings</h1>
+      <p className="text-sm text-muted-foreground">
+        These apply across all your placements. Sensible defaults are used unless you set your own — you don't need
+        to configure anything here unless you want to.
+      </p>
+
+      <div className="rounded-lg border bg-card p-4">
+        <label className="flex items-center gap-2 text-sm font-semibold">
+          <input type="checkbox" checked={paused} onChange={(e) => setPaused(e.target.checked)} />
+          Temporarily pause new booking requests
+        </label>
+        <p className="mt-1 text-xs text-muted-foreground">Your placements stay listed, but students can't book a new job shadow with you while this is on.</p>
+      </div>
+
+      <div className="grid gap-4 rounded-lg border bg-card p-4 sm:grid-cols-2">
+        <label className="text-sm">Maximum shadows per week
+          <input type="number" min={0} value={maxWeek} onChange={(e) => setMaxWeek(e.target.value)} placeholder="No limit" className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none" />
+        </label>
+        <label className="text-sm">Maximum shadows per month
+          <input type="number" min={0} value={maxMonth} onChange={(e) => setMaxMonth(e.target.value)} placeholder="No limit" className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none" />
+        </label>
+        <label className="text-sm sm:col-span-2">Buffer between job shadows (days)
+          <input type="number" min={0} value={bufferDays} onChange={(e) => setBufferDays(e.target.value)} placeholder="No buffer" className="mt-1 block w-full max-w-xs border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none" />
+        </label>
+      </div>
+
+      <div className="rounded-lg border bg-card p-4">
+        <p className="text-sm font-semibold">Personal blackout dates</p>
+        <p className="mt-1 text-xs text-muted-foreground">Dates you're unavailable — leave, meetings, holidays. Separate from the dates you set per placement.</p>
+        <div className="mt-3 flex flex-wrap items-start gap-4">
+          <Calendar mode="multiple" selected={blackoutDates} onSelect={(d) => setBlackoutDates(d ?? [])} className="rounded-md border bg-background" />
+          <div className="flex flex-wrap gap-1.5">
+            {blackoutDates.length === 0 && <span className="text-xs text-muted-foreground">No blackout dates set.</span>}
+            {blackoutDates.map((d, i) => (
+              <span key={i} className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs">
+                {toUsDate(d)}
+                <button type="button" onClick={() => setBlackoutDates((cur) => cur.filter((_, idx) => idx !== i))} aria-label={`Remove ${toUsDate(d)}`} className="text-muted-foreground hover:text-destructive"><X className="h-3 w-3" /></button>
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {err && <p className="text-sm text-destructive">{err}</p>}
+      <button onClick={save} disabled={busy || settings.isLoading} className="rounded bg-primary px-5 py-2.5 text-sm font-bold uppercase text-primary-foreground disabled:opacity-50">{saved ? "Saved" : "Save"}</button>
     </section>
   );
 }

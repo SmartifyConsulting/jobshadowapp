@@ -323,6 +323,13 @@
       "when": 1794943600000,
       "tag": "0045_expanded_booking_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1794943700000,
+      "tag": "0046_host_availability_settings",
+      "breakpoints": true
     }
   ]
 }
