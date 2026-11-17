@@ -57,6 +57,7 @@ const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string
     { key: "hr_contact_name", label: "HR contact name" }, { key: "hr_contact_phone", label: "HR contact phone" }, { key: "hr_contact_email", label: "HR contact email" },
     { key: "dates", label: "Dates" }, { key: "max_applicants", label: "Places", field: "number" }, { key: "amount", label: "Price (R)", field: "number" },
     { key: "active", label: "Active", field: "checkbox" }, { key: "mode", label: "Type" }, { key: "logo_path", label: "Logo" },
+    { key: "allow_weekends", label: "Allow weekends", field: "checkbox" }, { key: "allow_off_season", label: "Allow Nov–Jan (off-season)", field: "checkbox" },
     { key: "custom_indemnity_text", label: "Indemnity form" } ] },
   { id: "sectors", label: "Sectors", icon: FileText, table: "sectors", singular: "Sectors", cols: [{ key: "name", label: "Sector Name" }, { key: "_student_count", label: "Students" }] },
   { id: "careers", label: "Careers", icon: Briefcase, table: "careers", singular: "Careers", cols: [{ key: "name", label: "Career Name" }, { key: "_student_count", label: "Students" }] },
@@ -651,7 +652,7 @@ function CreateRole({ onDone, onCancel }: { onDone: () => void; onCancel: () => 
     if (!vals["company"] || !vals["career"]) { setErr("Company and Career are required."); return; }
     setBusy(true);
     setErr(null);
-    const patch: Record<string, unknown> = { ...vals, amount: Number(vals["amount"]) || ROLE_TYPES[type]!.amount, active, mode: ROLE_TYPES[type]!.label };
+    const patch: Record<string, unknown> = { ...vals, amount: Number(vals["amount"]) || ROLE_TYPES[type]!.amount, active, mode: ROLE_TYPES[type]!.label, allow_weekends: vals["allow_weekends"] === "true", allow_off_season: vals["allow_off_season"] === "true" };
     if (patch["max_applicants"]) patch["max_applicants"] = Number(patch["max_applicants"]);
     const { error } = await supabase.from("companies").insert(patch as never);
     setBusy(false);
@@ -691,7 +692,18 @@ function CreateRole({ onDone, onCancel }: { onDone: () => void; onCancel: () => 
           </label>
           <div className="sm:col-span-3">
             <p className="text-sm">Dates</p>
-            <div className="mt-2"><DatesPicker value={vals["dates"] ?? ""} onChange={(v) => setVals({ ...vals, dates: v })} /></div>
+            <div className="mt-2 flex gap-5">
+              <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={vals["allow_weekends"] === "true"} onChange={(e) => setVals({ ...vals, allow_weekends: e.target.checked ? "true" : "" })} />Allow weekends</label>
+              <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={vals["allow_off_season"] === "true"} onChange={(e) => setVals({ ...vals, allow_off_season: e.target.checked ? "true" : "" })} />Allow Nov–Jan (off-season)</label>
+            </div>
+            <div className="mt-2">
+              <DatesPicker
+                value={vals["dates"] ?? ""}
+                onChange={(v) => setVals({ ...vals, dates: v })}
+                allowWeekends={vals["allow_weekends"] === "true"}
+                allowOffSeason={vals["allow_off_season"] === "true"}
+              />
+            </div>
           </div>
         </div>
         {err && <p className="mt-4 text-sm font-medium">{err}</p>}
@@ -1102,14 +1114,19 @@ function toUsDate(d: Date): string {
 /** Replaces the old comma-separated "MM/DD/YYYY, MM/DD/YYYY" dates field with a calendar
  * multi-select, so admins/hosts can pick available dates instead of typing them. Stores and
  * reads the same comma-separated string format other code (booking flow, triggers) expects. */
-function DatesPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function DatesPicker({ value, onChange, allowWeekends = true, allowOffSeason = true }: { value: string; onChange: (v: string) => void; allowWeekends?: boolean; allowOffSeason?: boolean }) {
   const dates = value.split(",").map((s) => s.trim()).filter(Boolean).map(parseUsDate).filter((d): d is Date => d !== null);
   function set(next: Date[]) {
     onChange(next.map(toUsDate).join(", "));
   }
+  const disabledMatchers = [
+    { before: new Date() },
+    ...(allowWeekends ? [] : [(d: Date) => d.getDay() === 0 || d.getDay() === 6]),
+    ...(allowOffSeason ? [] : [(d: Date) => { const m = d.getMonth() + 1; return m < 2 || m > 10; }]),
+  ];
   return (
     <div className="flex flex-wrap items-start gap-4">
-      <Calendar mode="multiple" selected={dates} onSelect={(d) => set(d ?? [])} disabled={{ before: new Date() }} className="rounded-md border border-warm-divider bg-background" />
+      <Calendar mode="multiple" selected={dates} onSelect={(d) => set(d ?? [])} disabled={disabledMatchers} className="rounded-md border border-warm-divider bg-background" />
       <div className="flex flex-wrap gap-1.5">
         {dates.length === 0 && <span className="text-xs text-muted-foreground">No dates set.</span>}
         {dates.map((d, i) => (
@@ -1378,9 +1395,21 @@ function EditRecord({ title, table, cols, row, onDone, onCancel }: { title: stri
             ) : table === "companies" && c.key === "dates" ? (
               <div key={c.key} className="sm:col-span-3">
                 <p className="text-sm">{c.label}</p>
-                <div className="mt-2"><DatesPicker value={(vals[c.key] as string) ?? ""} onChange={(v) => setVals({ ...vals, dates: v })} /></div>
+                <div className="mt-2 flex gap-5">
+                  <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={!!vals["allow_weekends"]} onChange={(e) => setVals({ ...vals, allow_weekends: e.target.checked })} />Allow weekends</label>
+                  <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={!!vals["allow_off_season"]} onChange={(e) => setVals({ ...vals, allow_off_season: e.target.checked })} />Allow Nov–Jan (off-season)</label>
+                </div>
+                <div className="mt-2">
+                  <DatesPicker
+                    value={(vals[c.key] as string) ?? ""}
+                    onChange={(v) => setVals({ ...vals, dates: v })}
+                    allowWeekends={!!vals["allow_weekends"]}
+                    allowOffSeason={!!vals["allow_off_season"]}
+                  />
+                </div>
               </div>
-            ) : table === "companies" && c.key === "mode" ? (
+            ) : table === "companies" && (c.key === "allow_weekends" || c.key === "allow_off_season") ? null
+            : table === "companies" && c.key === "mode" ? (
               <label key={c.key} className="block text-sm">
                 {c.label}
                 <select value={(vals["mode"] as string) ?? ""} onChange={(e) => setVals({ ...vals, mode: e.target.value })} className="mt-1 w-full border-b border-input bg-transparent px-1 py-1 outline-none focus:border-primary [&>option]:text-foreground">

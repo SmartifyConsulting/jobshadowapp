@@ -351,6 +351,13 @@
       "when": 1794944000000,
       "tag": "0049_career_favourites",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1794944100000,
+      "tag": "0050_weekend_season_rules_and_hr_email",
+      "breakpoints": true
     }
   ]
 }

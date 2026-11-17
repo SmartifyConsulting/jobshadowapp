@@ -276,6 +276,8 @@ export type Database = {
         Row: {
           active: boolean
           address: string | null
+          allow_off_season: boolean
+          allow_weekends: boolean
           amount: number | null
           arrival_time: string | null
           availability: string[] | null
@@ -314,6 +316,8 @@ export type Database = {
         Insert: {
           active?: boolean
           address?: string | null
+          allow_off_season?: boolean
+          allow_weekends?: boolean
           amount?: number | null
           arrival_time?: string | null
           availability?: string[] | null
@@ -352,6 +356,8 @@ export type Database = {
         Update: {
           active?: boolean
           address?: string | null
+          allow_off_season?: boolean
+          allow_weekends?: boolean
           amount?: number | null
           arrival_time?: string | null
           availability?: string[] | null
@@ -826,6 +832,8 @@ export type Database = {
         Args: never
         Returns: {
           active: boolean
+          allow_off_season: boolean
+          allow_weekends: boolean
           arrival_time: string
           career: string
           collection_time: string

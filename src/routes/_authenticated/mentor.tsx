@@ -26,6 +26,7 @@ type Placement = {
   id: number; company: string; career: string; sector: string; location: string; dates: string | null;
   active: boolean; max_applicants: number | null; days_per_shadow: number | null;
   arrival_time: string | null; collection_time: string | null; description: string | null; mode: string | null;
+  allow_weekends: boolean; allow_off_season: boolean;
 };
 type MentorBooking = {
   id: string; company: string; career: string; location: string; shadow_date: string; status: string;
@@ -176,14 +177,19 @@ function toUsDate(d: Date): string {
   return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
 }
 
-function DatesPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function DatesPicker({ value, onChange, allowWeekends = true, allowOffSeason = true }: { value: string; onChange: (v: string) => void; allowWeekends?: boolean; allowOffSeason?: boolean }) {
   const dates = value.split(",").map((s) => s.trim()).filter(Boolean).map(parseUsDate).filter((d): d is Date => d !== null);
   function set(next: Date[]) {
     onChange(next.map(toUsDate).join(", "));
   }
+  const disabledMatchers = [
+    { before: new Date() },
+    ...(allowWeekends ? [] : [(d: Date) => d.getDay() === 0 || d.getDay() === 6]),
+    ...(allowOffSeason ? [] : [(d: Date) => { const m = d.getMonth() + 1; return m < 2 || m > 10; }]),
+  ];
   return (
     <div className="flex flex-wrap items-start gap-4">
-      <Calendar mode="multiple" selected={dates} onSelect={(d) => set(d ?? [])} disabled={{ before: new Date() }} className="rounded-md border bg-background" />
+      <Calendar mode="multiple" selected={dates} onSelect={(d) => set(d ?? [])} disabled={disabledMatchers} className="rounded-md border bg-background" />
       <div className="flex flex-wrap gap-1.5">
         {dates.length === 0 && <span className="text-xs text-muted-foreground">No dates set.</span>}
         {dates.map((d, i) => (
@@ -417,7 +423,14 @@ function PlacementCard({ placement }: { placement: Placement }) {
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <p className="text-sm">Available dates</p>
-            <div className="mt-2"><DatesPicker value={vals.dates} onChange={(v) => setVals({ ...vals, dates: v })} /></div>
+            {!(placement.allow_weekends && placement.allow_off_season) && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                {!placement.allow_weekends && "Weekends are excluded for this placement. "}
+                {!placement.allow_off_season && "Only February–October dates are allowed. "}
+                Ask JobShadow admin to change this.
+              </p>
+            )}
+            <div className="mt-2"><DatesPicker value={vals.dates} onChange={(v) => setVals({ ...vals, dates: v })} allowWeekends={placement.allow_weekends} allowOffSeason={placement.allow_off_season} /></div>
           </div>
           <label className="text-sm">Places
             <input type="number" value={vals.max_applicants} onChange={(e) => setVals({ ...vals, max_applicants: e.target.value })} className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none" />

@@ -50,10 +50,13 @@ function Roles() {
     qc.invalidateQueries({ queryKey: ["career-favourites", session.user.id] });
   }
 
+  const [location, setLocation] = useState("");
   const placements = useQuery({
     queryKey: ["placements"],
-    queryFn: async () => ((await supabase.rpc("list_placements")).data ?? []) as { career: string }[],
+    queryFn: async () => ((await supabase.rpc("list_placements")).data ?? []) as { career: string; location: string | null }[],
   });
+  const locations = useMemo(() => [...new Set((placements.data ?? []).map((p) => p.location).filter((l): l is string => !!l))].sort(), [placements.data]);
+  const careersAtLocation = useMemo(() => new Set((placements.data ?? []).filter((p) => p.location === location).map((p) => p.career.trim().toLowerCase())), [placements.data, location]);
   const noAvailabilityMessage = useQuery({
     queryKey: ["no-availability-message"],
     queryFn: async () => (await supabase.rpc("get_no_availability_message")).data,
@@ -71,8 +74,9 @@ function Roles() {
     const q = search.trim().toLowerCase();
     let list = q ? ROLES.filter((r) => r.title.toLowerCase().includes(q) || r.field.toLowerCase().includes(q)) : ROLES;
     if (favouritesOnly) list = list.filter((r) => favourites.data?.has(r.slug));
+    if (location) list = list.filter((r) => careersAtLocation.has(r.title.trim().toLowerCase()));
     return list;
-  }, [search, favouritesOnly, favourites.data]);
+  }, [search, favouritesOnly, favourites.data, location, careersAtLocation]);
 
   const grouped = useMemo(() => {
     const m = new Map<string, typeof ROLES>();
@@ -127,6 +131,17 @@ function Roles() {
             className="w-full rounded-full border border-primary-foreground/30 bg-primary-foreground/10 py-2.5 pl-10 pr-4 text-sm text-primary-foreground placeholder:text-primary-foreground/60 outline-none focus:border-primary-foreground/60"
           />
         </div>
+        {locations.length > 0 && (
+          <div className="mx-auto mt-3 max-w-xl">
+            <select
+              value={location} onChange={(e) => setLocation(e.target.value)}
+              className="w-full rounded-full border border-primary-foreground/30 bg-primary-foreground/10 py-2 px-4 text-sm text-primary-foreground outline-none focus:border-primary-foreground/60 [&>option]:text-foreground"
+            >
+              <option value="">All locations</option>
+              {locations.map((l) => <option key={l} value={l}>{l}</option>)}
+            </select>
+          </div>
+        )}
         <p className="mx-auto mt-3 max-w-xl text-center text-xs text-primary-foreground/70">
           Tap the notification icon on a career with no host to be notified when one becomes available.
         </p>
