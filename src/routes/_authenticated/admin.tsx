@@ -8,6 +8,7 @@ import { draftCareerDescription } from "@/lib/career-ai.functions";
 import { accountInitial, alphabetInitial } from "@/lib/alphabet";
 import { withCareerDescriptions } from "@/lib/career-descriptions";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -62,6 +63,7 @@ const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string
     { key: "custom_indemnity_text", label: "Indemnity form" } ] },
   { id: "sectors", label: "Sectors", icon: FileText, table: "sectors", singular: "Sectors", cols: [{ key: "name", label: "Sector Name" }, { key: "_student_count", label: "Students" }] },
   { id: "careers", label: "Careers", icon: Briefcase, table: "careers", singular: "Careers", cols: [{ key: "name", label: "Career Name" }, { key: "_student_count", label: "Students" }] },
+  { id: "reports", label: "Reports", icon: FileText, table: "reports", singular: "Reports", custom: true, cols: [] },
   { id: "vouchers", label: "Vouchers", icon: ShoppingCart, table: "vouchers", singular: "Vouchers", cols: [
     { key: "id", label: "#" }, { key: "name", label: "Name" }, { key: "code", label: "Code" },
     { key: "discount", label: "Discount", field: "number" }, { key: "available_from", label: "From", field: "date" },
@@ -111,6 +113,8 @@ function AdminPage() {
             <p className="p-8">Your account doesn't have admin access. Ask JobShadow to grant it.</p>
           ) : section.id === "users" ? (
             <AdminUsers key={section.id} />
+          ) : section.id === "reports" ? (
+            <AdminReports />
           ) : section.id === "emails" ? (
             <EmailArchive key={section.id} />
           ) : section.id === "evaluations" ? (
@@ -895,7 +899,7 @@ export function AdminUsers() {
         </div>
       </div>
       <div className="flex flex-col items-start xl:flex-row">
-      <div className={'min-w-0 w-full flex-1 px-4 py-4 text-foreground ' + (view === 'table' ? 'bg-[#7CCCC8]' : 'bg-muted/30')}>
+      <div className={'min-w-0 w-full flex-1 px-4 py-4 text-foreground ' + (view === 'table' ? 'bg-cta' : 'bg-muted/30')}>
         <div className="flex flex-wrap gap-1.5">
           <button
             type="button" aria-pressed={letter === null} onClick={() => { setLetter(null); setOpenGroups([]); }}
@@ -934,7 +938,7 @@ export function AdminUsers() {
         ) : (
           <Accordion type="multiple" value={openGroups} onValueChange={setOpenGroups} className="mt-5 space-y-2">
             {[...new Set(rows.map((a) => accountInitial(a)))].sort((a, b) => a === "#" ? 1 : b === "#" ? -1 : a.localeCompare(b)).map((group) => (
-              <AccordionItem key={group} value={group} className={"group overflow-hidden rounded-md border-[8px] border-ivory " + (view === "table" ? "bg-[#7CCCC8]" : "bg-background")}>
+              <AccordionItem key={group} value={group} className="group overflow-hidden rounded-md border-[8px] border-ivory bg-cta">
                 <AccordionTrigger className="justify-start gap-3 px-4 py-2.5 text-sm hover:no-underline [&>svg]:ml-auto"><span className="w-5 font-medium text-primary">{group}</span><span className="text-xs text-muted-foreground">{rows.filter((a) => (accountInitial(a)) === group).length} users</span></AccordionTrigger>
                 <AccordionContent className="pb-0">{view === "cards" ? <UserCards rows={rows.filter((a) => (accountInitial(a)) === group)} selectedId={selectedId} busyId={busyId} onSelect={setSelectedId} onEdit={(a) => setEditing({ ...a, roles: [...a.roles] })} onDelete={deleteAccountRow} onVerify={setIdVerified} /> : <div className="overflow-x-auto border-t border-border [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-track]:bg-muted">
                   <table className="w-full min-w-[820px] text-left text-xs">
@@ -1104,6 +1108,48 @@ const BOOKING_EXPORT_COLS: { key: string; label: string }[] = [
   { key: "amount_due", label: "Amount due" }, { key: "paid_at", label: "Paid status" }, { key: "indemnity_received", label: "Indemnity status" }, { key: "created_at", label: "Booked on" },
 ];
 
+function AdminReports() {
+  return <div className="bg-background">
+    <div className="border-b border-border px-6 py-5"><h1 className="text-2xl">Reports</h1></div>
+    <Tabs defaultValue="bookings">
+      <div className="overflow-x-auto border-b border-border px-6 py-3"><TabsList aria-label="Admin reports" className="h-auto justify-start">{["Bookings", "Vouchers", "Activity Log", "Token Ledger"].map((label) => <TabsTrigger key={label} value={label.toLowerCase().replaceAll(' ', '-')} className="min-h-11">{label}</TabsTrigger>)}</TabsList></div>
+      <TabsContent value="bookings" className="mt-0"><LiveBookings /></TabsContent>
+      <TabsContent value="vouchers" className="mt-0"><VoucherReport /></TabsContent>
+      <TabsContent value="activity-log" className="m-6 rounded-lg border border-border bg-ivory p-5"><h2 className="text-xl">Activity Log</h2><p className="mt-2 text-sm">Activity tracking is awaiting setup. The app does not currently store an audit history.</p></TabsContent>
+      <TabsContent value="token-ledger" className="m-6 rounded-lg border border-border bg-ivory p-5"><h2 className="text-xl">Token Ledger</h2><p className="mt-2 text-sm">AI usage tracking is awaiting setup. Token counts and costs will be recorded for future requests once it is enabled.</p></TabsContent>
+    </Tabs>
+  </div>;
+}
+
+function VoucherReport() {
+  const [search, setSearch] = useState("");
+  const report = useQuery({
+    queryKey: ["admin", "voucher-report"],
+    queryFn: async () => {
+      const [vouchers, bookings] = await Promise.all([
+        fetchAllRows(async (from, to) => { const result = await supabase.from("vouchers").select("*").order("id").range(from, to); if (result.error) throw result.error; return result.data ?? []; }),
+        fetchAllRows(async (from, to) => { const result = await supabase.from("bookings").select("id, voucher_code, paid_at, status").order("id").range(from, to); if (result.error) throw result.error; return result.data ?? []; }),
+      ]);
+      return vouchers.map((voucher) => {
+        const code = String(voucher["code"] ?? "").trim().toLowerCase();
+        const uses = code ? bookings.filter((booking) => String(booking["voucher_code"] ?? "").trim().toLowerCase() === code) : [];
+        return { ...voucher, bookings: uses.length, paid_bookings: uses.filter((booking) => !!booking["paid_at"]).length, cancelled_bookings: uses.filter((booking) => ["cancelled", "canceled"].includes(String(booking["status"]))).length };
+      });
+    },
+  });
+  const columns: Col[] = [{ key: "name", label: "Name" }, { key: "code", label: "Code" }, { key: "discount", label: "Discount" }, { key: "available_from", label: "From" }, { key: "available_until", label: "Until" }, { key: "usage_limit", label: "Usage limit" }, { key: "bookings", label: "All bookings" }, { key: "paid_bookings", label: "Paid bookings" }, { key: "cancelled_bookings", label: "Cancelled bookings" }];
+  const all = (report.data ?? []) as Record<string, unknown>[];
+  const rows = all.filter((row) => [row["name"], row["code"]].some((value) => String(value ?? "").toLowerCase().includes(search.toLowerCase().trim())));
+  return <section className="p-6">
+    <div className="flex flex-wrap items-center justify-between gap-4"><h2 className="text-2xl">Vouchers ({rows.length})</h2><Button disabled={report.isPending || !!report.error} onClick={() => exportCsv("Voucher report", completeExportColumns(columns, all), all)} variant="outline">Export all</Button></div>
+    <label className="mt-4 block max-w-sm text-sm">Search<input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Voucher name or code" className="mt-1 w-full rounded border border-input bg-background px-3 py-2" /></label>
+    <p className="mt-2 text-xs text-muted-foreground">Counts include all matching bookings; paid and cancelled counts are shown separately.</p>
+    <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[850px] text-left text-xs"><thead><tr>{columns.map((column) => <th key={column.key} className="whitespace-nowrap border-b border-border px-3 py-2 font-medium">{column.label}</th>)}</tr></thead><tbody>
+      {report.isPending ? <tr><td colSpan={columns.length} className="p-4">Loading…</td></tr> : report.error ? <tr><td colSpan={columns.length} role="alert" className="p-4 text-destructive">{report.error.message}</td></tr> : !rows.length ? <tr><td colSpan={columns.length} className="p-4">No vouchers match this search.</td></tr> : rows.map((row) => <tr key={String(row["id"])}>{columns.map((column) => <td key={column.key} className="border-b border-border px-3 py-2">{fmt(row[column.key]) || '—'}</td>)}</tr>)}
+    </tbody></table></div>
+  </section>;
+}
+
 function LiveBookings() {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("");
@@ -1151,7 +1197,7 @@ function LiveBookings() {
   function exportCsvNow() {
     setExporting(true);
     try {
-      const csv = toCsv(BOOKING_EXPORT_COLS, rows);
+      const csv = toCsv(BOOKING_EXPORT_COLS, bookings.data ?? []);
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
