@@ -31,6 +31,8 @@ const FORM_COPY: Record<NonNullable<ContactType>, { heading: string; orgLabel: s
   sponsor: { heading: "Sponsor A Learner", orgLabel: "Organisation / your name", subject: "New sponsor application" },
 };
 
+const CONTACT_AUDIENCES = ["Learner", "Parent / guardian", "School representative", "Host / company representative", "Sponsor", "Other"] as const;
+
 const BLOCKS = [
   { color: "bg-teal text-teal-foreground", text: <>If you are a school and want to include job shadow as <strong>part of your life orientation program</strong></> },
   { color: "bg-accent text-accent-foreground", text: <>if you are a company who would like to be <strong>a part of our hosting</strong> program</> },
@@ -41,11 +43,12 @@ function Contact() {
   const { type } = Route.useSearch();
   const copy = type ? FORM_COPY[type] : null;
 
-  const [f, setF] = useState({ org: "", contact: "", email: "", phone: "", message: "" });
+  const [f, setF] = useState({ reachingOutAs: "", org: "", contact: "", email: "", phone: "", message: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [sent, setSent] = useState(false);
 
   const schema = z.object({
+    reachingOutAs: copy ? z.string().optional() : z.enum(CONTACT_AUDIENCES, { errorMap: () => ({ message: "Please select who you are reaching out as" }) }),
     org: copy ? z.string().trim().min(1, `Please enter the ${copy.orgLabel.toLowerCase()}`).max(150) : z.string().trim().min(1, "Please enter your name").max(150),
     contact: copy ? z.string().trim().min(1, "Please enter a contact person").max(150) : z.string().optional(),
     email: z.string().trim().email("Enter a valid email").max(255),
@@ -64,7 +67,7 @@ function Contact() {
     const subject = copy ? `${copy.subject} — ${r.data.org}` : `Message from ${r.data.org} via jobshadow.co.za`;
     const bodyLines = copy
       ? [`Type: ${copy.heading}`, `${copy.orgLabel}: ${r.data.org}`, `Contact person: ${r.data.contact}`, `Email: ${r.data.email}`, `Phone: ${r.data.phone}`, "", r.data.message || "(no additional message)"]
-      : [r.data.message, "", `— ${r.data.org} (${r.data.email})`];
+      : [`I am reaching out as a: ${r.data.reachingOutAs}`, "", r.data.message, "", `— ${r.data.org} (${r.data.email})`];
     window.location.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyLines.join("\n"))}`;
     setSent(true);
   };
@@ -109,10 +112,19 @@ function Contact() {
 
           <div className="rounded-xl border border-primary-foreground/20 bg-primary-foreground/5 p-6">
             <h2 className="font-display text-2xl uppercase">{copy?.heading ?? "Send Us A Message"}</h2>
+            {!copy && <p className="mt-3 text-sm text-primary-foreground/80">If you just want to say hi, please send us a message below.</p>}
             {sent ? (
               <p className="mt-6 text-sm">Your email app should now be open with your application ready to send.</p>
             ) : (
               <form onSubmit={submit} className="mt-6 grid gap-4">
+                {!copy && <label>
+                  <span className="text-xs uppercase tracking-wide opacity-80">I am reaching out as a:</span>
+                  <select required className={input} value={f.reachingOutAs} onChange={(e) => setF({ ...f, reachingOutAs: e.target.value })}>
+                    <option value="" disabled className="bg-background text-foreground">Please select</option>
+                    {CONTACT_AUDIENCES.map((audience) => <option key={audience} value={audience} className="bg-background text-foreground">{audience}</option>)}
+                  </select>
+                  {err("reachingOutAs")}
+                </label>}
                 <label><span className="text-xs uppercase tracking-wide opacity-80">{copy?.orgLabel ?? "Your name"}</span><input className={input} value={f.org} onChange={(e) => setF({ ...f, org: e.target.value })} />{err("org")}</label>
                 {copy && (
                   <label><span className="text-xs uppercase tracking-wide opacity-80">Contact person</span><input className={input} value={f.contact} onChange={(e) => setF({ ...f, contact: e.target.value })} />{err("contact")}</label>
