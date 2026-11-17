@@ -15,6 +15,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { sendQueuedEmails } from "@/lib/email.functions";
 import { getAccounts, updateAccount, removeAccount } from "@/lib/users.functions";
 import { mapCsvColumns } from "@/lib/csv-import.functions";
+import { extractCompanyIndemnity } from "@/lib/indemnity-ai.functions";
 import { confirmAction, notify } from "@/lib/dialogs";
 import type { AccountRow } from "@/lib/users.server";
 import { renderEmailHtml } from "@/lib/email-template";
@@ -52,7 +53,8 @@ const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string
     { key: "backup_mentor_name", label: "Backup mentor" }, { key: "backup_mentor_phone", label: "Backup mentor phone" }, { key: "backup_mentor_email", label: "Backup mentor email" },
     { key: "hr_contact_name", label: "HR contact name" }, { key: "hr_contact_phone", label: "HR contact phone" }, { key: "hr_contact_email", label: "HR contact email" },
     { key: "dates", label: "Dates" }, { key: "max_applicants", label: "Places", field: "number" }, { key: "amount", label: "Price (R)", field: "number" },
-    { key: "active", label: "Active", field: "checkbox" }, { key: "mode", label: "Type" }, { key: "logo_path", label: "Logo" } ] },
+    { key: "active", label: "Active", field: "checkbox" }, { key: "mode", label: "Type" }, { key: "logo_path", label: "Logo" },
+    { key: "custom_indemnity_text", label: "Indemnity form" } ] },
   { id: "sectors", label: "Sectors", icon: FileText, table: "sectors", singular: "Sectors", cols: [{ key: "name", label: "Sector Name" }, { key: "_student_count", label: "Students" }] },
   { id: "careers", label: "Careers", icon: Briefcase, table: "careers", singular: "Careers", cols: [{ key: "name", label: "Career Name" }, { key: "_student_count", label: "Students" }] },
   { id: "vouchers", label: "Vouchers", icon: ShoppingCart, table: "vouchers", singular: "Vouchers", cols: [
@@ -412,7 +414,7 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
                       <button type="button" aria-expanded={descOpen} aria-label={descOpen ? "Hide description" : "Show description"} onClick={() => setOpenDesc((prev) => { const n = new Set(prev); n.has(rid) ? n.delete(rid) : n.add(rid); return n; })} className="grid h-5 w-5 shrink-0 place-items-center rounded border border-border text-xs font-bold text-muted-foreground hover:text-primary">{descOpen ? "−" : "+"}</button>
                       {fmt(r[c.key])}
                     </span>
-                  ) : fmt(r[c.key])}</td>)}
+                  ) : c.key === "custom_indemnity_text" ? (r[c.key] ? "Uploaded" : "—") : fmt(r[c.key])}</td>)}
                   <td className={table === "companies" ? "px-2 py-1" : "px-3 py-2"}>
                     <div className="flex gap-1.5">
                       <button onClick={() => setEditing(r)} className="rounded border border-border p-1.5 text-muted-foreground transition hover:text-primary" aria-label="Edit"><Pencil className="h-3 w-3" /></button>
@@ -1058,6 +1060,43 @@ function LogoUpload({ companyId, value, onChange }: { companyId: unknown; value:
   );
 }
 
+function CompanyIndemnityUpload({ companyId, value, onChange }: { companyId: unknown; value: string; onChange: (text: string) => void }) {
+  const extract = useServerFn(extractCompanyIndemnity);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function upload(file: File) {
+    setBusy(true);
+    setErr(null);
+    const path = `${companyId}-${Date.now()}-${file.name}`;
+    const { error } = await supabase.storage.from("company-indemnity").upload(path, file, { upsert: true });
+    if (error) { setBusy(false); return setErr(error.message); }
+    try {
+      const { text } = await extract({ data: { companyId: Number(companyId), storagePath: path } });
+      onChange(text);
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="sm:col-span-3">
+      <label className="block text-sm">
+        Company's own indemnity form
+        <div className="mt-1 flex items-center gap-3">
+          <input type="file" accept="application/pdf,image/png,image/jpeg" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload(f); }} disabled={busy} className="text-xs" />
+          {busy && <span className="text-xs text-muted-foreground">Reading document…</span>}
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">AI extracts the clauses below; they'll be signed alongside the standard JobShadow indemnity.</p>
+      </label>
+      {err && <p className="mt-1 text-xs text-destructive">{err}</p>}
+      <textarea rows={6} value={value} onChange={(e) => onChange(e.target.value)} placeholder="No company indemnity uploaded yet." className="mt-2 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary" />
+    </div>
+  );
+}
+
 function EditRecord({ title, table, cols, row, onDone, onCancel }: { title: string; table: string; cols: Col[]; row: Record<string, unknown>; onDone: () => void; onCancel: () => void }) {
   const [vals, setVals] = useState<Record<string, unknown>>(row);
   const [busy, setBusy] = useState(false);
@@ -1093,6 +1132,8 @@ function EditRecord({ title, table, cols, row, onDone, onCancel }: { title: stri
               />
             ) : table === "companies" && c.key === "logo_path" ? (
               <LogoUpload key={c.key} companyId={row["id"]} value={(vals[c.key] as string) ?? ""} onChange={(v) => setVals({ ...vals, logo_path: v })} />
+            ) : table === "companies" && c.key === "custom_indemnity_text" ? (
+              <CompanyIndemnityUpload key={c.key} companyId={row["id"]} value={(vals[c.key] as string) ?? ""} onChange={(v) => setVals({ ...vals, custom_indemnity_text: v })} />
             ) : table === "companies" && c.key === "mode" ? (
               <label key={c.key} className="block text-sm">
                 {c.label}

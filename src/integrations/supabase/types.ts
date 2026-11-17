@@ -44,6 +44,8 @@ export type Database = {
           career: string | null
           company: string | null
           company_id: number
+          company_indemnity_path: string | null
+          company_indemnity_signed_at: string | null
           created_at: string
           discount: number
           id: string
@@ -69,6 +71,8 @@ export type Database = {
           career?: string | null
           company?: string | null
           company_id: number
+          company_indemnity_path?: string | null
+          company_indemnity_signed_at?: string | null
           created_at?: string
           discount?: number
           id?: string
@@ -94,6 +98,8 @@ export type Database = {
           career?: string | null
           company?: string | null
           company_id?: number
+          company_indemnity_path?: string | null
+          company_indemnity_signed_at?: string | null
           created_at?: string
           discount?: number
           id?: string
@@ -166,6 +172,8 @@ export type Database = {
           collection_time: string | null
           company: string | null
           company_code: string | null
+          custom_indemnity_path: string | null
+          custom_indemnity_text: string | null
           dates: string | null
           days_per_shadow: number | null
           description: string | null
@@ -202,6 +210,8 @@ export type Database = {
           collection_time?: string | null
           company?: string | null
           company_code?: string | null
+          custom_indemnity_path?: string | null
+          custom_indemnity_text?: string | null
           dates?: string | null
           days_per_shadow?: number | null
           description?: string | null
@@ -238,6 +248,8 @@ export type Database = {
           collection_time?: string | null
           company?: string | null
           company_code?: string | null
+          custom_indemnity_path?: string | null
+          custom_indemnity_text?: string | null
           dates?: string | null
           days_per_shadow?: number | null
           description?: string | null
