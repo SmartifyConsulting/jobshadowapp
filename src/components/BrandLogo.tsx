@@ -1,20 +1,21 @@
+import logoRedShadow from "@/assets/jobshadow-logo-red-shadow.png.asset.json";
 import { cn } from "@/lib/utils";
 
-/** Supplied transparent wordmark and its red geometric shadow. */
+/** Original full-colour square artwork extracted from the supplied CI guide. */
 export function BrandLogo({ className, loading }: { className?: string; loading?: "lazy" }) {
   return (
     <img
-      src="/assets/jobshadow-logo-shadow.png"
+      src="/assets/jobshadow-logo-square.svg"
       alt="Job Shadow"
-      width={631}
-      height={342}
+      width={184}
+      height={184}
       loading={loading}
-      className={cn("shrink-0 object-contain", className)}
+      className={cn("aspect-square shrink-0 object-contain", className)}
     />
   );
 }
 
-/** Shared header artwork on public pages and portals, including Home. */
-export function HeaderLogo({ className = "" }: { className?: string }) {
-  return <BrandLogo className={className} />;
+/** Red-shadow wordmark used top-left on every page except the home page. */
+export function HeaderLogo({ className }: { className?: string }) {
+  return <img src={logoRedShadow.url} alt="Job Shadow" width={1320} height={680} className={cn("shrink-0 object-contain", className)} />;
 }

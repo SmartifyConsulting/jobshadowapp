@@ -25,7 +25,7 @@ const ORG_JSON_LD = JSON.stringify({
   "@type": "Organization",
   name: "Job Shadow",
   url: "https://jobshadow.co.za",
-  logo: "https://jobshadow.co.za/assets/jobshadow-logo-shadow.png",
+  logo: "https://jobshadow.co.za/assets/jobshadow-logo-flat.png",
   email: "info@jobshadow.co.za",
   description: "Job Shadow facilitates job shadowing for South African high school students.",
   areaServed: "ZA",
@@ -86,7 +86,7 @@ function Home() {
   }
 
   return (
-    <SiteLayout className="home-reference">
+    <SiteLayout className="home-reference" headerLogo={<img src="/assets/jobshadow-logo-flat.png" alt="Job Shadow" width={359} height={195} className="h-auto w-[14.9vw] min-w-[82px] self-start" fetchPriority="high" />}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ORG_JSON_LD }} />
       <section
         className="relative overflow-hidden text-primary-foreground"
