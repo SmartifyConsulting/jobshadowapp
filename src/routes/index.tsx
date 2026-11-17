@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { SiteLayout } from "@/components/SiteLayout";
 import { RegisterForm } from "@/components/RegisterForm";
+import { PasswordInput } from "@/components/PasswordInput";
 import { supabase } from "@/integrations/supabase/client";
 import arrow from "@/assets/yellow-arrow.png.asset.json";
 
@@ -55,7 +56,7 @@ function InlineSignIn() {
   return (
     <form onSubmit={submit} className="col-span-2 mt-2 grid gap-2 text-left">
       <input id="home-signin-email" type="email" required placeholder="EMAIL" value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
-      <input type="password" required placeholder="PASSWORD" value={password} onChange={(e) => setPassword(e.target.value)} className={input} />
+      <PasswordInput required placeholder="PASSWORD" value={password} onChange={(e) => setPassword(e.target.value)} className={input} />
       {msg && <p aria-live="polite" className="text-xs font-semibold text-accent">{msg}</p>}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <button type="submit" disabled={busy} className="rounded-full bg-cta px-5 py-2 text-xs font-bold uppercase tracking-wide text-cta-foreground disabled:opacity-50">
@@ -84,8 +85,8 @@ function Home() {
     <SiteLayout hideLogo>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ORG_JSON_LD }} />
       <section
-        className="relative overflow-hidden bg-primary bg-cover bg-top text-primary-foreground"
-        style={{ backgroundImage: "url(/assets/home-hero-bg.webp)" }}
+        className="relative overflow-hidden bg-no-repeat text-primary-foreground"
+        style={{ backgroundImage: "url(/assets/home-hero-bg.webp)", backgroundSize: "85%", backgroundPosition: "left top", backgroundColor: "#D2163A" }}
       >
         <img src={arrow.url} alt="" aria-hidden width={326} height={1080} className="pointer-events-none absolute -bottom-4 right-[4%] hidden h-[110%] w-auto md:block" />
         <div className="relative mx-auto flex max-w-5xl flex-col items-center px-5 pb-32 pt-40 text-center sm:pt-44 md:pt-56">

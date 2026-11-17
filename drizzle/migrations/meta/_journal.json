@@ -211,6 +211,20 @@
       "when": 1794923100000,
       "tag": "0028_profiles_avatars",
       "breakpoints": true
-    }
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1794926000000,
+      "tag": "0029_role_descriptions",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1794926100000,
+      "tag": "0030_role_notify_subscriptions",
+      "breakpoints": true
+    },
   ]
 }

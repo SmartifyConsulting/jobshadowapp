@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteLayout } from "@/components/SiteLayout";
+import { PasswordInput } from "@/components/PasswordInput";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
@@ -37,7 +38,7 @@ function Page() {
         <form onSubmit={submit} className="mx-auto flex max-w-7xl flex-col items-center text-center">
           <label className="w-full max-w-md text-left text-sm">
             New Password
-            <input type="password" required value={pw} onChange={(e) => setPw(e.target.value)} className="mt-1 w-full border-b border-current/60 bg-transparent px-1 py-2 outline-none focus:border-primary-foreground" />
+            <PasswordInput required value={pw} onChange={(e) => setPw(e.target.value)} className="mt-1 w-full border-b border-current/60 bg-transparent px-1 py-2 outline-none focus:border-primary-foreground" />
           </label>
           {msg && <p aria-live="polite" className="mt-3 max-w-md text-sm font-semibold">{msg}</p>}
           <button type="submit" className="mt-6 rounded-full bg-cta px-6 py-3 text-sm font-bold uppercase tracking-wide text-cta-foreground">Save Password</button>

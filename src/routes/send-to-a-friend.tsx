@@ -66,7 +66,7 @@ function SendToFriend() {
               </span>
             ))}
           </div>
-          <div className="mt-10 grid gap-6 border-b border-current/40 pb-6 sm:grid-cols-2">
+          <div className="mt-10 grid gap-6 sm:grid-cols-2">
             <label><span className="text-xs uppercase tracking-wide opacity-80">Recipient's first name</span><input className={input} value={f.recipientFirstName} onChange={(e) => setF({ ...f, recipientFirstName: e.target.value })} />{err("recipientFirstName")}</label>
             <label><span className="text-xs uppercase tracking-wide opacity-80">Recipient email</span><input className={input} type="email" value={f.to} onChange={(e) => setF({ ...f, to: e.target.value })} />{err("to")}</label>
           </div>

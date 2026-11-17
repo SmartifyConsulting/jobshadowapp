@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Turnstile } from "@/components/Turnstile";
+import { PasswordInput } from "@/components/PasswordInput";
 import { WHERE_HEAR_OPTIONS } from "@/lib/data";
 
 export function RegisterForm({ compact }: { compact?: boolean }) {
@@ -44,10 +45,10 @@ export function RegisterForm({ compact }: { compact?: boolean }) {
         <input required placeholder="NAME" value={name} onChange={(e) => setName(e.target.value)} className={input} />
         <input type="email" required placeholder="EMAIL ADDRESS" value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
         <div>
-          <input type="password" required placeholder="PASSWORD" value={password} onChange={(e) => setPassword(e.target.value)} className={input} />
+          <PasswordInput required placeholder="PASSWORD" value={password} onChange={(e) => setPassword(e.target.value)} className={input} />
           {!compact && <p className="mt-1 text-xs text-current/70">At least 8 characters. Avoid common or easy-to-guess passwords.</p>}
         </div>
-        <input type="password" required placeholder="REPEAT PASSWORD" value={confirm} onChange={(e) => setConfirm(e.target.value)} className={input} />
+        <PasswordInput required placeholder="REPEAT PASSWORD" value={confirm} onChange={(e) => setConfirm(e.target.value)} className={input} />
         <select
           aria-label="Where did you hear about Job Shadow?"
           value={whereHear}
