@@ -8,6 +8,7 @@ export type AccountRow = {
   full_name: string | null;
   id_file_path: string | null;
   photo_path: string | null;
+  id_verified: boolean | null;
   has_profile: boolean;
   is_spam: boolean;
   booking_count: number;
@@ -31,7 +32,7 @@ export async function listAccounts(): Promise<AccountRow[]> {
   const [{ data: roles }, { data: profiles }, { data: scholars }, { data: legacy }, { data: bookingRows }] = await Promise.all([
     supabaseAdmin.from("user_roles").select("user_id, role"),
     supabaseAdmin.from("profiles").select("user_id, display_name, avatar_path"),
-    supabaseAdmin.from("scholar_profiles").select("user_id, full_name, id_file_path, photo_path"),
+    supabaseAdmin.from("scholar_profiles").select("user_id, full_name, id_file_path, photo_path, id_verified"),
     supabaseAdmin.from("legacy_users").select("email, has_profile, is_spam"),
     supabaseAdmin.from("bookings").select("user_id"),
   ]);
@@ -61,6 +62,7 @@ export async function listAccounts(): Promise<AccountRow[]> {
         full_name: scholar?.full_name ?? null,
         id_file_path: scholar?.id_file_path ?? null,
         photo_path: scholar?.photo_path ?? null,
+        id_verified: scholar?.id_verified ?? null,
         has_profile: legacyRow?.has_profile ?? false,
         is_spam: legacyRow?.is_spam ?? false,
         booking_count: bookingCountByUser.get(u.id) ?? 0,

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Users as UsersIcon, FileText, ShoppingCart, Briefcase, GraduationCap, Pencil, Trash2, Download, IdCard, Image } from "lucide-react";
+import { Users as UsersIcon, FileText, ShoppingCart, Briefcase, GraduationCap, Pencil, Trash2, FileUser, ImageDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
@@ -32,9 +32,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 type Field = "text" | "number" | "date" | "checkbox";
 type Col = { key: string; label: string; field?: Field };
 const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string; singular: string; cols: Col[]; csvUpload?: boolean; dateCompanyFilter?: boolean; indemnityEdit?: boolean; custom?: boolean }[] = [
-  { id: "scholars", label: "Scholars", icon: GraduationCap, table: "scholar_profiles", singular: "Scholars", custom: true, cols: [] },
-  { id: "emails", label: "Email Archive", icon: FileText, table: "email_outbox", singular: "Emails", custom: true, cols: [] },
-  { id: "settings", label: "Booking Settings", icon: FileText, table: "booking_settings", singular: "Settings", custom: true, cols: [] },
+  { id: "users", label: "Users", icon: GraduationCap, table: "legacy_users", singular: "Users", custom: true, cols: [] },
   { id: "apps", label: "Applications", icon: UsersIcon, table: "legacy_applications", singular: "Applications", dateCompanyFilter: true, indemnityEdit: true, cols: [
     { key: "id", label: "ID" }, { key: "name", label: "Name" }, { key: "id_number", label: "ID No." },
     { key: "email", label: "Email" }, { key: "contact", label: "Contact" }, { key: "school", label: "School" },
@@ -49,13 +47,14 @@ const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string
     { key: "hr_contact_name", label: "HR contact name" }, { key: "hr_contact_phone", label: "HR contact phone" }, { key: "hr_contact_email", label: "HR contact email" },
     { key: "dates", label: "Dates" }, { key: "max_applicants", label: "Places", field: "number" }, { key: "amount", label: "Price (R)", field: "number" },
     { key: "active", label: "Active", field: "checkbox" }, { key: "mode", label: "Type" }, { key: "logo_path", label: "Logo" } ] },
+  { id: "sectors", label: "Sectors", icon: FileText, table: "sectors", singular: "Sectors", cols: [{ key: "name", label: "Sector Name" }, { key: "_student_count", label: "Students" }] },
+  { id: "careers", label: "Careers", icon: Briefcase, table: "careers", singular: "Careers", cols: [{ key: "name", label: "Career Name" }, { key: "_student_count", label: "Students" }] },
   { id: "vouchers", label: "Vouchers", icon: ShoppingCart, table: "vouchers", singular: "Vouchers", cols: [
     { key: "id", label: "#" }, { key: "name", label: "Name" }, { key: "code", label: "Code" },
     { key: "discount", label: "Discount", field: "number" }, { key: "available_from", label: "From", field: "date" },
     { key: "available_until", label: "Until", field: "date" }, { key: "usage_limit", label: "Limit", field: "number" } ] },
-  { id: "sectors", label: "Sectors", icon: FileText, table: "sectors", singular: "Sectors", cols: [{ key: "name", label: "Sector Name" }, { key: "_student_count", label: "Students" }] },
-  { id: "careers", label: "Careers", icon: Briefcase, table: "careers", singular: "Careers", cols: [{ key: "name", label: "Career Name" }, { key: "_student_count", label: "Students" }] },
-  { id: "users", label: "Users", icon: GraduationCap, table: "legacy_users", singular: "Users", custom: true, cols: [] },
+  { id: "settings", label: "Booking Settings", icon: FileText, table: "booking_settings", singular: "Settings", custom: true, cols: [] },
+  { id: "emails", label: "Email Archive", icon: FileText, table: "email_outbox", singular: "Emails", custom: true, cols: [] },
 ];
 
 function useIsAdmin() {
@@ -101,8 +100,6 @@ function AdminPage() {
             <p className="p-8">Your account doesn't have admin access. Ask JobShadow to grant it.</p>
           ) : section.id === "users" ? (
             <AdminUsers key={section.id} />
-          ) : section.id === "scholars" ? (
-            <ScholarVerification key={section.id} />
           ) : section.id === "emails" ? (
             <EmailArchive key={section.id} />
           ) : section.id === "settings" ? (
@@ -602,12 +599,6 @@ function CreateRole({ onDone, onCancel }: { onDone: () => void; onCancel: () => 
   );
 }
 
-type ScholarProfile = {
-  user_id: string; full_name: string; school: string; id_number: string;
-  id_file_path: string | null; photo_path: string | null; id_verified: boolean;
-};
-type ScholarBooking = { id: string; user_id: string; career: string | null; company: string | null; shadow_date: string; status: string; indemnity_path: string | null; indemnity_received: boolean; internship_preapproved: boolean; internship_notes: string | null; ad_hoc_requested: boolean; ad_hoc_note: string | null };
-
 async function downloadDoc(path: string | null) {
   if (!path) return;
   const { data, error } = await supabase.storage.from("scholar-docs").download(path);
@@ -632,6 +623,22 @@ function AdminUsers() {
   const [showSpam, setShowSpam] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [letter, setLetter] = useState<string | null>(null);
+
+  async function setIdVerified(userId: string, verified: boolean) {
+    setBusyId(userId);
+    try {
+      const { error } = await supabase.from("scholar_profiles").update({
+        id_verified: verified,
+        id_verified_at: verified ? new Date().toISOString() : null,
+      }).eq("user_id", userId);
+      if (error) throw error;
+      await qc.invalidateQueries({ queryKey: ["admin", "accounts"] });
+    } catch (e) {
+      notify((e as Error).message, "error");
+    } finally {
+      setBusyId(null);
+    }
+  }
 
   function surnameOf(a: AccountRow) {
     const name = (a.display_name || a.full_name || "").trim();
@@ -668,7 +675,7 @@ function AdminUsers() {
     return (accounts.data ?? [])
       .filter((a) => {
         if (!showSpam && a.is_spam) return false;
-        if (s && ![a.email, a.display_name, a.full_name].some((v) => (v ?? "").toLowerCase().includes(s))) return false;
+        if (s && ![a.email, a.display_name, a.full_name, ROLE_LABELS[a.role]].some((v) => (v ?? "").toLowerCase().includes(s))) return false;
         if (letter && surnameOf(a).charAt(0) !== letter) return false;
         return true;
       })
@@ -713,7 +720,7 @@ function AdminUsers() {
         <div className="mt-4 flex flex-wrap items-end gap-6">
           <label className="block max-w-sm text-sm">
             Search
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name or email" className="mt-1 w-full border-b border-foreground/30 bg-transparent px-1 py-1 outline-none" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name, email or user type" className="mt-1 w-full border-b border-foreground/30 bg-transparent px-1 py-1 outline-none" />
           </label>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={showSpam} onChange={(e) => setShowSpam(e.target.checked)} />
@@ -741,6 +748,7 @@ function AdminUsers() {
                     <div>
                       <p className="text-sm font-semibold">
                         {a.display_name || a.full_name || a.email || a.id}
+                        <span className="ml-2 inline-block rounded-full bg-background/70 px-2 py-0.5 text-[10px] font-semibold text-foreground">User type: {ROLE_LABELS[a.role]}</span>
                         {a.is_spam && <span className="ml-2 rounded-full bg-destructive/20 px-2 py-0.5 text-[10px] font-bold uppercase text-destructive">Spam</span>}
                       </p>
                       {(a.display_name || a.full_name) && <p className="text-xs text-muted-foreground">{a.email}</p>}
@@ -750,15 +758,18 @@ function AdminUsers() {
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <button onClick={() => downloadDoc(a.id_file_path)} disabled={!a.id_file_path} aria-label="Download ID scan" title="Download ID scan" className="relative rounded bg-cta p-1.5 text-cta-foreground disabled:opacity-50">
-                      <IdCard className="h-3.5 w-3.5" />
-                      <Download className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-background p-0.5 text-cta" />
+                    <label className="flex items-center gap-2 text-xs" title={a.id_verified === null ? "No scholar profile to verify" : undefined}>
+                      <input type="checkbox" checked={a.id_verified === true} disabled={a.id_verified === null || busyId === a.id} onChange={(e) => setIdVerified(a.id, e.target.checked)} aria-label={`ID verified for ${a.display_name || a.full_name || a.email || a.id}`} />
+                      ID verified
+                    </label>
+                    <button onClick={() => downloadDoc(a.id_file_path)} disabled={!a.id_file_path} aria-label="Download ID scan" title="Download ID scan" className="rounded bg-cta p-2 text-cta-foreground disabled:opacity-50">
+                      <FileUser aria-hidden="true" className="h-4 w-4" />
                     </button>
-                    <button onClick={() => downloadDoc(a.photo_path)} disabled={!a.photo_path} aria-label="Download photo" title="Download photo" className="relative rounded bg-cta p-1.5 text-cta-foreground disabled:opacity-50">
-                      <Image className="h-3.5 w-3.5" />
-                      <Download className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-background p-0.5 text-cta" />
+                    <button onClick={() => downloadDoc(a.photo_path)} disabled={!a.photo_path} aria-label="Download photo" title="Download photo" className="rounded bg-cta p-2 text-cta-foreground disabled:opacity-50">
+                      <ImageDown aria-hidden="true" className="h-4 w-4" />
                     </button>
                     <select
+                      aria-label={`Change user type for ${a.display_name || a.full_name || a.email || a.id}`}
                       value={a.role}
                       disabled={busyId === a.id}
                       onChange={(e) => changeRole(a.id, e.target.value as AccountRow["role"])}
@@ -783,125 +794,6 @@ function AdminUsers() {
             {rows.length === 0 && <p className="py-6 text-sm text-muted-foreground">No users match "{q}".</p>}
           </div>
         )}
-      </div>
-    </div>
-  );
-}
-
-function ScholarVerification() {
-  const qc = useQueryClient();
-  const profiles = useQuery({
-    queryKey: ["admin", "scholar_profiles"],
-    queryFn: async () => ((await supabase.from("scholar_profiles").select("*").order("created_at", { ascending: false })).data ?? []) as ScholarProfile[],
-  });
-  const bookings = useQuery({
-    queryKey: ["admin", "scholar_bookings"],
-    queryFn: async () => ((await supabase.from("bookings").select("*").order("shadow_date", { ascending: false })).data ?? []) as ScholarBooking[],
-  });
-  const [editing, setEditing] = useState<string | null>(null);
-  const [vals, setVals] = useState({ full_name: "", school: "", id_number: "" });
-
-  async function setIdVerified(userId: string, verified: boolean) {
-    const { error } = await supabase.from("scholar_profiles").update({ id_verified: verified, id_verified_at: verified ? new Date().toISOString() : null }).eq("user_id", userId);
-    if (error) return notify(error.message, "error");
-    qc.invalidateQueries({ queryKey: ["admin", "scholar_profiles"] });
-  }
-
-  async function setIndemnityReceived(id: string, received: boolean) {
-    const { error } = await supabase.from("bookings").update({ indemnity_received: received }).eq("id", id);
-    if (error) return notify(error.message, "error");
-    qc.invalidateQueries({ queryKey: ["admin", "scholar_bookings"] });
-  }
-
-  function startEdit(p: ScholarProfile) {
-    setEditing(p.user_id);
-    setVals({ full_name: p.full_name, school: p.school, id_number: p.id_number });
-  }
-
-  async function saveEdit(userId: string) {
-    const { error } = await supabase.from("scholar_profiles").update(vals).eq("user_id", userId);
-    if (error) return notify(error.message, "error");
-    setEditing(null);
-    qc.invalidateQueries({ queryKey: ["admin", "scholar_profiles"] });
-  }
-
-  async function deleteProfile(userId: string, name: string) {
-    if (!(await confirmAction(`Delete ${name}'s scholar profile? This removes their profile record only, not their login account. This cannot be undone.`, { danger: true, confirmLabel: "Delete" }))) return;
-    const { error } = await supabase.from("scholar_profiles").delete().eq("user_id", userId);
-    if (error) return notify(error.message, "error");
-    qc.invalidateQueries({ queryKey: ["admin", "scholar_profiles"] });
-  }
-
-  if (profiles.isLoading || bookings.isLoading) {
-    return <p className="p-8">Loading…</p>;
-  }
-
-  return (
-    <div>
-      <div className="bg-[#E81C45] px-6 py-6 text-background"><h1 className="text-2xl font-semibold">Scholars ({profiles.data?.length ?? 0})</h1></div>
-      <div className="space-y-4 bg-teal/90 px-6 py-6 text-teal-foreground">
-        {profiles.data?.length === 0 && <p>No scholar profiles yet.</p>}
-        {profiles.data?.map((p) => {
-          const own = (bookings.data ?? []).filter((b) => b.user_id === p.user_id);
-          const isEditing = editing === p.user_id;
-          return (
-            <div key={p.user_id} className="rounded-lg border border-primary-foreground/20 bg-background/10 p-4">
-              {isEditing ? (
-                <div className="grid gap-2 sm:grid-cols-3">
-                  <input value={vals.full_name} onChange={(e) => setVals({ ...vals, full_name: e.target.value })} placeholder="Full name" className="border-b border-primary-foreground/40 bg-transparent px-1 py-1 text-sm outline-none" />
-                  <input value={vals.school} onChange={(e) => setVals({ ...vals, school: e.target.value })} placeholder="School" className="border-b border-primary-foreground/40 bg-transparent px-1 py-1 text-sm outline-none" />
-                  <input value={vals.id_number} onChange={(e) => setVals({ ...vals, id_number: e.target.value })} placeholder="ID number" className="border-b border-primary-foreground/40 bg-transparent px-1 py-1 text-sm outline-none" />
-                  <div className="flex gap-2 sm:col-span-3">
-                    <button onClick={() => saveEdit(p.user_id)} className="bg-cta px-3 py-1.5 text-xs font-bold uppercase text-cta-foreground">Save</button>
-                    <button onClick={() => setEditing(null)} className="bg-background/30 px-3 py-1.5 text-xs font-bold uppercase">Cancel</button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="font-semibold">{p.full_name} · {p.school} · ID: {p.id_number}</p>
-                  <label className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={p.id_verified} onChange={(e) => setIdVerified(p.user_id, e.target.checked)} />
-                    ID verified
-                  </label>
-                </div>
-              )}
-              <div className="mt-2 flex flex-wrap gap-3 text-sm">
-                <button onClick={() => downloadDoc(p.id_file_path)} disabled={!p.id_file_path} className="bg-cta px-3 py-1.5 text-xs font-bold uppercase text-cta-foreground disabled:opacity-50">Download ID scan</button>
-                <button onClick={() => downloadDoc(p.photo_path)} disabled={!p.photo_path} className="bg-cta px-3 py-1.5 text-xs font-bold uppercase text-cta-foreground disabled:opacity-50">Download photo</button>
-                {!isEditing && <button onClick={() => startEdit(p)} className="bg-background/30 px-3 py-1.5 text-xs font-bold uppercase">Edit</button>}
-                <button onClick={() => deleteProfile(p.user_id, p.full_name)} className="bg-destructive px-3 py-1.5 text-xs font-bold uppercase text-destructive-foreground">Delete</button>
-              </div>
-              {own.length > 0 && (
-                <div className="mt-3 space-y-2 border-t border-primary-foreground/20 pt-3">
-                  {own.map((b) => (
-                    <div key={b.id} className="text-sm">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span>{b.career} · {b.company} · {b.shadow_date} · {b.status}</span>
-                        <div className="flex items-center gap-3">
-                          <button onClick={() => downloadDoc(b.indemnity_path)} disabled={!b.indemnity_path} className="bg-cta px-3 py-1 text-xs font-bold uppercase text-cta-foreground disabled:opacity-50">Download indemnity</button>
-                          <label className="flex items-center gap-1">
-                            <input type="checkbox" checked={b.indemnity_received} onChange={(e) => setIndemnityReceived(b.id, e.target.checked)} />
-                            Received
-                          </label>
-                        </div>
-                      </div>
-                      {b.ad_hoc_requested && (
-                        <p className="mt-1 rounded bg-cta/30 px-2 py-1 text-xs">
-                          Ad-hoc date requested - not pre-confirmed by the host{b.ad_hoc_note ? `: ${b.ad_hoc_note}` : ""}
-                        </p>
-                      )}
-                      {b.internship_preapproved && (
-                        <p className="mt-1 rounded bg-accent/30 px-2 py-1 text-xs">
-                          Internship pre-approved by mentor{b.internship_notes ? `: ${b.internship_notes}` : ""}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
       </div>
     </div>
   );
