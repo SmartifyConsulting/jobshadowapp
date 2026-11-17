@@ -65,81 +65,6 @@ export type Database = {
         }
         Relationships: []
       }
-      career_favourites: {
-        Row: { career_slug: string; created_at: string; user_id: string }
-        Insert: { career_slug: string; created_at?: string; user_id: string }
-        Update: { career_slug?: string; created_at?: string; user_id?: string }
-        Relationships: []
-      }
-      evaluations: {
-        Row: {
-          booking_id: string
-          comments_text: string | null
-          continue_text: string | null
-          created_at: string
-          extra_text: string | null
-          id: string
-          ratings: number[]
-          role: string
-          start_text: string | null
-          stop_text: string | null
-        }
-        Insert: {
-          booking_id: string
-          comments_text?: string | null
-          continue_text?: string | null
-          created_at?: string
-          extra_text?: string | null
-          id?: string
-          ratings: number[]
-          role: string
-          start_text?: string | null
-          stop_text?: string | null
-        }
-        Update: {
-          booking_id?: string
-          comments_text?: string | null
-          continue_text?: string | null
-          created_at?: string
-          extra_text?: string | null
-          id?: string
-          ratings?: number[]
-          role?: string
-          start_text?: string | null
-          stop_text?: string | null
-        }
-        Relationships: []
-      }
-      host_settings: {
-        Row: {
-          blackout_dates: string[]
-          buffer_days: number | null
-          max_shadows_per_month: number | null
-          max_shadows_per_week: number | null
-          mentor_email: string
-          paused: boolean
-          updated_at: string
-        }
-        Insert: {
-          blackout_dates?: string[]
-          buffer_days?: number | null
-          max_shadows_per_month?: number | null
-          max_shadows_per_week?: number | null
-          mentor_email: string
-          paused?: boolean
-          updated_at?: string
-        }
-        Update: {
-          blackout_dates?: string[]
-          buffer_days?: number | null
-          max_shadows_per_month?: number | null
-          max_shadows_per_week?: number | null
-          mentor_email?: string
-          paused?: boolean
-          updated_at?: string
-        }
-        Relationships: []
-      }
       bookings: {
         Row: {
           ad_hoc_note: string | null
@@ -230,6 +155,24 @@ export type Database = {
           status?: string
           user_id?: string
           voucher_code?: string | null
+        }
+        Relationships: []
+      }
+      career_favourites: {
+        Row: {
+          career_slug: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          career_slug: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          career_slug?: string
+          created_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -428,6 +371,83 @@ export type Database = {
           subject?: string
           template?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      evaluations: {
+        Row: {
+          booking_id: string
+          comments_text: string | null
+          continue_text: string | null
+          created_at: string
+          extra_text: string | null
+          id: string
+          ratings: number[]
+          role: string
+          start_text: string | null
+          stop_text: string | null
+        }
+        Insert: {
+          booking_id: string
+          comments_text?: string | null
+          continue_text?: string | null
+          created_at?: string
+          extra_text?: string | null
+          id?: string
+          ratings: number[]
+          role: string
+          start_text?: string | null
+          stop_text?: string | null
+        }
+        Update: {
+          booking_id?: string
+          comments_text?: string | null
+          continue_text?: string | null
+          created_at?: string
+          extra_text?: string | null
+          id?: string
+          ratings?: number[]
+          role?: string
+          start_text?: string | null
+          stop_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluations_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      host_settings: {
+        Row: {
+          blackout_dates: string[]
+          buffer_days: number | null
+          max_shadows_per_month: number | null
+          max_shadows_per_week: number | null
+          mentor_email: string
+          paused: boolean
+          updated_at: string
+        }
+        Insert: {
+          blackout_dates?: string[]
+          buffer_days?: number | null
+          max_shadows_per_month?: number | null
+          max_shadows_per_week?: number | null
+          mentor_email: string
+          paused?: boolean
+          updated_at?: string
+        }
+        Update: {
+          blackout_dates?: string[]
+          buffer_days?: number | null
+          max_shadows_per_month?: number | null
+          max_shadows_per_week?: number | null
+          mentor_email?: string
+          paused?: boolean
+          updated_at?: string
         }
         Relationships: []
       }
@@ -762,20 +782,6 @@ export type Database = {
           location: string
         }[]
       }
-      get_my_host_settings: {
-        Args: never
-        Returns: Database["public"]["Tables"]["host_settings"]["Row"]
-      }
-      update_my_host_settings: {
-        Args: {
-          _blackout_dates: string[]
-          _buffer_days: number | null
-          _max_shadows_per_month: number | null
-          _max_shadows_per_week: number | null
-          _paused: boolean
-        }
-        Returns: undefined
-      }
       get_evaluation_context: {
         Args: { _booking: string }
         Returns: {
@@ -786,18 +792,23 @@ export type Database = {
           viewer_role: string
         }[]
       }
-      submit_evaluation: {
-        Args: {
-          _booking: string
-          _comments: string | null
-          _continue: string | null
-          _extra: string | null
-          _ratings: number[]
-          _role: string
-          _start: string | null
-          _stop: string | null
+      get_my_host_settings: {
+        Args: never
+        Returns: {
+          blackout_dates: string[]
+          buffer_days: number | null
+          max_shadows_per_month: number | null
+          max_shadows_per_week: number | null
+          mentor_email: string
+          paused: boolean
+          updated_at: string
         }
-        Returns: undefined
+        SetofOptions: {
+          from: "*"
+          to: "host_settings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       get_no_availability_message: { Args: never; Returns: string }
       has_role: {
@@ -874,7 +885,7 @@ export type Database = {
       }
       normalize_career_name: { Args: { _n: string }; Returns: string }
       release_expired_booking_holds: { Args: never; Returns: undefined }
-      send_shadow_reminders: { Args: never; Returns: undefined }
+      send_scheduled_reminders: { Args: never; Returns: undefined }
       set_company_indemnity_path: {
         Args: { _booking: string; _path: string }
         Returns: undefined
@@ -887,6 +898,19 @@ export type Database = {
         Args: { _booking: string; _notes: string; _preapproved: boolean }
         Returns: undefined
       }
+      submit_evaluation: {
+        Args: {
+          _booking: string
+          _comments: string
+          _continue: string
+          _extra: string
+          _ratings: number[]
+          _role: string
+          _start: string
+          _stop: string
+        }
+        Returns: undefined
+      }
       submit_indemnity: { Args: { _booking: string }; Returns: undefined }
       update_mentor_placement: {
         Args: {
@@ -897,6 +921,16 @@ export type Database = {
           _description: string
           _id: number
           _max_applicants: number
+        }
+        Returns: undefined
+      }
+      update_my_host_settings: {
+        Args: {
+          _blackout_dates: string[]
+          _buffer_days: number
+          _max_shadows_per_month: number
+          _max_shadows_per_week: number
+          _paused: boolean
         }
         Returns: undefined
       }
