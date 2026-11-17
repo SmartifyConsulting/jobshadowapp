@@ -9,6 +9,7 @@ const CTA: Record<string, { label: string; path: string }> = {
   applicant_application_complete: { label: "Upload signed indemnity", path: "/my-account" },
   applicant_thank_you: { label: "View my booking", path: "/my-account" },
   shadow_reminder_scholar: { label: "View my booking", path: "/my-account" },
+  shadow_reminder_day_before: { label: "View my booking", path: "/my-account" },
   scholar_evaluation_request: { label: "Visit Job Shadow", path: "/" },
   mentor_application_complete: { label: "Open Mentor Portal", path: "/mentor" },
   mentor_welcome_pack: { label: "Open Mentor Portal", path: "/register" },

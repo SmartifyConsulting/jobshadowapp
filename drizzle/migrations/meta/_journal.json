@@ -281,6 +281,20 @@
       "when": 1794943000000,
       "tag": "0039_booking_company_indemnity_text",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1794943100000,
+      "tag": "0040_richer_confirmed_booking_email",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1794943200000,
+      "tag": "0041_day_before_reminder",
+      "breakpoints": true
     }
   ]
 }

@@ -47,6 +47,7 @@ export type Database = {
           company_indemnity_path: string | null
           company_indemnity_signed_at: string | null
           created_at: string
+          day_before_reminder_sent_at: string | null
           discount: number
           id: string
           indemnity_path: string | null
@@ -74,6 +75,7 @@ export type Database = {
           company_indemnity_path?: string | null
           company_indemnity_signed_at?: string | null
           created_at?: string
+          day_before_reminder_sent_at?: string | null
           discount?: number
           id?: string
           indemnity_path?: string | null
@@ -101,6 +103,7 @@ export type Database = {
           company_indemnity_path?: string | null
           company_indemnity_signed_at?: string | null
           created_at?: string
+          day_before_reminder_sent_at?: string | null
           discount?: number
           id?: string
           indemnity_path?: string | null
