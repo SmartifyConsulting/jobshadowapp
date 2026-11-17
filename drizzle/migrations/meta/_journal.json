@@ -141,6 +141,13 @@
       "when": 1794510114213,
       "tag": "0019_restrict_booking_settings_read",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1794510200000,
+      "tag": "0020_resilient_email_outbox_enqueue",
+      "breakpoints": true
     }
   ]
 }
