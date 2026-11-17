@@ -4,6 +4,8 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import { Users as UsersIcon, FileText, ShoppingCart, Briefcase, GraduationCap, Pencil, Trash2, IdCard, Image as ImageIcon, Download, BadgeCheck, ChevronDown, LayoutGrid, List, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BrandLogo } from "@/components/BrandLogo";
+import { accountInitial, alphabetInitial } from "@/lib/alphabet";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { SITE_NAV } from "@/components/SiteLayout";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -225,7 +227,7 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
   const letterCounts = useMemo(() => {
     const counts = new Map<string, number>();
     if (alphabetField) (data ?? []).forEach((row) => {
-      const initial = fmt(row[alphabetField]).trim().charAt(0).toUpperCase();
+      const initial = alphabetInitial(fmt(row[alphabetField]));
       if (initial) counts.set(initial, (counts.get(initial) ?? 0) + 1);
     });
     return counts;
@@ -233,7 +235,7 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
   const rows = useMemo(() => {
     const s = q.toLowerCase().trim();
     return (data ?? []).filter((r) => {
-      if (letter && alphabetField && fmt(r[alphabetField]).trim().charAt(0).toUpperCase() !== letter) return false;
+      if (letter && alphabetField && alphabetInitial(fmt(r[alphabetField])) !== letter) return false;
       if (s && !cols.some((c) => fmt(r[c.key]).toLowerCase().includes(s))) return false;
       if (dateCompanyFilter) {
         if (company !== "All companies" && fmt(r["company"]) !== company) return false;
@@ -651,7 +653,7 @@ function UserDocument({ path, kind, verified = false }: { path: string | null; k
   </div>;
 }
 
-const ROLE_LABELS: Record<AccountRow["role"], string> = { user: "Student", mentor: "Mentor", hr_admin: "HR Admin", admin: "Admin" };
+const ROLE_LABELS: Record<AccountRow["role"], string> = { user: "Student", mentor: "Host", hr_admin: "HR Admin", admin: "Admin" };
 
 function UserFilePreview({ path, label }: { path: string | null; label: string }) {
   const preview = useQuery({
@@ -706,7 +708,7 @@ function UserCards({ rows, selectedId, busyId, onSelect, onEdit, onDelete, onVer
   })}</div>;
 }
 
-function AdminUsers() {
+export function AdminUsers() {
   const qc = useQueryClient();
   const getAccountsFn = useServerFn(getAccounts);
   const updateRoleFn = useServerFn(updateAccount);
@@ -739,13 +741,6 @@ function AdminUsers() {
     }
   }
 
-  function surnameOf(a: AccountRow) {
-    const name = (a.display_name || a.full_name || "").trim();
-    if (!name) return "";
-    const parts = name.split(/\s+/);
-    return (parts[parts.length - 1] ?? "").toUpperCase();
-  }
-
   async function saveAccount() {
     if (!editing) return;
     setBusyId(editing.id);
@@ -775,7 +770,7 @@ function AdminUsers() {
       .filter((a) => {
         if (!showSpam && a.is_spam) return false;
         if (s && ![a.email, a.display_name, a.full_name, a.contact_no, a.school, a.id_number, ...a.roles.map((role) => ROLE_LABELS[role]), ...a.applications.flatMap((application) => [application.company, application.career, application.dates])].some((v) => (v ?? "").toLowerCase().includes(s))) return false;
-        if (letter && surnameOf(a).charAt(0) !== letter) return false;
+        if (letter && accountInitial(a) !== letter) return false;
         return true;
       })
       .sort((a, b) => (a.display_name || a.full_name || a.email || "").localeCompare(b.display_name || b.full_name || b.email || ""));
@@ -785,7 +780,7 @@ function AdminUsers() {
     const counts = new Map<string, number>();
     (accounts.data ?? []).forEach((a) => {
       if (!showSpam && a.is_spam) return;
-      const first = surnameOf(a).charAt(0);
+      const first = accountInitial(a);
       if (first) counts.set(first, (counts.get(first) ?? 0) + 1);
     });
     return counts;
@@ -815,7 +810,7 @@ function AdminUsers() {
       <div className={'min-w-0 w-full flex-1 px-4 py-4 text-foreground ' + (view === 'table' ? 'bg-[#7CCCC8]' : 'bg-muted/30')}>
         <div className="flex flex-wrap gap-1.5">
           <button
-            onClick={() => setLetter(null)}
+            type="button" aria-pressed={letter === null} onClick={() => { setLetter(null); setOpenGroups([]); }}
             className={`rounded-md px-2.5 py-1.5 text-xs font-medium uppercase transition ${letter === null ? "bg-primary text-primary-foreground" : "bg-muted/70 text-foreground hover:bg-teal/20"}`}
           >
             All
@@ -825,7 +820,7 @@ function AdminUsers() {
             return (
               <button
                 key={ch}
-                onClick={() => { setLetter(letter === ch ? null : ch); setOpenGroups([ch]); }}
+                type="button" aria-pressed={letter === ch} onClick={() => { setLetter(ch); setOpenGroups([ch]); }}
                 disabled={count === 0}
                 className={`rounded-md px-2.5 py-1.5 text-xs font-medium uppercase transition ${letter === ch ? "bg-primary text-primary-foreground" : count === 0 ? "bg-muted/30 text-muted-foreground/50" : "bg-muted/70 text-foreground hover:bg-teal/20"}`}
               >
@@ -849,15 +844,15 @@ function AdminUsers() {
         ) : accounts.error ? (
           <p className="mt-6 text-destructive">{(accounts.error as Error).message}</p>
         ) : (
-          <div className="mt-5 space-y-2">
-            {[...new Set(rows.map((a) => /^[A-Z]/.test(surnameOf(a)) ? surnameOf(a).charAt(0) : "#"))].sort((a, b) => a === "#" ? 1 : b === "#" ? -1 : a.localeCompare(b)).map((group) => (
-              <details key={group} open={openGroups.includes(group)} onToggle={(event) => { const open = event.currentTarget.open; setOpenGroups((current) => open ? [...new Set([...current, group])] : current.filter((item) => item !== group)); }} className={"group overflow-hidden rounded-md border border-foreground/15 " + (view === "table" ? "bg-[#7CCCC8]" : "bg-background")}>
-                <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-2.5 text-sm [&::-webkit-details-marker]:hidden"><span className="w-5 font-medium text-primary">{group}</span><span className="text-xs text-muted-foreground">{rows.filter((a) => (/^[A-Z]/.test(surnameOf(a)) ? surnameOf(a).charAt(0) : "#") === group).length} users</span><ChevronDown className="ml-auto h-3.5 w-3.5 text-muted-foreground transition group-open:rotate-180" /></summary>
-                {openGroups.includes(group) && (view === "cards" ? <UserCards rows={rows.filter((a) => (/^[A-Z]/.test(surnameOf(a)) ? surnameOf(a).charAt(0) : "#") === group)} selectedId={selectedId} busyId={busyId} onSelect={setSelectedId} onEdit={(a) => setEditing({ ...a, roles: [...a.roles] })} onDelete={deleteAccountRow} onVerify={setIdVerified} /> : <div className="overflow-x-auto border-t border-border">
+          <Accordion type="multiple" value={openGroups} onValueChange={setOpenGroups} className="mt-5 space-y-2">
+            {[...new Set(rows.map((a) => accountInitial(a)))].sort((a, b) => a === "#" ? 1 : b === "#" ? -1 : a.localeCompare(b)).map((group) => (
+              <AccordionItem key={group} value={group} className={"group overflow-hidden rounded-md border border-foreground/15 " + (view === "table" ? "bg-[#7CCCC8]" : "bg-background")}>
+                <AccordionTrigger className="justify-start gap-3 px-4 py-2.5 text-sm hover:no-underline [&>svg]:ml-auto"><span className="w-5 font-medium text-primary">{group}</span><span className="text-xs text-muted-foreground">{rows.filter((a) => (accountInitial(a)) === group).length} users</span></AccordionTrigger>
+                <AccordionContent className="pb-0">{view === "cards" ? <UserCards rows={rows.filter((a) => (accountInitial(a)) === group)} selectedId={selectedId} busyId={busyId} onSelect={setSelectedId} onEdit={(a) => setEditing({ ...a, roles: [...a.roles] })} onDelete={deleteAccountRow} onVerify={setIdVerified} /> : <div className="overflow-x-auto border-t border-border">
                   <table className="w-full min-w-[1120px] text-left text-xs">
                     <thead className="bg-background/40 text-foreground"><tr>{["Name", "User type", "Email", "Phone", "School", "ID / passport", "Documents", "Applications", "Actions"].map((heading) => <th key={heading} className="whitespace-nowrap px-3 py-2 font-normal">{heading}</th>)}</tr></thead>
                     <tbody>
-                    {rows.filter((a) => (/^[A-Z]/.test(surnameOf(a)) ? surnameOf(a).charAt(0) : "#") === group).map((a) => {
+                    {rows.filter((a) => (accountInitial(a)) === group).map((a) => {
                       const avatarUrl = a.avatar_path ? supabase.storage.from("avatars").getPublicUrl(a.avatar_path).data.publicUrl : null;
                       const label = a.display_name || a.full_name || a.email || a.id;
                       return <Fragment key={a.id}>
@@ -891,11 +886,11 @@ function AdminUsers() {
                     })}
                     </tbody>
                   </table>
-                </div>)}
-              </details>
+                </div>}</AccordionContent>
+              </AccordionItem>
             ))}
             {rows.length === 0 && <p className="py-6 text-sm text-muted-foreground">No users match "{q}".</p>}
-          </div>
+          </Accordion>
         )}
       </div>
       {selectedAccount && <UserDetailPanel account={selectedAccount} onClose={() => setSelectedId(null)} onEdit={() => setEditing({ ...selectedAccount, roles: [...selectedAccount.roles] })} />}

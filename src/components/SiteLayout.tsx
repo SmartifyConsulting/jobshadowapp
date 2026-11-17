@@ -16,12 +16,6 @@ export const SITE_NAV = [
   { to: "/contact", label: "Contact Us" },
 ] as const;
 
-const ADMIN_NAV = [
-  { to: "/admin", label: "Companies" },
-  { to: "/admin", label: "Vouchers" },
-  { to: "/admin", label: "Applications" },
-] as const;
-
 function useSession() {
   return useQuery({
     queryKey: ["site-session"],
@@ -76,9 +70,6 @@ export function SiteLayout({ children, hideLogo }: { children: ReactNode; hideLo
                 {n.label}
               </Link>
             ))}
-            {isAdmin && ADMIN_NAV.map((n) => (
-              <Link key={n.label} to={n.to} className="border-b-4 border-transparent py-2 text-sm font-semibold transition hover:border-accent">{n.label}</Link>
-            ))}
             {user && (
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-2 text-sm font-semibold">
@@ -90,6 +81,7 @@ export function SiteLayout({ children, hideLogo }: { children: ReactNode; hideLo
                   <span className="max-w-32 truncate">{displayName}</span> <ChevronDown className="h-4 w-4 shrink-0" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  {isAdmin && <DropdownMenuItem asChild><Link to="/admin">Admin Dashboard</Link></DropdownMenuItem>}
                   <DropdownMenuItem asChild><Link to="/my-account">My Account</Link></DropdownMenuItem>
                   <DropdownMenuItem asChild><Link to="/my-account">My Bookings</Link></DropdownMenuItem>
                   <DropdownMenuItem asChild><Link to="/mentor">Mentor Portal</Link></DropdownMenuItem>
@@ -111,9 +103,9 @@ export function SiteLayout({ children, hideLogo }: { children: ReactNode; hideLo
         {open && (
           <nav className="flex flex-col gap-3 border-t border-primary-foreground/20 px-5 py-4 font-semibold lg:hidden">
             {SITE_NAV.map((n) => <Link key={n.to} to={n.to} onClick={() => setOpen(false)}>{n.label}</Link>)}
-            {isAdmin && ADMIN_NAV.map((n) => <Link key={n.label} to={n.to} onClick={() => setOpen(false)}>{n.label}</Link>)}
             {user && (
               <>
+                {isAdmin && <Link to="/admin" onClick={() => setOpen(false)}>Admin Dashboard</Link>}
                 <Link to="/my-account" onClick={() => setOpen(false)}>My Account</Link>
                 <Link to="/my-account" onClick={() => setOpen(false)}>My Bookings</Link>
                 <Link to="/mentor" onClick={() => setOpen(false)}>Mentor Portal</Link>

@@ -125,7 +125,7 @@ function Roles() {
               <ChevronDown className={`h-6 w-6 shrink-0 transition ${fieldOpen ? "rotate-180" : ""}`} />
             </button>
             {fieldOpen && (
-              <div className="bg-background text-foreground">
+              <div className="bg-[#E5C61E] text-foreground">
                 <div className="hidden items-center justify-between gap-6 border-b border-border px-5 py-2 sm:flex">
                   <span />
                   <span className="shrink-0 text-xs font-bold uppercase tracking-wide text-muted-foreground">Host</span>
