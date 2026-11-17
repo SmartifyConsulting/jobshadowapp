@@ -213,3 +213,60 @@
   filter: grayscale(1);
   mix-blend-mode: multiply;
 }
+
+/* Home reference artwork: geometry and colours only, with shared type and controls. */
+.home-reference {
+  --primary: oklch(0.555476 0.221758 19.0106);
+  --brand-deep: var(--primary);
+  --accent: oklch(0.956867 0.206505 108.5585);
+  --cta: oklch(0.900998 0.233622 127.6398);
+  position: relative;
+  isolation: isolate;
+  background: radial-gradient(ellipse at 70% 15%, #f50b44 0%, #e8033f 48%, #dc033c 100%);
+}
+
+.home-reference::before {
+  content: "";
+  position: absolute;
+  inset: 96px 0 0;
+  z-index: -1;
+  pointer-events: none;
+  clip-path: polygon(3% 0, 100% 24.5vw, 100% 100%, 10% 100%);
+  background: linear-gradient(135deg, #c90035 0%, #d20339 45%, #d00437 100%);
+}
+
+.home-reference > header {
+  background: var(--primary);
+  box-shadow: none;
+}
+
+.home-reference > header > div {
+  position: static;
+  min-height: 96px;
+}
+
+.home-reference > header > div > a {
+  position: absolute;
+  left: 1%;
+  top: 24px;
+  height: auto;
+}
+
+.home-reference > header > div > a > img {
+  width: clamp(96px, 21.6vw, 310px);
+  height: auto;
+}
+
+.home-reference > footer {
+  background: transparent;
+}
+
+@media (min-width: 1024px) {
+  .home-reference::before {
+    top: 112px;
+  }
+
+  .home-reference > header > div {
+    min-height: 112px;
+  }
+}
