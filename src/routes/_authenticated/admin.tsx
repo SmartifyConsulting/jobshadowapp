@@ -8,6 +8,7 @@ import { RichText } from "@/components/RichText";
 import { draftCareerDescription } from "@/lib/career-ai.functions";
 import { accountInitial, alphabetInitial } from "@/lib/alphabet";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { Calendar } from "@/components/ui/calendar";
 import { SITE_NAV, SiteAccountMenu } from "@/components/SiteLayout";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -1024,32 +1025,82 @@ function EmailArchive() {
   );
 }
 
+type BookingSettingsRow = {
+  min_lead_days: number; blackout_dates: string[] | null; no_availability_message: string;
+  max_advance_days: number; documentation_deadline_days: number; cancellation_cutoff_days: number;
+  reschedule_allowed: boolean; reschedule_min_notice_days: number; max_pending_requests: number;
+  waitlist_expiry_hours: number; request_expiry_hours: number;
+};
+
+function parseUsDate(s: string): Date | null {
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(s.trim());
+  if (!m) return null;
+  const d = new Date(Number(m[3]), Number(m[1]) - 1, Number(m[2]));
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+function toUsDate(d: Date): string {
+  return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
+}
+
+function NumberField({ label, hint, value, onChange, suffix }: { label: string; hint?: string; value: string; onChange: (v: string) => void; suffix?: string }) {
+  return (
+    <label className="block text-sm">
+      {label}
+      <div className="mt-1 flex max-w-xs items-center gap-2">
+        <input type="number" min={0} value={value} onChange={(e) => onChange(e.target.value)} className="w-full border-b border-input bg-transparent px-1 py-1 outline-none" />
+        {suffix && <span className="shrink-0 text-xs text-muted-foreground">{suffix}</span>}
+      </div>
+      {hint && <p className="mt-1 max-w-md text-xs text-muted-foreground">{hint}</p>}
+    </label>
+  );
+}
+
+const NOT_ENFORCED_HINT = "Stored, but not yet enforced anywhere in the app — that needs a workflow (host response tracking, waitlist, or self-service cancel/reschedule) this project doesn't have yet.";
+
 function BookingSettings() {
   const qc = useQueryClient();
   const settings = useQuery({
     queryKey: ["admin", "booking_settings"],
-    queryFn: async () => (await supabase.from("booking_settings").select("*").eq("id", 1).single()).data,
+    queryFn: async () => (await supabase.from("booking_settings").select("*").eq("id", 1).single()).data as BookingSettingsRow | null,
   });
-  const [minLead, setMinLead] = useState("3");
-  const [blackout, setBlackout] = useState("");
-  const [noAvailMsg, setNoAvailMsg] = useState("");
+  const [v, setV] = useState<Record<string, string>>({});
+  const [blackoutDates, setBlackoutDates] = useState<Date[]>([]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     if (!settings.data) return;
-    setMinLead(String(settings.data.min_lead_days));
-    setBlackout((settings.data.blackout_dates ?? []).join(", "));
-    setNoAvailMsg(settings.data.no_availability_message ?? "");
+    const s = settings.data;
+    setV({
+      min_lead_days: String(s.min_lead_days), max_advance_days: String(s.max_advance_days),
+      documentation_deadline_days: String(s.documentation_deadline_days), request_expiry_hours: String(s.request_expiry_hours),
+      cancellation_cutoff_days: String(s.cancellation_cutoff_days), reschedule_min_notice_days: String(s.reschedule_min_notice_days),
+      waitlist_expiry_hours: String(s.waitlist_expiry_hours), max_pending_requests: String(s.max_pending_requests),
+      no_availability_message: s.no_availability_message ?? "",
+    });
+    setBlackoutDates((s.blackout_dates ?? []).map(parseUsDate).filter((d): d is Date => d !== null));
   }, [settings.data]);
+
+  const f = (key: string) => v[key] ?? "";
+  const set = (key: string) => (val: string) => setV((cur) => ({ ...cur, [key]: val }));
 
   async function save() {
     setBusy(true);
     setErr(null);
     setSaved(false);
-    const dates = blackout.split(",").map((d) => d.trim()).filter(Boolean);
-    const { error } = await supabase.from("booking_settings").update({ min_lead_days: Number(minLead) || 0, blackout_dates: dates, no_availability_message: noAvailMsg }).eq("id", 1);
+    const { error } = await supabase.from("booking_settings").update({
+      min_lead_days: Number(f("min_lead_days")) || 0,
+      max_advance_days: Number(f("max_advance_days")) || 0,
+      documentation_deadline_days: Number(f("documentation_deadline_days")) || 0,
+      request_expiry_hours: Number(f("request_expiry_hours")) || 0,
+      cancellation_cutoff_days: Number(f("cancellation_cutoff_days")) || 0,
+      reschedule_min_notice_days: Number(f("reschedule_min_notice_days")) || 0,
+      waitlist_expiry_hours: Number(f("waitlist_expiry_hours")) || 0,
+      max_pending_requests: Number(f("max_pending_requests")) || 0,
+      blackout_dates: blackoutDates.map(toUsDate),
+      no_availability_message: f("no_availability_message"),
+    }).eq("id", 1);
     setBusy(false);
     if (error) return setErr(error.message);
     setSaved(true);
@@ -1057,22 +1108,74 @@ function BookingSettings() {
     qc.invalidateQueries({ queryKey: ["booking-settings"] });
   }
 
+  const sectionClass = "overflow-hidden rounded-lg border-2 border-ivory";
+  const triggerClass = (color: string) => `px-5 py-3.5 text-left font-display text-lg uppercase hover:no-underline [&>svg]:ml-4 ${color}`;
+
   return (
     <div>
       <div className="border-b border-border bg-background px-6 py-6 text-foreground"><h1 className="text-2xl font-medium">Booking Settings</h1></div>
-      <div className="max-w-xl space-y-5 bg-background px-6 py-6 text-foreground">
-        <label className="block text-sm">
-          Minimum lead time (days before a shadow date a booking is allowed)
-          <input type="number" value={minLead} onChange={(e) => setMinLead(e.target.value)} className="mt-1 w-full max-w-xs border-b border-input bg-transparent px-1 py-1 outline-none" />
-        </label>
-        <label className="block text-sm">
-          Blackout dates (comma separated, MM/DD/YYYY - no bookings allowed on these dates)
-          <textarea value={blackout} onChange={(e) => setBlackout(e.target.value)} placeholder="12/15/2026, 12/16/2026" className="mt-1 w-full border-b border-input bg-transparent px-1 py-1 outline-none" />
-        </label>
-        <label className="block text-sm">
-          "No mentors available" message (shown on /roles and the booking wizard whenever nothing is bookable)
-          <textarea value={noAvailMsg} onChange={(e) => setNoAvailMsg(e.target.value)} className="mt-1 w-full border-b border-input bg-transparent px-1 py-1 outline-none" />
-        </label>
+      <div className="max-w-2xl space-y-3 bg-background px-6 py-6 text-foreground">
+        <Accordion type="multiple" defaultValue={["rules"]} className="space-y-3">
+          <AccordionItem value="rules" className={sectionClass}>
+            <AccordionTrigger className={triggerClass(BAND_COLORS[0]!)}>Booking Rules</AccordionTrigger>
+            <AccordionContent className="space-y-5 bg-ivory px-5 py-5 text-foreground">
+              <NumberField label="Minimum request lead time" suffix="days before the shadow date" value={f("min_lead_days")} onChange={set("min_lead_days")} hint="The earliest a student may submit a booking request relative to the shadow date." />
+              <NumberField label="Maximum advance booking window" suffix="days ahead" value={f("max_advance_days")} onChange={set("max_advance_days")} hint="How far into the future a student can request a shadow." />
+              <NumberField label="Maximum pending requests per student" suffix="active requests" value={f("max_pending_requests")} onChange={set("max_pending_requests")} hint={NOT_ENFORCED_HINT} />
+              <div>
+                <p className="text-sm">Blackout dates <span className="text-xs text-muted-foreground">(no bookings allowed)</span></p>
+                <div className="mt-2 flex flex-wrap items-start gap-4">
+                  <Calendar mode="multiple" selected={blackoutDates} onSelect={(d) => setBlackoutDates(d ?? [])} className="rounded-md border border-warm-divider bg-background" />
+                  <div className="flex flex-wrap gap-1.5">
+                    {blackoutDates.length === 0 && <span className="text-xs text-muted-foreground">No blackout dates set.</span>}
+                    {blackoutDates.map((d, i) => (
+                      <span key={i} className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs">
+                        {toUsDate(d)}
+                        <button type="button" onClick={() => setBlackoutDates((cur) => cur.filter((_, idx) => idx !== i))} aria-label={`Remove ${toUsDate(d)}`} className="text-muted-foreground hover:text-destructive"><X className="h-3 w-3" /></button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="docs" className={sectionClass}>
+            <AccordionTrigger className={triggerClass(BAND_COLORS[1]!)}>Documentation &amp; Approval</AccordionTrigger>
+            <AccordionContent className="space-y-5 bg-ivory px-5 py-5 text-foreground">
+              <NumberField label="Documentation deadline" suffix="days before the shadow date" value={f("documentation_deadline_days")} onChange={set("documentation_deadline_days")} hint="The latest all required paperwork (indemnities, consent) must be approved. Enforced as a floor under the minimum lead time above, so a request can't be made with too little time left to complete it." />
+              <NumberField label="Booking request expiry" suffix="hours for a host to respond" value={f("request_expiry_hours")} onChange={set("request_expiry_hours")} hint={NOT_ENFORCED_HINT} />
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="cancel" className={sectionClass}>
+            <AccordionTrigger className={triggerClass(BAND_COLORS[2]!)}>Cancellations &amp; Waitlists</AccordionTrigger>
+            <AccordionContent className="space-y-5 bg-ivory px-5 py-5 text-foreground">
+              <NumberField label="Cancellation cut-off" suffix="days before the shadow date" value={f("cancellation_cutoff_days")} onChange={set("cancellation_cutoff_days")} hint={NOT_ENFORCED_HINT} />
+              <NumberField label="Reschedule minimum notice" suffix="days ahead" value={f("reschedule_min_notice_days")} onChange={set("reschedule_min_notice_days")} hint={NOT_ENFORCED_HINT} />
+              <NumberField label="Waitlist expiry" suffix="hours to respond to an offered place" value={f("waitlist_expiry_hours")} onChange={set("waitlist_expiry_hours")} hint={NOT_ENFORCED_HINT} />
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="notify" className={sectionClass}>
+            <AccordionTrigger className={triggerClass(BAND_COLORS[3]!)}>Notifications &amp; Messages</AccordionTrigger>
+            <AccordionContent className="space-y-5 bg-ivory px-5 py-5 text-foreground">
+              <label className="block text-sm">
+                "No mentors available" message <span className="text-xs text-muted-foreground">(shown on /roles and the booking wizard whenever nothing is bookable)</span>
+                <textarea value={f("no_availability_message")} onChange={(e) => set("no_availability_message")(e.target.value)} className="mt-1 w-full border-b border-input bg-transparent px-1 py-1 outline-none" />
+              </label>
+              <div>
+                <p className="text-sm">Reminder schedule</p>
+                <p className="mt-1 max-w-md text-xs text-muted-foreground">
+                  Scholars and guardians are reminded 2 days before a confirmed shadow, and again the afternoon before
+                  with a packing reminder (ID, signed indemnity form(s), questionnaire). These are fixed schedules in
+                  the database, not configurable from here yet.
+                </p>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+
         {err && <p className="text-sm font-medium">{err}</p>}
         <button onClick={save} disabled={busy || settings.isLoading} className="rounded-md bg-teal/20 hover:bg-teal/30 px-5 py-2.5 text-sm font-medium uppercase text-foreground disabled:opacity-50">{saved ? "Saved" : "Save"}</button>
       </div>

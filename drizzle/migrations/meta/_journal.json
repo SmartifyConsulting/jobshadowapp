@@ -316,6 +316,13 @@
       "when": 1794943500000,
       "tag": "0044_school_signup_requires_approval",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1794943600000,
+      "tag": "0045_expanded_booking_settings",
+      "breakpoints": true
     }
   ]
 }

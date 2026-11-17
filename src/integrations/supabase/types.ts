@@ -17,21 +17,45 @@ export type Database = {
       booking_settings: {
         Row: {
           blackout_dates: string[]
+          cancellation_cutoff_days: number
+          documentation_deadline_days: number
           id: number
+          max_advance_days: number
+          max_pending_requests: number
           min_lead_days: number
           no_availability_message: string
+          request_expiry_hours: number
+          reschedule_allowed: boolean
+          reschedule_min_notice_days: number
+          waitlist_expiry_hours: number
         }
         Insert: {
           blackout_dates?: string[]
+          cancellation_cutoff_days?: number
+          documentation_deadline_days?: number
           id?: number
+          max_advance_days?: number
+          max_pending_requests?: number
           min_lead_days?: number
           no_availability_message?: string
+          request_expiry_hours?: number
+          reschedule_allowed?: boolean
+          reschedule_min_notice_days?: number
+          waitlist_expiry_hours?: number
         }
         Update: {
           blackout_dates?: string[]
+          cancellation_cutoff_days?: number
+          documentation_deadline_days?: number
           id?: number
+          max_advance_days?: number
+          max_pending_requests?: number
           min_lead_days?: number
           no_availability_message?: string
+          request_expiry_hours?: number
+          reschedule_allowed?: boolean
+          reschedule_min_notice_days?: number
+          waitlist_expiry_hours?: number
         }
         Relationships: []
       }
