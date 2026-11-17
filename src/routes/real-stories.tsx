@@ -31,7 +31,7 @@ function Stories() {
         </div>
       </div>
       <section className="bg-accent py-14">
-        <Carousel opts={{ loop: true }} className="mx-auto max-w-7xl px-5">
+        <Carousel opts={{ loop: true }} className="mx-auto max-w-6xl px-12 sm:px-16">
           <CarouselContent className="-ml-8">
             {STORIES.map((s, index) => (
               <CarouselItem key={s.name} className="basis-full pl-8 sm:basis-1/2 lg:basis-1/3">
@@ -41,12 +41,12 @@ function Stories() {
                     <img src={s.img} alt={s.name} width={140} height={140} loading="lazy" className="brand-photo h-full w-full object-cover object-right" />
                   </div>
                 </div>
-                <p className="mt-6 text-sm leading-relaxed text-accent-foreground">{s.quote}</p>
+                <p className="mx-auto mt-6 max-w-xs text-sm leading-relaxed text-accent-foreground">{s.quote}</p>
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="left-0" />
-          <CarouselNext className="right-0" />
+          <CarouselPrevious className="-left-2 sm:-left-10" />
+          <CarouselNext className="-right-2 sm:-right-10" />
         </Carousel>
         <div className="mx-auto mt-14 max-w-3xl px-5"><YouTube {...STORIES_VIDEO} /></div>
       </section>
