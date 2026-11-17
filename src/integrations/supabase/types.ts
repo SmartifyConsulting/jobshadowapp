@@ -359,6 +359,51 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          avatar_path: string | null
+          display_name: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_path?: string | null
+          display_name?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_path?: string | null
+          display_name?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      role_notify_subscriptions: {
+        Row: {
+          career: string
+          created_at: string
+          email: string
+          id: string
+          notified_at: string | null
+        }
+        Insert: {
+          career: string
+          created_at?: string
+          email: string
+          id?: string
+          notified_at?: string | null
+        }
+        Update: {
+          career?: string
+          created_at?: string
+          email?: string
+          id?: string
+          notified_at?: string | null
+        }
+        Relationships: []
+      }
       scholar_profiles: {
         Row: {
           career_interests: string | null
@@ -464,27 +509,6 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
-        }
-        Relationships: []
-      }
-      profiles: {
-        Row: {
-          user_id: string
-          display_name: string | null
-          avatar_path: string | null
-          updated_at: string
-        }
-        Insert: {
-          user_id: string
-          display_name?: string | null
-          avatar_path?: string | null
-          updated_at?: string
-        }
-        Update: {
-          user_id?: string
-          display_name?: string | null
-          avatar_path?: string | null
-          updated_at?: string
         }
         Relationships: []
       }
@@ -640,7 +664,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user" | "mentor" | "hr_admin"
+      app_role: "admin" | "user" | "mentor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -768,7 +792,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user", "mentor", "hr_admin"],
+      app_role: ["admin", "user", "mentor"],
     },
   },
 } as const
