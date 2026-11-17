@@ -31,10 +31,18 @@ function IndemnityForm() {
 
   return (
     <div className="mx-auto max-w-3xl px-8 py-10 text-sm leading-relaxed text-foreground print:px-0">
-      <style>{`@media print { .no-print { display: none !important; } }`}</style>
+      <style>{`@media print { .no-print { display: none !important; } .page-break { break-before: page; } }`}</style>
       <div className="no-print mb-6 flex justify-end">
         <button onClick={() => window.print()} className="rounded bg-primary px-4 py-2 text-sm font-bold uppercase text-primary-foreground">Print / Save as PDF</button>
       </div>
+
+      {company?.custom_indemnity_text && (
+        <p className="no-print mb-8 rounded-md border border-primary/30 bg-muted/40 p-3 text-xs text-muted-foreground">
+          {company.company || "This host"} requires its own indemnity in addition to the standard JobShadow form below.
+          Both must be signed and filed for this job shadow — see the second document further down.
+        </p>
+      )}
+
       <h1 className="font-display text-2xl font-bold">Job Shadow Indemnity &amp; Consent Form</h1>
       <p className="mt-1 text-muted-foreground">Please print, read, sign and have your parent/guardian sign, then upload the scanned/photographed form in My Bookings.</p>
 
@@ -67,23 +75,41 @@ function IndemnityForm() {
         used for promotional purposes unless I notify Job Shadow in writing that I do not consent to this.
       </p>
 
-      <div className="mt-10 grid grid-cols-2 gap-x-10 gap-y-8">
-        <div>
-          <p className="border-b border-foreground/50 pb-8" />
-          <p className="mt-1 text-xs">Parent / Guardian signature</p>
+      <SignatureBlock />
+
+      {company?.custom_indemnity_text && (
+        <div className="page-break mt-16 border-t border-border pt-10">
+          <h1 className="font-display text-2xl font-bold">{company.company || "Host"} Indemnity &amp; Consent Form</h1>
+          <p className="mt-1 text-muted-foreground">
+            This additional form is required by the host company for this placement. It must be signed and filed
+            alongside the standard JobShadow form above.
+          </p>
+          <div className="mt-6 whitespace-pre-wrap">{company.custom_indemnity_text}</div>
+          <SignatureBlock />
         </div>
-        <div>
-          <p className="border-b border-foreground/50 pb-8" />
-          <p className="mt-1 text-xs">Date</p>
-        </div>
-        <div>
-          <p className="border-b border-foreground/50 pb-8" />
-          <p className="mt-1 text-xs">Parent / Guardian name (print)</p>
-        </div>
-        <div>
-          <p className="border-b border-foreground/50 pb-8" />
-          <p className="mt-1 text-xs">Contact number</p>
-        </div>
+      )}
+    </div>
+  );
+}
+
+function SignatureBlock() {
+  return (
+    <div className="mt-10 grid grid-cols-2 gap-x-10 gap-y-8">
+      <div>
+        <p className="border-b border-foreground/50 pb-8" />
+        <p className="mt-1 text-xs">Parent / Guardian signature</p>
+      </div>
+      <div>
+        <p className="border-b border-foreground/50 pb-8" />
+        <p className="mt-1 text-xs">Date</p>
+      </div>
+      <div>
+        <p className="border-b border-foreground/50 pb-8" />
+        <p className="mt-1 text-xs">Parent / Guardian name (print)</p>
+      </div>
+      <div>
+        <p className="border-b border-foreground/50 pb-8" />
+        <p className="mt-1 text-xs">Contact number</p>
       </div>
     </div>
   );

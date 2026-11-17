@@ -637,6 +637,8 @@ export type Database = {
           address: string
           arrival_time: string
           collection_time: string
+          company: string
+          custom_indemnity_text: string
           location: string
         }[]
       }
