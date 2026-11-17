@@ -1,8 +1,9 @@
 // Pure, client-safe renderer for branded Job Shadow emails.
 export const SITE_URL = "https://jobshadow.co.za";
-export const LOGO_URL = `${SITE_URL}/__l5e/assets-v1/89ef579f-b9d6-4e09-9ab3-227f0aa7d824/jobshadow-logo.png`;
+export const LOGO_URL = `${SITE_URL}/assets/jobshadow-logo.png`;
 
-const BRAND = { red: "#df1b41", deepRed: "#c80015", yellow: "#f9db01", green: "#7dc600", teal: "#6cc5c0", ink: "#1f1f1f" };
+// Matches the exact banner red sampled from the live site, plus the CI guidebook swatches.
+const BRAND = { red: "#D2163A", deepRed: "#b01230", yellow: "#e5c61e", green: "#96c93d", teal: "#6dc6c1", ink: "#1f1f1f" };
 
 const CTA: Record<string, { label: string; path: string }> = {
   applicant_application_complete: { label: "Upload signed indemnity", path: "/my-account" },

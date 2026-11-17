@@ -65,7 +65,10 @@ function RegisterPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <input required placeholder="NAME" value={name} onChange={(e) => setName(e.target.value)} className={input} />
             <input type="email" required placeholder="EMAIL ADDRESS" value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
-            <input type="password" required placeholder="PASSWORD" value={password} onChange={(e) => setPassword(e.target.value)} className={input} />
+            <div>
+              <input type="password" required placeholder="PASSWORD" value={password} onChange={(e) => setPassword(e.target.value)} className={input} />
+              <p className="mt-1 text-xs text-current/70">At least 8 characters. Avoid common or easy-to-guess passwords.</p>
+            </div>
             <input type="password" required placeholder="REPEAT PASSWORD" value={confirm} onChange={(e) => setConfirm(e.target.value)} className={input} />
             <select aria-label="Where did you hear about Job Shadow?" value={whereHear} onChange={(e) => setWhereHear(e.target.value)} className={`${input} sm:col-span-2 sm:max-w-md [&>option]:text-foreground`}>
               <option value="">HOW DID YOU HEAR ABOUT US?</option>
@@ -73,8 +76,12 @@ function RegisterPage() {
             </select>
           </div>
           <Turnstile onVerify={setCaptchaToken} />
-          {msg && <p aria-live="polite" className="mt-4 max-w-md text-sm">{msg}</p>}
-          <button type="submit" disabled={busy || (captchaRequired && !captchaToken)} className="mt-6 bg-primary px-6 py-3 text-sm font-bold uppercase tracking-wide text-primary-foreground disabled:opacity-50">Register</button>
+          <button type="submit" disabled={busy || (captchaRequired && !captchaToken)} className="mt-6 rounded-full bg-primary px-6 py-3 text-sm font-bold uppercase tracking-wide text-primary-foreground disabled:opacity-50">Register</button>
+          {msg && (
+            <p aria-live="assertive" className="mt-3 max-w-md rounded border-2 border-destructive bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive">
+              {msg}
+            </p>
+          )}
           <Link to="/auth" className="mt-4 block text-sm underline">Already have an account? Log in</Link>
         </form>
       </section>
