@@ -148,7 +148,7 @@ export function SiteLayout({ children, hideLogo }: { children: ReactNode; hideLo
             </ul>
           </div>
         </div>
-        <div className="border-t border-primary-foreground/20">
+        <div>
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-5 px-5 py-2">
             <p className="text-xs opacity-80">© JobShadow {new Date().getFullYear()}</p>
             <BrandLogo loading="lazy" className="h-12 w-12" />
