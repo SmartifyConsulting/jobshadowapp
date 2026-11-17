@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { z } from "zod";
-import { Mail, Facebook, Twitter, Linkedin } from "lucide-react";
+import { Mail, Facebook } from "lucide-react";
 import { SiteLayout, useSiteSession } from "@/components/SiteLayout";
 import { CONTACT_EMAIL } from "@/lib/data";
 
@@ -83,7 +83,7 @@ const schema = z.object({
 
 const DEFAULT_MESSAGE = "Yo bruh,\nI found this lit site that gives you the chance to discover what you wanna do\nwith your life.";
 
-const SHARE_ICONS = [Mail, Facebook, Twitter, Linkedin] as const;
+const SHARE_ICONS = [Mail, Facebook] as const;
 
 function SendToFriendSection() {
   const [f, setF] = useState({ recipientFirstName: "", to: "", message: "" });

@@ -12,8 +12,8 @@ export const SITE_NAV = [
   { to: "/about", label: "About" },
   { to: "/real-stories", label: "Real Stories" },
   { to: "/how-to", label: "How To" },
-  { to: "/send-to-a-friend", label: "Send to a Friend" },
   { to: "/roles", label: "Careers" },
+  { to: "/send-to-a-friend", label: "Share" },
   { to: "/contact", label: "Contact Us" },
 ] as const;
 
@@ -120,7 +120,7 @@ export function SiteHeader({ headerLogo }: { headerLogo?: ReactNode }) {
   );
 }
 
-export function SiteLayout({ children, headerLogo, className = "" }: { children: ReactNode; headerLogo?: ReactNode; className?: string }) {
+export function SiteLayout({ children, headerLogo, className = "", hideExperienceLink = false }: { children: ReactNode; headerLogo?: ReactNode; className?: string; hideExperienceLink?: boolean }) {
   const { data: session } = useSession();
   const isAdmin = session?.isAdmin ?? false;
 
@@ -128,14 +128,14 @@ export function SiteLayout({ children, headerLogo, className = "" }: { children:
     <div className={`flex min-h-screen flex-col ${className}`}>
       <SiteHeader headerLogo={headerLogo} />
       <main className="flex flex-1 flex-col">{children}</main>
-      <SiteFooter />
+      <SiteFooter hideExperienceLink={hideExperienceLink} />
       <SupportChatWidget viewerRole={isAdmin ? "admin" : session?.roles?.[0]} />
     </div>
   );
 }
 
 /** The site footer, shared verbatim with SiteHeader by Admin/Host Portal. */
-export function SiteFooter() {
+export function SiteFooter({ hideExperienceLink = false }: { hideExperienceLink?: boolean } = {}) {
   return (
     <footer className="bg-brand-deep text-primary-foreground">
       <div className="mx-auto grid max-w-7xl gap-6 px-5 py-6 md:grid-cols-4">
@@ -149,7 +149,7 @@ export function SiteFooter() {
               </a>
             ))}
           </div>
-          <Link to="/share-experience" className="mt-2 inline-block text-sm font-semibold text-accent hover:underline">Share your experience with us</Link>
+          {!hideExperienceLink && <Link to="/share-experience" className="mt-2 inline-block text-sm font-semibold text-accent hover:underline">Share your experience with us</Link>}
         </div>
         <div className="text-sm">
           <p className="font-display text-base text-accent">Explore</p>
@@ -157,7 +157,7 @@ export function SiteFooter() {
             <li><Link to="/roles">Careers</Link></li>
             <li><Link to="/auth">Book a Job Shadow</Link></li>
             <li><Link to="/how-to">How To</Link></li>
-            <li><Link to="/send-to-a-friend">Send to a Friend</Link></li>
+            <li><Link to="/send-to-a-friend">Share</Link></li>
             <li><Link to="/real-stories">Real Stories</Link></li>
           </ul>
         </div>

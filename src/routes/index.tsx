@@ -86,7 +86,7 @@ function Home() {
   }
 
   return (
-    <SiteLayout className="home-reference" headerLogo={<img src="/assets/jobshadow-logo-flat.png" alt="Job Shadow" width={359} height={195} className="h-auto w-[14.9vw] min-w-[82px] self-start" fetchPriority="high" />}>
+    <SiteLayout hideExperienceLink className="home-reference" headerLogo={<img src="/assets/jobshadow-logo-flat.png" alt="Job Shadow" width={359} height={195} className="h-auto w-[14.9vw] min-w-[82px] self-start" fetchPriority="high" />}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ORG_JSON_LD }} />
       <section
         className="relative overflow-hidden text-primary-foreground"
@@ -100,7 +100,7 @@ function Home() {
           <button
             type="button"
             onClick={focusSignIn}
-            className="mt-12 rounded-2xl bg-cta px-9 py-4 text-lg font-semibold uppercase tracking-[0.2em] text-cta-foreground shadow-warm transition hover:-translate-y-0.5 hover:brightness-110"
+            className="mt-12 rounded-full bg-cta px-9 py-4 text-lg font-semibold uppercase tracking-[0.2em] text-cta-foreground shadow-warm transition hover:-translate-y-0.5 hover:brightness-110"
           >
             Book Job Shadow
           </button>
