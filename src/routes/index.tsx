@@ -30,7 +30,7 @@ const ORG_JSON_LD = JSON.stringify({
 
 function Home() {
   return (
-    <SiteLayout>
+    <SiteLayout hideLogo>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ORG_JSON_LD }} />
       <section
         className="relative overflow-hidden bg-primary bg-cover bg-top text-primary-foreground"

@@ -39,7 +39,7 @@ const SOCIAL = [
   { href: "https://www.instagram.com/jobshadowbookings", icon: Instagram, label: "Instagram" },
 ];
 
-export function SiteLayout({ children }: { children: ReactNode }) {
+export function SiteLayout({ children, hideLogo }: { children: ReactNode; hideLogo?: boolean }) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { data: session } = useSession();
@@ -56,9 +56,11 @@ export function SiteLayout({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-40 bg-brand-deep text-primary-foreground shadow-warm">
         <div className="relative mx-auto flex max-w-7xl items-center justify-center gap-6 px-5 xl:justify-between">
-          <Link to="/" aria-label="JobShadow home" className="shrink-0">
-            <BrandLogo className="h-24 w-24 xl:h-28 xl:w-28" />
-          </Link>
+          {!hideLogo && (
+            <Link to="/" aria-label="JobShadow home" className="shrink-0">
+              <BrandLogo className="h-24 w-24 xl:h-28 xl:w-28" />
+            </Link>
+          )}
           <nav className="hidden items-center gap-4 xl:flex">
             {NAV.map((n) => (
               <Link
