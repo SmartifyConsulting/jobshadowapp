@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { notify } from "@/lib/dialogs";
 
-export function CreateAccountDialog({ role, label, onClose }: { role: AccountRow["role"]; label: string; onClose: () => void }) {
+export function CreateAccountDialog({ role, label, onClose }: { role: AccountRow["roles"][number]; label: string; onClose: () => void }) {
   const create = useServerFn(createAccount), qc = useQueryClient();
   const [name, setName] = useState(""), [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false), [error, setError] = useState("");

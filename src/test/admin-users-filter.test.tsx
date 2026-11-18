@@ -30,6 +30,20 @@ function mount(extra: AccountRow[] = []) {
 afterEach(cleanup);
 
 describe("User alphabet chips", () => {
+  it("keeps unassigned accounts out of Students and exposes Companies as a tab", () => {
+    const unknown = { ...account("unknown", "Unknown Person"), role: null, roles: [] };
+    const client = mount([unknown]);
+    client.setQueryData(["admin", "companies", false], [{ id: 1, company: "Example Company", career: "Engineer" }]);
+    expect(screen.getByRole("tab", { name: "Students (2)" })).toBeVisible();
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Unclassified (1)" }), { button: 0 });
+    fireEvent.click(screen.getByRole("button", { name: "U" }));
+    expect(screen.getByRole("button", { name: "View details for Unknown Person" })).toBeVisible();
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Companies" }), { button: 0 });
+    expect(screen.getByRole("heading", { name: "Companies (1)" })).toBeVisible();
+    expect(screen.getByText("Example Company")).toBeVisible();
+    expect(screen.queryByRole("columnheader", { name: "ID" })).not.toBeInTheDocument();
+    client.clear();
+  });
   it("opens the selected displayed-name group and supports switching and re-opening", () => {
     const client = mount();
     fireEvent.click(screen.getByRole("button", { name: "A" }));
@@ -88,7 +102,11 @@ describe("Booking status chips", () => {
     ]);
     const Page = Route.options.component as () => React.JSX.Element;
     render(<QueryClientProvider client={client}><Page /></QueryClientProvider>);
-    fireEvent.click(screen.getByRole("button", { name: "Bookings" }));
+    expect(screen.queryByRole("button", { name: "Bookings" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Companies" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Evaluations" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Reports" }));
+    expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Bookings", "Evaluations", "Vouchers", "Activity Log", "Token Ledger"]);
     expect(screen.getByText("Alice Confirmed")).toBeVisible();
     expect(screen.getByText("Bob Awaiting")).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Confirmed 1" }));

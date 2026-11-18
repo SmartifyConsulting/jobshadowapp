@@ -17,7 +17,7 @@ beforeEach(() => {
   db.remove.mockResolvedValue({ error: null });
 });
 describe("No-email account creation", () => {
-  it.each(["user", "mentor", "school", "hr_admin", "admin"] as AccountRow["role"][])("creates the %s account without inviting or emailing", async (role) => {
+  it.each(["user", "mentor", "school", "hr_admin", "admin"] as AccountRow["roles"][number][])("creates the %s account without inviting or emailing", async (role) => {
     await expect(createAccountSilently("test@example.com", "Test Name", role)).resolves.toMatchObject({ id: "brand-new-user", emailSent: false });
     expect(db.create).toHaveBeenCalledWith({ email: "test@example.com", email_confirm: false, user_metadata: { name: "Test Name", display_name: "Test Name" } });
     expect(db.assign).toHaveBeenCalledWith({ user_id: "brand-new-user", role });

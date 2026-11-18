@@ -1,3 +1,4 @@
+import { BOOKING_EXPORT_COLS } from "@/lib/application-columns";
 import { CreateAccountDialog } from "@/components/CreateAccountDialog";
 import { VoucherEditor } from "@/components/VoucherEditor";
 import { NamedCsvUpload } from "@/components/NamedCsvUpload";
@@ -102,7 +103,7 @@ function AdminPage() {
       <aside className="w-60 shrink-0 border-r border-primary/20 bg-accent text-accent-foreground shadow-warm">
         <p className="px-5 pb-3 pt-6 text-xs font-bold uppercase tracking-widest text-foreground/70">Admin Portal</p>
         <nav className="space-y-1 px-3 pb-6">
-          {TABLES.filter((t) => !["sectors", "vouchers"].includes(t.id)).map((t) => (
+          {TABLES.filter((t) => !["sectors", "vouchers", "bookings", "companies", "evaluations"].includes(t.id)).map((t) => (
             <button key={t.id} onClick={() => setActive(t.id)} className={`flex w-full items-center gap-3 rounded-md border-l-2 px-3 py-2.5 text-left text-sm font-medium transition ${active === t.id ? "border-primary bg-primary/10 text-foreground" : "border-transparent text-foreground/85 hover:bg-primary/5 hover:text-foreground"}`}>
               <t.icon className="h-4 w-4" /> {t.label}
             </button>
@@ -683,7 +684,7 @@ function UserDocument({ path, kind, verified = false }: { path: string | null; k
   </div>;
 }
 
-const ROLE_LABELS: Record<AccountRow["role"], string> = { user: "Student", mentor: "Host", hr_admin: "HR Admin", school: "School", admin: "Admin" };
+const ROLE_LABELS: Record<AccountRow["roles"][number], string> = { user: "Student", mentor: "Host", hr_admin: "HR Admin", school: "School", admin: "Admin" };
 
 function UserFilePreview({ path, label }: { path: string | null; label: string }) {
   const preview = useQuery({
@@ -706,7 +707,7 @@ function UserFilePreview({ path, label }: { path: string | null; label: string }
 function UserDetailPanel({ account: a, onClose, onEdit }: { account: AccountRow; onClose: () => void; onEdit: () => void }) {
   const label = a.display_name || a.full_name || a.email || a.id;
   return <aside aria-label="Selected user details" className="w-full shrink-0 border-t border-border bg-background p-5 xl:sticky xl:top-0 xl:max-h-screen xl:w-72 xl:overflow-y-auto xl:border-l xl:border-t-0">
-    <div className="mb-4 flex items-start justify-between gap-3"><div><h2 className="font-sans text-sm font-medium">{label}</h2><div className="mt-1 flex flex-wrap gap-1">{a.roles.map((role) => <span key={role} className="rounded bg-teal/15 px-1.5 py-0.5 text-[10px]">{ROLE_LABELS[role]}</span>)}</div></div><button onClick={onClose} aria-label="Close user details" className="rounded p-1 text-muted-foreground hover:bg-muted"><X className="h-4 w-4" /></button></div>
+    <div className="mb-4 flex items-start justify-between gap-3"><div><h2 className="font-sans text-sm font-medium">{label}</h2><div className="mt-1 flex flex-wrap gap-1">{a.roles.length === 0 && <span className="text-xs text-muted-foreground">Unclassified</span>}{a.roles.map((role) => <span key={role} className="rounded bg-teal/15 px-1.5 py-0.5 text-[10px]">{ROLE_LABELS[role]}</span>)}</div></div><button onClick={onClose} aria-label="Close user details" className="rounded p-1 text-muted-foreground hover:bg-muted"><X className="h-4 w-4" /></button></div>
     <dl className="space-y-2 text-xs">
       {([['Email', a.email], ['Phone', a.contact_no], ['School', a.school], ['ID / passport', a.id_number], ['Joined', new Date(a.created_at).toLocaleDateString()]] as const).map(([title, value]) => <div key={title}><dt className="text-muted-foreground">{title}</dt><dd className="break-words">{value || '—'}</dd></div>)}
     </dl>
@@ -725,7 +726,7 @@ function UserCards({ rows, selectedId, busyId, onSelect, onEdit, onDelete, onVer
     const label = a.display_name || a.full_name || a.email || a.id;
     return <article key={a.id} className={'min-w-0 rounded-md border bg-ivory p-4 ' + (selectedId === a.id ? 'border-primary/40' : 'border-border')}>
       <button className="max-w-full truncate text-left text-sm font-medium hover:text-primary" onClick={() => onSelect(a.id)}>{label}</button>
-      <div className="my-2 flex flex-wrap gap-1">{a.roles.map((role) => <span key={role} className="rounded bg-teal/15 px-1.5 py-0.5 text-[10px]">{ROLE_LABELS[role]}</span>)}{a.is_spam && <span className="text-[10px] text-destructive">Spam</span>}</div>
+      <div className="my-2 flex flex-wrap gap-1">{a.roles.length === 0 && <span className="text-xs text-muted-foreground">Unclassified</span>}{a.roles.map((role) => <span key={role} className="rounded bg-teal/15 px-1.5 py-0.5 text-[10px]">{ROLE_LABELS[role]}</span>)}{a.is_spam && <span className="text-[10px] text-destructive">Spam</span>}</div>
       <div className="space-y-1 text-xs text-muted-foreground"><p className="truncate" title={a.email ?? undefined}>{a.email || 'No email'}</p><p>{a.contact_no || 'No phone'}</p><p className="truncate" title={a.school ?? undefined}>{a.school || 'No school'}</p><p>ID / passport: {a.id_number || '—'}</p><p>Joined {new Date(a.created_at).toLocaleDateString()}</p></div>
       <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
         <label title="ID verified"><input type="checkbox" className="accent-teal" checked={a.id_verified === true} disabled={a.id_verified === null || busyId === a.id} onChange={(e) => onVerify(a.id, e.target.checked)} aria-label={'ID verified for ' + label} /></label>
@@ -752,7 +753,9 @@ export function AdminUsers() {
   const [openGroups, setOpenGroups] = useState<string[]>([]);
   const [expandedApplicationUser, setExpandedApplicationUser] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
-  const [roleTab, setRoleTab] = useState<AccountRow["role"]>("user");
+  const [roleTab, setRoleTab] = useState<AccountRow["roles"][number] | "companies" | "unclassified">("user");
+  const isUnclassified = roleTab === "unclassified";
+  const accountRole = roleTab === "companies" || isUnclassified ? "user" : roleTab;
   const [showSpam, setShowSpam] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [letter, setLetter] = useState<string | null>(null);
@@ -800,29 +803,29 @@ export function AdminUsers() {
     const s = q.toLowerCase().trim();
     return (accounts.data ?? [])
       .filter((a) => {
-        if (!a.roles.includes(roleTab)) return false;
+        if (isUnclassified ? a.roles.length > 0 : !a.roles.includes(accountRole)) return false;
         if (!showSpam && a.is_spam) return false;
         if (s && ![a.email, a.display_name, a.full_name, a.contact_no, a.school, a.id_number, ...a.roles.map((role) => ROLE_LABELS[role]), ...a.applications.flatMap((application) => [application.company, application.career, application.dates])].some((v) => (v ?? "").toLowerCase().includes(s))) return false;
         if (letter && accountInitial(a) !== letter) return false;
         return true;
       })
       .sort((a, b) => (a.display_name || a.full_name || a.email || "").localeCompare(b.display_name || b.full_name || b.email || ""));
-  }, [accounts.data, q, showSpam, letter, roleTab]);
+  }, [accounts.data, q, showSpam, letter, accountRole, isUnclassified]);
 
   const letterCounts = useMemo(() => {
     const counts = new Map<string, number>();
     (accounts.data ?? []).forEach((a) => {
-      if (!a.roles.includes(roleTab)) return;
+      if (isUnclassified ? a.roles.length > 0 : !a.roles.includes(accountRole)) return;
       if (!showSpam && a.is_spam) return;
       const first = accountInitial(a);
       if (first) counts.set(first, (counts.get(first) ?? 0) + 1);
     });
     return counts;
-  }, [accounts.data, showSpam, roleTab]);
+  }, [accounts.data, showSpam, accountRole, isUnclassified]);
 
   return (
     <div>
-      {createOpen && <CreateAccountDialog role={roleTab} label={ROLE_LABELS[roleTab]} onClose={() => setCreateOpen(false)} />}
+      {createOpen && <CreateAccountDialog role={accountRole} label={ROLE_LABELS[accountRole]} onClose={() => setCreateOpen(false)} />}
       <Dialog open={!!editing} onOpenChange={(open) => { if (!open && busyId !== editing?.id) setEditing(null); }}>
         <DialogContent className="max-h-[90vh] overflow-auto">
           <DialogHeader><DialogTitle>Edit user</DialogTitle></DialogHeader>
@@ -830,22 +833,22 @@ export function AdminUsers() {
             <p className="text-sm text-muted-foreground">{editing.email}</p>
             {([['display_name', 'Display name'], ['full_name', 'Full name'], ['contact_no', 'Phone'], ['school', 'School'], ['id_number', 'ID / passport number']] as const).map(([field, label]) => <label key={field} className="block text-sm">{label}<input disabled={busyId === editing.id || (field !== 'display_name' && !editing.has_scholar_profile)} value={editing[field] ?? ''} onChange={(e) => setEditing({ ...editing, [field]: e.target.value })} className="mt-1 w-full rounded border border-input bg-background px-3 py-2 disabled:opacity-50" /></label>)}
             {!editing.has_scholar_profile && <p className="text-xs text-muted-foreground">Scholar details can be edited once this user has a scholar profile. Imported details remain on the original application.</p>}
-            <details className="rounded border border-input p-3"><summary className="cursor-pointer text-sm">User types: {editing.roles.map((role) => ROLE_LABELS[role]).join(', ') || 'Select roles'}</summary><div className="mt-2 space-y-2">{(Object.keys(ROLE_LABELS) as AccountRow['role'][]).map((role) => <label key={role} className="flex items-center gap-2 text-sm"><input type="checkbox" disabled={busyId === editing.id} checked={editing.roles.includes(role)} onChange={(e) => setEditing({ ...editing, roles: e.target.checked ? [...editing.roles, role] : editing.roles.filter((item) => item !== role) })} />{ROLE_LABELS[role]}</label>)}</div></details>
+            <details className="rounded border border-input p-3"><summary className="cursor-pointer text-sm">User types: {editing.roles.map((role) => ROLE_LABELS[role]).join(', ') || 'Select roles'}</summary><div className="mt-2 space-y-2">{(Object.keys(ROLE_LABELS) as AccountRow['roles'][number][]).map((role) => <label key={role} className="flex items-center gap-2 text-sm"><input type="checkbox" disabled={busyId === editing.id} checked={editing.roles.includes(role)} onChange={(e) => setEditing({ ...editing, roles: e.target.checked ? [...editing.roles, role] : editing.roles.filter((item) => item !== role) })} />{ROLE_LABELS[role]}</label>)}</div></details>
             <div className="flex justify-end gap-2 pt-2"><Button type="button" variant="outline" disabled={busyId === editing.id} onClick={() => setEditing(null)}>Cancel</Button><Button disabled={busyId === editing.id || editing.roles.length === 0}>{busyId === editing.id ? 'Saving…' : 'Save changes'}</Button></div>
           </form>}
         </DialogContent>
       </Dialog>
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-ivory px-6 py-6 text-foreground">
+      {roleTab !== "companies" && <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-ivory px-6 py-6 text-foreground">
         <h1 className="text-2xl font-medium">Users {!accounts.isLoading && `(${rows.length})`}</h1>
-        <Button onClick={() => setCreateOpen(true)}>Add {ROLE_LABELS[roleTab]}</Button>
+        {!isUnclassified && <Button onClick={() => setCreateOpen(true)}>Add {ROLE_LABELS[accountRole]}</Button>}
         <div role="group" aria-label="Users view" className="flex rounded border border-border p-0.5">
           {([['table', List, 'Table'], ['cards', LayoutGrid, 'Cards']] as const).map(([value, Icon, label]) => <button key={value} onClick={() => setView(value)} aria-pressed={view === value} className={'flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs transition ' + (view === value ? 'bg-background text-primary' : 'hover:bg-primary/5')}><Icon className="h-3.5 w-3.5" />{label}</button>)}
         </div>
-      </div>
-      <Tabs value={roleTab} onValueChange={(value) => { setRoleTab(value as AccountRow["role"]); setLetter(null); setOpenGroups([]); setSelectedId(null); }}>
-        <div className="overflow-x-auto border-b border-border bg-ivory px-6 py-3"><TabsList aria-label="User types" className="h-auto">{([["user", "Students"], ["mentor", "Hosts"], ["school", "Schools"], ["hr_admin", "HR Admin"], ["admin", "Admin"]] as const).map(([role, name]) => <TabsTrigger key={role} value={role} className="min-h-11">{name} ({(accounts.data ?? []).filter((user) => user.roles.includes(role) && (showSpam || !user.is_spam)).length})</TabsTrigger>)}</TabsList></div>
+      </div>}
+      <Tabs value={roleTab} onValueChange={(value) => { setRoleTab(value as AccountRow["roles"][number] | "companies" | "unclassified"); setLetter(null); setOpenGroups([]); setSelectedId(null); }}>
+        <div className="overflow-x-auto border-b border-border bg-ivory px-6 py-3"><TabsList aria-label="User types" className="h-auto">{([["user", "Students"], ["mentor", "Hosts"], ["school", "Schools"], ["hr_admin", "HR Admin"], ["admin", "Admin"], ["companies", "Companies"], ["unclassified", "Unclassified"]] as const).map(([role, name]) => <TabsTrigger key={role} value={role} className="min-h-11">{name}{role !== "companies" && ` (${(accounts.data ?? []).filter((user) => (role === "unclassified" ? user.roles.length === 0 : user.roles.includes(role)) && (showSpam || !user.is_spam)).length})`}</TabsTrigger>)}</TabsList></div>
       <TabsContent value={roleTab} className="mt-0">
-      <div className="flex flex-col items-start xl:flex-row">
+      {roleTab === "companies" ? <CompaniesList /> : <div className="flex flex-col items-start xl:flex-row">
       <div className={'min-w-0 w-full flex-1 px-4 py-2 text-foreground ' + 'bg-ivory'}>
         <div className="flex flex-wrap gap-1.5">
           <button
@@ -901,14 +904,14 @@ export function AdminUsers() {
                             <button onClick={() => setSelectedId(a.id)} className="max-w-40 truncate text-left font-medium hover:text-primary" title={label} aria-label={'View details for ' + label}>{label}</button>
                             {a.is_spam && <span className="text-[10px] text-destructive">Spam</span>}
                           </div></td>
-                          <td className="px-3 py-2.5"><div className="flex gap-1">{a.roles.map((role) => <span key={role} className="whitespace-nowrap rounded bg-muted px-1.5 py-1 text-[10px] text-foreground">{ROLE_LABELS[role]}</span>)}</div></td>
-                          <td className="px-3 py-2.5"><div className="flex items-center gap-2">
+                          <td className="px-3 py-1.5"><div className="flex gap-1">{a.roles.length === 0 && <span className="text-xs text-muted-foreground">Unclassified</span>}{a.roles.map((role) => <span key={role} className="whitespace-nowrap rounded bg-muted px-1.5 py-1 text-[10px] text-foreground">{ROLE_LABELS[role]}</span>)}</div></td>
+                          <td className="px-3 py-1.5"><div className="flex items-center gap-2">
                             <label className="flex items-center" title={a.id_verified === null ? 'No scholar profile to verify' : 'ID verified'}><input type="checkbox" className="accent-primary" checked={a.id_verified === true} disabled={a.id_verified === null || busyId === a.id} onChange={(e) => setIdVerified(a.id, e.target.checked)} aria-label={'ID verified for ' + label} /></label>
                             <UserDocument path={a.id_file_path} kind="id" verified={a.id_verified === true} />
                             <UserDocument path={a.photo_path} kind="photo" />
                           </div></td>
-                          <td className="px-3 py-2.5"><button disabled={!a.applications.length} aria-expanded={expandedApplicationUser === a.id} aria-controls={'applications-' + a.id} onClick={() => setExpandedApplicationUser(expandedApplicationUser === a.id ? null : a.id)} className="flex items-center gap-2 whitespace-nowrap rounded px-1.5 py-1 text-xs hover:bg-muted disabled:text-muted-foreground" title={a.booking_count + ' bookings'}>{a.applications.length}<ChevronDown className={'h-3 w-3 transition ' + (expandedApplicationUser === a.id ? 'rotate-180' : '')} /><span className="sr-only">Applications for {label}</span></button></td>
-                          <td className="px-3 py-2.5"><div className="flex items-center gap-1.5">
+                          <td className="px-3 py-1.5"><button disabled={!a.applications.length} aria-expanded={expandedApplicationUser === a.id} aria-controls={'applications-' + a.id} onClick={() => setExpandedApplicationUser(expandedApplicationUser === a.id ? null : a.id)} className="flex items-center gap-2 whitespace-nowrap rounded px-1.5 py-1 text-xs hover:bg-muted disabled:text-muted-foreground" title={a.booking_count + ' bookings'}>{a.applications.length}<ChevronDown className={'h-3 w-3 transition ' + (expandedApplicationUser === a.id ? 'rotate-180' : '')} /><span className="sr-only">Applications for {label}</span></button></td>
+                          <td className="px-3 py-1.5"><div className="flex items-center gap-1.5">
                             <button onClick={() => setEditing({ ...a, roles: [...a.roles] })} disabled={busyId === a.id} className="flex items-center gap-1.5 rounded border border-border px-2 py-1 text-xs transition hover:border-primary/30 hover:text-primary disabled:opacity-50" aria-label={'Edit ' + label}><Pencil className="h-3.5 w-3.5" />Edit</button>
                             <button onClick={() => deleteAccountRow(a.id, label)} disabled={busyId === a.id} className="rounded p-1.5 text-muted-foreground transition hover:bg-destructive/5 hover:text-destructive disabled:opacity-50" aria-label={'Delete account for ' + label}><Trash2 className="h-3.5 w-3.5" /></button>
                           </div></td>
@@ -929,7 +932,7 @@ export function AdminUsers() {
         )}
       </div>
       {selectedAccount && <UserDetailPanel account={selectedAccount} onClose={() => setSelectedId(null)} onEdit={() => setEditing({ ...selectedAccount, roles: [...selectedAccount.roles] })} />}
-      </div>
+      </div>}
       </TabsContent>
       </Tabs>
     </div>
@@ -1047,15 +1050,12 @@ function Evaluations() {
 }
 
 const BOOKING_STATUS_LABELS: Record<string, string> = { awaiting_payment: "Awaiting payment", indemnity_required: "Paid – indemnity needed", confirmed: "Confirmed", completed: "Completed", cancelled: "Cancelled" };
-const BOOKING_EXPORT_COLS: { key: string; label: string }[] = [
-  { key: "shadow_date", label: "Shadow date" }, { key: "status", label: "Status" },
-  { key: "career", label: "Career" }, { key: "company", label: "Company" }, { key: "sector", label: "Sector" }, { key: "location", label: "Location" }, { key: "mode", label: "Mode" },
-  { key: "student_name", label: "Student name" }, { key: "student_contact", label: "Student contact" }, { key: "student_id_number", label: "Student ID number" }, { key: "student_school", label: "School" }, { key: "student_career_interests", label: "Career interests" }, { key: "student_dietary", label: "Dietary" },
-  { key: "guardian_name", label: "Parent/guardian name" }, { key: "guardian_contact", label: "Parent/guardian contact" }, { key: "guardian_email", label: "Parent/guardian email" },
-  { key: "mentor_name", label: "Mentor name" }, { key: "mentor_position", label: "Mentor position" }, { key: "mentor_phone", label: "Mentor phone" }, { key: "mentor_email", label: "Mentor email" },
-  { key: "hr_contact_name", label: "HR contact name" }, { key: "hr_contact_phone", label: "HR contact phone" }, { key: "hr_contact_email", label: "HR contact email" },
-  { key: "amount_due", label: "Amount due" }, { key: "paid_at", label: "Paid status" }, { key: "indemnity_received", label: "Indemnity status" }, { key: "created_at", label: "Booked on" },
-];
+
+
+function CompaniesList() {
+  const config = TABLES.find((entry) => entry.id === "companies")!;
+  return <DataTable title={config.singular} table={config.table} cols={config.cols} />;
+}
 
 function CareersAndSectors() {
   return <Tabs defaultValue="careers" className="bg-ivory">
@@ -1081,8 +1081,9 @@ function AdminReports() {
   return <div className="bg-background">
     <div className="border-b border-border px-6 py-5"><h1 className="text-2xl">Reports</h1></div>
     <Tabs defaultValue="bookings">
-      <div className="overflow-x-auto border-b border-border px-6 py-3"><TabsList aria-label="Admin reports" className="h-auto justify-start">{["Bookings", "Vouchers", "Activity Log", "Token Ledger"].map((label) => <TabsTrigger key={label} value={label.toLowerCase().replaceAll(' ', '-')} className="min-h-11">{label}</TabsTrigger>)}</TabsList></div>
+      <div className="overflow-x-auto border-b border-border px-6 py-3"><TabsList aria-label="Admin reports" className="h-auto justify-start">{["Bookings", "Evaluations", "Vouchers", "Activity Log", "Token Ledger"].map((label) => <TabsTrigger key={label} value={label.toLowerCase().replaceAll(' ', '-')} className="min-h-11">{label}</TabsTrigger>)}</TabsList></div>
       <TabsContent value="bookings" className="mt-0"><LiveBookings /></TabsContent>
+      <TabsContent value="evaluations" className="mt-0"><Evaluations /></TabsContent>
       <TabsContent value="vouchers" className="mt-0"><VoucherReport /></TabsContent>
       <TabsContent value="activity-log" className="mt-0"><AdminLedgerReport table="activity_log" /></TabsContent>
       <TabsContent value="token-ledger" className="mt-0"><AdminLedgerReport table="ai_token_ledger" /></TabsContent>
@@ -1364,8 +1365,8 @@ function BookingSettings() {
   return (
     <div>
       <div className="border-b border-border bg-background px-6 py-6 text-foreground"><h1 className="text-2xl font-medium">Booking Settings</h1></div>
-      <div className="max-w-2xl space-y-3 bg-background px-6 py-6 text-foreground">
-        <Accordion type="multiple" defaultValue={["rules"]} className="space-y-3">
+      <div className="w-full space-y-3 bg-background px-6 py-6 text-foreground">
+        <Accordion type="multiple" defaultValue={["rules"]} className="grid items-start gap-4 xl:grid-cols-2">
           <AccordionItem value="rules" className={sectionClass}>
             <AccordionTrigger className={triggerClass(BAND_COLORS[0]!)}>Booking Rules</AccordionTrigger>
             <AccordionContent className="space-y-5 bg-ivory px-5 py-5 text-foreground">

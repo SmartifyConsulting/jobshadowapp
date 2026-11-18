@@ -4,7 +4,7 @@ export type AccountRow = {
   id: string;
   email: string | null;
   created_at: string;
-  role: "user" | "mentor" | "hr_admin" | "school" | "admin";
+  role: "user" | "mentor" | "hr_admin" | "school" | "admin" | null;
   roles: ("user" | "mentor" | "hr_admin" | "school" | "admin")[];
   has_scholar_profile: boolean;
   display_name: string | null;
@@ -22,7 +22,7 @@ export type AccountRow = {
   booking_count: number;
 };
 
-const ROLE_PRIORITY = ["admin", "hr_admin", "mentor"] as const;
+const ROLE_PRIORITY = ["admin", "hr_admin", "mentor", "school", "user"] as const;
 
 async function readAllRows<T>(load: (from: number, to: number) => Promise<{ data: T[] | null; error: { message: string } | null }>) {
   const rows: T[] = [];
@@ -67,7 +67,7 @@ export async function listAccounts(): Promise<AccountRow[]> {
   return users
     .map((u) => {
       const userRoles = roleByUser.get(u.id) ?? [];
-      const role = (ROLE_PRIORITY.find((r) => userRoles.includes(r)) ?? "user") as AccountRow["role"];
+      const role = ROLE_PRIORITY.find((r) => userRoles.includes(r)) ?? null;
       const profile = profileByUser.get(u.id);
       const scholar = scholarByUser.get(u.id);
       const { latestImported, applications } = getUserApplications(u, applicationRows, bookingRows);
@@ -77,7 +77,7 @@ export async function listAccounts(): Promise<AccountRow[]> {
         email: u.email,
         created_at: u.created_at,
         role,
-        roles: (userRoles.length ? [...new Set(userRoles)] : ["user"]) as AccountRow["roles"],
+        roles: [...new Set(userRoles)] as AccountRow["roles"],
         has_scholar_profile: !!scholar,
         display_name: profile?.display_name ?? null,
         avatar_path: profile?.avatar_path ?? null,
@@ -129,7 +129,7 @@ export async function deleteAccount(userId: string) {
 }
 
 /** Admin account creation deliberately sends no invitation, confirmation or password email. */
-export async function createAccountSilently(email: string, name: string, role: AccountRow["role"]) {
+export async function createAccountSilently(email: string, name: string, role: AccountRow["roles"][number]) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const created = await supabaseAdmin.auth.admin.createUser({ email, email_confirm: false, user_metadata: { name, display_name: name } });
   if (created.error || !created.data.user) throw new Error(created.error?.message ?? "Unable to create account.");

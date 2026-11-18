@@ -201,13 +201,13 @@ function HostSettings() {
   const qc = useQueryClient();
   const settings = useQuery({
     queryKey: ["host-settings"],
-    queryFn: async () => (await supabase.rpc("get_my_host_settings")).data,
+    queryFn: async () => { const result = await supabase.rpc("get_my_host_settings"); if (result.error) throw result.error; return result.data; },
   });
   const [paused, setPaused] = useState(false);
   const [maxWeek, setMaxWeek] = useState("");
   const [maxMonth, setMaxMonth] = useState("");
   const [bufferDays, setBufferDays] = useState("");
-  const [blackoutDates, setBlackoutDates] = useState<Date[]>([]);
+  const placements = useQuery({ queryKey: ["mentor-placements"], queryFn: async () => { const result = await supabase.rpc("list_mentor_placements"); if (result.error) throw result.error; return result.data as unknown as Placement[]; } });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -219,7 +219,6 @@ function HostSettings() {
     setMaxWeek(s.max_shadows_per_week != null ? String(s.max_shadows_per_week) : "");
     setMaxMonth(s.max_shadows_per_month != null ? String(s.max_shadows_per_month) : "");
     setBufferDays(s.buffer_days != null ? String(s.buffer_days) : "");
-    setBlackoutDates((s.blackout_dates ?? []).map(parseUsDate).filter((d): d is Date => d !== null));
   }, [settings.data]);
 
   async function save() {
@@ -231,7 +230,7 @@ function HostSettings() {
       _max_shadows_per_week: maxWeek ? Number(maxWeek) : null,
       _max_shadows_per_month: maxMonth ? Number(maxMonth) : null,
       _buffer_days: bufferDays ? Number(bufferDays) : null,
-      _blackout_dates: blackoutDates.map(toUsDate),
+      _blackout_dates: [],
     } as never);
     setBusy(false);
     if (error) return setErr(error.message);
@@ -240,13 +239,13 @@ function HostSettings() {
   }
 
   return (
-    <section className="max-w-2xl space-y-6">
+    <section className="w-full space-y-5">
       <h1 className="text-2xl font-bold">Settings</h1>
       <p className="text-sm text-muted-foreground">
-        These apply across all your placements. Sensible defaults are used unless you set your own — you don't need
-        to configure anything here unless you want to.
+        Set your booking limits and choose the dates and times you are available for each placement.
       </p>
 
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]"><div className="space-y-4">
       <div className="rounded-lg border bg-card p-4">
         <label className="flex items-center gap-2 text-sm font-semibold">
           <input type="checkbox" checked={paused} onChange={(e) => setPaused(e.target.checked)} />
@@ -267,25 +266,10 @@ function HostSettings() {
         </label>
       </div>
 
-      <div className="rounded-lg border bg-card p-4">
-        <p className="text-sm font-semibold">Personal blackout dates</p>
-        <p className="mt-1 text-xs text-muted-foreground">Dates you're unavailable — leave, meetings, holidays. Separate from the dates you set per placement.</p>
-        <div className="mt-3 flex flex-wrap items-start gap-4">
-          <Calendar mode="multiple" selected={blackoutDates} onSelect={(d) => setBlackoutDates(d ?? [])} className="rounded-md border bg-background" />
-          <div className="flex flex-wrap gap-1.5">
-            {blackoutDates.length === 0 && <span className="text-xs text-muted-foreground">No blackout dates set.</span>}
-            {blackoutDates.map((d, i) => (
-              <span key={i} className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs">
-                {toUsDate(d)}
-                <button type="button" onClick={() => setBlackoutDates((cur) => cur.filter((_, idx) => idx !== i))} aria-label={`Remove ${toUsDate(d)}`} className="text-muted-foreground hover:text-destructive"><X className="h-3 w-3" /></button>
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {err && <p className="text-sm text-destructive">{err}</p>}
-      <button onClick={save} disabled={busy || settings.isLoading} className="rounded bg-primary px-5 py-2.5 text-sm font-bold uppercase text-primary-foreground disabled:opacity-50">{saved ? "Saved" : "Save"}</button>
+      {(err || settings.error) && <p role="alert" className="text-sm text-destructive">{err || "Unable to load your settings. Please refresh before saving."}</p>}
+      <p className="text-xs text-muted-foreground">Saving settings clears any previously saved personal blackout dates. Your placement calendars specify when you are available.</p>
+      <button onClick={save} disabled={busy || settings.isPending || !!settings.error} className="rounded bg-primary px-5 py-2.5 text-sm font-bold uppercase text-primary-foreground disabled:opacity-50">{saved ? "Saved" : "Save settings"}</button>
+      </div><section className="min-w-0 space-y-4" aria-label="Available dates and times"><h2 className="text-xl font-semibold">Available Dates and Times</h2><p className="text-sm text-muted-foreground">Select only the dates you can host, and set the start and end time for each placement.</p>{placements.isPending ? <p>Loading placements…</p> : placements.error ? <p role="alert" className="text-sm text-destructive">Unable to load your placements.</p> : !placements.data?.length ? <p className="text-sm text-muted-foreground">No placements are linked to your account yet.</p> : placements.data.map((placement) => <PlacementCard key={placement.id} placement={placement} initialEditing />)}</section></div>
     </section>
   );
 }
@@ -362,9 +346,9 @@ function BookingCard({ booking }: { booking: MentorBooking }) {
   );
 }
 
-function PlacementCard({ placement }: { placement: Placement }) {
+function PlacementCard({ placement, initialEditing = false }: { placement: Placement; initialEditing?: boolean }) {
   const qc = useQueryClient();
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(initialEditing);
   const [vals, setVals] = useState({
     dates: placement.dates ?? "",
     active: placement.active,
@@ -429,10 +413,10 @@ function PlacementCard({ placement }: { placement: Placement }) {
           <label className="text-sm">Places
             <input type="number" value={vals.max_applicants} onChange={(e) => setVals({ ...vals, max_applicants: e.target.value })} className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none" />
           </label>
-          <label className="text-sm">Arrival time
+          <label className="text-sm">Available from (arrival time)
             <input value={vals.arrival_time} onChange={(e) => setVals({ ...vals, arrival_time: e.target.value })} className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none" />
           </label>
-          <label className="text-sm">Collection time
+          <label className="text-sm">Available until (collection time)
             <input value={vals.collection_time} onChange={(e) => setVals({ ...vals, collection_time: e.target.value })} className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none" />
           </label>
           <label className="text-sm sm:col-span-2">Description
