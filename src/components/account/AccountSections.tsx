@@ -83,7 +83,7 @@ function ProfileForm({ userId }: { userId: string }) {
   const [files, setFiles] = useState<{ id?: File | undefined; photo?: File | undefined }>({});
 
   const field = (k: string, label: string, placeholder?: string) => (
-    <div>
+    <div className="min-w-0">
       <Label htmlFor={k}>{label}</Label>
       <Input id={k} placeholder={placeholder} value={(f[k] as string) ?? ""} onChange={(e) => setF({ ...f, [k]: e.target.value })} />
       {errors[k] && <p className="text-xs text-destructive">{errors[k]}</p>}
@@ -121,7 +121,7 @@ function ProfileForm({ userId }: { userId: string }) {
     qc.invalidateQueries({ queryKey: ["scholar-profile"] });
   }
   return (
-    <form onSubmit={save} className="space-y-6">
+    <form onSubmit={save} className="min-w-0 w-full space-y-5">
       <div>
         <h1 className="font-display text-4xl">Personal Details</h1>
         <h5 className="mt-1 font-semibold">NOTE: no more than one scholar per registration.</h5>
@@ -145,7 +145,7 @@ function ProfileForm({ userId }: { userId: string }) {
       <div className="grid gap-4 sm:grid-cols-2">
         {field("school", "Current School", "Current school")}
         <div>
-          <div className="flex gap-4 pt-7 text-sm">
+          <div className="flex flex-wrap gap-x-4 gap-y-2 pt-7 text-sm">
             {["Public School", "Private School", "Home School"].map((t) => (
               <label key={t} className="flex items-center gap-1">
                 <input type="radio" name="school_type" checked={f["school_type"] === t} onChange={() => setF({ ...f, school_type: t })} /> {t}
@@ -156,19 +156,21 @@ function ProfileForm({ userId }: { userId: string }) {
         {field("career_interests", "Career interests")}
         {field("dietary", "Dietary requirements/allergies")}
       </div>
-      <h5 className="font-semibold">Parent / Guardian Information</h5>
-      <div className="grid gap-4 sm:grid-cols-2">
-        {field("guardian_name", "Parent / Guardian name", "Parent / guardian name")}
-        {field("guardian_contact", "Parent / Guardian contact no", "Parent / guardian contact no")}
-        {field("guardian_email", "Parent / Guardian email address", "Parent / guardian email address")}
-        {field("guardian_id", "Parent / Guardian ID/passport", "Parent / guardian ID no")}
-      </div>
-      <details className="group -mx-6 bg-cta px-6 py-5 text-cta-foreground">
+      <fieldset className="min-w-0 rounded-md border border-current/20 p-4">
+        <legend className="px-2 font-semibold">Parent / Guardian</legend>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {field("guardian_name", "Name", "Full name")}
+          {field("guardian_contact", "Contact Number", "Contact number")}
+          {field("guardian_email", "Email Address", "name@example.com")}
+          {field("guardian_id", "ID / Passport Number", "ID or passport number")}
+        </div>
+      </fieldset>
+      <details className="group min-w-0 w-full rounded-md bg-cta px-4 py-4 text-cta-foreground">
         <summary className="flex cursor-pointer list-none items-center gap-3 font-display text-2xl">
-          <ChevronDown className="h-6 w-6 shrink-0 transition group-open:rotate-180" /> T &amp; C's
+          <ChevronDown className="h-6 w-6 shrink-0 transition group-open:rotate-180" /> Terms &amp; Conditions
         </summary>
         <a href="#" onClick={(e) => e.preventDefault()} className="mt-3 block text-sm font-bold underline">View here</a>
-        <div className="mt-3 max-h-64 space-y-2 overflow-y-auto text-xs">
+        <div className="mt-3 max-h-64 space-y-2 overflow-y-auto break-words text-xs">
           {TERMS.map((t, i) => <p key={i}>{t}</p>)}
         </div>
         <label className="mt-3 flex items-center gap-2 text-sm">
@@ -177,11 +179,11 @@ function ProfileForm({ userId }: { userId: string }) {
         </label>
       </details>
       {errors["tc_accepted"] && <p className="text-xs text-destructive">{errors["tc_accepted"]}</p>}
-      <details className="group -mx-6 bg-cta px-6 py-5 text-cta-foreground">
+      <details className="group min-w-0 w-full rounded-md bg-cta px-4 py-4 text-cta-foreground">
         <summary className="flex cursor-pointer list-none items-center gap-3 font-display text-2xl">
           <ChevronDown className="h-6 w-6 shrink-0 transition group-open:rotate-180" /> POPI Consent
         </summary>
-        <div className="mt-3 max-h-64 space-y-2 overflow-y-auto text-xs">
+        <div className="mt-3 max-h-64 space-y-2 overflow-y-auto break-words text-xs">
           <p>In terms of the Protection of Personal Information Act 4 of 2013 ("POPIA"), we need your consent, as parent or legal guardian, to collect and process the Job Shadow-er's personal information above (including name, ID/passport number, school, a copy of their ID, and a photo) for the purpose of:</p>
           <p>registering the scholar for a Job Shadow placement; sharing their name, school and relevant details with the host company and mentor so the placement can take place; verifying their identity and age; and contacting you and the scholar about the booking (confirmations, indemnity requirements and scheduling).</p>
           <p>Your information will not be sold or used for any purpose beyond operating the Job Shadow booking and placement process, and will be retained only for as long as reasonably necessary for that purpose. You may request access to, correction of, or deletion of this information at any time by emailing info@jobshadow.co.za.</p>
