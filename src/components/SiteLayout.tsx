@@ -12,7 +12,7 @@ export const SITE_NAV = [
   { to: "/about", label: "About" },
   { to: "/real-stories", label: "Real Stories" },
   { to: "/how-to", label: "How To" },
-  { to: "/roles", label: "Sectors and Careers" },
+  { to: "/roles", label: "Careers" },
   { to: "/send-to-a-friend", label: "Share" },
   { to: "/contact", label: "Contact Us" },
 ] as const;
