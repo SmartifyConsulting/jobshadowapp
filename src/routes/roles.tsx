@@ -211,6 +211,7 @@ function Roles() {
                         {open && (
                           <div className="mt-2 pl-9">
                             {r.summary.split("\n").map((p, i) => <p key={i} className="mt-1 text-sm text-soft-grey">{p}</p>)}
+                            {r.idealFor && <p className="mt-2 text-sm text-charcoal"><strong>Ideal for:</strong> {r.idealFor}</p>}
                             {r.video && <div className="mt-3 max-w-xl"><YouTube id={r.video} title={r.title} /></div>}
                             {count > 0 && (
                               <Link to="/auth" className="mt-3 inline-block rounded-full bg-cta px-5 py-2 text-xs font-semibold uppercase tracking-wider text-cta-foreground">Book this Job Shadow</Link>

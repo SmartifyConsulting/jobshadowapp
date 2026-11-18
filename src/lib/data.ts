@@ -1,3 +1,4 @@
+import { getCareerIdealFor } from "./career-ideal-for";
 import raw from "./roles.json";
 import { getCareerDescription } from "./career-descriptions";
 
@@ -6,12 +7,13 @@ export interface Role {
   title: string;
   field: string;
   summary: string;
+  idealFor: string;
   video: string | null;
 }
 
 const slugify = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
-export const ROLES: Role[] = (raw as Omit<Role, "slug">[]).map((r) => ({ ...r, summary: getCareerDescription(r.title) || r.summary, slug: `${slugify(r.field)}--${slugify(r.title)}` }));
+export const ROLES: Role[] = (raw as Omit<Role, "slug" | "idealFor">[]).map((r) => ({ ...r, idealFor: getCareerIdealFor(r.title), summary: getCareerDescription(r.title) || r.summary, slug: `${slugify(r.field)}--${slugify(r.title)}` }));
 export const FIELDS: string[] = [...new Set(ROLES.map((r) => r.field))];
 /** Unique role titles for selection lists (some roles appear under several fields). */
 export const ROLE_TITLES: string[] = [...new Set(ROLES.map((r) => r.title))].sort();

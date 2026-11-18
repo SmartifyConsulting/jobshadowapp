@@ -38,8 +38,7 @@ export function SupportChatWidget({ viewerRole }: { viewerRole?: string | undefi
     <div className="fixed bottom-5 right-5 z-50">
       {open && (
         <div className="relative w-80 max-w-[calc(100vw-2.5rem)]">
-          <img src="/assets/reddy-mascot.webp" alt="" aria-hidden="true" className="pointer-events-none absolute -top-20 left-0 z-10 w-24 origin-bottom-right -rotate-12 object-contain drop-shadow-lg sm:top-auto sm:-left-28 sm:bottom-6 sm:w-32 sm:-rotate-6" />
-        <div className="flex h-[28rem] max-h-[calc(100dvh-8rem)] flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-xl sm:max-h-[calc(100dvh-3rem)]">
+        <div role="dialog" aria-label="Ask Reddy" className="flex h-[28rem] max-h-[calc(100dvh-3rem)] flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-xl sm:max-h-[calc(100dvh-3rem)]">
           <div className="flex items-center justify-between bg-primary px-4 py-3 text-primary-foreground">
             <div className="flex items-center gap-2">
               <p className="font-display text-lg uppercase tracking-wide">Ask Reddy</p>
@@ -48,8 +47,9 @@ export function SupportChatWidget({ viewerRole }: { viewerRole?: string | undefi
           </div>
           <div className="flex-1 space-y-3 overflow-y-auto p-3">
             {messages.map((m, i) => (
-              <div key={i} className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${m.role === "user" ? "ml-auto bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
-                {m.content}
+              <div key={i} className={"flex items-start gap-2 " + (m.role === "user" ? "justify-end" : "")}>
+                {i === 0 && <img src="/assets/reddy-mascot.webp" alt="Reddy" className="h-24 w-14 shrink-0 self-start object-contain" />}
+                <div className={"min-w-0 rounded-lg px-3 py-2 text-sm " + (i === 0 ? "flex-1 bg-muted text-foreground" : m.role === "user" ? "max-w-[85%] bg-primary text-primary-foreground" : "max-w-[85%] bg-muted text-foreground")}>{m.content}</div>
               </div>
             ))}
             {busy && <div className="max-w-[85%] rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">Typing…</div>}

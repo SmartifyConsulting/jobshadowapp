@@ -1,3 +1,4 @@
+import { getCareerIdealFor } from "@/lib/career-ideal-for";
 import { BOOKING_EXPORT_COLS } from "@/lib/application-columns";
 import { CreateAccountDialog } from "@/components/CreateAccountDialog";
 import { VoucherEditor } from "@/components/VoucherEditor";
@@ -204,7 +205,7 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
     setExportError(null);
     try {
       let all = await loadAll(table);
-      if (table === "careers") all = withCareerDescriptions(all);
+      if (table === "careers") all = withCareerDescriptions(all).map((row) => ({ ...row, ideal_for: getCareerIdealFor(String(row["name"] ?? "")) }));
       if (table === "legacy_applications") all = joinApplicationContacts(all, await loadAll("companies"));
       exportCsv(title, completeExportColumns(cols.filter((c) => !c.key.startsWith("_")), all), all);
     } catch (error) {
@@ -379,6 +380,7 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
                               {table === "careers" && descOpen && (
                                 <div className="bg-background/60 px-10 py-3 text-sm text-muted-foreground">
                                   {r["description"] ? <RichText text={String(r["description"])} /> : <em>No description yet — edit this career to add one.</em>}
+                                  {getCareerIdealFor(String(r["name"] ?? "")) && <p className="mt-2 text-foreground"><strong>Ideal for:</strong> {getCareerIdealFor(String(r["name"] ?? ""))}</p>}
                                 </div>
                               )}
                             </Fragment>

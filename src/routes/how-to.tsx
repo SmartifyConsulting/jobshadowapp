@@ -29,10 +29,10 @@ function HowTo() {
       </div>
       <section className="bg-[#7CCCC8] px-5 py-8">
         <figure className="mx-auto max-w-7xl">
-          <a href="/assets/how-job-shadow-works-infographic.png" target="_blank" rel="noopener noreferrer" aria-label="Open the full-size How Job Shadow Works infographic">
-            <img src="/assets/how-job-shadow-works-infographic.png" alt="How Job Shadow works: step-by-step guides for students and hosts" width={2100} height={749} className="h-auto w-full" loading="lazy" />
+          <a href="/assets/how-job-shadow-works-infographic-v2.png" target="_blank" rel="noopener noreferrer" aria-label="Open the full-size How Job Shadow Works infographic">
+            <img src="/assets/how-job-shadow-works-infographic-v2.png" alt="How Job Shadow works: step-by-step guides for students and hosts" width={2061} height={763} className="h-auto w-full" loading="lazy" />
           </a>
-          <figcaption className="sr-only">Students: explore careers, find a host, request a booking, complete indemnity and consent forms, get approval, do your job shadow and share feedback. Hosts: register, create your profile, set availability, complete host forms, receive booking requests, confirm a booking, host the experience and receive feedback.</figcaption>
+          <figcaption className="sr-only">Students: register as a student, create your profile, explore careers, request a booking, complete indemnity and consent forms, do your job shadow and share feedback. Hosts: register, create your profile, set availability, complete host forms, receive booking requests, confirm a booking, host the experience and receive feedback.</figcaption>
         </figure>
       </section>
       <section className="bg-primary">
