@@ -79,20 +79,6 @@ begin
 
   return new;
 end $$;
-
--- Seed with South Africa's 2026 public holidays (admin can edit via Booking Settings).
-update public.booking_settings set public_holidays = array[
-  '1/1/2026',   -- New Year's Day
-  '3/21/2026',  -- Human Rights Day
-  '4/3/2026',   -- Good Friday
-  '4/6/2026',   -- Family Day
-  '4/27/2026',  -- Freedom Day
-  '4/28/2026',  -- Freedom Day observed (falls on a Sunday)
-  '5/1/2026',   -- Workers' Day
-  '6/16/2026',  -- Youth Day
-  '8/9/2026',   -- National Women's Day
-  '9/24/2026',  -- Heritage Day
-  '12/16/2026', -- Day of Reconciliation
-  '12/25/2026', -- Christmas Day
-  '12/26/2026'  -- Day of Goodwill
-] where id = 1 and (public_holidays is null or public_holidays = '{}');
+-- No hardcoded seed: the admin fetches the current list live for any country/year from the
+-- Booking Settings screen (see fetchPublicHolidays in the app), rather than a baked-in list
+-- that would go stale every year and only ever covers one country.

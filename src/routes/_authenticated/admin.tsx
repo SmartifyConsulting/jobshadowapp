@@ -26,6 +26,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { sendQueuedEmails } from "@/lib/email.functions";
 import { getAccounts, updateAccount, removeAccount } from "@/lib/users.functions";
 import { extractCompanyIndemnity } from "@/lib/indemnity-ai.functions";
+import { lookupPublicHolidays } from "@/lib/public-holidays.functions";
 import { confirmAction, notify } from "@/lib/dialogs";
 import type { AccountRow } from "@/lib/users.server";
 import { renderEmailHtml } from "@/lib/email-template";
@@ -1313,6 +1314,42 @@ function parseIntList(s: string): number[] {
   return [...new Set(s.split(",").map((v) => Number(v.trim())).filter((n) => Number.isFinite(n) && n >= 0))].sort((a, b) => b - a);
 }
 
+function PublicHolidayFetcher({ onFetched }: { onFetched: (dates: Date[]) => void }) {
+  const lookup = useServerFn(lookupPublicHolidays);
+  const [year, setYear] = useState(String(new Date().getFullYear()));
+  const [country, setCountry] = useState("ZA");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function fetchNow() {
+    setBusy(true);
+    setErr(null);
+    try {
+      const results = await lookup({ data: { year: Number(year), countryCode: country.trim() } });
+      onFetched(results.map((h) => parseUsDate(h.date)).filter((d): d is Date => d !== null));
+      notify(`Added ${results.length} public holiday${results.length === 1 ? "" : "s"} for ${country.toUpperCase()} ${year}.`, "success");
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mt-2 flex flex-wrap items-end gap-3 rounded border border-warm-divider bg-background/50 p-3">
+      <label className="text-xs">Year
+        <input value={year} onChange={(e) => setYear(e.target.value)} className="mt-1 block w-20 border-b border-input bg-transparent px-1 py-1 text-sm outline-none" />
+      </label>
+      <label className="text-xs">Country code
+        <input value={country} onChange={(e) => setCountry(e.target.value)} placeholder="ZA" className="mt-1 block w-20 border-b border-input bg-transparent px-1 py-1 text-sm uppercase outline-none" />
+      </label>
+      <button type="button" onClick={fetchNow} disabled={busy} className="rounded-md bg-teal/20 hover:bg-teal/30 px-3 py-1.5 text-xs font-medium uppercase text-foreground disabled:opacity-50">{busy ? "Fetching…" : "Fetch holidays"}</button>
+      {err && <p className="w-full text-xs text-destructive">{err}</p>}
+      <p className="w-full text-xs text-muted-foreground">Looks up the official public holiday list live (date.nager.at) — nothing is hardcoded. Remember to click Save below.</p>
+    </div>
+  );
+}
+
 const NOT_ENFORCED_HINT = "Stored, but not yet enforced anywhere in the app — that needs a workflow (host response tracking, waitlist, or self-service cancel/reschedule) this project doesn't have yet.";
 
 function BookingSettings() {
@@ -1404,6 +1441,10 @@ function BookingSettings() {
               </div>
               <div>
                 <p className="text-sm">Public holidays <span className="text-xs text-muted-foreground">(always blocked, every placement, no override)</span></p>
+                <PublicHolidayFetcher onFetched={(dates) => setPublicHolidays((cur) => {
+                  const seen = new Set(cur.map((d) => d.toDateString()));
+                  return [...cur, ...dates.filter((d) => !seen.has(d.toDateString()))];
+                })} />
                 <div className="mt-2 flex flex-wrap items-start gap-4">
                   <Calendar mode="multiple" selected={publicHolidays} onSelect={(d) => setPublicHolidays(d ?? [])} className="rounded-md border border-warm-divider bg-background" />
                   <div className="flex flex-wrap gap-1.5">
