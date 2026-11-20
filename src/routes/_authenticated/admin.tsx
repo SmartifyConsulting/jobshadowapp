@@ -63,6 +63,7 @@ const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string
     { key: "sector", label: "Sector" }, { key: "location", label: "Location" }, { key: "mentor_name", label: "Mentor" },
     { key: "mentor_email", label: "Mentor email" }, { key: "mentor_phone", label: "Mentor phone" },
     { key: "mentor_position", label: "Mentor position" },
+    { key: "arrival_instruction", label: "Arrival instructions (used when no mentor is named)" },
     { key: "backup_mentor_name", label: "Backup mentor" }, { key: "backup_mentor_phone", label: "Backup mentor phone" }, { key: "backup_mentor_email", label: "Backup mentor email" },
     { key: "hr_contact_name", label: "HR contact name" }, { key: "hr_contact_phone", label: "HR contact phone" }, { key: "hr_contact_email", label: "HR contact email" },
     { key: "dates", label: "Dates" }, { key: "max_applicants", label: "Places", field: "number" }, { key: "amount", label: "Price (R)", field: "number" },
@@ -590,6 +591,7 @@ function CreateRole({ onDone, onCancel }: { onDone: () => void; onCancel: () => 
   const fields: { key: string; label: string }[] = [
     { key: "company", label: "Company" }, { key: "location", label: "Location" },
     { key: "mentor_name", label: "Mentor name" }, { key: "mentor_phone", label: "Mentor phone" }, { key: "mentor_email", label: "Mentor email" },
+    { key: "arrival_instruction", label: "Arrival instructions (used when no mentor is named)" },
     { key: "hr_contact_name", label: "HR contact name" }, { key: "hr_contact_phone", label: "HR contact phone" }, { key: "hr_contact_email", label: "HR contact email" },
     { key: "backup_mentor_name", label: "Backup mentor name" }, { key: "backup_mentor_phone", label: "Backup mentor phone" }, { key: "backup_mentor_email", label: "Backup mentor email" },
     { key: "max_applicants", label: "Places" },

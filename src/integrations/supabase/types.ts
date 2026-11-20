@@ -256,6 +256,7 @@ export type Database = {
           allow_off_season: boolean
           allow_weekends: boolean
           amount: number | null
+          arrival_instruction: string | null
           arrival_time: string | null
           availability: string[] | null
           backup_mentor_email: string | null
@@ -302,6 +303,7 @@ export type Database = {
           allow_off_season?: boolean
           allow_weekends?: boolean
           amount?: number | null
+          arrival_instruction?: string | null
           arrival_time?: string | null
           availability?: string[] | null
           backup_mentor_email?: string | null
@@ -348,6 +350,7 @@ export type Database = {
           allow_off_season?: boolean
           allow_weekends?: boolean
           amount?: number | null
+          arrival_instruction?: string | null
           arrival_time?: string | null
           availability?: string[] | null
           backup_mentor_email?: string | null
