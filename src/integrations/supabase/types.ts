@@ -107,6 +107,8 @@ export type Database = {
           created_at: string
           day_before_reminder_sent_at: string | null
           discount: number
+          guardian_signature_status: string
+          guardian_signed_at: string | null
           id: string
           indemnity_path: string | null
           indemnity_received: boolean
@@ -137,6 +139,8 @@ export type Database = {
           created_at?: string
           day_before_reminder_sent_at?: string | null
           discount?: number
+          guardian_signature_status?: string
+          guardian_signed_at?: string | null
           id?: string
           indemnity_path?: string | null
           indemnity_received?: boolean
@@ -167,6 +171,8 @@ export type Database = {
           created_at?: string
           day_before_reminder_sent_at?: string | null
           discount?: number
+          guardian_signature_status?: string
+          guardian_signed_at?: string | null
           id?: string
           indemnity_path?: string | null
           indemnity_received?: boolean
@@ -895,6 +901,36 @@ export type Database = {
           location: string
         }[]
       }
+      get_parent_children: {
+        Args: never
+        Returns: {
+          career_interests: string | null
+          full_name: string
+          pending_bookings: Json
+          school: string
+          scholar_user_id: string
+        }[]
+      }
+      get_indemnity_context: {
+        Args: { _booking: string }
+        Returns: {
+          career: string
+          company: string
+          company_signed: boolean
+          custom_indemnity_text: string | null
+          location: string | null
+          needs_company_doc: boolean
+          school: string | null
+          scholar_name: string | null
+          shadow_date: string
+          standard_signed: boolean
+          viewer_role: string
+        }[]
+      }
+      submit_guardian_signature: {
+        Args: { _booking: string; _document: string; _path: string }
+        Returns: undefined
+      }
       get_evaluation_context: {
         Args: { _booking: string }
         Returns: {
@@ -1073,7 +1109,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user" | "mentor" | "hr_admin" | "school"
+      app_role: "admin" | "user" | "mentor" | "hr_admin" | "school" | "parent"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1201,7 +1237,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user", "mentor", "hr_admin", "school"],
+      app_role: ["admin", "user", "mentor", "hr_admin", "school", "parent"],
     },
   },
 } as const

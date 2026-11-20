@@ -690,7 +690,7 @@ function UserDocument({ path, kind, verified = false }: { path: string | null; k
   </div>;
 }
 
-const ROLE_LABELS: Record<AccountRow["roles"][number], string> = { user: "Student", mentor: "Host", hr_admin: "HR Admin", school: "School", admin: "Admin" };
+const ROLE_LABELS: Record<AccountRow["roles"][number], string> = { user: "Student", mentor: "Host", hr_admin: "HR Admin", school: "School", admin: "Admin", parent: "Parent" };
 
 function UserFilePreview({ path, label }: { path: string | null; label: string }) {
   const preview = useQuery({

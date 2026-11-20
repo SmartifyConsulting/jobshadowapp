@@ -228,22 +228,12 @@ export function Bookings({ selectedId }: { selectedId?: string | undefined } = {
     queryFn: async () => { const result = await supabase.from("bookings").select("*").eq("user_id", user!.id).order("created_at", { ascending: false }); if (result.error) throw result.error; return result.data ?? []; },
   });
   const [err, setErr] = useState<string | null>(null);
-  async function act(fn: "confirm_test_payment" | "submit_indemnity", id: string) {
+  async function act(fn: "confirm_test_payment", id: string) {
     setErr(null);
     const { error } = await supabase.rpc(fn, { _booking: id });
     if (error) setErr(error.message);
     qc.invalidateQueries({ queryKey: ["bookings"] });
     qc.invalidateQueries({ queryKey: ["emails"] });
-  }
-  async function uploadIndemnity(id: string, file: File) {
-    setErr(null);
-    const uid = (await supabase.auth.getUser()).data.user?.id;
-    if (!uid) return;
-    const path = `${uid}/indemnity-${id}-${file.name}`;
-    const up = await supabase.storage.from("scholar-docs").upload(path, file, { upsert: true });
-    if (up.error) return setErr(up.error.message);
-    await supabase.rpc("set_indemnity_path", { _booking: id, _path: path });
-    await act("submit_indemnity", id);
   }
   return (
     <div className="space-y-3">
@@ -265,13 +255,10 @@ export function Bookings({ selectedId }: { selectedId?: string | undefined } = {
               <Button size="sm" onClick={() => act("confirm_test_payment", b.id)}>Pay R{Number(b.amount_due).toFixed(0)} (test payment)</Button>
             )}
             {b.status === "indemnity_required" && (
-              <>
-                <Link to="/indemnity/$bookingId" params={{ bookingId: b.id }} target="_blank" className="rounded bg-primary px-3 py-1.5 text-xs font-bold uppercase text-primary-foreground">Download indemnity form</Link>
-                <label className="text-sm">
-                  <span className="font-semibold">Upload signed indemnity: </span>
-                  <input type="file" accept="image/*,application/pdf,.doc,.docx" onChange={(e) => { const file = e.target.files?.[0]; if (file) void uploadIndemnity(b.id, file); }} />
-                </label>
-              </>
+              <div className="flex flex-col gap-1">
+                <Link to="/indemnity/$bookingId" params={{ bookingId: b.id }} target="_blank" className="rounded bg-primary px-3 py-1.5 text-xs font-bold uppercase text-primary-foreground">View indemnity form</Link>
+                <p className="text-xs text-muted-foreground">Your parent/guardian must sign this from their own account before the booking is confirmed.</p>
+              </div>
             )}
             {b.status === "completed" && (
               <Link to="/evaluation/$bookingId" params={{ bookingId: b.id }} className="rounded bg-primary px-3 py-1.5 text-xs font-bold uppercase text-primary-foreground">Evaluate this job shadow</Link>

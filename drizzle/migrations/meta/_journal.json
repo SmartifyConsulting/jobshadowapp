@@ -407,6 +407,13 @@
       "when": 1794962500000,
       "tag": "0057_mentor_profiles",
       "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1794962600000,
+      "tag": "0058_booking_gatekeeper_guardian_signature",
+      "breakpoints": true
     }
   ]
 }
