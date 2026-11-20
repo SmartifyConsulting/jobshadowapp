@@ -183,7 +183,7 @@ function ProfileForm({ userId, initialProfile, onSaved }: { userId: string; init
         <summary className="flex cursor-pointer list-none items-center gap-3 font-display text-2xl">
           <ChevronDown className="h-6 w-6 shrink-0 transition group-open:rotate-180" /> Terms &amp; Conditions
         </summary>
-        <a href="#" onClick={(e) => e.preventDefault()} className="mt-3 block text-sm font-bold underline">View here</a>
+        <Link to="/legal" target="_blank" className="mt-3 block text-sm font-bold underline">View full Terms &amp; Privacy Policy</Link>
         <div className="mt-3 max-h-64 space-y-2 overflow-y-auto break-words text-xs">
           {TERMS.map((t, i) => <p key={i}>{t}</p>)}
         </div>

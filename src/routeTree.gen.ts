@@ -18,6 +18,7 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as HowToRouteImport } from './routes/how-to'
+import { Route as LegalRouteImport } from './routes/legal'
 import { Route as PartnersRouteImport } from './routes/partners'
 import { Route as RealStoriesRouteImport } from './routes/real-stories'
 import { Route as RegisterRouteImport } from './routes/register'
@@ -75,6 +76,11 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
 const HowToRoute = HowToRouteImport.update({
   id: '/how-to',
   path: '/how-to',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalRoute = LegalRouteImport.update({
+  id: '/legal',
+  path: '/legal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PartnersRoute = PartnersRouteImport.update({
@@ -159,6 +165,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/how-to': typeof HowToRoute
+  '/legal': typeof LegalRoute
   '/partners': typeof PartnersRoute
   '/real-stories': typeof RealStoriesRoute
   '/register': typeof RegisterRoute
@@ -183,6 +190,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/how-to': typeof HowToRoute
+  '/legal': typeof LegalRoute
   '/partners': typeof PartnersRoute
   '/real-stories': typeof RealStoriesRoute
   '/register': typeof RegisterRoute
@@ -209,6 +217,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/how-to': typeof HowToRoute
+  '/legal': typeof LegalRoute
   '/partners': typeof PartnersRoute
   '/real-stories': typeof RealStoriesRoute
   '/register': typeof RegisterRoute
@@ -235,6 +244,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/forgot-password'
     | '/how-to'
+    | '/legal'
     | '/partners'
     | '/real-stories'
     | '/register'
@@ -259,6 +269,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/forgot-password'
     | '/how-to'
+    | '/legal'
     | '/partners'
     | '/real-stories'
     | '/register'
@@ -284,6 +295,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/forgot-password'
     | '/how-to'
+    | '/legal'
     | '/partners'
     | '/real-stories'
     | '/register'
@@ -310,6 +322,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   HowToRoute: typeof HowToRoute
+  LegalRoute: typeof LegalRoute
   PartnersRoute: typeof PartnersRoute
   RealStoriesRoute: typeof RealStoriesRoute
   RegisterRoute: typeof RegisterRoute
@@ -383,6 +396,13 @@ declare module '@tanstack/react-router' {
       path: '/how-to'
       fullPath: '/how-to'
       preLoaderRoute: typeof HowToRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal': {
+      id: '/legal'
+      path: '/legal'
+      fullPath: '/legal'
+      preLoaderRoute: typeof LegalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/partners': {
@@ -517,6 +537,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   HowToRoute: HowToRoute,
+  LegalRoute: LegalRoute,
   PartnersRoute: PartnersRoute,
   RealStoriesRoute: RealStoriesRoute,
   RegisterRoute: RegisterRoute,
