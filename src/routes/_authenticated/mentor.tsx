@@ -175,11 +175,14 @@ function toUsDate(d: Date): string {
 
 function DatesPicker({ value, onChange, allowWeekends = true, allowOffSeason = true }: { value: string; onChange: (v: string) => void; allowWeekends?: boolean; allowOffSeason?: boolean }) {
   const dates = value.split(",").map((s) => s.trim()).filter(Boolean).map(parseUsDate).filter((d): d is Date => d !== null);
+  const holidays = useQuery({ queryKey: ["public-holidays"], queryFn: async () => ((await supabase.rpc("get_public_holidays")).data ?? []) as string[], staleTime: 60 * 60_000 });
+  const holidaySet = new Set((holidays.data ?? []).map((h) => parseUsDate(h)?.toDateString()).filter(Boolean));
   function set(next: Date[]) {
     onChange(next.map(toUsDate).join(", "));
   }
   const disabledMatchers = [
     { before: new Date() },
+    (d: Date) => holidaySet.has(d.toDateString()),
     ...(allowWeekends ? [] : [(d: Date) => d.getDay() === 0 || d.getDay() === 6]),
     ...(allowOffSeason ? [] : [(d: Date) => { const m = d.getMonth() + 1; return m < 2 || m > 10; }]),
   ];

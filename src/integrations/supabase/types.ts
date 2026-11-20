@@ -53,6 +53,7 @@ export type Database = {
           mentor_reminder_days: number[]
           min_lead_days: number
           no_availability_message: string
+          public_holidays: string[]
           request_expiry_hours: number
           reschedule_allowed: boolean
           reschedule_min_notice_days: number
@@ -69,6 +70,7 @@ export type Database = {
           mentor_reminder_days?: number[]
           min_lead_days?: number
           no_availability_message?: string
+          public_holidays?: string[]
           request_expiry_hours?: number
           reschedule_allowed?: boolean
           reschedule_min_notice_days?: number
@@ -85,6 +87,7 @@ export type Database = {
           mentor_reminder_days?: number[]
           min_lead_days?: number
           no_availability_message?: string
+          public_holidays?: string[]
           request_expiry_hours?: number
           reschedule_allowed?: boolean
           reschedule_min_notice_days?: number
@@ -982,6 +985,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      get_public_holidays: { Args: never; Returns: string[] }
       get_no_availability_message: { Args: never; Returns: string }
       has_role: {
         Args: {

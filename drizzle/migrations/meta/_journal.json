@@ -414,6 +414,13 @@
       "when": 1794962600000,
       "tag": "0058_booking_gatekeeper_guardian_signature",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1794962700000,
+      "tag": "0059_public_holidays",
+      "breakpoints": true
     }
   ]
 }

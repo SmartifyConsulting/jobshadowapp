@@ -1247,7 +1247,7 @@ function LiveBookings() {
 }
 
 type BookingSettingsRow = {
-  min_lead_days: number; blackout_dates: string[] | null; no_availability_message: string;
+  min_lead_days: number; blackout_dates: string[] | null; public_holidays: string[] | null; no_availability_message: string;
   max_advance_days: number; documentation_deadline_days: number; cancellation_cutoff_days: number;
   reschedule_allowed: boolean; reschedule_min_notice_days: number; max_pending_requests: number;
   waitlist_expiry_hours: number; request_expiry_hours: number;
@@ -1269,11 +1269,14 @@ function toUsDate(d: Date): string {
  * reads the same comma-separated string format other code (booking flow, triggers) expects. */
 function DatesPicker({ value, onChange, allowWeekends = true, allowOffSeason = true }: { value: string; onChange: (v: string) => void; allowWeekends?: boolean; allowOffSeason?: boolean }) {
   const dates = value.split(",").map((s) => s.trim()).filter(Boolean).map(parseUsDate).filter((d): d is Date => d !== null);
+  const holidays = useQuery({ queryKey: ["public-holidays"], queryFn: async () => ((await supabase.rpc("get_public_holidays")).data ?? []) as string[], staleTime: 60 * 60_000 });
+  const holidaySet = new Set((holidays.data ?? []).map((h) => parseUsDate(h)?.toDateString()).filter(Boolean));
   function set(next: Date[]) {
     onChange(next.map(toUsDate).join(", "));
   }
   const disabledMatchers = [
     { before: new Date() },
+    (d: Date) => holidaySet.has(d.toDateString()),
     ...(allowWeekends ? [] : [(d: Date) => d.getDay() === 0 || d.getDay() === 6]),
     ...(allowOffSeason ? [] : [(d: Date) => { const m = d.getMonth() + 1; return m < 2 || m > 10; }]),
   ];
@@ -1320,6 +1323,7 @@ function BookingSettings() {
   });
   const [v, setV] = useState<Record<string, string>>({});
   const [blackoutDates, setBlackoutDates] = useState<Date[]>([]);
+  const [publicHolidays, setPublicHolidays] = useState<Date[]>([]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -1337,6 +1341,7 @@ function BookingSettings() {
       mentor_reminder_days: (s.mentor_reminder_days ?? []).join(", "),
     });
     setBlackoutDates((s.blackout_dates ?? []).map(parseUsDate).filter((d): d is Date => d !== null));
+    setPublicHolidays((s.public_holidays ?? []).map(parseUsDate).filter((d): d is Date => d !== null));
   }, [settings.data]);
 
   const f = (key: string) => v[key] ?? "";
@@ -1358,6 +1363,7 @@ function BookingSettings() {
       scholar_reminder_days: parseIntList(f("scholar_reminder_days")),
       mentor_reminder_days: parseIntList(f("mentor_reminder_days")),
       blackout_dates: blackoutDates.map(toUsDate),
+      public_holidays: publicHolidays.map(toUsDate),
       no_availability_message: f("no_availability_message"),
     }).eq("id", 1);
     setBusy(false);
@@ -1391,6 +1397,21 @@ function BookingSettings() {
                       <span key={i} className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs">
                         {toUsDate(d)}
                         <button type="button" onClick={() => setBlackoutDates((cur) => cur.filter((_, idx) => idx !== i))} aria-label={`Remove ${toUsDate(d)}`} className="text-muted-foreground hover:text-destructive"><X className="h-3 w-3" /></button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm">Public holidays <span className="text-xs text-muted-foreground">(always blocked, every placement, no override)</span></p>
+                <div className="mt-2 flex flex-wrap items-start gap-4">
+                  <Calendar mode="multiple" selected={publicHolidays} onSelect={(d) => setPublicHolidays(d ?? [])} className="rounded-md border border-warm-divider bg-background" />
+                  <div className="flex flex-wrap gap-1.5">
+                    {publicHolidays.length === 0 && <span className="text-xs text-muted-foreground">No public holidays set.</span>}
+                    {publicHolidays.map((d, i) => (
+                      <span key={i} className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs">
+                        {toUsDate(d)}
+                        <button type="button" onClick={() => setPublicHolidays((cur) => cur.filter((_, idx) => idx !== i))} aria-label={`Remove ${toUsDate(d)}`} className="text-muted-foreground hover:text-destructive"><X className="h-3 w-3" /></button>
                       </span>
                     ))}
                   </div>
