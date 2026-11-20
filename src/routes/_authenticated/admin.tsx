@@ -1,3 +1,5 @@
+import { PersonNameFields } from "@/components/PersonNameFields";
+import { PhoneInput } from "@/components/PhoneInput";
 import { getCareerIdealFor } from "@/lib/career-ideal-for";
 import { BOOKING_EXPORT_COLS } from "@/lib/application-columns";
 import { CreateAccountDialog } from "@/components/CreateAccountDialog";
@@ -348,12 +350,12 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
         </div>
         {table === "careers" ? (
           <div className="mt-4 space-y-0">
-            {[...new Set(rows.map((r) => alphabetInitial(fmt(r["name"]))))].sort((a, b) => a === "#" ? 1 : b === "#" ? -1 : a.localeCompare(b)).map((group, index) => {
+            {[...new Set(rows.map((r) => alphabetInitial(fmt(r["name"]))))].sort((a, b) => a === "#" ? 1 : b === "#" ? -1 : a.localeCompare(b)).map((group) => {
               const groupRows = rows.filter((r) => alphabetInitial(fmt(r["name"])) === group);
               return (
                 <Accordion key={group} type="multiple" className="overflow-hidden border-x-[4px] border-b-[4px] border-ivory bg-ivory">
                   <AccordionItem value={group} className="border-none">
-                    <AccordionTrigger className={`min-h-11 justify-start gap-3 px-3 py-1.5 text-left hover:no-underline [&>svg]:ml-auto ${BAND_COLORS[index % BAND_COLORS.length]}`}>
+                    <AccordionTrigger className="min-h-11 justify-start gap-3 bg-ivory px-3 py-1.5 text-left text-foreground hover:no-underline [&>svg]:ml-auto">
                       <span className="font-display text-lg uppercase">{group}</span>
                       <span className="text-xs opacity-80">{groupRows.length} {groupRows.length === 1 ? title.replace(/s$/, "") : title}</span>
                     </AccordionTrigger>
@@ -782,7 +784,7 @@ export function AdminUsers() {
     if (!editing) return;
     setBusyId(editing.id);
     try {
-      await updateRoleFn({ data: { userId: editing.id, display_name: editing.display_name ?? "", full_name: editing.full_name ?? "", contact_no: editing.contact_no ?? "", school: editing.school ?? "", id_number: editing.id_number ?? "", roles: editing.roles } });
+      await updateRoleFn({ data: { userId: editing.id, display_name: editing.display_name ?? "", first_name: editing.first_name, last_name: editing.last_name, scholar_first_name: editing.scholar_first_name, scholar_last_name: editing.scholar_last_name, full_name: editing.full_name ?? "", contact_no: editing.contact_no ?? "", school: editing.school ?? "", id_number: editing.id_number ?? "", roles: editing.roles } });
       await qc.invalidateQueries({ queryKey: ["admin", "accounts"] });
       setEditing(null);
     } catch (e) { notify((e as Error).message, "error"); }
@@ -833,7 +835,9 @@ export function AdminUsers() {
           <DialogHeader><DialogTitle>Edit user</DialogTitle></DialogHeader>
           {editing && <form onSubmit={(e) => { e.preventDefault(); saveAccount(); }} className="space-y-3">
             <p className="text-sm text-muted-foreground">{editing.email}</p>
-            {([['display_name', 'Display name'], ['full_name', 'Full name'], ['contact_no', 'Phone'], ['school', 'School'], ['id_number', 'ID / passport number']] as const).map(([field, label]) => <label key={field} className="block text-sm">{label}<input disabled={busyId === editing.id || (field !== 'display_name' && !editing.has_scholar_profile)} value={editing[field] ?? ''} onChange={(e) => setEditing({ ...editing, [field]: e.target.value })} className="mt-1 w-full rounded border border-input bg-background px-3 py-2 disabled:opacity-50" /></label>)}
+            <PersonNameFields id="admin-account-name" label="Account Name" firstName={editing.first_name} lastName={editing.last_name} originalName={editing.display_name} disabled={busyId === editing.id} onChange={(first, last, full) => setEditing({ ...editing, first_name: first, last_name: last, display_name: full })} />
+            {editing.has_scholar_profile && <PersonNameFields id="admin-scholar-name" label="Learner Name" firstName={editing.scholar_first_name} lastName={editing.scholar_last_name} originalName={editing.full_name} disabled={busyId === editing.id} onChange={(first, last, full) => setEditing({ ...editing, scholar_first_name: first, scholar_last_name: last, full_name: full })} />}
+            {([['contact_no', 'Mobile Number'], ['school', 'School'], ['id_number', 'ID / passport number']] as const).map(([field, label]) => <label key={field} className="block text-sm">{label}{field === "contact_no" ? <PhoneInput label={label} disabled={busyId === editing.id || !editing.has_scholar_profile} value={editing.contact_no ?? ""} onChange={(value) => setEditing({ ...editing, contact_no: value })} /> : <input disabled={busyId === editing.id || !editing.has_scholar_profile} value={editing[field] ?? ''} onChange={(e) => setEditing({ ...editing, [field]: e.target.value })} className="mt-1 w-full rounded border border-input bg-background px-3 py-2 disabled:opacity-50" />}</label>)}
             {!editing.has_scholar_profile && <p className="text-xs text-muted-foreground">Scholar details can be edited once this user has a scholar profile. Imported details remain on the original application.</p>}
             <details className="rounded border border-input p-3"><summary className="cursor-pointer text-sm">User types: {editing.roles.map((role) => ROLE_LABELS[role]).join(', ') || 'Select roles'}</summary><div className="mt-2 space-y-2">{(Object.keys(ROLE_LABELS) as AccountRow['roles'][number][]).map((role) => <label key={role} className="flex items-center gap-2 text-sm"><input type="checkbox" disabled={busyId === editing.id} checked={editing.roles.includes(role)} onChange={(e) => setEditing({ ...editing, roles: e.target.checked ? [...editing.roles, role] : editing.roles.filter((item) => item !== role) })} />{ROLE_LABELS[role]}</label>)}</div></details>
             <div className="flex justify-end gap-2 pt-2"><Button type="button" variant="outline" disabled={busyId === editing.id} onClick={() => setEditing(null)}>Cancel</Button><Button disabled={busyId === editing.id || editing.roles.length === 0}>{busyId === editing.id ? 'Saving…' : 'Save changes'}</Button></div>
@@ -1060,7 +1064,7 @@ function CompaniesList() {
 }
 
 function CareersAndSectors() {
-  return <Tabs defaultValue="careers" className="bg-ivory">
+  return <Tabs defaultValue="sectors" className="bg-ivory">
     <div className="overflow-x-auto border-b border-border px-6 py-3"><TabsList aria-label="Career management"><TabsTrigger value="sectors" className="min-h-11">Sectors</TabsTrigger><TabsTrigger value="careers" className="min-h-11">Careers</TabsTrigger></TabsList></div>
     {(["sectors", "careers"] as const).map((id) => { const config = TABLES.find((entry) => entry.id === id)!; return <TabsContent key={id} value={id} className="mt-0"><DataTable title={config.singular} table={config.table} cols={config.cols} csvUpload /></TabsContent>; })}
   </Tabs>;

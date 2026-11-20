@@ -4,8 +4,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteLayout } from "@/components/SiteLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserCircle, IdCard, CalendarCheck, Mail } from "lucide-react";
-import { AccountPanel, Emails } from "@/components/account/AccountSections";
+import { UserCircle, IdCard, CalendarCheck } from "lucide-react";
+import { AccountPanel } from "@/components/account/AccountSections";
 
 type Tab = "profile" | "account" | "bookings";
 export const Route = createFileRoute("/_authenticated/profile")({
@@ -84,7 +84,7 @@ function ProfileSettings() {
   return (
     <SiteLayout>
       <section className="bg-muted/40">
-        <div className="mx-auto max-w-3xl space-y-4 px-5 py-8">
+        <div className="mx-auto max-w-7xl space-y-4 px-5 py-8">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Profile</h1>
             <p className="text-xs text-muted-foreground">Manage your details, scholar account and bookings.</p>
@@ -122,14 +122,14 @@ function ProfileSettings() {
           </div>
         </div>
 
-        <div className="max-w-lg">
+        <div className="w-full">
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block text-sm font-semibold">
-              First name
+              First Name
               <input value={firstName} onChange={(e) => setFirst(e.target.value)} autoComplete="given-name" className="mt-1 w-full border-b border-foreground/30 bg-transparent px-1 py-2 text-sm outline-none focus:border-foreground" />
             </label>
             <label className="block text-sm font-semibold">
-              Last name
+              Last Name
               <input value={lastName} onChange={(e) => setLast(e.target.value)} autoComplete="family-name" className="mt-1 w-full border-b border-foreground/30 bg-transparent px-1 py-2 text-sm outline-none focus:border-foreground" />
             </label>
           </div>
@@ -152,10 +152,7 @@ function ProfileSettings() {
               <div className="rounded-xl border border-primary bg-teal p-4 text-teal-foreground shadow-sm">
                 <AccountPanel withBookings />
               </div>
-              <div className="rounded-xl border border-primary bg-card p-4 shadow-sm">
-                <div className="mb-3 flex items-center gap-3"><Mail className="h-4 w-4 text-primary" /><h2 className="text-sm font-semibold">Notifications</h2></div>
-                <Emails />
-              </div>
+
             </TabsContent>
           </Tabs>
         </div>

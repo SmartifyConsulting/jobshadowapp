@@ -14,6 +14,12 @@ export type Database = {
   }
   public: {
     Tables: {
+      user_notification_state: {
+        Row: { user_id: string; notification_id: string; read_at: string | null; dismissed_at: string | null }
+        Insert: { user_id: string; notification_id: string; read_at?: string | null; dismissed_at?: string | null }
+        Update: { user_id?: string; notification_id?: string; read_at?: string | null; dismissed_at?: string | null }
+        Relationships: []
+      }
       activity_log: {
         Row: { id: string; created_at: string; actor_user_id: string | null; resource_type: string; record_id: string; action: string }
         Insert: { id?: string; created_at?: string; actor_user_id?: string | null; resource_type: string; record_id: string; action: string }
@@ -239,6 +245,12 @@ export type Database = {
       }
       companies: {
         Row: {
+          mentor_first_name: string | null
+          mentor_last_name: string | null
+          backup_mentor_first_name: string | null
+          backup_mentor_last_name: string | null
+          hr_contact_first_name: string | null
+          hr_contact_last_name: string | null
           active: boolean
           address: string | null
           allow_off_season: boolean
@@ -279,6 +291,12 @@ export type Database = {
           website: string | null
         }
         Insert: {
+          mentor_first_name?: string | null
+          mentor_last_name?: string | null
+          backup_mentor_first_name?: string | null
+          backup_mentor_last_name?: string | null
+          hr_contact_first_name?: string | null
+          hr_contact_last_name?: string | null
           active?: boolean
           address?: string | null
           allow_off_season?: boolean
@@ -319,6 +337,12 @@ export type Database = {
           website?: string | null
         }
         Update: {
+          mentor_first_name?: string | null
+          mentor_last_name?: string | null
+          backup_mentor_first_name?: string | null
+          backup_mentor_last_name?: string | null
+          hr_contact_first_name?: string | null
+          hr_contact_last_name?: string | null
           active?: boolean
           address?: string | null
           allow_off_season?: boolean
@@ -447,6 +471,7 @@ export type Database = {
         Row: {
           blackout_dates: string[]
           buffer_days: number | null
+          max_consecutive_hours: number | null
           max_shadows_per_month: number | null
           max_shadows_per_week: number | null
           mentor_email: string
@@ -456,6 +481,7 @@ export type Database = {
         Insert: {
           blackout_dates?: string[]
           buffer_days?: number | null
+          max_consecutive_hours?: number | null
           max_shadows_per_month?: number | null
           max_shadows_per_week?: number | null
           mentor_email: string
@@ -465,6 +491,7 @@ export type Database = {
         Update: {
           blackout_dates?: string[]
           buffer_days?: number | null
+          max_consecutive_hours?: number | null
           max_shadows_per_month?: number | null
           max_shadows_per_week?: number | null
           mentor_email?: string
@@ -475,6 +502,8 @@ export type Database = {
       }
       legacy_applications: {
         Row: {
+          first_name: string | null
+          last_name: string | null
           cancelled: boolean | null
           career: string | null
           company: string | null
@@ -494,6 +523,8 @@ export type Database = {
           sector: string | null
         }
         Insert: {
+          first_name?: string | null
+          last_name?: string | null
           cancelled?: boolean | null
           career?: string | null
           company?: string | null
@@ -513,6 +544,8 @@ export type Database = {
           sector?: string | null
         }
         Update: {
+          first_name?: string | null
+          last_name?: string | null
           cancelled?: boolean | null
           career?: string | null
           company?: string | null
@@ -535,6 +568,8 @@ export type Database = {
       }
       legacy_users: {
         Row: {
+          first_name: string | null
+          last_name: string | null
           email: string | null
           has_profile: boolean | null
           id: number
@@ -542,6 +577,8 @@ export type Database = {
           name: string | null
         }
         Insert: {
+          first_name?: string | null
+          last_name?: string | null
           email?: string | null
           has_profile?: boolean | null
           id: number
@@ -549,6 +586,8 @@ export type Database = {
           name?: string | null
         }
         Update: {
+          first_name?: string | null
+          last_name?: string | null
           email?: string | null
           has_profile?: boolean | null
           id?: number
@@ -640,6 +679,10 @@ export type Database = {
       }
       scholar_profiles: {
         Row: {
+          first_name: string | null
+          last_name: string | null
+          guardian_first_name: string | null
+          guardian_last_name: string | null
           career_interests: string | null
           contact_no: string
           created_at: string
@@ -664,6 +707,10 @@ export type Database = {
           where_heard: string | null
         }
         Insert: {
+          first_name?: string | null
+          last_name?: string | null
+          guardian_first_name?: string | null
+          guardian_last_name?: string | null
           career_interests?: string | null
           contact_no: string
           created_at?: string
@@ -688,6 +735,10 @@ export type Database = {
           where_heard?: string | null
         }
         Update: {
+          first_name?: string | null
+          last_name?: string | null
+          guardian_first_name?: string | null
+          guardian_last_name?: string | null
           career_interests?: string | null
           contact_no?: string
           created_at?: string
@@ -784,6 +835,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_read_own_notification: { Args: { _notification: string }; Returns: boolean }
+      get_public_career_content: { Args: never; Returns: { name: string; description: string | null }[] }
+      get_my_notifications: { Args: never; Returns: { id: string; subject: string; body: string; created_at: string; read_at: string | null }[] }
+      set_my_notification_state: { Args: { _notification: string; _action: string }; Returns: undefined }
       check_voucher: {
         Args: { _code: string }
         Returns: {
@@ -819,6 +874,7 @@ export type Database = {
         Returns: {
           blackout_dates: string[]
           buffer_days: number | null
+          max_consecutive_hours: number | null
           max_shadows_per_month: number | null
           max_shadows_per_week: number | null
           mentor_email: string
@@ -950,6 +1006,7 @@ export type Database = {
         Args: {
           _blackout_dates: string[]
           _buffer_days: number
+          _max_consecutive_hours: number | null
           _max_shadows_per_month: number
           _max_shadows_per_week: number
           _paused: boolean

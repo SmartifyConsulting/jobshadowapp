@@ -1,3 +1,4 @@
+import { NotificationInbox } from "@/components/NotificationInbox";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -106,10 +107,11 @@ export function SiteHeader({ headerLogo }: { headerLogo?: ReactNode }) {
                 <s.icon className="h-4 w-4" />
               </a>
             ))}
+            {user && <NotificationInbox userId={user.id} />}
           </div>
           {user && <AccountMenu displayName={displayName} avatarUrl={avatarUrl} isAdmin={isAdmin} logout={logout} />}
         </nav>
-        <div className="absolute right-5 flex items-center gap-3 lg:hidden">{user && <AccountMenu displayName={displayName} avatarUrl={avatarUrl} isAdmin={isAdmin} logout={logout} />}<button className="rounded p-2" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button></div>
+        <div className="absolute right-5 flex items-center gap-3 lg:hidden">{user && <NotificationInbox userId={user.id} />}{user && <AccountMenu displayName={displayName} avatarUrl={avatarUrl} isAdmin={isAdmin} logout={logout} />}<button className="rounded p-2" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button></div>
       </div>
       {open && (
         <nav className="flex flex-col gap-3 border-t border-primary-foreground/20 px-5 py-4 font-semibold lg:hidden">
@@ -120,7 +122,7 @@ export function SiteHeader({ headerLogo }: { headerLogo?: ReactNode }) {
   );
 }
 
-export function SiteLayout({ children, headerLogo, className = "", hideExperienceLink = false }: { children: ReactNode; headerLogo?: ReactNode; className?: string; hideExperienceLink?: boolean }) {
+export function SiteLayout({ children, headerLogo, className = "" }: { children: ReactNode; headerLogo?: ReactNode; className?: string }) {
   const { data: session } = useSession();
   const isAdmin = session?.isAdmin ?? false;
 
@@ -128,14 +130,14 @@ export function SiteLayout({ children, headerLogo, className = "", hideExperienc
     <div className={`flex min-h-screen flex-col ${className}`}>
       <SiteHeader headerLogo={headerLogo} />
       <main className="flex flex-1 flex-col">{children}</main>
-      <SiteFooter hideExperienceLink={hideExperienceLink} />
+      <SiteFooter />
       <SupportChatWidget viewerRole={isAdmin ? "admin" : session?.roles?.[0]} />
     </div>
   );
 }
 
 /** The site footer, shared verbatim with SiteHeader by Admin/Host Portal. */
-export function SiteFooter({ hideExperienceLink = false }: { hideExperienceLink?: boolean } = {}) {
+export function SiteFooter() {
   return (
     <footer className="bg-brand-deep text-primary-foreground">
       <div className="mx-auto grid max-w-7xl gap-6 px-5 py-6 md:grid-cols-4">
@@ -149,7 +151,6 @@ export function SiteFooter({ hideExperienceLink = false }: { hideExperienceLink?
               </a>
             ))}
           </div>
-          {!hideExperienceLink && <Link to="/share-experience" className="mt-2 inline-block text-sm font-semibold text-accent hover:underline">Share your experience with us</Link>}
         </div>
         <div className="text-sm">
           <p className="font-display text-base text-accent">Explore</p>

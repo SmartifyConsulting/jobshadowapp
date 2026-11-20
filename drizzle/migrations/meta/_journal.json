@@ -362,8 +362,29 @@
     {
       "idx": 51,
       "version": "7",
+      "when": 1794944200000,
+      "tag": "0051_host_max_consecutive_hours",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
       "when": 1794955300492,
       "tag": "0052_admin_reporting_ledgers",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1794961857058,
+      "tag": "0053_person_name_parts_and_private_inbox",
+      "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1794962247770,
+      "tag": "0054_public_career_content",
       "breakpoints": true
     }
   ]

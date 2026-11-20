@@ -7,6 +7,10 @@ export type AccountRow = {
   role: "user" | "mentor" | "hr_admin" | "school" | "admin" | null;
   roles: ("user" | "mentor" | "hr_admin" | "school" | "admin")[];
   has_scholar_profile: boolean;
+  first_name?: string | null | undefined;
+  last_name?: string | null | undefined;
+  scholar_first_name?: string | null | undefined;
+  scholar_last_name?: string | null | undefined;
   display_name: string | null;
   avatar_path: string | null;
   full_name: string | null;
@@ -48,10 +52,10 @@ export async function listAccounts(): Promise<AccountRow[]> {
   }
 
   const [{ data: roles }, { data: profiles }, { data: scholars }, { data: legacy }, bookingRows, applicationRows] = await Promise.all([
-    supabaseAdmin.from("user_roles").select("user_id, role"),
-    supabaseAdmin.from("profiles").select("user_id, display_name, avatar_path"),
-    supabaseAdmin.from("scholar_profiles").select("user_id, full_name, contact_no, school, id_number, id_file_path, photo_path, id_verified"),
-    supabaseAdmin.from("legacy_users").select("email, has_profile, is_spam"),
+    (async () => ({ data: await readAllRows(async (from, to) => await supabaseAdmin.from("user_roles").select("user_id, role").order("user_id").order("role").range(from, to)) }))(),
+    (async () => ({ data: await readAllRows(async (from, to) => await supabaseAdmin.from("profiles").select("user_id, display_name, avatar_path, first_name, last_name").order("user_id").range(from, to)) }))(),
+    (async () => ({ data: await readAllRows(async (from, to) => await supabaseAdmin.from("scholar_profiles").select("user_id, full_name, first_name, last_name, contact_no, school, id_number, id_file_path, photo_path, id_verified").order("user_id").range(from, to)) }))(),
+    (async () => ({ data: await readAllRows(async (from, to) => await supabaseAdmin.from("legacy_users").select("email, name, first_name, last_name, has_profile, is_spam").order("id").range(from, to)) }))(),
     readAllRows(async (from, to) => await supabaseAdmin.from("bookings").select("id, user_id, company, career, shadow_date, paid_at, indemnity_received, status").order("created_at", { ascending: false }).order("id").range(from, to)),
     readAllRows(async (from, to) => await supabaseAdmin.from("legacy_applications").select("id, name, email, contact, school, id_number, company, career, dates, paid, indemnity, cancelled").order("id", { ascending: false }).range(from, to)),
   ]);
@@ -79,7 +83,11 @@ export async function listAccounts(): Promise<AccountRow[]> {
         role,
         roles: [...new Set(userRoles)] as AccountRow["roles"],
         has_scholar_profile: !!scholar,
-        display_name: profile?.display_name ?? null,
+        first_name: profile?.first_name ?? legacyRow?.first_name ?? null,
+        last_name: profile?.last_name ?? legacyRow?.last_name ?? null,
+        scholar_first_name: scholar?.first_name ?? null,
+        scholar_last_name: scholar?.last_name ?? null,
+        display_name: profile?.display_name ?? legacyRow?.name ?? null,
         avatar_path: profile?.avatar_path ?? null,
         full_name: scholar?.full_name || latestImported?.name || null,
         contact_no: scholar?.contact_no || latestImported?.contact || null,
@@ -97,14 +105,14 @@ export async function listAccounts(): Promise<AccountRow[]> {
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
 }
 
-export type AccountEdit = { userId: string; display_name: string; full_name: string; contact_no: string; school: string; id_number: string; roles: AccountRow["roles"] };
+export type AccountEdit = { userId: string; display_name: string; full_name: string; contact_no: string; school: string; id_number: string; roles: AccountRow["roles"]; first_name?: string | null | undefined; last_name?: string | null | undefined; scholar_first_name?: string | null | undefined; scholar_last_name?: string | null | undefined };
 
 export async function editAccount(data: AccountEdit) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const profile = await supabaseAdmin.from("profiles").update({ display_name: data.display_name }).eq("user_id", data.userId);
+  const profile = await supabaseAdmin.from("profiles").upsert({ user_id: data.userId, display_name: data.display_name, ...(data.first_name !== undefined ? { first_name: data.first_name } : {}), ...(data.last_name !== undefined ? { last_name: data.last_name } : {}) });
   if (profile.error) throw new Error(profile.error.message);
   // Never create scholar consent or a profile on the user's behalf.
-  const scholar = await supabaseAdmin.from("scholar_profiles").update({ full_name: data.full_name, contact_no: data.contact_no, school: data.school, id_number: data.id_number }).eq("user_id", data.userId);
+  const scholar = await supabaseAdmin.from("scholar_profiles").update({ full_name: data.full_name, contact_no: data.contact_no, school: data.school, id_number: data.id_number, ...(data.scholar_first_name !== undefined ? { first_name: data.scholar_first_name } : {}), ...(data.scholar_last_name !== undefined ? { last_name: data.scholar_last_name } : {}) }).eq("user_id", data.userId);
   if (scholar.error) throw new Error(scholar.error.message);
   const current = await supabaseAdmin.from("user_roles").select("role").eq("user_id", data.userId);
   if (current.error) throw new Error(current.error.message);
@@ -129,13 +137,13 @@ export async function deleteAccount(userId: string) {
 }
 
 /** Admin account creation deliberately sends no invitation, confirmation or password email. */
-export async function createAccountSilently(email: string, name: string, role: AccountRow["roles"][number]) {
+export async function createAccountSilently(email: string, name: string, role: AccountRow["roles"][number], parts?: { first_name: string; last_name: string }) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const created = await supabaseAdmin.auth.admin.createUser({ email, email_confirm: false, user_metadata: { name, display_name: name } });
+  const created = await supabaseAdmin.auth.admin.createUser({ email, email_confirm: false, user_metadata: { name, display_name: name, ...parts } });
   if (created.error || !created.data.user) throw new Error(created.error?.message ?? "Unable to create account.");
   const id = created.data.user.id;
   try {
-    const profile = await supabaseAdmin.from("profiles").upsert({ user_id: id, display_name: name });
+    const profile = await supabaseAdmin.from("profiles").upsert({ user_id: id, display_name: name, ...parts });
     if (profile.error) throw profile.error;
     const removed = await supabaseAdmin.from("user_roles").delete().eq("user_id", id);
     if (removed.error) throw removed.error;

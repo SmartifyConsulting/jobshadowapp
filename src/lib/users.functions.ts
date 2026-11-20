@@ -13,16 +13,16 @@ export const getAccounts = createServerFn({ method: "GET" })
 
 export const createAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator(z.object({ email: z.string().trim().email().max(255), name: z.string().trim().min(1).max(200), role: z.enum(["user", "mentor", "school", "hr_admin", "admin"]) }))
+  .inputValidator(z.object({ email: z.string().trim().email().max(255), name: z.string().trim().min(1).max(200), first_name: z.string().trim().min(1).max(100).optional(), last_name: z.string().trim().min(1).max(100).optional(), role: z.enum(["user", "mentor", "school", "hr_admin", "admin"]) }))
   .handler(async ({ context, data }) => {
     const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (!isAdmin) throw new Error("Forbidden");
-    return createAccountSilently(data.email, data.name, data.role);
+    return createAccountSilently(data.email, data.name, data.role, data.first_name && data.last_name ? { first_name: data.first_name, last_name: data.last_name } : undefined);
   });
 
 export const updateAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator(z.object({ userId: z.string().uuid(), display_name: z.string().trim().max(200), full_name: z.string().trim().max(200), contact_no: z.string().trim().max(100), school: z.string().trim().max(300), id_number: z.string().trim().max(100), roles: z.array(z.enum(["user", "mentor", "hr_admin", "school", "admin"])).min(1).max(5) }))
+  .inputValidator(z.object({ userId: z.string().uuid(), first_name: z.string().trim().max(100).nullable().optional(), last_name: z.string().trim().max(100).nullable().optional(), scholar_first_name: z.string().trim().max(100).nullable().optional(), scholar_last_name: z.string().trim().max(100).nullable().optional(), display_name: z.string().trim().max(200), full_name: z.string().trim().max(200), contact_no: z.string().trim().max(100), school: z.string().trim().max(300), id_number: z.string().trim().max(100), roles: z.array(z.enum(["user", "mentor", "hr_admin", "school", "admin"])).min(1).max(5) }))
   .handler(async ({ context, data }) => {
     const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (!isAdmin) throw new Error("Forbidden");

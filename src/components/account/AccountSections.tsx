@@ -1,6 +1,12 @@
+import { JourneyStepper, type JourneyStep } from "@/components/JourneyStepper";
+import { ROLES } from "@/lib/data";
+import { phoneWithCountryCode } from "@/components/PhoneInput";
+import { PersonNameFields, joinPersonName } from "@/components/PersonNameFields";
+import { PhoneInput } from "@/components/PhoneInput";
+import { isPossiblePhoneNumber } from "libphonenumber-js/min";
 import { Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronDown, UserRound, Search, CalendarDays, FileText, BadgeCheck, Briefcase, Star } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,11 +43,12 @@ export function AccountPanel({ withBookings = false }: { withBookings?: boolean 
   const profile = useQuery({
     queryKey: ["scholar-profile", user?.id],
     enabled: !!user,
-    queryFn: async () => (await supabase.from("scholar_profiles").select("*").eq("user_id", user!.id).maybeSingle()).data,
+    queryFn: async () => { const result = await supabase.from("scholar_profiles").select("*").eq("user_id", user!.id).maybeSingle(); if (result.error) throw result.error; return result.data; },
   });
   if (profile.isLoading || !user) return <p>Loading…</p>;
+  if (profile.error) return <p role="alert">Your profile could not be loaded. Please refresh before continuing.</p>;
+  if (withBookings) return <StudentJourney userId={user.id} profile={profile.data as Record<string, unknown> | null} />;
   if (!profile.data) return <ProfileForm userId={user.id} />;
-  if (withBookings) return <div className="space-y-10"><Bookings /><NewBooking /></div>;
   return <ScholarDetails p={profile.data as Record<string, unknown>} />;
 }
 
@@ -60,24 +67,28 @@ function ScholarDetails({ p }: { p: Record<string, unknown> }) {
 }
 
 const profileSchema = z.object({
+  first_name: z.string().trim().min(1, "Enter the first name").max(100),
+  last_name: z.string().trim().min(1, "Enter the last name").max(100),
+  guardian_first_name: z.string().trim().min(1, "Enter the guardian first name").max(100),
+  guardian_last_name: z.string().trim().min(1, "Enter the guardian last name").max(100),
   full_name: z.string().trim().min(2, "Enter the scholar's name"),
-  contact_no: z.string().trim().min(10, "Enter a valid phone number"),
+  contact_no: z.string().trim().refine(isPossiblePhoneNumber, "Enter a valid number with its country code"),
   id_number: z.string().trim().regex(/^[A-Za-z0-9]{6,13}$/, "Enter an ID or passport number"),
   school: z.string().trim().min(2, "Enter the current school"),
   school_type: z.enum(["Public School", "Private School", "Home School"]),
   career_interests: z.string().trim().max(200).optional(),
   dietary: z.string().trim().max(200).optional(),
   guardian_name: z.string().trim().min(2, "Enter parent/guardian name"),
-  guardian_contact: z.string().trim().min(10, "Enter parent/guardian number"),
+  guardian_contact: z.string().trim().refine(isPossiblePhoneNumber, "Enter a valid guardian number with its country code"),
   guardian_email: z.string().trim().email("Enter a valid email"),
   guardian_id: z.string().trim().optional(),
   tc_accepted: z.literal(true, { errorMap: () => ({ message: "Please accept the Terms & Conditions" }) }),
   popi_accepted: z.literal(true, { errorMap: () => ({ message: "Please provide POPI consent to continue" }) }),
 });
 
-function ProfileForm({ userId }: { userId: string }) {
+function ProfileForm({ userId, initialProfile, onSaved }: { userId: string; initialProfile?: Record<string, unknown> | undefined; onSaved?: (() => void) | undefined }) {
   const qc = useQueryClient();
-  const [f, setF] = useState<Record<string, string | boolean>>({ school_type: "Public School", tc_accepted: false, popi_accepted: false });
+  const [f, setF] = useState<Record<string, string | boolean>>(() => ({ school_type: "Public School", tc_accepted: false, popi_accepted: false, ...Object.fromEntries(Object.entries(initialProfile ?? {}).filter(([, value]) => typeof value === "string" || typeof value === "boolean")), contact_no: initialProfile?.["contact_no"] ? phoneWithCountryCode(String(initialProfile["contact_no"]), "ZA") : "", guardian_contact: initialProfile?.["guardian_contact"] ? phoneWithCountryCode(String(initialProfile["guardian_contact"]), "ZA") : "" }));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [files, setFiles] = useState<{ id?: File | undefined; photo?: File | undefined }>({});
@@ -85,7 +96,7 @@ function ProfileForm({ userId }: { userId: string }) {
   const field = (k: string, label: string, placeholder?: string) => (
     <div className="min-w-0">
       <Label htmlFor={k}>{label}</Label>
-      <Input id={k} placeholder={placeholder} value={(f[k] as string) ?? ""} onChange={(e) => setF({ ...f, [k]: e.target.value })} />
+      {["contact_no", "guardian_contact"].includes(k) ? <PhoneInput id={k} label={label} value={String(f[k] ?? "")} onChange={(value) => setF({ ...f, [k]: value })} /> : <Input id={k} placeholder={placeholder} value={(f[k] as string) ?? ""} onChange={(e) => setF({ ...f, [k]: e.target.value })} />}
       {errors[k] && <p className="text-xs text-destructive">{errors[k]}</p>}
     </div>
   );
@@ -97,7 +108,7 @@ function ProfileForm({ userId }: { userId: string }) {
       return;
     }
     setErrors({});
-    if (!files.id) return setErrors({ form: "Please upload a scan of the scholar's ID." });
+    if (!files.id && !initialProfile?.["id_file_path"]) return setErrors({ form: "Please upload a scan of the scholar's ID." });
     setBusy(true);
     const upload = async (file: File | undefined, kind: string) => {
       if (!file) return null;
@@ -106,19 +117,21 @@ function ProfileForm({ userId }: { userId: string }) {
       if (res.error) throw new Error(res.error.message);
       return path;
     };
-    let id_file_path: string | null = null;
-    let photo_path: string | null = null;
+    let id_file_path: string | null = typeof initialProfile?.["id_file_path"] === "string" ? initialProfile["id_file_path"] : null;
+    let photo_path: string | null = typeof initialProfile?.["photo_path"] === "string" ? initialProfile["photo_path"] : null;
     try {
-      id_file_path = await upload(files.id, "id");
-      photo_path = await upload(files.photo, "photo");
+      if (files.id) id_file_path = await upload(files.id, "id");
+      if (files.photo) photo_path = await upload(files.photo, "photo");
     } catch (ex) {
       setBusy(false);
       return setErrors({ form: (ex as Error).message });
     }
-    const { error } = await supabase.from("scholar_profiles").insert({ ...r.data, career_interests: r.data.career_interests ?? null, dietary: r.data.dietary ?? null, guardian_id: r.data.guardian_id ?? null, user_id: userId, id_file_path, photo_path, popi_accepted_at: new Date().toISOString() });
+    const patch = { ...r.data, career_interests: r.data.career_interests ?? null, dietary: r.data.dietary ?? null, guardian_id: r.data.guardian_id ?? null, user_id: userId, id_file_path, photo_path, ...(!initialProfile || initialProfile["popi_accepted"] !== true ? { popi_accepted_at: new Date().toISOString() } : {}) };
+    const { error } = initialProfile ? await supabase.from("scholar_profiles").update(patch).eq("user_id", userId) : await supabase.from("scholar_profiles").insert(patch);
     setBusy(false);
     if (error) return setErrors({ form: error.message });
-    qc.invalidateQueries({ queryKey: ["scholar-profile"] });
+    await qc.invalidateQueries({ queryKey: ["scholar-profile"] });
+    onSaved?.();
   }
   return (
     <form onSubmit={save} className="min-w-0 w-full space-y-5">
@@ -128,7 +141,7 @@ function ProfileForm({ userId }: { userId: string }) {
       </div>
       <h5 className="font-semibold">The Job Shadow-ers Details</h5>
       <div className="grid gap-4 sm:grid-cols-2">
-        {field("full_name", "Name & Surname", "Name & surname")}
+        <div className="sm:col-span-2"><PersonNameFields id="learner-name" label="Name" originalName={String(initialProfile?.["full_name"] ?? "")} required firstName={String(f["first_name"] ?? "")} lastName={String(f["last_name"] ?? "")} onChange={(first, last, full) => setF({ ...f, first_name: first, last_name: last, full_name: full })} />{(errors["first_name"] || errors["last_name"]) && <p className="text-xs text-destructive">{errors["first_name"] || errors["last_name"]}</p>}</div>
         {field("contact_no", "Tel No", "Tel no")}
         {field("id_number", "ID / passport number", "Id no")}
       </div>
@@ -159,7 +172,7 @@ function ProfileForm({ userId }: { userId: string }) {
       <fieldset className="min-w-0 rounded-md border border-current/20 p-4">
         <legend className="px-2 font-semibold">Parent / Guardian</legend>
         <div className="grid gap-4 sm:grid-cols-2">
-          {field("guardian_name", "Name", "Full name")}
+          <div className="sm:col-span-2"><PersonNameFields id="guardian-name" originalName={String(initialProfile?.["guardian_name"] ?? "")} required firstName={String(f["guardian_first_name"] ?? "")} lastName={String(f["guardian_last_name"] ?? "")} onChange={(first, last, full) => setF({ ...f, guardian_first_name: first, guardian_last_name: last, guardian_name: full })} />{(errors["guardian_first_name"] || errors["guardian_last_name"]) && <p className="text-xs text-destructive">{errors["guardian_first_name"] || errors["guardian_last_name"]}</p>}</div>
           {field("guardian_contact", "Contact Number", "Contact number")}
           {field("guardian_email", "Email Address", "name@example.com")}
           {field("guardian_id", "ID / Passport Number", "ID or passport number")}
@@ -196,16 +209,17 @@ function ProfileForm({ userId }: { userId: string }) {
       </details>
       {errors["popi_accepted"] && <p className="text-xs text-destructive">{errors["popi_accepted"]}</p>}
       {errors["form"] && <p className="text-sm text-destructive">{errors["form"]}</p>}
-      <Button type="submit" disabled={busy} className="bg-primary text-primary-foreground">Complete &amp; Go To Step 2</Button>
+      <Button type="submit" disabled={busy} className="bg-primary text-primary-foreground">{initialProfile ? "Save Profile" : "Complete Profile & Continue"}</Button>
     </form>
   );
 }
 
-export function Bookings() {
+export function Bookings({ selectedId }: { selectedId?: string | undefined } = {}) {
+  const { data: user } = useUser();
   const qc = useQueryClient();
   const q = useQuery({
-    queryKey: ["bookings"],
-    queryFn: async () => (await supabase.from("bookings").select("*").order("created_at", { ascending: false })).data ?? [],
+    queryKey: ["bookings", user?.id], enabled: !!user,
+    queryFn: async () => { const result = await supabase.from("bookings").select("*").eq("user_id", user!.id).order("created_at", { ascending: false }); if (result.error) throw result.error; return result.data ?? []; },
   });
   const [err, setErr] = useState<string | null>(null);
   async function act(fn: "confirm_test_payment" | "submit_indemnity", id: string) {
@@ -230,7 +244,7 @@ export function Bookings() {
       <h2 className="font-display text-3xl text-teal-foreground">My bookings</h2>
       {err && <p className="text-sm text-destructive">{err}</p>}
       {q.data?.length === 0 && <p className="text-muted-foreground">No bookings yet. Book your first Job Shadow below.</p>}
-      {q.data?.map((b) => (
+      {q.data?.filter((b) => !selectedId || b.id === selectedId).map((b) => (
         <div key={b.id} className="rounded-lg border bg-card p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
@@ -263,17 +277,62 @@ export function Bookings() {
   );
 }
 
+function StudentJourney({ userId, profile }: { userId: string; profile: Record<string, unknown> | null }) {
+  const [active, setActive] = useState("profile");
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [career, setCareer] = useState("");
+  const [selectedId, setSelectedId] = useState("");
+  const bookings = useQuery({ queryKey: ["bookings", userId], queryFn: async () => {
+    const result = await supabase.from("bookings").select("*").eq("user_id", userId).order("created_at", { ascending: false });
+    if (result.error) throw result.error; return result.data ?? [];
+  } });
+  const current = selectedId ? bookings.data?.find((booking) => booking.id === selectedId) : bookings.data?.find((booking) => booking.status !== "cancelled");
+  const feedback = useQuery({ queryKey: ["student-journey-feedback", current?.id], enabled: current?.status === "completed", queryFn: async () => {
+    const result = await supabase.rpc("get_evaluation_context", { _booking: current!.id }); if (result.error) throw result.error; return result.data?.[0];
+  } });
+  const confirmed = current?.status === "confirmed" || current?.status === "completed";
+  const steps: JourneyStep[] = [
+    { id: "profile", title: "Complete Profile", icon: UserRound, complete: !!profile },
+    { id: "careers", title: "Explore Careers", icon: Search, complete: !!current, locked: !profile },
+    { id: "request", title: "Request a Booking", icon: CalendarDays, complete: !!current, locked: !profile },
+    { id: "forms", title: "Payment & Forms", icon: FileText, complete: confirmed, locked: !current },
+    { id: "confirmation", title: "Check Confirmation", icon: BadgeCheck, complete: confirmed, locked: !current },
+    { id: "experience", title: "Do Your Job Shadow", icon: Briefcase, complete: current?.status === "completed", locked: !confirmed },
+    { id: "feedback", title: "Share Feedback", icon: Star, complete: feedback.data?.already_submitted === true, locked: current?.status !== "completed" },
+  ];
+  const selectedCareer = ROLES.find((role) => role.title === career);
+  return <section className="min-w-0 space-y-5" aria-label="Student step wizard">
+    <JourneyStepper title="Your Job Shadow Journey" steps={steps} active={active} onChange={setActive} />
+    <div className="min-w-0 rounded-lg border border-border bg-ivory p-4 text-foreground sm:p-6">
+      {active === "profile" && (!profile || editingProfile ? <ProfileForm userId={userId} initialProfile={profile ?? undefined} onSaved={() => { setEditingProfile(false); setActive("careers"); }} /> : <div className="space-y-4"><h2 className="font-display text-2xl">Step 1: Complete Profile</h2><p className="text-sm">Your profile is saved. Review your details before choosing a career and host.</p><ScholarDetails p={profile} /><div className="flex flex-wrap gap-3"><Button variant="outline" onClick={() => setEditingProfile(true)}>Edit Profile</Button><Button onClick={() => setActive("careers")}>Continue to Explore Careers</Button></div></div>)}
+      {active === "careers" && <div className="space-y-4"><h2 className="font-display text-2xl">Step 2: Explore Careers</h2><p className="text-sm">Choose a career that interests you, then find a host offering that experience.</p><label className="block text-sm">Career<select value={career} onChange={(event) => setCareer(event.target.value)} className="mt-1 block w-full rounded border border-input bg-background p-2"><option value="">Choose a career</option>{[...new Set(ROLES.map((role) => role.title))].sort().map((title) => <option key={title}>{title}</option>)}</select></label>{selectedCareer?.idealFor && <p className="text-sm"><strong>Ideal for:</strong> {selectedCareer.idealFor}</p>}<div className="flex flex-wrap items-center gap-4"><Link to="/roles" className="text-sm text-primary underline">Browse all career descriptions</Link><Button onClick={() => setActive("request")}>Continue to Find a Host</Button></div></div>}
+      {active === "request" && <NewBooking initialCareer={career} onBooked={(id) => { setSelectedId(id); setActive("forms"); }} />}
+      {["forms", "confirmation", "experience", "feedback"].includes(active) && <div className="space-y-4">
+        <label className="block text-sm">Your application<select value={current?.id ?? ""} onChange={(event) => setSelectedId(event.target.value)} className="mt-1 block w-full rounded border border-input bg-background p-2"><option value="" disabled>Choose an application</option>{bookings.data?.map((booking) => <option key={booking.id} value={booking.id}>{booking.career} — {booking.company} — {booking.shadow_date}</option>)}</select></label>
+        {!current ? <p className="text-sm">{bookings.isFetching ? "Loading your application…" : "Choose an application to continue."}</p> : <>
+          {active === "forms" && <><h2 className="font-display text-2xl">Step 4: Payment & Forms</h2><p className="text-sm">Check payment and complete the required indemnity and consent documents for this booking.</p><Bookings selectedId={current.id} /><Button variant="outline" onClick={() => setActive("confirmation")}>Check Confirmation</Button></>}
+          {active === "confirmation" && <><h2 className="font-display text-2xl">Step 5: Check Confirmation</h2><p className="text-sm">{confirmed ? "Your booking is confirmed. Check the date, location and arrangements before your visit." : current.status === "cancelled" ? "This application has been cancelled. You can request another booking." : "Your booking is not confirmed yet. Complete any outstanding payment or forms and check back here."}</p><Bookings selectedId={current.id} />{confirmed && <Button onClick={() => setActive("experience")}>Continue to Your Job Shadow</Button>}</>}
+          {active === "experience" && <><h2 className="font-display text-2xl">Step 6: Do Your Job Shadow</h2><p className="text-sm">{current.career} at {current.company} · {current.shadow_date}</p><p className="text-sm">Check your booking instructions, arrival time and what to bring. Feedback becomes available when the experience is recorded as completed.</p><Bookings selectedId={current.id} />{current.status === "completed" && <Button onClick={() => setActive("feedback")}>Continue to Feedback</Button>}</>}
+          {active === "feedback" && <><h2 className="font-display text-2xl">Step 7: Share Feedback</h2>{feedback.data?.already_submitted ? <p className="text-sm">Thank you—your feedback has been submitted.</p> : <><p className="text-sm">Tell us about your experience and what you learned.</p><Link to="/evaluation/$bookingId" params={{ bookingId: current.id }} className="inline-block rounded bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Complete Your Evaluation</Link></>}</>}
+        </>}
+      </div>}
+      {bookings.error && <p role="alert" className="mt-3 text-sm text-destructive">Your applications could not be loaded. Please refresh and try again.</p>}
+    </div>
+  </section>;
+}
+
 type Placement = { id: number; company: string; sector: string; career: string; location: string; availability: string; amount: number; days_per_shadow: number | null; arrival_time: string | null; collection_time: string | null; description: string | null; mode: string | null };
 
-export function NewBooking() {
+export function NewBooking({ initialCareer = "", onBooked }: { initialCareer?: string; onBooked?: ((id: string) => void) | undefined } = {}) {
+  const { data: user } = useUser();
   const qc = useQueryClient();
   const placements = useQuery({
     queryKey: ["placements"],
     queryFn: async () => ((await supabase.rpc("list_placements")).data ?? []) as Placement[],
   });
   const myBookings = useQuery({
-    queryKey: ["bookings"],
-    queryFn: async () => (await supabase.from("bookings").select("*").order("created_at", { ascending: false })).data ?? [],
+    queryKey: ["bookings", user?.id], enabled: !!user,
+    queryFn: async () => { const result = await supabase.from("bookings").select("*").eq("user_id", user!.id).order("created_at", { ascending: false }); if (result.error) throw result.error; return result.data ?? []; },
   });
   const noAvailabilityMessage = useQuery({
     queryKey: ["no-availability-message"],
@@ -283,6 +342,7 @@ export function NewBooking() {
   const [career, setCareer] = useState("");
   const [step, setStep] = useState(1);
   const [pid, setPid] = useState<number | null>(null);
+  useEffect(() => { const match = placements.data?.find((item) => item.career.trim().toLowerCase() === initialCareer.trim().toLowerCase()); if (initialCareer && match) { setSector(match.sector); setCareer(match.career); setStep(3); } }, [initialCareer, placements.data]);
   const [date, setDate] = useState("");
   const [code, setCode] = useState("");
   const [voucher, setVoucher] = useState<{ code: string; discount: number } | null>(null);
@@ -314,15 +374,16 @@ export function NewBooking() {
     const effectiveDate = requestingDate ? requestedDate : date;
     if (!chosen || !effectiveDate) return setMsg("Choose a career and a date.");
     if (duplicate && !confirmDupe) return;
-    const { error } = await supabase.from("bookings").insert({
+    const { data: created, error } = await supabase.from("bookings").insert({
       company_id: chosen.id, company: chosen.company, sector: chosen.sector, career: chosen.career, location: chosen.location, mode: chosen.mode,
       shadow_date: effectiveDate, base_amount: base, voucher_code: voucher?.code ?? null, discount: voucher?.discount ?? 0, amount_due: due,
       ad_hoc_requested: requestingDate, ad_hoc_note: requestingDate ? (requestNote || null) : null,
-    });
+    }).select("id").single();
     if (error) return setMsg(error.message);
     setRequestingDate(false); setRequestedDate(""); setRequestNote("");
     setPid(null); setDate(""); setVoucher(null); setCode(""); setConfirmDupe(false);
-    setMsg("Booking created – pay below to secure it.");
+    setMsg("Booking created – continue to payment and forms.");
+    if (created?.id) onBooked?.(created.id);
     qc.invalidateQueries({ queryKey: ["bookings"] });
   }
 
@@ -340,7 +401,7 @@ export function NewBooking() {
 
   if (!placements.isLoading && sectors.length === 0) {
     return (
-      <div className="-mx-6 bg-accent px-6 py-8 text-center text-accent-foreground">
+      <div className="bg-accent px-6 py-8 text-center text-accent-foreground">
         <h2 className="font-display text-2xl">Book a Job Shadow</h2>
         <p className="mt-3">{noAvailabilityMessage.data ?? "Our mentors are not available right now. Please check back closer to the time to see availability."}</p>
       </div>

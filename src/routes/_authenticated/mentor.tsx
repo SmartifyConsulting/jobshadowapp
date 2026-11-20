@@ -207,6 +207,7 @@ function HostSettings() {
   const [maxWeek, setMaxWeek] = useState("");
   const [maxMonth, setMaxMonth] = useState("");
   const [bufferDays, setBufferDays] = useState("");
+  const [maxHours, setMaxHours] = useState("");
   const placements = useQuery({ queryKey: ["mentor-placements"], queryFn: async () => { const result = await supabase.rpc("list_mentor_placements"); if (result.error) throw result.error; return result.data as unknown as Placement[]; } });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -219,6 +220,7 @@ function HostSettings() {
     setMaxWeek(s.max_shadows_per_week != null ? String(s.max_shadows_per_week) : "");
     setMaxMonth(s.max_shadows_per_month != null ? String(s.max_shadows_per_month) : "");
     setBufferDays(s.buffer_days != null ? String(s.buffer_days) : "");
+    setMaxHours(s.max_consecutive_hours != null ? String(s.max_consecutive_hours) : "");
   }, [settings.data]);
 
   async function save() {
@@ -231,6 +233,7 @@ function HostSettings() {
       _max_shadows_per_month: maxMonth ? Number(maxMonth) : null,
       _buffer_days: bufferDays ? Number(bufferDays) : null,
       _blackout_dates: [],
+      _max_consecutive_hours: maxHours ? Number(maxHours) : null,
     } as never);
     setBusy(false);
     if (error) return setErr(error.message);
@@ -261,8 +264,11 @@ function HostSettings() {
         <label className="text-sm">Maximum shadows per month
           <input type="number" min={0} value={maxMonth} onChange={(e) => setMaxMonth(e.target.value)} placeholder="No limit" className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none" />
         </label>
-        <label className="text-sm sm:col-span-2">Buffer between job shadows (days)
+        <label className="text-sm">Buffer between job shadows (days)
           <input type="number" min={0} value={bufferDays} onChange={(e) => setBufferDays(e.target.value)} placeholder="No buffer" className="mt-1 block w-full max-w-xs border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none" />
+        </label>
+        <label className="text-sm">Max consecutive hours per session
+          <input type="number" min={0} value={maxHours} onChange={(e) => setMaxHours(e.target.value)} placeholder="No limit" className="mt-1 block w-full max-w-xs border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none" />
         </label>
       </div>
 

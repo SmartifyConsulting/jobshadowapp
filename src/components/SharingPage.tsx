@@ -5,7 +5,7 @@ import { SiteLayout, useSiteSession } from "@/components/SiteLayout";
 import { CONTACT_EMAIL } from "@/lib/data";
 
 export function SharingPage() {
-  return <SiteLayout className="sharing-page bg-teal"><ShareStorySection /><SendToFriendSection /></SiteLayout>;
+  return <SiteLayout className="sharing-page bg-teal"><SendToFriendSection /><ShareStorySection /></SiteLayout>;
 }
 
 function ShareStorySection() {
@@ -39,7 +39,7 @@ function ShareStorySection() {
 
   return (
     <>
-      <section id="share-your-story" aria-labelledby="share-your-story-title" className="flex items-center bg-accent px-5 py-4 text-accent-foreground sm:py-5">
+      <section id="share-your-story" aria-labelledby="share-your-story-title" className="flex items-center bg-[#7CCCC8] px-5 py-4 text-teal-foreground sm:py-5">
         <div className="mx-auto grid w-full max-w-6xl items-start gap-6 md:grid-cols-2">
           <div>
             <h1 id="share-your-story-title" className="font-display text-3xl uppercase leading-tight md:text-4xl">Share your experience with us</h1>
@@ -107,7 +107,7 @@ function SendToFriendSection() {
 
   return (
     <>
-      <section id="send-to-friend" aria-labelledby="send-to-friend-title" className="flex items-center border-t border-foreground/15 bg-[#7CCCC8] px-5 py-4 text-teal-foreground sm:py-5">
+      <section id="send-to-friend" aria-labelledby="send-to-friend-title" className="flex items-center border-b border-foreground/15 bg-accent px-5 py-4 text-accent-foreground sm:py-5">
         <div className="mx-auto grid max-w-6xl items-start gap-6 md:grid-cols-2">
           <div>
             <h2 id="send-to-friend-title" className="font-display text-3xl uppercase leading-tight md:text-4xl">Send To A Friend</h2>

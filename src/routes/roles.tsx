@@ -1,3 +1,4 @@
+import { getCareerDescription } from "@/lib/career-descriptions";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -50,6 +51,9 @@ function Roles() {
     qc.invalidateQueries({ queryKey: ["career-favourites", session.user.id] });
   }
 
+  const savedContent = useQuery({ queryKey: ["public-career-content"], queryFn: async () => { const result = await supabase.rpc("get_public_career_content"); if (result.error) throw result.error; return result.data ?? []; } });
+  const careerKey = (name: string) => name.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+  const descriptionFor = (title: string, fallback: string) => getCareerDescription(title, savedContent.data?.find((row) => careerKey(row.name) === careerKey(title))?.description) || fallback;
   const [location, setLocation] = useState("");
   const placements = useQuery({
     queryKey: ["placements"],
@@ -178,6 +182,7 @@ function Roles() {
               <div className="bg-ivory">
                 <div className="divide-y divide-warm-divider">
                   {roles.map((r) => {
+                    const description = descriptionFor(r.title, r.summary);
                     const count = mentorCounts.get(r.title.trim().toLowerCase()) ?? 0;
                     const open = openRoles.has(r.slug);
                     return (
@@ -185,7 +190,7 @@ function Roles() {
                         <div className="flex items-start justify-between gap-3">
                           <button type="button" onClick={() => toggleRole(r.slug)} aria-expanded={open} className="flex min-w-0 flex-1 items-center gap-3 text-left">
                             <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-warm-divider bg-card text-charcoal">{open ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}</span>
-                            <span className="min-w-0"><span className="flex items-center gap-2 text-sm font-semibold leading-tight text-charcoal">{r.title}{r.video && <PlayCircle className="h-4 w-4" aria-label="Has video" />}</span>{!open && <span className="mt-0.5 block text-xs leading-snug text-soft-grey">{r.summary.split("\n")[0]}</span>}</span>
+                            <span className="min-w-0"><span className="flex items-center gap-2 text-sm font-semibold leading-tight text-charcoal">{r.title}{r.video && <PlayCircle className="h-4 w-4" aria-label="Has video" />}</span></span>
                           </button>
                           <div className="flex shrink-0 items-center gap-2 self-start sm:self-center">
                             <button
@@ -210,7 +215,7 @@ function Roles() {
                         </div>
                         {open && (
                           <div className="mt-2 pl-9">
-                            {r.summary.split("\n").map((p, i) => <p key={i} className="mt-1 text-sm text-soft-grey">{p}</p>)}
+                            {description.split("\n").map((p, i) => <p key={i} className="mt-1 text-sm text-soft-grey">{p}</p>)}
                             {r.idealFor && <p className="mt-2 text-sm text-charcoal"><strong>Ideal for:</strong> {r.idealFor}</p>}
                             {r.video && <div className="mt-3 max-w-xl"><YouTube id={r.video} title={r.title} /></div>}
                             {count > 0 && (
