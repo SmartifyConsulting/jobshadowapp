@@ -329,6 +329,24 @@ function StudentJourney({ userId, profile }: { userId: string; profile: Record<s
 
 type Placement = { id: number; company: string; sector: string; career: string; location: string; availability: string; amount: number; days_per_shadow: number | null; arrival_time: string | null; collection_time: string | null; description: string | null; mode: string | null };
 
+function HostProfileCard({ companyId }: { companyId: number }) {
+  const profile = useQuery({
+    queryKey: ["host-profile-for-placement", companyId],
+    queryFn: async () => { const { data, error } = await supabase.rpc("get_host_profile_for_placement", { _company_id: companyId }); if (error) throw error; return data?.[0] ?? null; },
+  });
+  if (profile.isPending || !profile.data || (!profile.data.bio && !profile.data.certifications && !(profile.data.specialties ?? []).length)) return null;
+  return (
+    <div className="mt-4 rounded border border-current/20 bg-primary-foreground/10 p-3">
+      <p className="text-xs font-semibold uppercase tracking-wide opacity-80">About your host</p>
+      {profile.data.bio && <p className="mt-1 text-sm">{profile.data.bio}</p>}
+      {!!(profile.data.specialties ?? []).length && (
+        <div className="mt-2 flex flex-wrap gap-1.5">{profile.data.specialties.map((s) => <span key={s} className="rounded-full bg-primary-foreground/20 px-2 py-0.5 text-xs">{s}</span>)}</div>
+      )}
+      {profile.data.certifications && <p className="mt-2 text-xs opacity-90">{profile.data.certifications}</p>}
+    </div>
+  );
+}
+
 export function NewBooking({ initialCareer = "", onBooked }: { initialCareer?: string; onBooked?: ((id: string) => void) | undefined } = {}) {
   const { data: user } = useUser();
   const qc = useQueryClient();
@@ -444,14 +462,17 @@ export function NewBooking({ initialCareer = "", onBooked }: { initialCareer?: s
             </select>
           )}
           {step === 4 && chosen && (
-            <dl className="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
-              <div><dt className="font-semibold">Type</dt><dd>{chosen.mode || "TBC"}</dd></div>
-              <div><dt className="font-semibold">Location</dt><dd>{chosen.location}</dd></div>
-              <div><dt className="font-semibold">Days per shadow</dt><dd>{chosen.days_per_shadow ?? 1}</dd></div>
-              <div><dt className="font-semibold">Arrival time</dt><dd>{chosen.arrival_time || "TBC"}</dd></div>
-              <div><dt className="font-semibold">Collection time</dt><dd>{chosen.collection_time || "TBC"}</dd></div>
-              <div><dt className="font-semibold">Fee</dt><dd>R{base.toFixed(0)}</dd></div>
-            </dl>
+            <>
+              <dl className="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
+                <div><dt className="font-semibold">Type</dt><dd>{chosen.mode || "TBC"}</dd></div>
+                <div><dt className="font-semibold">Location</dt><dd>{chosen.location}</dd></div>
+                <div><dt className="font-semibold">Days per shadow</dt><dd>{chosen.days_per_shadow ?? 1}</dd></div>
+                <div><dt className="font-semibold">Arrival time</dt><dd>{chosen.arrival_time || "TBC"}</dd></div>
+                <div><dt className="font-semibold">Collection time</dt><dd>{chosen.collection_time || "TBC"}</dd></div>
+                <div><dt className="font-semibold">Fee</dt><dd>R{base.toFixed(0)}</dd></div>
+              </dl>
+              <HostProfileCard companyId={chosen.id} />
+            </>
           )}
           {step === 5 && chosen && (
             <div className="space-y-3">

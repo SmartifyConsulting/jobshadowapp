@@ -470,6 +470,36 @@ export type Database = {
           },
         ]
       }
+      host_profiles: {
+        Row: {
+          bio: string | null
+          certifications: string | null
+          cv_path: string | null
+          linkedin_url: string | null
+          mentor_email: string
+          specialties: string[]
+          updated_at: string
+        }
+        Insert: {
+          bio?: string | null
+          certifications?: string | null
+          cv_path?: string | null
+          linkedin_url?: string | null
+          mentor_email: string
+          specialties?: string[]
+          updated_at?: string
+        }
+        Update: {
+          bio?: string | null
+          certifications?: string | null
+          cv_path?: string | null
+          linkedin_url?: string | null
+          mentor_email?: string
+          specialties?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       host_settings: {
         Row: {
           blackout_dates: string[]
@@ -873,6 +903,28 @@ export type Database = {
           company: string
           shadow_date: string
           viewer_role: string
+        }[]
+      }
+      get_my_host_profile: {
+        Args: never
+        Returns: Database["public"]["Tables"]["host_profiles"]["Row"]
+      }
+      update_my_host_profile: {
+        Args: {
+          _bio: string | null
+          _certifications: string | null
+          _cv_path: string | null
+          _linkedin_url: string | null
+          _specialties: string[]
+        }
+        Returns: undefined
+      }
+      get_host_profile_for_placement: {
+        Args: { _company_id: number }
+        Returns: {
+          bio: string | null
+          certifications: string | null
+          specialties: string[]
         }[]
       }
       get_my_host_settings: {

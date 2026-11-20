@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, Briefcase, MessageSquare, ChevronLeft, ChevronRight, Settings as SettingsIcon, X } from "lucide-react";
+import { CalendarDays, Briefcase, MessageSquare, ChevronLeft, ChevronRight, Settings as SettingsIcon, X, UserCircle, Award, Upload } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
 import { bookingDayKey, countByDay, filterHostBookings } from "@/lib/host-bookings";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,11 +35,12 @@ type MentorBooking = {
 
 const STATUS: Record<string, string> = { awaiting_payment: "Awaiting payment", indemnity_required: "Paid – indemnity needed", confirmed: "Confirmed", completed: "Completed" };
 
-type Section = "calendar" | "shadows" | "messages" | "settings";
+type Section = "calendar" | "shadows" | "messages" | "profile" | "settings";
 const MENU: { id: Section; label: string; icon: typeof CalendarDays }[] = [
   { id: "calendar", label: "Calendar", icon: CalendarDays },
   { id: "shadows", label: "Job Shadows", icon: Briefcase },
   { id: "messages", label: "Messages", icon: MessageSquare },
+  { id: "profile", label: "Profile", icon: UserCircle },
   { id: "settings", label: "Settings", icon: SettingsIcon },
 ];
 
@@ -80,6 +81,7 @@ function MentorPortal() {
           {active === "calendar" && <HostCalendar bookings={all} />}
           {active === "shadows" && <JobShadows bookings={all} placements={placements.data ?? []} loadingPlacements={placements.isLoading} />}
           {active === "messages" && <HostMessages />}
+          {active === "profile" && <HostProfile />}
           {active === "settings" && <HostSettings />}
         </main>
       </div>
@@ -194,6 +196,112 @@ function DatesPicker({ value, onChange, allowWeekends = true, allowOffSeason = t
         ))}
       </div>
     </div>
+  );
+}
+
+function HostProfile() {
+  const qc = useQueryClient();
+  const profile = useQuery({
+    queryKey: ["host-profile"],
+    queryFn: async () => { const result = await supabase.rpc("get_my_host_profile"); if (result.error) throw result.error; return result.data; },
+  });
+  const [bio, setBio] = useState("");
+  const [specialties, setSpecialties] = useState("");
+  const [certifications, setCertifications] = useState("");
+  const [linkedinUrl, setLinkedinUrl] = useState("");
+  const [cvPath, setCvPath] = useState<string | null>(null);
+  const [cvBusy, setCvBusy] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    if (!profile.data) return;
+    const p = profile.data;
+    setBio(p.bio ?? "");
+    setSpecialties((p.specialties ?? []).join(", "));
+    setCertifications(p.certifications ?? "");
+    setLinkedinUrl(p.linkedin_url ?? "");
+    setCvPath(p.cv_path ?? null);
+  }, [profile.data]);
+
+  async function uploadCv(file: File) {
+    setCvBusy(true);
+    setErr(null);
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const email = userData.user?.email;
+      if (!email) throw new Error("Not signed in.");
+      const path = `${email}/cv-${Date.now()}-${file.name}`;
+      const { error } = await supabase.storage.from("host-docs").upload(path, file, { upsert: true });
+      if (error) throw error;
+      setCvPath(path);
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setCvBusy(false);
+    }
+  }
+
+  async function save() {
+    setBusy(true);
+    setErr(null);
+    setSaved(false);
+    const { error } = await supabase.rpc("update_my_host_profile", {
+      _bio: bio || null,
+      _specialties: specialties.split(",").map((s) => s.trim()).filter(Boolean),
+      _certifications: certifications || null,
+      _linkedin_url: linkedinUrl || null,
+      _cv_path: cvPath,
+    } as never);
+    setBusy(false);
+    if (error) return setErr(error.message);
+    setSaved(true);
+    qc.invalidateQueries({ queryKey: ["host-profile"] });
+  }
+
+  return (
+    <section className="max-w-2xl space-y-5">
+      <h1 className="text-2xl font-bold">Profile</h1>
+      <p className="text-sm text-muted-foreground">
+        Shown to students and HR before your identity is revealed — it's what gives them confidence to book, without naming you. Your name, email and phone are never shown here.
+      </p>
+
+      <div className="rounded-lg border bg-card p-4">
+        <label className="block text-sm font-semibold">
+          <span className="flex items-center gap-1.5"><UserCircle className="h-4 w-4" /> Experience / bio</span>
+          <textarea rows={4} value={bio} onChange={(e) => setBio(e.target.value)} placeholder="A few sentences about your role and experience." className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none" />
+        </label>
+      </div>
+
+      <div className="rounded-lg border bg-card p-4">
+        <label className="block text-sm font-semibold">
+          <span className="flex items-center gap-1.5"><Award className="h-4 w-4" /> Specialties (comma separated)</span>
+          <input value={specialties} onChange={(e) => setSpecialties(e.target.value)} placeholder="e.g. Corporate law, Contract negotiation" className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none" />
+        </label>
+        <label className="mt-3 block text-sm font-semibold">
+          Certifications / qualifications
+          <textarea rows={2} value={certifications} onChange={(e) => setCertifications(e.target.value)} className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none" />
+        </label>
+      </div>
+
+      <div className="rounded-lg border bg-card p-4">
+        <label className="block text-sm font-semibold">LinkedIn / professional profile URL
+          <input type="url" value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} placeholder="https://linkedin.com/in/..." className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none" />
+        </label>
+        <div className="mt-3">
+          <p className="text-sm font-semibold">CV (private — admin only, never shown to students)</p>
+          <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded bg-muted px-3 py-2 text-xs font-semibold">
+            <Upload className="h-3.5 w-3.5" /> {cvBusy ? "Uploading…" : cvPath ? "Replace CV" : "Upload CV"}
+            <input type="file" accept=".pdf,.doc,.docx" hidden disabled={cvBusy} onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadCv(f); }} />
+          </label>
+          {cvPath && <span className="ml-2 text-xs text-muted-foreground">{cvPath.split("/").pop()}</span>}
+        </div>
+      </div>
+
+      {(err || profile.error) && <p role="alert" className="text-sm text-destructive">{err || "Unable to load your profile. Please refresh before saving."}</p>}
+      <button onClick={save} disabled={busy || profile.isPending} className="rounded bg-primary px-5 py-2.5 text-sm font-bold uppercase text-primary-foreground disabled:opacity-50">{saved ? "Saved" : "Save profile"}</button>
+    </section>
   );
 }
 
