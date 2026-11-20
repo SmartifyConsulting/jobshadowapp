@@ -81,6 +81,7 @@ const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string
   { id: "settings", label: "Booking Settings", icon: FileText, table: "booking_settings", singular: "Settings", custom: true, cols: [] },
   { id: "emails", label: "Email Archive", icon: FileText, table: "email_outbox", singular: "Emails", custom: true, cols: [] },
   { id: "evaluations", label: "Evaluations", icon: FileText, table: "evaluations", singular: "Evaluations", custom: true, cols: [] },
+  { id: "legal", label: "Legal Content", icon: FileText, table: "legal_documents", singular: "Legal Content", custom: true, cols: [] },
 ];
 
 function useIsAdmin() {
@@ -133,6 +134,8 @@ function AdminPage() {
             <EmailArchive key={section.id} />
           ) : section.id === "evaluations" ? (
             <Evaluations key={section.id} />
+          ) : section.id === "legal" ? (
+            <LegalContentEditor key={section.id} />
           ) : section.id === "bookings" ? (
             <LiveBookings key={section.id} />
           ) : section.id === "settings" ? (
@@ -1011,6 +1014,71 @@ function EmailArchive() {
 
 type EvaluationRow = { id: string; booking_id: string; role: "scholar" | "mentor"; ratings: number[]; continue_text: string | null; stop_text: string | null; start_text: string | null; extra_text: string | null; comments_text: string | null; created_at: string };
 
+function LegalContentEditor() {
+  const qc = useQueryClient();
+  const docs = useQuery({
+    queryKey: ["admin", "legal_documents"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("legal_documents").select("*").order("key");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const [editing, setEditing] = useState<{ key: string; title: string; body: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function save() {
+    if (!editing) return;
+    setBusy(true);
+    setErr(null);
+    const { error } = await supabase.from("legal_documents").update({ title: editing.title, body: editing.body }).eq("key", editing.key);
+    setBusy(false);
+    if (error) return setErr(error.message);
+    setEditing(null);
+    qc.invalidateQueries({ queryKey: ["admin", "legal_documents"] });
+    notify("Saved.", "success");
+  }
+
+  return (
+    <div>
+      <div className="border-b border-border bg-background px-6 py-6 text-foreground">
+        <h1 className="text-2xl font-medium">Legal Content</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Edit the text shown on /legal and in the indemnity signing flow directly — no code change needed. Use "## Heading" on its own line for a section heading; leave a blank line between paragraphs.</p>
+      </div>
+      <div className="bg-background px-6 py-6 text-foreground">
+        {editing ? (
+          <div className="space-y-3">
+            <label className="block text-sm">Title
+              <input value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} className="mt-1 w-full border-b border-input bg-transparent px-1 py-1 outline-none" />
+            </label>
+            <label className="block text-sm">Body
+              <textarea rows={20} value={editing.body} onChange={(e) => setEditing({ ...editing, body: e.target.value })} className="mt-1 w-full rounded border border-input bg-transparent p-2 font-mono text-xs outline-none" />
+            </label>
+            {err && <p className="text-sm text-destructive">{err}</p>}
+            <div className="flex gap-2">
+              <Button onClick={save} disabled={busy}>{busy ? "Saving…" : "Save"}</Button>
+              <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
+            </div>
+          </div>
+        ) : docs.isLoading ? <p>Loading…</p> : (
+          <div className="space-y-2">
+            {docs.data?.map((d) => (
+              <div key={d.key} className="flex items-center justify-between rounded border border-border p-3">
+                <div>
+                  <p className="text-sm font-medium">{d.title}</p>
+                  <p className="text-xs text-muted-foreground">Updated {new Date(d.updated_at).toLocaleDateString()}</p>
+                </div>
+                <Button variant="outline" onClick={() => setEditing({ key: d.key, title: d.title, body: d.body })}>Edit</Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function Evaluations() {
   const evals = useQuery({
     queryKey: ["admin", "evaluations"],
@@ -1253,6 +1321,7 @@ type BookingSettingsRow = {
   reschedule_allowed: boolean; reschedule_min_notice_days: number; max_pending_requests: number;
   waitlist_expiry_hours: number; request_expiry_hours: number;
   scholar_reminder_days: number[]; mentor_reminder_days: number[];
+  season_start_month: number; season_end_month: number;
 };
 
 function parseUsDate(s: string): Date | null {
@@ -1272,6 +1341,7 @@ function DatesPicker({ value, onChange, allowWeekends = true, allowOffSeason = t
   const dates = value.split(",").map((s) => s.trim()).filter(Boolean).map(parseUsDate).filter((d): d is Date => d !== null);
   const holidays = useQuery({ queryKey: ["public-holidays"], queryFn: async () => ((await supabase.rpc("get_public_holidays")).data ?? []) as string[], staleTime: 60 * 60_000 });
   const holidaySet = new Set((holidays.data ?? []).map((h) => parseUsDate(h)?.toDateString()).filter(Boolean));
+  const season = useQuery({ queryKey: ["season-window"], queryFn: async () => ((await supabase.rpc("get_season_window")).data ?? [])[0] ?? { season_start_month: 1, season_end_month: 12 }, staleTime: 60 * 60_000 });
   function set(next: Date[]) {
     onChange(next.map(toUsDate).join(", "));
   }
@@ -1279,7 +1349,7 @@ function DatesPicker({ value, onChange, allowWeekends = true, allowOffSeason = t
     { before: new Date() },
     (d: Date) => holidaySet.has(d.toDateString()),
     ...(allowWeekends ? [] : [(d: Date) => d.getDay() === 0 || d.getDay() === 6]),
-    ...(allowOffSeason ? [] : [(d: Date) => { const m = d.getMonth() + 1; return m < 2 || m > 10; }]),
+    ...(allowOffSeason ? [] : [(d: Date) => { const m = d.getMonth() + 1; return m < (season.data?.season_start_month ?? 1) || m > (season.data?.season_end_month ?? 12); }]),
   ];
   return (
     <div className="flex flex-wrap items-start gap-4">
@@ -1376,6 +1446,7 @@ function BookingSettings() {
       no_availability_message: s.no_availability_message ?? "",
       scholar_reminder_days: (s.scholar_reminder_days ?? []).join(", "),
       mentor_reminder_days: (s.mentor_reminder_days ?? []).join(", "),
+      season_start_month: String(s.season_start_month), season_end_month: String(s.season_end_month),
     });
     setBlackoutDates((s.blackout_dates ?? []).map(parseUsDate).filter((d): d is Date => d !== null));
     setPublicHolidays((s.public_holidays ?? []).map(parseUsDate).filter((d): d is Date => d !== null));
@@ -1399,6 +1470,8 @@ function BookingSettings() {
       max_pending_requests: Number(f("max_pending_requests")) || 0,
       scholar_reminder_days: parseIntList(f("scholar_reminder_days")),
       mentor_reminder_days: parseIntList(f("mentor_reminder_days")),
+      season_start_month: Number(f("season_start_month")) || 1,
+      season_end_month: Number(f("season_end_month")) || 12,
       blackout_dates: blackoutDates.map(toUsDate),
       public_holidays: publicHolidays.map(toUsDate),
       no_availability_message: f("no_availability_message"),
@@ -1423,6 +1496,10 @@ function BookingSettings() {
             <AccordionContent className="space-y-5 bg-ivory px-5 py-5 text-foreground">
               <NumberField label="Minimum request lead time" suffix="days before the shadow date" value={f("min_lead_days")} onChange={set("min_lead_days")} hint="The earliest a student may submit a booking request relative to the shadow date." />
               <NumberField label="Maximum advance booking window" suffix="days ahead" value={f("max_advance_days")} onChange={set("max_advance_days")} hint="How far into the future a student can request a shadow." />
+              <div className="flex gap-4">
+                <NumberField label="Operating season starts" suffix="month (1-12)" value={f("season_start_month")} onChange={set("season_start_month")} />
+                <NumberField label="Operating season ends" suffix="month (1-12)" value={f("season_end_month")} onChange={set("season_end_month")} hint="Placements run only within this month range unless a listing explicitly allows off-season dates." />
+              </div>
               <NumberField label="Maximum pending requests per student" suffix="active requests" value={f("max_pending_requests")} onChange={set("max_pending_requests")} hint={NOT_ENFORCED_HINT} />
               <div>
                 <p className="text-sm">Blackout dates <span className="text-xs text-muted-foreground">(no bookings allowed)</span></p>

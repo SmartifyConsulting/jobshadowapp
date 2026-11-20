@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { SiteLayout } from "@/components/SiteLayout";
-import { LEGAL_REVIEW_NOTICE, PRIVACY_POLICY, CONSENT_FORMS, PLATFORM_TERMS, type LegalSection } from "@/lib/legal-content";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/legal")({
   head: () => ({
@@ -14,23 +15,31 @@ export const Route = createFileRoute("/legal")({
   component: LegalPage,
 });
 
-function SectionBlock({ title, sections }: { title: string; sections: LegalSection[] }) {
-  return (
-    <section className="mt-10">
-      <h2 className="font-display text-2xl uppercase">{title}</h2>
-      <div className="mt-4 space-y-6">
-        {sections.map((s) => (
-          <div key={s.heading}>
-            <h3 className="font-semibold">{s.heading}</h3>
-            {s.paragraphs.map((p, i) => <p key={i} className="mt-2 text-sm leading-relaxed text-muted-foreground">{p}</p>)}
-          </div>
-        ))}
-      </div>
-    </section>
-  );
+/** "## Heading" lines become section headings; blank lines separate paragraphs. Lets admin edit
+ * the raw text (Admin > Legal Content) without touching structured data. */
+function renderBody(body: string) {
+  const blocks = body.split(/\n\s*\n/).map((b) => b.trim()).filter(Boolean);
+  return blocks.map((block, i) => {
+    if (block.startsWith("## ")) return <h3 key={i} className="mt-6 font-semibold">{block.slice(3)}</h3>;
+    return <p key={i} className="mt-2 text-sm leading-relaxed text-muted-foreground">{block}</p>;
+  });
 }
 
+const DOCUMENT_KEYS = ["privacy_policy", "consent_forms", "platform_terms"] as const;
+
 function LegalPage() {
+  const notice = useQuery({
+    queryKey: ["legal-document", "legal_review_notice"],
+    queryFn: async () => (await supabase.from("legal_documents").select("body").eq("key", "legal_review_notice").maybeSingle()).data?.body ?? "",
+  });
+  const docs = useQuery({
+    queryKey: ["legal-documents", DOCUMENT_KEYS],
+    queryFn: async () => {
+      const { data } = await supabase.from("legal_documents").select("key, title, body").in("key", DOCUMENT_KEYS);
+      return DOCUMENT_KEYS.map((k) => (data ?? []).find((d) => d.key === k)).filter((d): d is { key: string; title: string; body: string } => !!d);
+    },
+  });
+
   return (
     <SiteLayout>
       <div className="bg-cta text-cta-foreground">
@@ -40,11 +49,14 @@ function LegalPage() {
         </div>
       </div>
       <div className="mx-auto max-w-3xl px-5 py-10">
-        <p className="rounded-md border border-accent/40 bg-accent/10 p-4 text-sm">{LEGAL_REVIEW_NOTICE}</p>
+        {notice.data && <p className="rounded-md border border-accent/40 bg-accent/10 p-4 text-sm">{notice.data}</p>}
 
-        <SectionBlock title="Part 1: Global Data Protection & Privacy Policy" sections={PRIVACY_POLICY} />
-        <SectionBlock title="Part 2: In-App Digital Consent, Indemnity & Safeguarding Agreements" sections={CONSENT_FORMS} />
-        <SectionBlock title="Part 3: Platform Terms & Conditions of Service" sections={PLATFORM_TERMS} />
+        {docs.isLoading ? <p className="mt-10 text-sm text-muted-foreground">Loading…</p> : docs.data?.map((doc) => (
+          <section key={doc.key} className="mt-10">
+            <h2 className="font-display text-2xl uppercase">{doc.title}</h2>
+            <div className="mt-4">{renderBody(doc.body)}</div>
+          </section>
+        ))}
 
         <p className="mt-10 text-xs text-muted-foreground">Questions about this policy? Contact our Information Officer at <a href="mailto:privacy@jobshadow.co.za" className="underline">privacy@jobshadow.co.za</a>.</p>
       </div>

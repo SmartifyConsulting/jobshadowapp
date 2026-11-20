@@ -58,6 +58,8 @@ export type Database = {
           reschedule_allowed: boolean
           reschedule_min_notice_days: number
           scholar_reminder_days: number[]
+          season_end_month: number
+          season_start_month: number
           waitlist_expiry_hours: number
         }
         Insert: {
@@ -75,6 +77,8 @@ export type Database = {
           reschedule_allowed?: boolean
           reschedule_min_notice_days?: number
           scholar_reminder_days?: number[]
+          season_end_month?: number
+          season_start_month?: number
           waitlist_expiry_hours?: number
         }
         Update: {
@@ -92,6 +96,8 @@ export type Database = {
           reschedule_allowed?: boolean
           reschedule_min_notice_days?: number
           scholar_reminder_days?: number[]
+          season_end_month?: number
+          season_start_month?: number
           waitlist_expiry_hours?: number
         }
         Relationships: []
@@ -478,6 +484,12 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      legal_documents: {
+        Row: { body: string; key: string; title: string; updated_at: string }
+        Insert: { body: string; key: string; title: string; updated_at?: string }
+        Update: { body?: string; key?: string; title?: string; updated_at?: string }
+        Relationships: []
       }
       host_profiles: {
         Row: {
@@ -986,6 +998,10 @@ export type Database = {
         }
       }
       get_public_holidays: { Args: never; Returns: string[] }
+      get_season_window: {
+        Args: never
+        Returns: { season_end_month: number; season_start_month: number }[]
+      }
       get_no_availability_message: { Args: never; Returns: string }
       has_role: {
         Args: {

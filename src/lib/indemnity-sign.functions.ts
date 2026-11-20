@@ -19,7 +19,7 @@ export const signIndemnityDocument = createServerFn({ method: "POST" })
 
     const pdfBytes = await buildSignedIndemnityPdf({
       title: isCompany ? `${ctx.company ?? "Host"} Indemnity & Consent Form` : "Job Shadow Indemnity & Consent Form",
-      clauses: isCompany ? [ctx.custom_indemnity_text as string] : standardIndemnityClauses(),
+      clauses: isCompany ? [ctx.custom_indemnity_text as string] : await standardIndemnityClauses(),
       placement: { scholarName: ctx.scholar_name ?? "—", school: ctx.school ?? "—", career: ctx.career ?? "—", shadowDate: ctx.shadow_date, location: ctx.location ?? "—" },
       guardianName: data.guardianName.trim(),
       guardianContact: data.guardianContact.trim(),

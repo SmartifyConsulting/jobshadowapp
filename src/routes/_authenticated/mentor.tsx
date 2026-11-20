@@ -177,6 +177,7 @@ function DatesPicker({ value, onChange, allowWeekends = true, allowOffSeason = t
   const dates = value.split(",").map((s) => s.trim()).filter(Boolean).map(parseUsDate).filter((d): d is Date => d !== null);
   const holidays = useQuery({ queryKey: ["public-holidays"], queryFn: async () => ((await supabase.rpc("get_public_holidays")).data ?? []) as string[], staleTime: 60 * 60_000 });
   const holidaySet = new Set((holidays.data ?? []).map((h) => parseUsDate(h)?.toDateString()).filter(Boolean));
+  const season = useQuery({ queryKey: ["season-window"], queryFn: async () => ((await supabase.rpc("get_season_window")).data ?? [])[0] ?? { season_start_month: 1, season_end_month: 12 }, staleTime: 60 * 60_000 });
   function set(next: Date[]) {
     onChange(next.map(toUsDate).join(", "));
   }
@@ -184,7 +185,7 @@ function DatesPicker({ value, onChange, allowWeekends = true, allowOffSeason = t
     { before: new Date() },
     (d: Date) => holidaySet.has(d.toDateString()),
     ...(allowWeekends ? [] : [(d: Date) => d.getDay() === 0 || d.getDay() === 6]),
-    ...(allowOffSeason ? [] : [(d: Date) => { const m = d.getMonth() + 1; return m < 2 || m > 10; }]),
+    ...(allowOffSeason ? [] : [(d: Date) => { const m = d.getMonth() + 1; return m < (season.data?.season_start_month ?? 1) || m > (season.data?.season_end_month ?? 12); }]),
   ];
   return (
     <div className="flex flex-wrap items-start gap-4">

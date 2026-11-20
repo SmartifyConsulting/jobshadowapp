@@ -421,6 +421,13 @@
       "when": 1794962700000,
       "tag": "0059_public_holidays",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1794962800000,
+      "tag": "0060_admin_controlled_season_and_legal_content",
+      "breakpoints": true
     }
   ]
 }

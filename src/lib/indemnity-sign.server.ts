@@ -1,18 +1,5 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont } from "pdf-lib";
-
-const STANDARD_CLAUSES = [
-  "I, the undersigned parent/legal guardian of the above-named scholar, consent to their participation in the Job " +
-    "Shadow placement described above. I understand that the scholar will spend time at a host company's premises " +
-    "under the supervision of a mentor, and that reasonable precautions will be taken for their safety, but that " +
-    "job shadowing, like any workplace activity, carries some inherent risk.",
-  "I hereby release and indemnify Job Shadow, the host company, and their respective employees and " +
-    "representatives, against any claim for loss, injury, illness or damage arising from the scholar's " +
-    "participation in this placement, except to the extent caused by their gross negligence or wilful misconduct. " +
-    "I confirm that the scholar has no medical condition that I have not disclosed to Job Shadow which could " +
-    "affect their participation, and that I have provided accurate contact and emergency information.",
-  "I understand that photographs or video may be taken during the placement for Job Shadow's records and may be " +
-    "used for promotional purposes unless I notify Job Shadow in writing that I do not consent to this.",
-];
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 type PlacementInfo = { scholarName: string; school: string; career: string; shadowDate: string; location: string };
 
@@ -97,6 +84,10 @@ export async function buildSignedIndemnityPdf(opts: {
   return pdf.save();
 }
 
-export function standardIndemnityClauses() {
-  return STANDARD_CLAUSES;
+/** Reads the standard indemnity clause text from the database (admin-editable via the Legal
+ * Content admin tab) instead of hardcoding it, split into paragraphs on blank lines. */
+export async function standardIndemnityClauses(): Promise<string[]> {
+  const { data } = await supabaseAdmin.from("legal_documents").select("body").eq("key", "standard_indemnity_clauses").maybeSingle();
+  const body = data?.body ?? "Please contact Job Shadow for the current indemnity wording.";
+  return body.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
 }

@@ -25,6 +25,13 @@ function IndemnityForm() {
       return data?.[0] ?? null;
     },
   });
+  const clausesQuery = useQuery({
+    queryKey: ["legal-document", "standard_indemnity_clauses"],
+    queryFn: async () => {
+      const { data } = await supabase.from("legal_documents").select("body").eq("key", "standard_indemnity_clauses").maybeSingle();
+      return (data?.body ?? "").split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+    },
+  });
 
   if (ctx.isLoading) return <p className="p-8">Loading…</p>;
   if (ctx.error) return <p className="p-8 text-destructive">{(ctx.error as Error).message}</p>;
@@ -68,23 +75,7 @@ function IndemnityForm() {
       </dl>
 
       <h2 className="mt-6 font-semibold">Acknowledgement of risk and indemnity</h2>
-      <p className="mt-2">
-        I, the undersigned parent/legal guardian of the above-named scholar, consent to their participation in the Job
-        Shadow placement described above. I understand that the scholar will spend time at a host company's premises
-        under the supervision of a mentor, and that reasonable precautions will be taken for their safety, but that
-        job shadowing, like any workplace activity, carries some inherent risk.
-      </p>
-      <p className="mt-2">
-        I hereby release and indemnify Job Shadow, the host company, and their respective employees and
-        representatives, against any claim for loss, injury, illness or damage arising from the scholar's
-        participation in this placement, except to the extent caused by their gross negligence or wilful misconduct.
-        I confirm that the scholar has no medical condition that I have not disclosed to Job Shadow which could
-        affect their participation, and that I have provided accurate contact and emergency information.
-      </p>
-      <p className="mt-2">
-        I understand that photographs or video may be taken during the placement for Job Shadow's records and may be
-        used for promotional purposes unless I notify Job Shadow in writing that I do not consent to this.
-      </p>
+      {(clausesQuery.data ?? []).map((p, i) => <p key={i} className="mt-2">{p}</p>)}
 
       {isGuardian ? <SignForm bookingId={bookingId} document="standard" alreadySigned={d.standard_signed} /> : <StatusOnly signed={d.standard_signed} />}
 
