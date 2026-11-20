@@ -11,11 +11,11 @@ import { SupportChatWidget } from "@/components/SupportChatWidget";
 export const SITE_NAV = [
   { to: "/", label: "Home" },
   { to: "/about", label: "About" },
-  { to: "/real-stories", label: "Real Stories" },
+  { to: "/real-stories", label: "Stories" },
   { to: "/how-to", label: "How To" },
   { to: "/roles", label: "Careers" },
   { to: "/send-to-a-friend", label: "Share" },
-  { to: "/contact", label: "Contact Us" },
+  { to: "/contact", label: "Contact" },
 ] as const;
 
 export function useSiteSession() {
@@ -165,7 +165,6 @@ export function SiteFooter() {
         <div className="text-sm">
           <p className="font-display text-base text-accent">Get involved</p>
           <ul className="mt-1 space-y-0.5 opacity-90">
-            <li><Link to="/contact">Sponsor a learner</Link></li>
             <li><Link to="/contact">Hosting contact</Link></li>
             <li><Link to="/contact">School contact</Link></li>
             <li><Link to="/partners">Partner with us</Link></li>

@@ -106,35 +106,31 @@ function Home() {
             Book Job Shadow
           </button>
 
-          {!signedIn && <div id="home-signin-frame" className="mt-10 grid w-full max-w-md grid-cols-2 gap-4 rounded-2xl border border-primary-foreground/30 bg-black/15 p-5 backdrop-blur-sm">
-            <div className="flex flex-col items-center gap-2">
-              <p className="text-xs font-semibold uppercase tracking-wider opacity-80">New here?</p>
+          {!signedIn && <div id="home-signin-frame" className="mt-10 w-full max-w-md rounded-2xl border border-primary-foreground/30 bg-black/15 p-5 backdrop-blur-sm">
+            <div className="flex overflow-hidden rounded-full border border-primary-foreground/40">
               <button
                 type="button"
                 onClick={() => { setShowSignUp((v) => !v); setShowSignIn(false); }}
                 aria-pressed={showSignUp}
-                className={`w-full rounded-none border px-4 py-2 text-sm font-semibold uppercase tracking-wide transition ${showSignUp ? "border-cta bg-cta text-cta-foreground shadow-warm" : "border-primary-foreground/40 hover:bg-primary-foreground/10"}`}
+                className={`flex-1 px-4 py-2 text-sm font-semibold uppercase tracking-wide transition ${showSignUp ? "bg-cta text-cta-foreground shadow-warm" : "hover:bg-primary-foreground/10"}`}
               >
                 Sign Up
               </button>
-            </div>
-            <div className="flex flex-col items-center gap-2">
-              <p className="text-xs font-semibold uppercase tracking-wider opacity-80">Returning?</p>
               <button
                 type="button"
                 onClick={() => { setShowSignIn((v) => !v); setShowSignUp(false); }}
                 aria-pressed={showSignIn}
-                className={`w-full rounded-none border px-4 py-2 text-sm font-semibold uppercase tracking-wide transition ${showSignIn ? "border-cta bg-cta text-cta-foreground shadow-warm" : "border-primary-foreground/40 hover:bg-primary-foreground/10"}`}
+                className={`flex-1 px-4 py-2 text-sm font-semibold uppercase tracking-wide transition ${showSignIn ? "bg-cta text-cta-foreground shadow-warm" : "hover:bg-primary-foreground/10"}`}
               >
                 Sign In
               </button>
             </div>
             {showSignUp && (
-              <div className="col-span-2 mt-2">
+              <div className="mt-4">
                 <RegisterForm compact />
               </div>
             )}
-            {showSignIn && <InlineSignIn />}
+            {showSignIn && <div className="mt-4"><InlineSignIn /></div>}
           </div>}
         </div>
       </section>

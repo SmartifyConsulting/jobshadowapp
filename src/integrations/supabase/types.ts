@@ -699,6 +699,7 @@ export type Database = {
           photo_path: string | null
           popi_accepted: boolean
           popi_accepted_at: string | null
+          info_accurate: boolean
           school: string
           school_type: string
           tc_accepted: boolean
@@ -726,6 +727,7 @@ export type Database = {
           id_verified_at?: string | null
           photo_path?: string | null
           popi_accepted?: boolean
+          info_accurate?: boolean
           popi_accepted_at?: string | null
           school: string
           school_type: string
@@ -752,6 +754,7 @@ export type Database = {
           id_number?: string
           id_verified?: boolean
           id_verified_at?: string | null
+          info_accurate?: boolean
           photo_path?: string | null
           popi_accepted?: boolean
           popi_accepted_at?: string | null

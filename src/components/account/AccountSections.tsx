@@ -84,11 +84,12 @@ const profileSchema = z.object({
   guardian_id: z.string().trim().optional(),
   tc_accepted: z.literal(true, { errorMap: () => ({ message: "Please accept the Terms & Conditions" }) }),
   popi_accepted: z.literal(true, { errorMap: () => ({ message: "Please provide POPI consent to continue" }) }),
+  info_accurate: z.literal(true, { errorMap: () => ({ message: "Please confirm the information supplied is accurate" }) }),
 });
 
 function ProfileForm({ userId, initialProfile, onSaved }: { userId: string; initialProfile?: Record<string, unknown> | undefined; onSaved?: (() => void) | undefined }) {
   const qc = useQueryClient();
-  const [f, setF] = useState<Record<string, string | boolean>>(() => ({ school_type: "Public School", tc_accepted: false, popi_accepted: false, ...Object.fromEntries(Object.entries(initialProfile ?? {}).filter(([, value]) => typeof value === "string" || typeof value === "boolean")), contact_no: initialProfile?.["contact_no"] ? phoneWithCountryCode(String(initialProfile["contact_no"]), "ZA") : "", guardian_contact: initialProfile?.["guardian_contact"] ? phoneWithCountryCode(String(initialProfile["guardian_contact"]), "ZA") : "" }));
+  const [f, setF] = useState<Record<string, string | boolean>>(() => ({ school_type: "Public School", tc_accepted: false, popi_accepted: false, info_accurate: false, ...Object.fromEntries(Object.entries(initialProfile ?? {}).filter(([, value]) => typeof value === "string" || typeof value === "boolean")), contact_no: initialProfile?.["contact_no"] ? phoneWithCountryCode(String(initialProfile["contact_no"]), "ZA") : "", guardian_contact: initialProfile?.["guardian_contact"] ? phoneWithCountryCode(String(initialProfile["guardian_contact"]), "ZA") : "" }));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [files, setFiles] = useState<{ id?: File | undefined; photo?: File | undefined }>({});
@@ -208,6 +209,11 @@ function ProfileForm({ userId, initialProfile, onSaved }: { userId: string; init
         </label>
       </details>
       {errors["popi_accepted"] && <p className="text-xs text-destructive">{errors["popi_accepted"]}</p>}
+      <label className="flex items-center gap-2 text-sm">
+        <input type="checkbox" checked={!!f["info_accurate"]} onChange={(e) => setF({ ...f, info_accurate: e.target.checked })} />
+        I acknowledge that my information supplied is verified and true
+      </label>
+      {errors["info_accurate"] && <p className="text-xs text-destructive">{errors["info_accurate"]}</p>}
       {errors["form"] && <p className="text-sm text-destructive">{errors["form"]}</p>}
       <Button type="submit" disabled={busy} className="bg-primary text-primary-foreground">{initialProfile ? "Save Profile" : "Complete Profile & Continue"}</Button>
     </form>

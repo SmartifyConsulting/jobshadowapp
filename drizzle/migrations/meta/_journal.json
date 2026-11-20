@@ -386,6 +386,13 @@
       "when": 1794962247770,
       "tag": "0054_public_career_content",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1794962300000,
+      "tag": "0055_info_accuracy_consent",
+      "breakpoints": true
     }
   ]
 }
