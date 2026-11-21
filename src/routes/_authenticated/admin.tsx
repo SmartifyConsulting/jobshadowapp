@@ -7,6 +7,7 @@ import { VoucherEditor } from "@/components/VoucherEditor";
 import { NamedCsvUpload } from "@/components/NamedCsvUpload";
 import { ApplicationsList } from "@/components/ApplicationsList";
 import { AdminLedgerReport } from "@/components/AdminLedgerReport";
+import { BoolIcon } from "@/components/BoolIcon";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Fragment, useEffect, useMemo, useState } from "react";
@@ -155,6 +156,10 @@ function fmt(v: unknown) {
   if (v === null || v === undefined) return "";
   if (typeof v === "boolean") return v ? "Yes" : "No";
   return String(v);
+}
+function fmtCell(v: unknown) {
+  if (typeof v === "boolean") return <BoolIcon value={v} />;
+  return fmt(v);
 }
 
 function exportCsv(title: string, cols: Col[], rows: Record<string, unknown>[]) {
@@ -419,9 +424,9 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
                   {cols.map((c) => <td key={c.key} className={`align-top ${table === "companies" ? "px-2 py-1" : "px-3 py-2"}`}>{table === "careers" && c.key === "name" ? (
                     <span className="flex items-start gap-2">
                       <button type="button" aria-expanded={descOpen} aria-label={descOpen ? "Hide description" : "Show description"} onClick={() => setOpenDesc((prev) => { const n = new Set(prev); n.has(rid) ? n.delete(rid) : n.add(rid); return n; })} className="grid h-5 w-5 shrink-0 place-items-center rounded border border-border text-xs font-bold text-muted-foreground hover:text-primary">{descOpen ? "−" : "+"}</button>
-                      {fmt(r[c.key])}
+                      {fmtCell(r[c.key])}
                     </span>
-                  ) : c.key === "custom_indemnity_text" ? (r[c.key] ? "Uploaded" : "—") : fmt(r[c.key])}</td>)}
+                  ) : c.key === "custom_indemnity_text" ? (r[c.key] ? "Uploaded" : "—") : fmtCell(r[c.key])}</td>)}
                   <td className={table === "companies" ? "px-2 py-1" : "px-3 py-2"}>
                     <div className="flex gap-1.5">
                       <button onClick={() => setEditing(r)} className="rounded border border-border p-1.5 text-muted-foreground transition hover:text-primary" aria-label="Edit"><Pencil className="h-3 w-3" /></button>
@@ -721,9 +726,9 @@ function UserDetailPanel({ account: a, onClose, onEdit }: { account: AccountRow;
     <dl className="space-y-2 text-xs">
       {([['Email', a.email], ['Phone', a.contact_no], ['School', a.school], ['ID / passport', a.id_number], ['Joined', new Date(a.created_at).toLocaleDateString()]] as const).map(([title, value]) => <div key={title}><dt className="text-muted-foreground">{title}</dt><dd className="break-words">{value || '—'}</dd></div>)}
     </dl>
-    <div className="my-4 flex items-center justify-between"><span className="text-xs text-muted-foreground">{a.id_verified ? 'ID verified' : 'ID not verified'}</span><button onClick={onEdit} className="flex items-center gap-1 text-xs text-primary"><Pencil className="h-3 w-3" />Edit user</button></div>
+    <div className="my-4 flex items-center justify-between"><span className="flex items-center gap-1 text-xs text-muted-foreground"><BoolIcon value={!!a.id_verified} /> {a.id_verified ? 'ID verified' : 'ID not verified'}</span><button onClick={onEdit} className="flex items-center gap-1 text-xs text-primary"><Pencil className="h-3 w-3" />Edit user</button></div>
     <div className="space-y-4 border-t border-border py-4"><UserFilePreview path={a.id_file_path} label="Uploaded ID" /><UserFilePreview path={a.photo_path} label="Uploaded photo" /></div>
-    <section className="border-t border-border pt-4"><h3 className="mb-3 text-xs font-medium">Application history ({a.applications.length})</h3><div className="space-y-3">{a.applications.length ? a.applications.map((application) => <article key={application.source + application.id} className="border-b border-border/60 pb-3 text-xs"><p className="font-medium">{application.career || 'Career not recorded'}</p><p className="text-muted-foreground">{application.company || 'Company not recorded'} · {application.dates || 'Dates not recorded'}</p><p className="mt-1 text-[10px]">{application.source} #{application.id}</p><p className="mt-1 text-[10px] text-muted-foreground">Paid: {application.paid === null ? 'Not recorded' : application.paid ? 'Yes' : 'No'} · Indemnity: {application.indemnity === null ? 'Not recorded' : application.indemnity ? 'Yes' : 'No'} · Cancelled: {application.cancelled === null ? 'Not recorded' : application.cancelled ? 'Yes' : 'No'}</p></article>) : <p className="text-xs text-muted-foreground">No applications recorded.</p>}</div></section>
+    <section className="border-t border-border pt-4"><h3 className="mb-3 text-xs font-medium">Application history ({a.applications.length})</h3><div className="space-y-3">{a.applications.length ? a.applications.map((application) => <article key={application.source + application.id} className="border-b border-border/60 pb-3 text-xs"><p className="font-medium">{application.career || 'Career not recorded'}</p><p className="text-muted-foreground">{application.company || 'Company not recorded'} · {application.dates || 'Dates not recorded'}</p><p className="mt-1 text-[10px]">{application.source} #{application.id}</p><p className="mt-1 flex flex-wrap items-center gap-x-1 text-[10px] text-muted-foreground"><span className="flex items-center gap-1">Paid: {application.paid === null ? 'Not recorded' : <BoolIcon value={application.paid} />}</span> · <span className="flex items-center gap-1">Indemnity: {application.indemnity === null ? 'Not recorded' : <BoolIcon value={application.indemnity} />}</span> · <span className="flex items-center gap-1">Cancelled: {application.cancelled === null ? 'Not recorded' : <BoolIcon value={!application.cancelled} />}</span></p></article>) : <p className="text-xs text-muted-foreground">No applications recorded.</p>}</div></section>
   </aside>;
 }
 
@@ -930,7 +935,7 @@ export function AdminUsers() {
                         </tr>
                         {expandedApplicationUser === a.id && <tr id={'applications-' + a.id}><td colSpan={5} className="border-t border-border bg-muted/30 px-5 py-3">
                           <div className="mb-2 flex justify-between text-xs text-muted-foreground"><span>Applications for {label}</span><span>{a.booking_count} bookings · Joined {new Date(a.created_at).toLocaleDateString()}</span></div>
-                          <table className="w-full text-left text-xs"><thead><tr>{["ID", "Company", "Career", "Dates", "Paid", "Indemnity", "Cancelled"].map((heading) => <th key={heading} className="px-2 py-2 font-medium">{heading}</th>)}</tr></thead><tbody>{a.applications.map((application) => <tr key={application.source + '-' + application.id} className="border-t border-border/70"><td className="px-2 py-2">{application.source} #{application.id}</td><td className="px-2 py-2">{application.company || '—'}</td><td className="px-2 py-2">{application.career || '—'}</td><td className="px-2 py-2">{application.dates || '—'}</td>{[application.paid, application.indemnity, application.cancelled].map((value, index) => <td key={index} className="px-2 py-2">{value === null ? 'Not recorded' : value ? 'Yes' : 'No'}</td>)}</tr>)}</tbody></table>
+                          <table className="w-full text-left text-xs"><thead><tr>{["ID", "Company", "Career", "Dates", "Paid", "Indemnity", "Cancelled"].map((heading) => <th key={heading} className="px-2 py-2 font-medium">{heading}</th>)}</tr></thead><tbody>{a.applications.map((application) => <tr key={application.source + '-' + application.id} className="border-t border-border/70"><td className="px-2 py-2">{application.source} #{application.id}</td><td className="px-2 py-2">{application.company || '—'}</td><td className="px-2 py-2">{application.career || '—'}</td><td className="px-2 py-2">{application.dates || '—'}</td>{[application.paid, application.indemnity, application.cancelled].map((value, index) => <td key={index} className="px-2 py-2">{value === null ? 'Not recorded' : <BoolIcon value={index === 2 ? !value : value} />}</td>)}</tr>)}</tbody></table>
                         </td></tr>}
                       </Fragment>;
                     })}
@@ -1202,7 +1207,7 @@ function VoucherReport() {
     <label className="mt-4 block max-w-sm text-sm">Search<input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Voucher name or code" className="mt-1 w-full rounded border border-input bg-background px-3 py-2" /></label>
     <p className="mt-2 text-xs text-muted-foreground">Counts include all matching bookings; paid and cancelled counts are shown separately.</p>
     <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[850px] text-left text-xs"><thead><tr>{columns.map((column) => <th key={column.key} className="whitespace-nowrap border-b border-border px-3 py-2 font-medium">{column.label}</th>)}<th className="px-3 py-2 font-medium">Actions</th></tr></thead><tbody>
-      {report.isPending ? <tr><td colSpan={columns.length + 1} className="p-4">Loading…</td></tr> : report.error ? <tr><td colSpan={columns.length + 1} role="alert" className="p-4 text-destructive">{report.error.message}</td></tr> : !rows.length ? <tr><td colSpan={columns.length + 1} className="p-4">No vouchers match this search.</td></tr> : rows.map((row) => <tr key={String(row["id"])}>{columns.map((column) => <td key={column.key} className="border-b border-border px-3 py-2">{fmt(row[column.key]) || '—'}</td>)}<td className="px-3 py-2"><div className="flex gap-2"><button onClick={() => setEditing(row)} aria-label={'Edit voucher ' + String(row['code'] ?? row['id'])} className="rounded border border-border px-2 py-1">Edit</button><button onClick={() => void removeVoucher(row)} aria-label={'Delete voucher ' + String(row['code'] ?? row['id'])} className="rounded px-2 py-1 text-destructive">Delete</button></div></td></tr>)}
+      {report.isPending ? <tr><td colSpan={columns.length + 1} className="p-4">Loading…</td></tr> : report.error ? <tr><td colSpan={columns.length + 1} role="alert" className="p-4 text-destructive">{report.error.message}</td></tr> : !rows.length ? <tr><td colSpan={columns.length + 1} className="p-4">No vouchers match this search.</td></tr> : rows.map((row) => <tr key={String(row["id"])}>{columns.map((column) => <td key={column.key} className="border-b border-border px-3 py-2">{fmtCell(row[column.key]) || '—'}</td>)}<td className="px-3 py-2"><div className="flex gap-2"><button onClick={() => setEditing(row)} aria-label={'Edit voucher ' + String(row['code'] ?? row['id'])} className="rounded border border-border px-2 py-1">Edit</button><button onClick={() => void removeVoucher(row)} aria-label={'Delete voucher ' + String(row['code'] ?? row['id'])} className="rounded px-2 py-1 text-destructive">Delete</button></div></td></tr>)}
     </tbody></table></div>
   </section>;
 }

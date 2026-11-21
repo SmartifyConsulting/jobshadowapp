@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { BoolIcon } from "@/components/BoolIcon";
 import { completeExportColumns, fetchAllRows, toCsv, type ExportColumn } from "@/lib/admin-export";
 
 export function AdminLedgerReport({ table }: { table: "activity_log" | "ai_token_ledger" }) {
@@ -34,7 +36,7 @@ export function AdminLedgerReport({ table }: { table: "activity_log" | "ai_token
     if (key === "cost_usd") return typeof value === "number" ? "$" + value.toFixed(8) : "Not priced";
     if (key.endsWith("_tokens") && value === null) return "Not reported";
     if (key === "cost_source") return value === "estimated" ? "Estimated" : value === "provider" ? "Provider reported" : "Unavailable";
-    if (typeof value === "boolean") return value ? "Yes" : "No";
+    if (typeof value === "boolean") return <BoolIcon value={value} />;
     return value === null || value === undefined ? "—" : String(value);
   }
   function download() {
@@ -42,7 +44,7 @@ export function AdminLedgerReport({ table }: { table: "activity_log" | "ai_token
     const link = document.createElement("a"); link.href = url; link.download = table + ".csv"; link.click(); URL.revokeObjectURL(url);
   }
   return <section className="bg-ivory p-6">
-    <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-2xl">{title} ({rows.length})</h2><div className="flex gap-2"><Button variant="outline" onClick={() => void report.refetch()} disabled={report.isFetching}>Refresh</Button><Button variant="outline" disabled={report.isPending || !!report.error} onClick={download}>Export all</Button></div></div>
+    <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-2xl">{title} ({rows.length})</h2><div className="flex gap-2"><Button variant="outline" size="icon" aria-label="Refresh" onClick={() => void report.refetch()} disabled={report.isFetching}><RefreshCw className={`h-4 w-4 ${report.isFetching ? "animate-spin" : ""}`} /></Button><Button variant="outline" disabled={report.isPending || !!report.error} onClick={download}>Export all</Button></div></div>
     {token && <p className="mt-3 text-sm">Known cost for this view: <strong>{"$" + cost.toFixed(6)}</strong> USD · {unpriced} unpriced requests. Estimated amounts use recorded model rates and may differ from the provider bill.</p>}
     <p className="mt-2 text-xs text-muted-foreground">{token ? "Future AI requests are recorded without prompts, responses or document contents. Cached input is included in the input total." : "Tracks database changes from the time logging was enabled. Older activity cannot be reconstructed."}</p>
     <div className="mt-4 flex flex-wrap gap-4"><label className="text-sm">Search<input className="mt-1 block rounded border border-input bg-background px-3 py-2" value={search} onChange={(e) => setSearch(e.target.value)} /></label><label className="text-sm">From (UTC)<input type="date" className="mt-1 block rounded border border-input bg-background px-3 py-2" value={from} onChange={(e) => setFrom(e.target.value)} /></label><label className="text-sm">Until (UTC)<input type="date" className="mt-1 block rounded border border-input bg-background px-3 py-2" value={until} onChange={(e) => setUntil(e.target.value)} /></label></div>

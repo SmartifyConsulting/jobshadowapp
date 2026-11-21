@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { GripVertical } from "lucide-react";
+import { BoolIcon } from "@/components/BoolIcon";
 
 const label = (key: string) => key.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 function valueText(value: unknown): string {
@@ -19,9 +20,17 @@ function valueText(value: unknown): string {
   if (Array.isArray(value)) return value.map((item) => typeof item === "object" && item ? Object.entries(item).map(([key, val]) => `${label(key)}: ${valueText(val)}`).join(" · ") : String(item)).join("\n");
   return typeof value === "object" ? Object.entries(value).map(([key, val]) => `${label(key)}: ${valueText(val)}`).join("\n") : String(value);
 }
+/** Fields where `true` is a bad/negative state (e.g. "cancelled: true"), so the icon colors should
+ * flip relative to the BoolIcon default of true=good. */
+const NEGATIVE_BOOL_KEYS = new Set(["cancelled"]);
+function cellValue(value: unknown, key?: string) {
+  if (typeof value !== "boolean") return valueText(value);
+  const good = key && NEGATIVE_BOOL_KEYS.has(key) ? !value : value;
+  return <BoolIcon value={good} trueLabel={value ? "Yes" : "No"} falseLabel={value ? "Yes" : "No"} />;
+}
 function RecordFields({ title, data }: { title: string; data: ApplicationData | null }) {
   if (!data) return null;
-  return <details open className="border-t border-border py-3"><summary className="cursor-pointer text-sm font-semibold">{title}</summary><dl className="mt-3 grid gap-3 text-xs sm:grid-cols-2">{Object.entries(data).map(([key, value]) => <div key={key} className={Array.isArray(value) || key.endsWith("notes") ? "sm:col-span-2" : ""}><dt className="text-muted-foreground">{label(key)}</dt><dd className="mt-0.5 whitespace-pre-wrap break-words">{valueText(value)}</dd></div>)}</dl></details>;
+  return <details open className="border-t border-border py-3"><summary className="cursor-pointer text-sm font-semibold">{title}</summary><dl className="mt-3 grid gap-3 text-xs sm:grid-cols-2">{Object.entries(data).map(([key, value]) => <div key={key} className={Array.isArray(value) || key.endsWith("notes") ? "sm:col-span-2" : ""}><dt className="text-muted-foreground">{label(key)}</dt><dd className="mt-0.5 whitespace-pre-wrap break-words">{cellValue(value, key)}</dd></div>)}</dl></details>;
 }
 
 function ApplicationDocuments({ record }: { record: ApplicationRecord }) {
@@ -106,7 +115,7 @@ export function ApplicationsList({ onEditImported, onDeleteImported }: { onEditI
     </PopoverContent></Popover></div>
     <div role="group" aria-label="Filter applications by status" className="flex flex-wrap gap-1.5 px-6 pb-4">{APPLICATION_STATUS_CHIPS.map(([key, title]) => <button key={key} type="button" aria-pressed={status === key} onClick={() => setStatus(key)} className={"rounded-full border px-3 py-1.5 text-xs font-medium " + (status === key ? "border-primary bg-primary text-primary-foreground" : "border-border bg-ivory hover:bg-teal/15")}>{title} <span className="ml-1 opacity-70">{matches.filter(({ record }) => key === "all" || applicationStage(record) === key).length}</span></button>)}</div>
     <div className="overflow-x-auto px-6 pb-6"><table className="w-full min-w-[1200px] text-left text-xs"><thead><tr>{shownColumns.map((column) => <th key={column.key} className="whitespace-nowrap border-b border-border px-3 py-2 font-medium">{column.label}</th>)}<th className="border-b border-border px-3 py-2 font-medium">Actions</th></tr></thead><tbody>
-      {records.isPending ? <tr><td colSpan={shownColumns.length + 1} className="p-4">Loading…</td></tr> : records.error ? <tr><td colSpan={shownColumns.length + 1} role="alert" className="p-4 text-destructive">{records.error.message}</td></tr> : !rows.length ? <tr><td colSpan={shownColumns.length + 1} className="p-4">No applications match these filters.</td></tr> : rows.map(({ record, data }) => <tr key={record.key} className="border-b border-border hover:bg-background/40">{shownColumns.map((column) => <td key={column.key} className="px-3 py-2">{column.key === "reference" ? <button onClick={() => setSelectedKey(record.key)} className="max-w-40 truncate text-left text-primary hover:underline" title={record.reference}>{record.source} #{record.reference}</button> : ["student_name", "learner", "name"].includes(column.key) ? <button onClick={() => setSelectedKey(record.key)} className="max-w-40 truncate text-left" title={record.email}>{record.name}</button> : column.key === "amount_due" && typeof data[column.key] === "number" ? "R " + Number(data[column.key]).toFixed(2) : <span className="block max-w-64 whitespace-pre-wrap break-words">{valueText(data[column.key])}</span>}</td>)}<td className="px-3 py-2"><button type="button" onClick={() => setSelectedKey(record.key)} className="whitespace-nowrap rounded border border-border px-2 py-1">View details</button></td></tr>)}
+      {records.isPending ? <tr><td colSpan={shownColumns.length + 1} className="p-4">Loading…</td></tr> : records.error ? <tr><td colSpan={shownColumns.length + 1} role="alert" className="p-4 text-destructive">{records.error.message}</td></tr> : !rows.length ? <tr><td colSpan={shownColumns.length + 1} className="p-4">No applications match these filters.</td></tr> : rows.map(({ record, data }) => <tr key={record.key} className="border-b border-border hover:bg-background/40">{shownColumns.map((column) => <td key={column.key} className="px-3 py-2">{column.key === "reference" ? <button onClick={() => setSelectedKey(record.key)} className="max-w-40 truncate text-left text-primary hover:underline" title={record.reference}>{record.source} #{record.reference}</button> : ["student_name", "learner", "name"].includes(column.key) ? <button onClick={() => setSelectedKey(record.key)} className="max-w-40 truncate text-left" title={record.email}>{record.name}</button> : column.key === "amount_due" && typeof data[column.key] === "number" ? "R " + Number(data[column.key]).toFixed(2) : <span className="block max-w-64 whitespace-pre-wrap break-words">{cellValue(data[column.key], column.key)}</span>}</td>)}<td className="px-3 py-2"><button type="button" onClick={() => setSelectedKey(record.key)} className="whitespace-nowrap rounded border border-border px-2 py-1">View details</button></td></tr>)}
     </tbody></table></div>
     <Sheet open={!!selected} onOpenChange={(open) => { if (!open) setSelectedKey(null); }}><SheetContent className="w-full overflow-y-auto bg-ivory sm:max-w-xl"><SheetHeader><SheetTitle>{selected?.name ?? "Application details"}</SheetTitle><SheetDescription>{selected ? `${selected.source} #${selected.reference}` : ""}</SheetDescription></SheetHeader>{selected && <>
       {!selected.user && <p className="my-3 text-xs text-muted-foreground">No unique user account is linked to this record. The original application details are preserved.</p>}
