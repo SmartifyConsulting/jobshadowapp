@@ -442,6 +442,13 @@
       "when": 1794963000000,
       "tag": "0062_legal_pack_v3_forus",
       "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1794963100000,
+      "tag": "0063_payment_hold_before_mentor_info_release",
+      "breakpoints": true
     }
   ]
 }

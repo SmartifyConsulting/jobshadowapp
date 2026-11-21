@@ -409,6 +409,7 @@ export type Database = {
           created_at: string
           id: string
           recipient: string | null
+          send_after: string | null
           status: string
           subject: string
           template: string
@@ -420,6 +421,7 @@ export type Database = {
           created_at?: string
           id?: string
           recipient?: string | null
+          send_after?: string | null
           status?: string
           subject: string
           template: string
@@ -431,6 +433,7 @@ export type Database = {
           created_at?: string
           id?: string
           recipient?: string | null
+          send_after?: string | null
           status?: string
           subject?: string
           template?: string
