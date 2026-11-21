@@ -10,7 +10,7 @@ import { combineApplicationRecords, type ApplicationData, type ApplicationRecord
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { ArrowUp, ArrowDown } from "lucide-react";
+import { GripVertical } from "lucide-react";
 
 const label = (key: string) => key.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 function valueText(value: unknown): string {
@@ -63,16 +63,17 @@ export function ApplicationsList({ onEditImported, onDeleteImported }: { onEditI
   const tableRows = all.map((record) => ({ record, data: applicationTableRow(record) }));
   const columns = applicationColumns(tableRows.map((row) => row.data));
   const shownColumns = visibleColumns.flatMap((key) => { const column = columns.find((item) => item.key === key); return column ? [column] : []; });
-  function moveColumn(key: string, direction: -1 | 1) {
+  function reorderColumn(key: string, toIndex: number) {
     setVisibleColumns((current) => {
-      const index = current.indexOf(key);
-      const swapWith = index + direction;
-      if (index < 0 || swapWith < 0 || swapWith >= current.length) return current;
+      const fromIndex = current.indexOf(key);
+      if (fromIndex < 0 || fromIndex === toIndex) return current;
       const next = [...current];
-      [next[index], next[swapWith]] = [next[swapWith]!, next[index]!];
+      next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, key);
       return next;
     });
   }
+  const [draggedKey, setDraggedKey] = useState<string | null>(null);
   const matches = tableRows.filter(({ record, data }) => (!source || record.source === source) && (!search.trim() || Object.values(data).some((value) => String(value ?? "").toLowerCase().includes(search.trim().toLowerCase()))));
   const rows = matches.filter(({ record }) => status === "all" || applicationStage(record) === status);
   const selected = all.find((record) => record.key === selectedKey);
@@ -84,8 +85,22 @@ export function ApplicationsList({ onEditImported, onDeleteImported }: { onEditI
   return <section className="bg-ivory" data-slot="admin-list">
     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-6"><h1 className="text-2xl font-medium">Applications ({rows.length})</h1><Button variant="outline" disabled={records.isPending || !!records.error} onClick={download}>Export all</Button></div>
     <div className="flex flex-wrap items-end gap-4 px-6 py-4"><label className="text-sm">Search<input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name, email, career, company or reference" className="mt-1 block w-72 max-w-full rounded border border-input bg-background px-3 py-2" /></label><label className="text-sm">Source<select value={source} onChange={(e) => setSource(e.target.value)} className="mt-1 block rounded border border-input bg-background px-3 py-2"><option value="">All</option><option>Booking</option><option>Imported</option></select></label><Button variant="outline" size="icon" aria-label="Refresh" onClick={() => void records.refetch()} disabled={records.isFetching}><RefreshCw className={`h-4 w-4 ${records.isFetching ? "animate-spin" : ""}`} /></Button><Popover><PopoverTrigger asChild><Button variant="outline" className="ml-auto text-sm font-normal">Customise View ({shownColumns.length})</Button></PopoverTrigger><PopoverContent align="end" className="max-h-96 w-80 overflow-y-auto p-3 text-sm"><div className="mb-3 flex gap-3"><button type="button" onClick={() => setVisibleColumns(columns.map((column) => column.key))} className="text-primary underline">Show all</button><button type="button" onClick={() => setVisibleColumns(DEFAULT_APPLICATION_COLUMNS)} className="text-primary underline">Compact view</button></div>
-      <p className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Visible columns (drag order with arrows)</p>
-      {shownColumns.map((column, index) => <div key={column.key} className="flex items-center gap-2 py-1"><input type="checkbox" checked disabled={shownColumns.length === 1} onChange={() => setVisibleColumns(visibleColumns.filter((key) => key !== column.key))} /><span className="flex-1">{column.label}</span><button type="button" aria-label={`Move ${column.label} up`} disabled={index === 0} onClick={() => moveColumn(column.key, -1)} className="disabled:opacity-30"><ArrowUp className="h-3.5 w-3.5" /></button><button type="button" aria-label={`Move ${column.label} down`} disabled={index === shownColumns.length - 1} onClick={() => moveColumn(column.key, 1)} className="disabled:opacity-30"><ArrowDown className="h-3.5 w-3.5" /></button></div>)}
+      <p className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Visible columns (drag to reorder)</p>
+      {shownColumns.map((column, index) => (
+        <div
+          key={column.key}
+          draggable
+          onDragStart={() => setDraggedKey(column.key)}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => { e.preventDefault(); if (draggedKey) reorderColumn(draggedKey, index); setDraggedKey(null); }}
+          onDragEnd={() => setDraggedKey(null)}
+          className={`flex cursor-move items-center gap-2 rounded py-1 ${draggedKey === column.key ? "opacity-40" : ""}`}
+        >
+          <GripVertical className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          <input type="checkbox" checked disabled={shownColumns.length === 1} onChange={() => setVisibleColumns(visibleColumns.filter((key) => key !== column.key))} />
+          <span className="flex-1">{column.label}</span>
+        </div>
+      ))}
       <p className="mb-1 mt-3 text-xs font-semibold uppercase text-muted-foreground">Other columns</p>
       {columns.filter((column) => !visibleColumns.includes(column.key)).map((column) => <label key={column.key} className="flex items-center gap-2 py-1"><input type="checkbox" checked={false} onChange={() => setVisibleColumns([...visibleColumns, column.key])} />{column.label}</label>)}
     </PopoverContent></Popover></div>
