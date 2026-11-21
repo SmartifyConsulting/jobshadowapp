@@ -16,7 +16,7 @@ export const APPLICATION_COLUMNS: ExportColumn[] = [
   { key: "reference", label: "Reference" }, { key: "learner", label: "Learner" },
   { key: "user_types", label: "User types" }, { key: "date", label: "Date" },
   { key: "status", label: "Status" }, { key: "paid", label: "Paid" }, { key: "indemnity", label: "Indemnity" },
-  { key: "id", label: "ID" }, { key: "name", label: "Name" }, { key: "id_number", label: "ID No." },
+  { key: "name", label: "Name" }, { key: "id_number", label: "ID No." },
   { key: "email", label: "Email" }, { key: "contact", label: "Contact" }, { key: "school", label: "School" },
   { key: "dates", label: "Dates" }, { key: "cancelled", label: "Cancelled" },
   { key: "student", label: "Student" }, { key: "mentor", label: "Mentor" }, { key: "hr_contact", label: "HR contact" },
