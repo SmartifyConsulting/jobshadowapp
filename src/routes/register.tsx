@@ -28,6 +28,7 @@ function RegisterPage() {
         <div className="mx-auto max-w-7xl">
           <RegisterForm />
           <Link to="/auth" className="mt-4 block text-sm underline">Already have an account? Log in</Link>
+          <Link to="/parent-signup" className="mt-2 block text-sm underline">Parent or guardian? Set your password here</Link>
         </div>
       </section>
     </SiteLayout>

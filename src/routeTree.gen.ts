@@ -19,6 +19,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as HowToRouteImport } from './routes/how-to'
 import { Route as LegalRouteImport } from './routes/legal'
+import { Route as ParentSignupRouteImport } from './routes/parent-signup'
 import { Route as PartnersRouteImport } from './routes/partners'
 import { Route as RealStoriesRouteImport } from './routes/real-stories'
 import { Route as RegisterRouteImport } from './routes/register'
@@ -29,6 +30,7 @@ import { Route as ShareExperienceRouteImport } from './routes/share-experience'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedMentorRouteImport } from './routes/_authenticated/mentor'
 import { Route as AuthenticatedMyAccountRouteImport } from './routes/_authenticated/my-account'
+import { Route as AuthenticatedParentRouteImport } from './routes/_authenticated/parent'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedEvaluationBookingIdRouteImport } from './routes/_authenticated/evaluation.$bookingId'
 import { Route as AuthenticatedIndemnityBookingIdRouteImport } from './routes/_authenticated/indemnity.$bookingId'
@@ -83,6 +85,11 @@ const LegalRoute = LegalRouteImport.update({
   path: '/legal',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ParentSignupRoute = ParentSignupRouteImport.update({
+  id: '/parent-signup',
+  path: '/parent-signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PartnersRoute = PartnersRouteImport.update({
   id: '/partners',
   path: '/partners',
@@ -133,6 +140,11 @@ const AuthenticatedMyAccountRoute = AuthenticatedMyAccountRouteImport.update({
   path: '/my-account',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedParentRoute = AuthenticatedParentRouteImport.update({
+  id: '/parent',
+  path: '/parent',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -166,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/forgot-password': typeof ForgotPasswordRoute
   '/how-to': typeof HowToRoute
   '/legal': typeof LegalRoute
+  '/parent-signup': typeof ParentSignupRoute
   '/partners': typeof PartnersRoute
   '/real-stories': typeof RealStoriesRoute
   '/register': typeof RegisterRoute
@@ -176,6 +189,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRoute
   '/mentor': typeof AuthenticatedMentorRoute
   '/my-account': typeof AuthenticatedMyAccountRoute
+  '/parent': typeof AuthenticatedParentRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/evaluation/$bookingId': typeof AuthenticatedEvaluationBookingIdRoute
   '/indemnity/$bookingId': typeof AuthenticatedIndemnityBookingIdRoute
@@ -191,6 +205,7 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
   '/how-to': typeof HowToRoute
   '/legal': typeof LegalRoute
+  '/parent-signup': typeof ParentSignupRoute
   '/partners': typeof PartnersRoute
   '/real-stories': typeof RealStoriesRoute
   '/register': typeof RegisterRoute
@@ -201,6 +216,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminRoute
   '/mentor': typeof AuthenticatedMentorRoute
   '/my-account': typeof AuthenticatedMyAccountRoute
+  '/parent': typeof AuthenticatedParentRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/evaluation/$bookingId': typeof AuthenticatedEvaluationBookingIdRoute
   '/indemnity/$bookingId': typeof AuthenticatedIndemnityBookingIdRoute
@@ -218,6 +234,7 @@ export interface FileRoutesById {
   '/forgot-password': typeof ForgotPasswordRoute
   '/how-to': typeof HowToRoute
   '/legal': typeof LegalRoute
+  '/parent-signup': typeof ParentSignupRoute
   '/partners': typeof PartnersRoute
   '/real-stories': typeof RealStoriesRoute
   '/register': typeof RegisterRoute
@@ -228,6 +245,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/mentor': typeof AuthenticatedMentorRoute
   '/_authenticated/my-account': typeof AuthenticatedMyAccountRoute
+  '/_authenticated/parent': typeof AuthenticatedParentRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/evaluation/$bookingId': typeof AuthenticatedEvaluationBookingIdRoute
   '/_authenticated/indemnity/$bookingId': typeof AuthenticatedIndemnityBookingIdRoute
@@ -245,6 +263,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/how-to'
     | '/legal'
+    | '/parent-signup'
     | '/partners'
     | '/real-stories'
     | '/register'
@@ -255,6 +274,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/mentor'
     | '/my-account'
+    | '/parent'
     | '/profile'
     | '/evaluation/$bookingId'
     | '/indemnity/$bookingId'
@@ -270,6 +290,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/how-to'
     | '/legal'
+    | '/parent-signup'
     | '/partners'
     | '/real-stories'
     | '/register'
@@ -280,6 +301,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/mentor'
     | '/my-account'
+    | '/parent'
     | '/profile'
     | '/evaluation/$bookingId'
     | '/indemnity/$bookingId'
@@ -296,6 +318,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/how-to'
     | '/legal'
+    | '/parent-signup'
     | '/partners'
     | '/real-stories'
     | '/register'
@@ -306,6 +329,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/mentor'
     | '/_authenticated/my-account'
+    | '/_authenticated/parent'
     | '/_authenticated/profile'
     | '/_authenticated/evaluation/$bookingId'
     | '/_authenticated/indemnity/$bookingId'
@@ -323,6 +347,7 @@ export interface RootRouteChildren {
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   HowToRoute: typeof HowToRoute
   LegalRoute: typeof LegalRoute
+  ParentSignupRoute: typeof ParentSignupRoute
   PartnersRoute: typeof PartnersRoute
   RealStoriesRoute: typeof RealStoriesRoute
   RegisterRoute: typeof RegisterRoute
@@ -405,6 +430,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LegalRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/parent-signup': {
+      id: '/parent-signup'
+      path: '/parent-signup'
+      fullPath: '/parent-signup'
+      preLoaderRoute: typeof ParentSignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/partners': {
       id: '/partners'
       path: '/partners'
@@ -475,6 +507,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMyAccountRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/parent': {
+      id: '/_authenticated/parent'
+      path: '/parent'
+      fullPath: '/parent'
+      preLoaderRoute: typeof AuthenticatedParentRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/profile': {
       id: '/_authenticated/profile'
       path: '/profile'
@@ -510,6 +549,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedMentorRoute: typeof AuthenticatedMentorRoute
   AuthenticatedMyAccountRoute: typeof AuthenticatedMyAccountRoute
+  AuthenticatedParentRoute: typeof AuthenticatedParentRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedEvaluationBookingIdRoute: typeof AuthenticatedEvaluationBookingIdRoute
   AuthenticatedIndemnityBookingIdRoute: typeof AuthenticatedIndemnityBookingIdRoute
@@ -519,6 +559,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedMentorRoute: AuthenticatedMentorRoute,
   AuthenticatedMyAccountRoute: AuthenticatedMyAccountRoute,
+  AuthenticatedParentRoute: AuthenticatedParentRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedEvaluationBookingIdRoute: AuthenticatedEvaluationBookingIdRoute,
   AuthenticatedIndemnityBookingIdRoute: AuthenticatedIndemnityBookingIdRoute,
@@ -538,6 +579,7 @@ const rootRouteChildren: RootRouteChildren = {
   ForgotPasswordRoute: ForgotPasswordRoute,
   HowToRoute: HowToRoute,
   LegalRoute: LegalRoute,
+  ParentSignupRoute: ParentSignupRoute,
   PartnersRoute: PartnersRoute,
   RealStoriesRoute: RealStoriesRoute,
   RegisterRoute: RegisterRoute,

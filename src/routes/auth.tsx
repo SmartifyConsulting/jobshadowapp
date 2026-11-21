@@ -45,7 +45,8 @@ function AuthPage() {
     }
     const { data: u } = await supabase.auth.getUser();
     const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: u.user!.id, _role: "admin" });
-    navigate({ to: isAdmin ? "/admin" : "/my-account" });
+    const { data: isParent } = await supabase.rpc("has_role", { _user_id: u.user!.id, _role: "parent" });
+    navigate({ to: isAdmin ? "/admin" : isParent ? "/parent" : "/my-account" });
   }
 
   async function resendConfirmation() {
@@ -82,6 +83,7 @@ function AuthPage() {
             <Link to="/forgot-password" className="text-sm font-bold uppercase tracking-wide underline">Forgot your password?</Link>
           </div>
           <Link to="/register" className="mt-4 block text-sm underline">No account? Register here.</Link>
+          <Link to="/parent-signup" className="mt-2 block text-sm underline">Parent or guardian? Set your password here</Link>
         </form>
       </section>
     </SiteLayout>
