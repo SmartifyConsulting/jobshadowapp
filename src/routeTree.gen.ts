@@ -12,10 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AboutRouteImport } from './routes/about'
-import { Route as ApplyRouteImport } from './routes/apply'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ContactRouteImport } from './routes/contact'
-import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as HowToRouteImport } from './routes/how-to'
 import { Route as LegalRouteImport } from './routes/legal'
@@ -51,11 +49,6 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApplyRoute = ApplyRouteImport.update({
-  id: '/apply',
-  path: '/apply',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -64,11 +57,6 @@ const AuthRoute = AuthRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -178,10 +166,8 @@ const ApiPublicEmailDispatchRoute = ApiPublicEmailDispatchRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/apply': typeof ApplyRoute
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
-  '/dashboard': typeof DashboardRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/how-to': typeof HowToRoute
   '/legal': typeof LegalRoute
@@ -206,10 +192,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/apply': typeof ApplyRoute
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
-  '/dashboard': typeof DashboardRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/how-to': typeof HowToRoute
   '/legal': typeof LegalRoute
@@ -236,10 +220,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/about': typeof AboutRoute
-  '/apply': typeof ApplyRoute
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
-  '/dashboard': typeof DashboardRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/how-to': typeof HowToRoute
   '/legal': typeof LegalRoute
@@ -266,10 +248,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
-    | '/apply'
     | '/auth'
     | '/contact'
-    | '/dashboard'
     | '/forgot-password'
     | '/how-to'
     | '/legal'
@@ -294,10 +274,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
-    | '/apply'
     | '/auth'
     | '/contact'
-    | '/dashboard'
     | '/forgot-password'
     | '/how-to'
     | '/legal'
@@ -323,10 +301,8 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/about'
-    | '/apply'
     | '/auth'
     | '/contact'
-    | '/dashboard'
     | '/forgot-password'
     | '/how-to'
     | '/legal'
@@ -353,10 +329,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
-  ApplyRoute: typeof ApplyRoute
   AuthRoute: typeof AuthRoute
   ContactRoute: typeof ContactRoute
-  DashboardRoute: typeof DashboardRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   HowToRoute: typeof HowToRoute
   LegalRoute: typeof LegalRoute
@@ -394,13 +368,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/apply': {
-      id: '/apply'
-      path: '/apply'
-      fullPath: '/apply'
-      preLoaderRoute: typeof ApplyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -413,13 +380,6 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -594,10 +554,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AboutRoute: AboutRoute,
-  ApplyRoute: ApplyRoute,
   AuthRoute: AuthRoute,
   ContactRoute: ContactRoute,
-  DashboardRoute: DashboardRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   HowToRoute: HowToRoute,
   LegalRoute: LegalRoute,
