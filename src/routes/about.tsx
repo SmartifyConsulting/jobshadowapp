@@ -1,8 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
 import { SiteLayout } from "@/components/SiteLayout";
 import { YouTube } from "@/components/YouTube";
 import { CORPORATE_VIDEO } from "@/lib/content";
+import { supabase } from "@/integrations/supabase/client";
+
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -19,6 +23,13 @@ export const Route = createFileRoute("/about")({
 });
 
 function About() {
+  const season = useQuery({
+    queryKey: ["season-window"],
+    staleTime: 60 * 60_000,
+    queryFn: async () => (await supabase.rpc("get_season_window")).data?.[0] ?? null,
+  });
+  const seasonText = season.data ? `${MONTHS[season.data.season_start_month - 1]} to ${MONTHS[season.data.season_end_month - 1]}` : "February to October";
+
   return (
     <SiteLayout>
       <div className="bg-cta text-cta-foreground">
@@ -36,7 +47,7 @@ function About() {
           <p>Job Shadow is exactly what its name suggests, it is a company which facilitates <strong>job shadowing for high school students.</strong> It allows Students and Parents the opportunity to be informed regarding a specific profession.</p>
         </div>
         <div className="mx-auto mt-6 max-w-7xl text-left text-[15px] leading-relaxed">
-          <p><strong>It’s a practical way of getting to know a job face-to-face with a mentor, before committing to study for it,</strong> at a cost of R350 per Job Shadow. In addition, we also offer a <strong>remote, one-hour, Digital Interview</strong> for an initial insight at a cost of R200 per Job Shadow Interview. Our platform offers bookings from May to October every year.</p>
+          <p><strong>It’s a practical way of getting to know a job face-to-face with a mentor, before committing to study for it,</strong> at a cost of R350 per Job Shadow. In addition, we also offer a <strong>remote, one-hour, Digital Interview</strong> for an initial insight at a cost of R200 per Job Shadow Interview. Our platform offers bookings from {seasonText} every year.</p>
           <p className="mt-4">A Job Shadow opportunity will potentially minimize students changing direction during their tertiary studies eliminating wasted time, money and frustration for both Parents and students.</p>
         </div>
         <div className="mx-auto mt-10 max-w-3xl"><YouTube {...CORPORATE_VIDEO} /></div>
