@@ -958,8 +958,16 @@ export function AdminUsers() {
 
 type EmailRow = { id: string; recipient: string | null; subject: string; body: string; template: string; status: string; created_at: string };
 
+const STATUS_BADGE: Record<string, string> = {
+  queued: "bg-accent/20 text-accent-foreground",
+  sent: "bg-teal/20 text-teal-foreground",
+  failed: "bg-destructive/15 text-destructive",
+};
+
 function EmailArchive() {
   const [q, setQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const emails = useQuery({
     queryKey: ["admin", "email_outbox"],
     queryFn: async () => ((await supabase.from("email_outbox").select("*").order("created_at", { ascending: false }).limit(500)).data ?? []) as EmailRow[],
@@ -980,36 +988,77 @@ function EmailArchive() {
   }
   const rows = useMemo(() => {
     const s = q.toLowerCase().trim();
-    return (emails.data ?? []).filter((e) => !s || [e.recipient, e.subject, e.template, e.status].some((v) => (v ?? "").toLowerCase().includes(s)));
-  }, [emails.data, q]);
+    return (emails.data ?? []).filter((e) => (statusFilter === "all" || e.status === statusFilter) && (!s || [e.recipient, e.subject, e.template, e.status].some((v) => (v ?? "").toLowerCase().includes(s))));
+  }, [emails.data, q, statusFilter]);
+  const selected = rows.find((e) => e.id === selectedId) ?? rows[0] ?? null;
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: (emails.data ?? []).length };
+    for (const e of emails.data ?? []) counts[e.status] = (counts[e.status] ?? 0) + 1;
+    return counts;
+  }, [emails.data]);
 
   return (
     <div>
       <div className="border-b border-border bg-background px-6 py-6 text-foreground"><h1 className="text-2xl font-medium">Email Archive {!emails.isLoading && `(${rows.length})`}</h1></div>
-      <div className="bg-background px-6 py-6 text-foreground">
-        <label className="block max-w-sm text-sm">
-          Search
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Recipient, subject, template or status" className="mt-1 w-full border-b border-input bg-transparent px-1 py-1 outline-none" />
-        </label>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <button onClick={() => flush(false)} disabled={sending} className="rounded-md bg-teal/20 hover:bg-teal/30 px-4 py-2 text-xs font-medium uppercase tracking-wide text-foreground disabled:opacity-50">Send queued emails now</button>
-          <button onClick={() => flush(true)} disabled={sending} className="bg-primary px-4 py-2 text-xs font-medium uppercase tracking-wide text-primary-foreground disabled:opacity-50">Retry failed emails</button>
+      <div className="flex flex-wrap items-center gap-2 border-b border-border bg-background px-6 py-3">
+        <button onClick={() => flush(false)} disabled={sending} className="rounded-md bg-teal/20 hover:bg-teal/30 px-4 py-2 text-xs font-medium uppercase tracking-wide text-foreground disabled:opacity-50">Send queued emails now</button>
+        <button onClick={() => flush(true)} disabled={sending} className="bg-primary px-4 py-2 text-xs font-medium uppercase tracking-wide text-primary-foreground disabled:opacity-50">Retry failed emails</button>
+        {sendMsg && <p className="text-sm break-words">{sendMsg}</p>}
+      </div>
+      <div className="flex min-h-[70vh] flex-col bg-background text-foreground md:flex-row">
+        {/* Mailbox sidebar: status "folders" */}
+        <div className="shrink-0 border-b border-border bg-muted/30 md:w-48 md:border-b-0 md:border-r">
+          <nav className="flex gap-1 overflow-x-auto p-2 md:block md:space-y-1 md:overflow-visible">
+            {(["all", "queued", "sent", "failed"] as const).map((s) => (
+              <button key={s} onClick={() => setStatusFilter(s)} className={`flex w-full items-center justify-between gap-2 whitespace-nowrap rounded-md px-3 py-2 text-left text-sm font-medium capitalize ${statusFilter === s ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}>
+                {s === "all" ? "Inbox" : s}
+                <span className="text-xs opacity-70">{statusCounts[s] ?? 0}</span>
+              </button>
+            ))}
+          </nav>
         </div>
-        {sendMsg && <p className="mt-2 text-sm break-words">{sendMsg}</p>}
-        <div className="mt-6 space-y-2">
-          {emails.isLoading ? (
-            <p>Loading…</p>
-          ) : rows.length === 0 ? (
-            <p>No emails found.</p>
+
+        {/* Message list */}
+        <div className="flex w-full flex-col border-b border-border md:w-80 md:shrink-0 md:border-b-0 md:border-r">
+          <div className="border-b border-border p-2">
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search mail…" className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm outline-none" />
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            {emails.isLoading ? (
+              <p className="p-4 text-sm">Loading…</p>
+            ) : rows.length === 0 ? (
+              <p className="p-4 text-sm text-muted-foreground">No emails found.</p>
+            ) : (
+              rows.map((e) => (
+                <button
+                  key={e.id}
+                  onClick={() => setSelectedId(e.id)}
+                  className={`block w-full border-b border-border/60 px-3 py-2.5 text-left text-xs ${selected?.id === e.id ? "bg-primary/10" : "hover:bg-muted/60"}`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate font-medium">{e.recipient || "(no address on file)"}</span>
+                    <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase ${STATUS_BADGE[e.status] ?? "bg-muted"}`}>{e.status}</span>
+                  </div>
+                  <p className="mt-0.5 truncate">{e.subject}</p>
+                  <p className="mt-0.5 truncate text-muted-foreground">{e.template} · {new Date(e.created_at).toLocaleString()}</p>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Reading pane */}
+        <div className="flex-1 overflow-y-auto">
+          {!selected ? (
+            <p className="p-6 text-sm text-muted-foreground">Select an email to preview it.</p>
           ) : (
-            rows.map((e) => (
-              <details key={e.id} className="rounded-lg border border-border bg-background/10 p-3 text-sm">
-                <summary className="cursor-pointer">
-                  <strong>{e.subject}</strong> → {e.recipient || "(no address on file)"} · {e.template} · {e.status} · {new Date(e.created_at).toLocaleString()}
-                </summary>
-                <iframe title={`Preview: ${e.subject}`} srcDoc={renderEmailHtml(e)} className="mt-3 h-[560px] w-full rounded bg-background" />
-              </details>
-            ))
+            <div className="p-4">
+              <div className="border-b border-border pb-3">
+                <h2 className="text-base font-semibold">{selected.subject}</h2>
+                <p className="mt-1 text-xs text-muted-foreground">To: {selected.recipient || "(no address on file)"} · {selected.template} · <span className={`rounded-full px-1.5 py-0.5 font-semibold uppercase ${STATUS_BADGE[selected.status] ?? "bg-muted"}`}>{selected.status}</span> · {new Date(selected.created_at).toLocaleString()}</p>
+              </div>
+              <iframe title={`Preview: ${selected.subject}`} srcDoc={renderEmailHtml(selected)} className="mt-3 h-[560px] w-full rounded border border-border bg-background" />
+            </div>
           )}
         </div>
       </div>
