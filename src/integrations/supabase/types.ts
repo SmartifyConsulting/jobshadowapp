@@ -14,32 +14,94 @@ export type Database = {
   }
   public: {
     Tables: {
-      user_notification_state: {
-        Row: { user_id: string; notification_id: string; read_at: string | null; dismissed_at: string | null }
-        Insert: { user_id: string; notification_id: string; read_at?: string | null; dismissed_at?: string | null }
-        Update: { user_id?: string; notification_id?: string; read_at?: string | null; dismissed_at?: string | null }
-        Relationships: []
-      }
       activity_log: {
-        Row: { id: string; created_at: string; actor_user_id: string | null; resource_type: string; record_id: string; action: string }
-        Insert: { id?: string; created_at?: string; actor_user_id?: string | null; resource_type: string; record_id: string; action: string }
-        Update: Partial<Database["public"]["Tables"]["activity_log"]["Insert"]>
+        Row: {
+          action: string
+          actor_user_id: string | null
+          created_at: string
+          id: string
+          record_id: string
+          resource_type: string
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          record_id: string
+          resource_type: string
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          record_id?: string
+          resource_type?: string
+        }
         Relationships: []
       }
       ai_token_ledger: {
         Row: {
-          id: string; created_at: string; actor_user_id: string | null; feature: string; provider: string; model: string; request_id: string | null
-          input_tokens: number | null; cached_input_tokens: number | null; output_tokens: number | null; total_tokens: number | null
-          cost_usd: number | null; cost_source: string; input_rate_per_million: number | null; cached_rate_per_million: number | null; output_rate_per_million: number | null
-          succeeded: boolean; error_code: string | null
+          actor_user_id: string | null
+          cached_input_tokens: number | null
+          cached_rate_per_million: number | null
+          cost_source: string
+          cost_usd: number | null
+          created_at: string
+          error_code: string | null
+          feature: string
+          id: string
+          input_rate_per_million: number | null
+          input_tokens: number | null
+          model: string
+          output_rate_per_million: number | null
+          output_tokens: number | null
+          provider: string
+          request_id: string | null
+          succeeded: boolean
+          total_tokens: number | null
         }
         Insert: {
-          id?: string; created_at?: string; actor_user_id?: string | null; feature: string; provider: string; model: string; request_id?: string | null
-          input_tokens?: number | null; cached_input_tokens?: number | null; output_tokens?: number | null; total_tokens?: number | null
-          cost_usd?: number | null; cost_source?: string; input_rate_per_million?: number | null; cached_rate_per_million?: number | null; output_rate_per_million?: number | null
-          succeeded: boolean; error_code?: string | null
+          actor_user_id?: string | null
+          cached_input_tokens?: number | null
+          cached_rate_per_million?: number | null
+          cost_source?: string
+          cost_usd?: number | null
+          created_at?: string
+          error_code?: string | null
+          feature: string
+          id?: string
+          input_rate_per_million?: number | null
+          input_tokens?: number | null
+          model: string
+          output_rate_per_million?: number | null
+          output_tokens?: number | null
+          provider: string
+          request_id?: string | null
+          succeeded: boolean
+          total_tokens?: number | null
         }
-        Update: Partial<Database["public"]["Tables"]["ai_token_ledger"]["Insert"]>
+        Update: {
+          actor_user_id?: string | null
+          cached_input_tokens?: number | null
+          cached_rate_per_million?: number | null
+          cost_source?: string
+          cost_usd?: number | null
+          created_at?: string
+          error_code?: string | null
+          feature?: string
+          id?: string
+          input_rate_per_million?: number | null
+          input_tokens?: number | null
+          model?: string
+          output_rate_per_million?: number | null
+          output_tokens?: number | null
+          provider?: string
+          request_id?: string | null
+          succeeded?: boolean
+          total_tokens?: number | null
+        }
         Relationships: []
       }
       booking_settings: {
@@ -260,12 +322,6 @@ export type Database = {
       }
       companies: {
         Row: {
-          mentor_first_name: string | null
-          mentor_last_name: string | null
-          backup_mentor_first_name: string | null
-          backup_mentor_last_name: string | null
-          hr_contact_first_name: string | null
-          hr_contact_last_name: string | null
           active: boolean
           address: string | null
           allow_off_season: boolean
@@ -275,6 +331,8 @@ export type Database = {
           arrival_time: string | null
           availability: string[] | null
           backup_mentor_email: string | null
+          backup_mentor_first_name: string | null
+          backup_mentor_last_name: string | null
           backup_mentor_name: string | null
           backup_mentor_phone: string | null
           career: string | null
@@ -287,6 +345,8 @@ export type Database = {
           days_per_shadow: number | null
           description: string | null
           hr_contact_email: string | null
+          hr_contact_first_name: string | null
+          hr_contact_last_name: string | null
           hr_contact_name: string | null
           hr_contact_phone: string | null
           hr_email: string | null
@@ -297,6 +357,8 @@ export type Database = {
           logo_path: string | null
           max_applicants: number | null
           mentor_email: string | null
+          mentor_first_name: string | null
+          mentor_last_name: string | null
           mentor_name: string | null
           mentor_phone: string | null
           mentor_position: string | null
@@ -307,12 +369,6 @@ export type Database = {
           website: string | null
         }
         Insert: {
-          mentor_first_name?: string | null
-          mentor_last_name?: string | null
-          backup_mentor_first_name?: string | null
-          backup_mentor_last_name?: string | null
-          hr_contact_first_name?: string | null
-          hr_contact_last_name?: string | null
           active?: boolean
           address?: string | null
           allow_off_season?: boolean
@@ -322,6 +378,8 @@ export type Database = {
           arrival_time?: string | null
           availability?: string[] | null
           backup_mentor_email?: string | null
+          backup_mentor_first_name?: string | null
+          backup_mentor_last_name?: string | null
           backup_mentor_name?: string | null
           backup_mentor_phone?: string | null
           career?: string | null
@@ -334,6 +392,8 @@ export type Database = {
           days_per_shadow?: number | null
           description?: string | null
           hr_contact_email?: string | null
+          hr_contact_first_name?: string | null
+          hr_contact_last_name?: string | null
           hr_contact_name?: string | null
           hr_contact_phone?: string | null
           hr_email?: string | null
@@ -344,6 +404,8 @@ export type Database = {
           logo_path?: string | null
           max_applicants?: number | null
           mentor_email?: string | null
+          mentor_first_name?: string | null
+          mentor_last_name?: string | null
           mentor_name?: string | null
           mentor_phone?: string | null
           mentor_position?: string | null
@@ -354,12 +416,6 @@ export type Database = {
           website?: string | null
         }
         Update: {
-          mentor_first_name?: string | null
-          mentor_last_name?: string | null
-          backup_mentor_first_name?: string | null
-          backup_mentor_last_name?: string | null
-          hr_contact_first_name?: string | null
-          hr_contact_last_name?: string | null
           active?: boolean
           address?: string | null
           allow_off_season?: boolean
@@ -369,6 +425,8 @@ export type Database = {
           arrival_time?: string | null
           availability?: string[] | null
           backup_mentor_email?: string | null
+          backup_mentor_first_name?: string | null
+          backup_mentor_last_name?: string | null
           backup_mentor_name?: string | null
           backup_mentor_phone?: string | null
           career?: string | null
@@ -381,6 +439,8 @@ export type Database = {
           days_per_shadow?: number | null
           description?: string | null
           hr_contact_email?: string | null
+          hr_contact_first_name?: string | null
+          hr_contact_last_name?: string | null
           hr_contact_name?: string | null
           hr_contact_phone?: string | null
           hr_email?: string | null
@@ -391,6 +451,8 @@ export type Database = {
           logo_path?: string | null
           max_applicants?: number | null
           mentor_email?: string | null
+          mentor_first_name?: string | null
+          mentor_last_name?: string | null
           mentor_name?: string | null
           mentor_phone?: string | null
           mentor_position?: string | null
@@ -409,7 +471,6 @@ export type Database = {
           created_at: string
           id: string
           recipient: string | null
-          send_after: string | null
           status: string
           subject: string
           template: string
@@ -421,7 +482,6 @@ export type Database = {
           created_at?: string
           id?: string
           recipient?: string | null
-          send_after?: string | null
           status?: string
           subject: string
           template: string
@@ -433,7 +493,6 @@ export type Database = {
           created_at?: string
           id?: string
           recipient?: string | null
-          send_after?: string | null
           status?: string
           subject?: string
           template?: string
@@ -488,12 +547,6 @@ export type Database = {
           },
         ]
       }
-      legal_documents: {
-        Row: { body: string; key: string; title: string; updated_at: string }
-        Insert: { body: string; key: string; title: string; updated_at?: string }
-        Update: { body?: string; key?: string; title?: string; updated_at?: string }
-        Relationships: []
-      }
       host_profiles: {
         Row: {
           bio: string | null
@@ -526,6 +579,7 @@ export type Database = {
       }
       host_settings: {
         Row: {
+          available_slots: Json
           blackout_dates: string[]
           buffer_days: number | null
           max_consecutive_hours: number | null
@@ -536,6 +590,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          available_slots?: Json
           blackout_dates?: string[]
           buffer_days?: number | null
           max_consecutive_hours?: number | null
@@ -546,6 +601,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          available_slots?: Json
           blackout_dates?: string[]
           buffer_days?: number | null
           max_consecutive_hours?: number | null
@@ -559,8 +615,6 @@ export type Database = {
       }
       legacy_applications: {
         Row: {
-          first_name: string | null
-          last_name: string | null
           cancelled: boolean | null
           career: string | null
           company: string | null
@@ -568,10 +622,12 @@ export type Database = {
           contact: string | null
           dates: string | null
           email: string | null
+          first_name: string | null
           id: number
           id_number: string | null
           imported_at: string
           indemnity: boolean | null
+          last_name: string | null
           location: string | null
           name: string | null
           paid: boolean | null
@@ -580,8 +636,6 @@ export type Database = {
           sector: string | null
         }
         Insert: {
-          first_name?: string | null
-          last_name?: string | null
           cancelled?: boolean | null
           career?: string | null
           company?: string | null
@@ -589,10 +643,12 @@ export type Database = {
           contact?: string | null
           dates?: string | null
           email?: string | null
+          first_name?: string | null
           id: number
           id_number?: string | null
           imported_at?: string
           indemnity?: boolean | null
+          last_name?: string | null
           location?: string | null
           name?: string | null
           paid?: boolean | null
@@ -601,8 +657,6 @@ export type Database = {
           sector?: string | null
         }
         Update: {
-          first_name?: string | null
-          last_name?: string | null
           cancelled?: boolean | null
           career?: string | null
           company?: string | null
@@ -610,10 +664,12 @@ export type Database = {
           contact?: string | null
           dates?: string | null
           email?: string | null
+          first_name?: string | null
           id?: number
           id_number?: string | null
           imported_at?: string
           indemnity?: boolean | null
+          last_name?: string | null
           location?: string | null
           name?: string | null
           paid?: boolean | null
@@ -625,31 +681,52 @@ export type Database = {
       }
       legacy_users: {
         Row: {
-          first_name: string | null
-          last_name: string | null
           email: string | null
+          first_name: string | null
           has_profile: boolean | null
           id: number
           is_spam: boolean
+          last_name: string | null
           name: string | null
         }
         Insert: {
-          first_name?: string | null
-          last_name?: string | null
           email?: string | null
+          first_name?: string | null
           has_profile?: boolean | null
           id: number
           is_spam?: boolean
+          last_name?: string | null
           name?: string | null
         }
         Update: {
-          first_name?: string | null
-          last_name?: string | null
           email?: string | null
+          first_name?: string | null
           has_profile?: boolean | null
           id?: number
           is_spam?: boolean
+          last_name?: string | null
           name?: string | null
+        }
+        Relationships: []
+      }
+      legal_documents: {
+        Row: {
+          body: string
+          key: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          key: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          key?: string
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -736,31 +813,27 @@ export type Database = {
       }
       scholar_profiles: {
         Row: {
-          first_name: string | null
-          last_name: string | null
-          guardian_first_name: string | null
-          guardian_last_name: string | null
           career_interests: string | null
-          citizenship: string | null
           contact_no: string
           created_at: string
           dietary: string | null
-          disability: string | null
+          first_name: string | null
           full_name: string
-          gender: string | null
-          population_group: string | null
           guardian_contact: string | null
           guardian_email: string | null
+          guardian_first_name: string | null
           guardian_id: string | null
+          guardian_last_name: string | null
           guardian_name: string | null
           id_file_path: string | null
           id_number: string
           id_verified: boolean
           id_verified_at: string | null
+          info_accurate: boolean
+          last_name: string | null
           photo_path: string | null
           popi_accepted: boolean
           popi_accepted_at: string | null
-          info_accurate: boolean
           school: string
           school_type: string
           tc_accepted: boolean
@@ -769,30 +842,26 @@ export type Database = {
           where_heard: string | null
         }
         Insert: {
-          first_name?: string | null
-          last_name?: string | null
-          guardian_first_name?: string | null
-          guardian_last_name?: string | null
           career_interests?: string | null
-          citizenship?: string | null
           contact_no: string
           created_at?: string
           dietary?: string | null
-          disability?: string | null
+          first_name?: string | null
           full_name: string
-          gender?: string | null
-          population_group?: string | null
           guardian_contact?: string | null
           guardian_email?: string | null
+          guardian_first_name?: string | null
           guardian_id?: string | null
+          guardian_last_name?: string | null
           guardian_name?: string | null
           id_file_path?: string | null
           id_number: string
           id_verified?: boolean
           id_verified_at?: string | null
+          info_accurate?: boolean
+          last_name?: string | null
           photo_path?: string | null
           popi_accepted?: boolean
-          info_accurate?: boolean
           popi_accepted_at?: string | null
           school: string
           school_type: string
@@ -802,28 +871,24 @@ export type Database = {
           where_heard?: string | null
         }
         Update: {
-          first_name?: string | null
-          last_name?: string | null
-          guardian_first_name?: string | null
-          guardian_last_name?: string | null
           career_interests?: string | null
-          citizenship?: string | null
           contact_no?: string
           created_at?: string
           dietary?: string | null
-          disability?: string | null
+          first_name?: string | null
           full_name?: string
-          gender?: string | null
-          population_group?: string | null
           guardian_contact?: string | null
           guardian_email?: string | null
+          guardian_first_name?: string | null
           guardian_id?: string | null
+          guardian_last_name?: string | null
           guardian_name?: string | null
           id_file_path?: string | null
           id_number?: string
           id_verified?: boolean
           id_verified_at?: string | null
           info_accurate?: boolean
+          last_name?: string | null
           photo_path?: string | null
           popi_accepted?: boolean
           popi_accepted_at?: string | null
@@ -850,6 +915,35 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      user_notification_state: {
+        Row: {
+          dismissed_at: string | null
+          notification_id: string
+          read_at: string | null
+          user_id: string
+        }
+        Insert: {
+          dismissed_at?: string | null
+          notification_id: string
+          read_at?: string | null
+          user_id: string
+        }
+        Update: {
+          dismissed_at?: string | null
+          notification_id?: string
+          read_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_notification_state_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "email_outbox"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -907,10 +1001,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      can_read_own_notification: { Args: { _notification: string }; Returns: boolean }
-      get_public_career_content: { Args: never; Returns: { name: string; description: string | null }[] }
-      get_my_notifications: { Args: never; Returns: { id: string; subject: string; body: string; created_at: string; read_at: string | null }[] }
-      set_my_notification_state: { Args: { _notification: string; _action: string }; Returns: undefined }
+      can_read_own_notification: {
+        Args: { _notification: string }
+        Returns: boolean
+      }
       check_voucher: {
         Args: { _code: string }
         Returns: {
@@ -931,60 +1025,6 @@ export type Database = {
           location: string
         }[]
       }
-      get_parent_children: {
-        Args: never
-        Returns: {
-          career_interests: string | null
-          full_name: string
-          pending_bookings: Json
-          school: string
-          scholar_user_id: string
-        }[]
-      }
-      list_my_hr_companies: {
-        Args: never
-        Returns: { id: number; company: string }[]
-      }
-      get_company_bee_report: {
-        Args: { _company: number }
-        Returns: {
-          scholar_name: string
-          school: string | null
-          population_group: string | null
-          gender: string | null
-          disability: string | null
-          citizenship: string | null
-          career: string
-          shadow_date: string
-          days_per_shadow: number | null
-          mentor_name: string
-          status: string
-        }[]
-      }
-      email_company_bee_report: {
-        Args: { _company: number }
-        Returns: undefined
-      }
-      get_indemnity_context: {
-        Args: { _booking: string }
-        Returns: {
-          career: string
-          company: string
-          company_signed: boolean
-          custom_indemnity_text: string | null
-          location: string | null
-          needs_company_doc: boolean
-          school: string | null
-          scholar_name: string | null
-          shadow_date: string
-          standard_signed: boolean
-          viewer_role: string
-        }[]
-      }
-      submit_guardian_signature: {
-        Args: { _booking: string; _document: string; _path: string }
-        Returns: undefined
-      }
       get_evaluation_context: {
         Args: { _booking: string }
         Returns: {
@@ -995,31 +1035,52 @@ export type Database = {
           viewer_role: string
         }[]
       }
-      get_my_host_profile: {
-        Args: never
-        Returns: Database["public"]["Tables"]["host_profiles"]["Row"]
-      }
-      update_my_host_profile: {
-        Args: {
-          _bio: string | null
-          _certifications: string | null
-          _cv_path: string | null
-          _linkedin_url: string | null
-          _specialties: string[]
-        }
-        Returns: undefined
-      }
       get_host_profile_for_placement: {
         Args: { _company_id: number }
         Returns: {
-          bio: string | null
-          certifications: string | null
+          bio: string
+          certifications: string
           specialties: string[]
         }[]
+      }
+      get_indemnity_context: {
+        Args: { _booking: string }
+        Returns: {
+          career: string
+          company: string
+          company_signed: boolean
+          custom_indemnity_text: string
+          location: string
+          needs_company_doc: boolean
+          scholar_name: string
+          school: string
+          shadow_date: string
+          standard_signed: boolean
+          viewer_role: string
+        }[]
+      }
+      get_my_host_profile: {
+        Args: never
+        Returns: {
+          bio: string | null
+          certifications: string | null
+          cv_path: string | null
+          linkedin_url: string | null
+          mentor_email: string
+          specialties: string[]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "host_profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       get_my_host_settings: {
         Args: never
         Returns: {
+          available_slots: Json
           blackout_dates: string[]
           buffer_days: number | null
           max_consecutive_hours: number | null
@@ -1036,12 +1097,42 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      get_my_notifications: {
+        Args: never
+        Returns: {
+          body: string
+          created_at: string
+          id: string
+          read_at: string
+          subject: string
+        }[]
+      }
+      get_no_availability_message: { Args: never; Returns: string }
+      get_parent_children: {
+        Args: never
+        Returns: {
+          career_interests: string
+          full_name: string
+          pending_bookings: Json
+          scholar_user_id: string
+          school: string
+        }[]
+      }
+      get_public_career_content: {
+        Args: never
+        Returns: {
+          description: string
+          name: string
+        }[]
+      }
       get_public_holidays: { Args: never; Returns: string[] }
       get_season_window: {
         Args: never
-        Returns: { season_end_month: number; season_start_month: number }[]
+        Returns: {
+          season_end_month: number
+          season_start_month: number
+        }[]
       }
-      get_no_availability_message: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1129,6 +1220,10 @@ export type Database = {
         Args: { _booking: string; _notes: string; _preapproved: boolean }
         Returns: undefined
       }
+      set_my_notification_state: {
+        Args: { _action: string; _notification: string }
+        Returns: undefined
+      }
       submit_evaluation: {
         Args: {
           _booking: string
@@ -1140,6 +1235,10 @@ export type Database = {
           _start: string
           _stop: string
         }
+        Returns: undefined
+      }
+      submit_guardian_signature: {
+        Args: { _booking: string; _document: string; _path: string }
         Returns: undefined
       }
       submit_indemnity: { Args: { _booking: string }; Returns: undefined }
@@ -1155,17 +1254,50 @@ export type Database = {
         }
         Returns: undefined
       }
-      update_my_host_settings: {
+      update_my_host_profile: {
         Args: {
-          _blackout_dates: string[]
-          _buffer_days: number
-          _max_consecutive_hours: number | null
-          _max_shadows_per_month: number
-          _max_shadows_per_week: number
-          _paused: boolean
+          _bio: string
+          _certifications: string
+          _cv_path: string
+          _linkedin_url: string
+          _specialties: string[]
         }
         Returns: undefined
       }
+      update_my_host_settings:
+        | {
+            Args: {
+              _blackout_dates: string[]
+              _buffer_days: number
+              _max_shadows_per_month: number
+              _max_shadows_per_week: number
+              _paused: boolean
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              _available_slots: Json
+              _blackout_dates: string[]
+              _buffer_days: number
+              _max_consecutive_hours: number
+              _max_shadows_per_month: number
+              _max_shadows_per_week: number
+              _paused: boolean
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              _blackout_dates: string[]
+              _buffer_days: number
+              _max_consecutive_hours: number
+              _max_shadows_per_month: number
+              _max_shadows_per_week: number
+              _paused: boolean
+            }
+            Returns: undefined
+          }
     }
     Enums: {
       app_role: "admin" | "user" | "mentor" | "hr_admin" | "school" | "parent"
