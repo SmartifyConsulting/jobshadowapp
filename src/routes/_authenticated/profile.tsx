@@ -6,6 +6,7 @@ import { SiteLayout } from "@/components/SiteLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserCircle, IdCard, CalendarCheck } from "lucide-react";
 import { AccountPanel } from "@/components/account/AccountSections";
+import { ImageCropModal } from "@/components/ImageCropModal";
 
 type Tab = "profile" | "account" | "bookings";
 export const Route = createFileRoute("/_authenticated/profile")({
@@ -43,6 +44,7 @@ function ProfileSettings() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [cropFile, setCropFile] = useState<File | null>(null);
 
   const splitName = (profile.data?.display_name ?? "").trim().split(/\s+/);
   const firstName = first ?? profile.data?.first_name ?? (splitName.length > 1 ? splitName.slice(0, -1).join(" ") : splitName[0] ?? "");
@@ -50,12 +52,12 @@ function ProfileSettings() {
   const displayName = `${firstName} ${lastName}`.trim();
   const avatarUrl = profile.data?.avatar_path ? supabase.storage.from("avatars").getPublicUrl(profile.data.avatar_path).data.publicUrl : null;
 
-  async function uploadAvatar(file: File) {
+  async function uploadAvatar(blob: Blob) {
     if (!user) return;
     setBusy(true);
     setErr(null);
-    const path = `${user.id}/${Date.now()}-${file.name}`;
-    const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+    const path = `${user.id}/${Date.now()}-avatar.jpg`;
+    const { error: upErr } = await supabase.storage.from("avatars").upload(path, blob, { upsert: true, contentType: "image/jpeg" });
     if (upErr) {
       setBusy(false);
       return setErr(upErr.message);
@@ -112,15 +114,22 @@ function ProfileSettings() {
               {busy ? "Uploading…" : "Change photo"}
               <input
                 type="file"
-                accept="image/png,image/jpeg,image/webp"
+                accept="image/*"
                 className="hidden"
                 disabled={busy}
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadAvatar(f); }}
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) setCropFile(f); e.target.value = ""; }}
               />
             </label>
-            <p className="mt-2 text-xs text-muted-foreground">PNG, JPG or WebP, up to 5MB.</p>
+            <p className="mt-2 text-xs text-muted-foreground">Any image file, up to 5MB. You'll be able to crop and zoom before saving.</p>
           </div>
         </div>
+        {cropFile && (
+          <ImageCropModal
+            file={cropFile}
+            onCancel={() => setCropFile(null)}
+            onSave={(blob) => { setCropFile(null); void uploadAvatar(blob); }}
+          />
+        )}
 
         <div className="w-full">
           <div className="grid gap-4 sm:grid-cols-2">

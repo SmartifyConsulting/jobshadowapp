@@ -45,7 +45,7 @@ function LegalPage() {
       <div className="bg-cta text-cta-foreground">
         <div className="mx-auto max-w-3xl px-5 py-4">
           <h1 className="font-display text-2xl uppercase">Legal, Privacy &amp; Consent</h1>
-          <p className="mt-1 text-xs">Global Data Protection Policy, Digital Indemnity Agreements &amp; Terms of Service — v2.0, November 2026</p>
+          <p className="mt-1 text-xs">Global Data Protection Policy, Digital Indemnity Agreements &amp; Terms of Service — v3.0, November 2026</p>
         </div>
       </div>
       <div className="mx-auto max-w-3xl px-5 py-10">

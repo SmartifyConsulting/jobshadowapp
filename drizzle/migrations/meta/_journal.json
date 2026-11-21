@@ -428,6 +428,20 @@
       "when": 1794962800000,
       "tag": "0060_admin_controlled_season_and_legal_content",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1794962900000,
+      "tag": "0061_enforce_48h_lead_time_floor",
+      "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1794963000000,
+      "tag": "0062_legal_pack_v3_forus",
+      "breakpoints": true
     }
   ]
 }
