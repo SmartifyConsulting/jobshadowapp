@@ -1206,7 +1206,7 @@ function VoucherReport() {
     <div className="flex flex-wrap items-center justify-between gap-4"><h2 className="text-2xl">Vouchers ({rows.length})</h2><Button disabled={report.isPending || !!report.error} onClick={() => setEditing({})}>Add voucher</Button><Button disabled={report.isPending || !!report.error} onClick={() => exportCsv("Voucher report", completeExportColumns(columns, all), all)} variant="outline">Export all</Button></div>
     <label className="mt-4 block max-w-sm text-sm">Search<input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Voucher name or code" className="mt-1 w-full rounded border border-input bg-background px-3 py-2" /></label>
     <p className="mt-2 text-xs text-muted-foreground">Counts include all matching bookings; paid and cancelled counts are shown separately.</p>
-    <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[850px] text-left text-xs"><thead><tr>{columns.map((column) => <th key={column.key} className="whitespace-nowrap border-b border-border px-3 py-2 font-medium">{column.label}</th>)}<th className="px-3 py-2 font-medium">Actions</th></tr></thead><tbody>
+    <div className="mt-4 overflow-x-auto [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-track]:bg-muted"><table className="w-full min-w-[850px] text-left text-xs"><thead><tr>{columns.map((column) => <th key={column.key} className="whitespace-nowrap border-b border-border px-3 py-2 font-medium">{column.label}</th>)}<th className="px-3 py-2 font-medium">Actions</th></tr></thead><tbody>
       {report.isPending ? <tr><td colSpan={columns.length + 1} className="p-4">Loading…</td></tr> : report.error ? <tr><td colSpan={columns.length + 1} role="alert" className="p-4 text-destructive">{report.error.message}</td></tr> : !rows.length ? <tr><td colSpan={columns.length + 1} className="p-4">No vouchers match this search.</td></tr> : rows.map((row) => <tr key={String(row["id"])}>{columns.map((column) => <td key={column.key} className="border-b border-border px-3 py-2">{fmtCell(row[column.key]) || '—'}</td>)}<td className="px-3 py-2"><div className="flex gap-2"><button onClick={() => setEditing(row)} aria-label={'Edit voucher ' + String(row['code'] ?? row['id'])} className="rounded border border-border px-2 py-1">Edit</button><button onClick={() => void removeVoucher(row)} aria-label={'Delete voucher ' + String(row['code'] ?? row['id'])} className="rounded px-2 py-1 text-destructive">Delete</button></div></td></tr>)}
     </tbody></table></div>
   </section>;
@@ -1489,16 +1489,21 @@ function BookingSettings() {
   }
 
   const sectionClass = "overflow-hidden rounded-lg border-[8px] border-ivory bg-ivory";
-  const triggerClass = (color: string) => `px-5 py-3.5 text-left font-display text-lg uppercase hover:no-underline [&>svg]:ml-4 ${color}`;
+  const tabTriggerClass = (color: string) => `rounded-md px-5 py-2.5 font-display text-sm uppercase data-[state=inactive]:opacity-60 ${color}`;
 
   return (
     <div>
       <div className="border-b border-border bg-background px-6 py-6 text-foreground"><h1 className="text-2xl font-medium">Booking Settings</h1></div>
       <div className="w-full space-y-3 bg-background px-6 py-6 text-foreground">
-        <Accordion type="multiple" defaultValue={["rules"]} className="grid items-start gap-4 xl:grid-cols-2">
-          <AccordionItem value="rules" className={sectionClass}>
-            <AccordionTrigger className={triggerClass(BAND_COLORS[0]!)}>Booking Rules</AccordionTrigger>
-            <AccordionContent className="space-y-5 bg-ivory px-5 py-5 text-foreground">
+        <Tabs defaultValue="rules" className="w-full">
+          <TabsList className="flex h-auto flex-wrap justify-start gap-2 bg-transparent p-0">
+            <TabsTrigger value="rules" className={tabTriggerClass(BAND_COLORS[0]!)}>Booking Rules</TabsTrigger>
+            <TabsTrigger value="docs" className={tabTriggerClass(BAND_COLORS[1]!)}>Documentation &amp; Approval</TabsTrigger>
+            <TabsTrigger value="cancel" className={tabTriggerClass(BAND_COLORS[2]!)}>Cancellations &amp; Waitlists</TabsTrigger>
+            <TabsTrigger value="notify" className={tabTriggerClass(BAND_COLORS[3]!)}>Notifications &amp; Messages</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="rules" className={sectionClass + " mt-3 space-y-5 px-5 py-5 text-foreground"}>
               <NumberField label="Minimum request lead time" suffix="days before the shadow date" value={f("min_lead_days")} onChange={set("min_lead_days")} hint="The earliest a student may submit a booking request relative to the shadow date." />
               <NumberField label="Maximum advance booking window" suffix="days ahead" value={f("max_advance_days")} onChange={set("max_advance_days")} hint="How far into the future a student can request a shadow." />
               <div className="flex gap-4">
@@ -1540,29 +1545,20 @@ function BookingSettings() {
                   </div>
                 </div>
               </div>
-            </AccordionContent>
-          </AccordionItem>
+          </TabsContent>
 
-          <div className={sectionClass}>
-            <div className={triggerClass(BAND_COLORS[1]!)}>Documentation &amp; Approval</div>
-            <div className="space-y-5 bg-ivory px-5 py-5 text-foreground">
+          <TabsContent value="docs" className={sectionClass + " mt-3 space-y-5 px-5 py-5 text-foreground"}>
               <NumberField label="Documentation deadline" suffix="days before the shadow date" value={f("documentation_deadline_days")} onChange={set("documentation_deadline_days")} hint="The latest all required paperwork (indemnities, consent) must be approved. Enforced as a floor under the minimum lead time above, so a request can't be made with too little time left to complete it." />
               <NumberField label="Booking request expiry" suffix="hours for a host to respond" value={f("request_expiry_hours")} onChange={set("request_expiry_hours")} hint={NOT_ENFORCED_HINT} />
-            </div>
-          </div>
+          </TabsContent>
 
-          <AccordionItem value="cancel" className={sectionClass}>
-            <AccordionTrigger className={triggerClass(BAND_COLORS[2]!)}>Cancellations &amp; Waitlists</AccordionTrigger>
-            <AccordionContent className="space-y-5 bg-ivory px-5 py-5 text-foreground">
+          <TabsContent value="cancel" className={sectionClass + " mt-3 space-y-5 px-5 py-5 text-foreground"}>
               <NumberField label="Cancellation cut-off" suffix="days before the shadow date" value={f("cancellation_cutoff_days")} onChange={set("cancellation_cutoff_days")} hint={NOT_ENFORCED_HINT} />
               <NumberField label="Reschedule minimum notice" suffix="days ahead" value={f("reschedule_min_notice_days")} onChange={set("reschedule_min_notice_days")} hint={NOT_ENFORCED_HINT} />
               <NumberField label="Waitlist expiry" suffix="hours to respond to an offered place" value={f("waitlist_expiry_hours")} onChange={set("waitlist_expiry_hours")} hint={NOT_ENFORCED_HINT} />
-            </AccordionContent>
-          </AccordionItem>
+          </TabsContent>
 
-          <AccordionItem value="notify" className={sectionClass}>
-            <AccordionTrigger className={triggerClass(BAND_COLORS[3]!)}>Notifications &amp; Messages</AccordionTrigger>
-            <AccordionContent className="space-y-5 bg-ivory px-5 py-5 text-foreground">
+          <TabsContent value="notify" className={sectionClass + " mt-3 space-y-5 px-5 py-5 text-foreground"}>
               <label className="block text-sm">
                 "No mentors available" message <span className="text-xs text-muted-foreground">(shown on /roles and the booking wizard whenever nothing is bookable)</span>
                 <textarea value={f("no_availability_message")} onChange={(e) => set("no_availability_message")(e.target.value)} className="mt-1 w-full border-b border-input bg-transparent px-1 py-1 outline-none" />
@@ -1577,9 +1573,8 @@ function BookingSettings() {
                 <input value={f("mentor_reminder_days")} onChange={(e) => set("mentor_reminder_days")(e.target.value)} placeholder="1" className="mt-1 w-full max-w-xs border-b border-input bg-transparent px-1 py-1 outline-none" />
                 <p className="mt-1 max-w-md text-xs text-muted-foreground">Every host reminder includes the stand-in / contact-manager notice.</p>
               </label>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
+          </TabsContent>
+        </Tabs>
 
         {err && <p className="text-sm font-medium">{err}</p>}
         <button onClick={save} disabled={busy || settings.isLoading} className="rounded-md bg-teal/20 hover:bg-teal/30 px-5 py-2.5 text-sm font-medium uppercase text-foreground disabled:opacity-50">{saved ? "Saved" : "Save"}</button>
