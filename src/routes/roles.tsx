@@ -1,4 +1,5 @@
 import { getCareerDescription } from "@/lib/career-descriptions";
+import { RichText } from "@/components/RichText";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -215,7 +216,7 @@ function Roles() {
                         </div>
                         {open && (
                           <div className="mt-2 pl-9">
-                            {description.split("\n").map((p, i) => <p key={i} className="mt-1 text-sm text-soft-grey">{p}</p>)}
+                            <RichText text={description} className="mt-1 block text-sm text-soft-grey" />
                             {r.idealFor && <p className="mt-2 text-sm text-charcoal"><strong>Ideal for:</strong> {r.idealFor}</p>}
                             {r.video && <div className="mt-3 max-w-xl"><YouTube id={r.video} title={r.title} /></div>}
                             {count > 0 && (
