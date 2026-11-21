@@ -202,7 +202,7 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  :is(h1, h2) {
+  :is(h1, h2):not(.admin-portal, .admin-portal *) {
     font-family: var(--font-display);
     font-weight: 400;
     line-height: 1.15;
