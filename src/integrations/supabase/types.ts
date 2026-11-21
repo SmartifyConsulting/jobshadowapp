@@ -741,10 +741,14 @@ export type Database = {
           guardian_first_name: string | null
           guardian_last_name: string | null
           career_interests: string | null
+          citizenship: string | null
           contact_no: string
           created_at: string
           dietary: string | null
+          disability: string | null
           full_name: string
+          gender: string | null
+          population_group: string | null
           guardian_contact: string | null
           guardian_email: string | null
           guardian_id: string | null
@@ -770,10 +774,14 @@ export type Database = {
           guardian_first_name?: string | null
           guardian_last_name?: string | null
           career_interests?: string | null
+          citizenship?: string | null
           contact_no: string
           created_at?: string
           dietary?: string | null
+          disability?: string | null
           full_name: string
+          gender?: string | null
+          population_group?: string | null
           guardian_contact?: string | null
           guardian_email?: string | null
           guardian_id?: string | null
@@ -799,10 +807,14 @@ export type Database = {
           guardian_first_name?: string | null
           guardian_last_name?: string | null
           career_interests?: string | null
+          citizenship?: string | null
           contact_no?: string
           created_at?: string
           dietary?: string | null
+          disability?: string | null
           full_name?: string
+          gender?: string | null
+          population_group?: string | null
           guardian_contact?: string | null
           guardian_email?: string | null
           guardian_id?: string | null
@@ -928,6 +940,30 @@ export type Database = {
           school: string
           scholar_user_id: string
         }[]
+      }
+      list_my_hr_companies: {
+        Args: never
+        Returns: { id: number; company: string }[]
+      }
+      get_company_bee_report: {
+        Args: { _company: number }
+        Returns: {
+          scholar_name: string
+          school: string | null
+          population_group: string | null
+          gender: string | null
+          disability: string | null
+          citizenship: string | null
+          career: string
+          shadow_date: string
+          days_per_shadow: number | null
+          mentor_name: string
+          status: string
+        }[]
+      }
+      email_company_bee_report: {
+        Args: { _company: number }
+        Returns: undefined
       }
       get_indemnity_context: {
         Args: { _booking: string }

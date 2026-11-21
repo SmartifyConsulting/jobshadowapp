@@ -85,6 +85,10 @@ const profileSchema = z.object({
   tc_accepted: z.literal(true, { errorMap: () => ({ message: "Please accept the Terms & Conditions" }) }),
   popi_accepted: z.literal(true, { errorMap: () => ({ message: "Please provide POPI consent to continue" }) }),
   info_accurate: z.literal(true, { errorMap: () => ({ message: "Please confirm the information supplied is accurate" }) }),
+  population_group: z.string().trim().max(50).optional(),
+  gender: z.string().trim().max(50).optional(),
+  disability: z.string().trim().max(50).optional(),
+  citizenship: z.string().trim().max(50).optional(),
 });
 
 function ProfileForm({ userId, initialProfile, onSaved }: { userId: string; initialProfile?: Record<string, unknown> | undefined; onSaved?: (() => void) | undefined }) {
@@ -127,7 +131,7 @@ function ProfileForm({ userId, initialProfile, onSaved }: { userId: string; init
       setBusy(false);
       return setErrors({ form: (ex as Error).message });
     }
-    const patch = { ...r.data, career_interests: r.data.career_interests ?? null, dietary: r.data.dietary ?? null, guardian_id: r.data.guardian_id ?? null, user_id: userId, id_file_path, photo_path, ...(!initialProfile || initialProfile["popi_accepted"] !== true ? { popi_accepted_at: new Date().toISOString() } : {}) };
+    const patch = { ...r.data, career_interests: r.data.career_interests ?? null, dietary: r.data.dietary ?? null, guardian_id: r.data.guardian_id ?? null, population_group: r.data.population_group || null, gender: r.data.gender || null, disability: r.data.disability || null, citizenship: r.data.citizenship || null, user_id: userId, id_file_path, photo_path, ...(!initialProfile || initialProfile["popi_accepted"] !== true ? { popi_accepted_at: new Date().toISOString() } : {}) };
     const { error } = initialProfile ? await supabase.from("scholar_profiles").update(patch).eq("user_id", userId) : await supabase.from("scholar_profiles").insert(patch);
     setBusy(false);
     if (error) return setErrors({ form: error.message });
@@ -170,6 +174,36 @@ function ProfileForm({ userId, initialProfile, onSaved }: { userId: string; init
         {field("career_interests", "Career interests")}
         {field("dietary", "Dietary requirements/allergies")}
       </div>
+      <fieldset className="min-w-0 rounded-md border border-current/20 p-4">
+        <legend className="px-2 font-semibold">Optional: Diversity Information</legend>
+        <p className="text-xs text-muted-foreground">Entirely optional and self-declared. Host companies use this only in aggregate to report their Job Shadow hosting toward their B-BBEE Skills Development / CSI scorecard - it's never shown to anyone individually or used to screen applicants.</p>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+          <label className="block text-sm">Population group
+            <select value={String(f["population_group"] ?? "")} onChange={(e) => setF({ ...f, population_group: e.target.value })} className="mt-1 w-full rounded border border-input bg-background px-2 py-2">
+              <option value="">Prefer not to say</option>
+              <option>African</option><option>Coloured</option><option>Indian</option><option>White</option><option>Other</option>
+            </select>
+          </label>
+          <label className="block text-sm">Gender
+            <select value={String(f["gender"] ?? "")} onChange={(e) => setF({ ...f, gender: e.target.value })} className="mt-1 w-full rounded border border-input bg-background px-2 py-2">
+              <option value="">Prefer not to say</option>
+              <option>Female</option><option>Male</option><option>Other</option>
+            </select>
+          </label>
+          <label className="block text-sm">Disability status
+            <select value={String(f["disability"] ?? "")} onChange={(e) => setF({ ...f, disability: e.target.value })} className="mt-1 w-full rounded border border-input bg-background px-2 py-2">
+              <option value="">Prefer not to say</option>
+              <option>None</option><option>Disabled</option>
+            </select>
+          </label>
+          <label className="block text-sm">Citizenship
+            <select value={String(f["citizenship"] ?? "")} onChange={(e) => setF({ ...f, citizenship: e.target.value })} className="mt-1 w-full rounded border border-input bg-background px-2 py-2">
+              <option value="">Prefer not to say</option>
+              <option>South African</option><option>Other</option>
+            </select>
+          </label>
+        </div>
+      </fieldset>
       <fieldset className="min-w-0 rounded-md border border-current/20 p-4">
         <legend className="px-2 font-semibold">Parent / Guardian</legend>
         <div className="grid gap-4 sm:grid-cols-2">

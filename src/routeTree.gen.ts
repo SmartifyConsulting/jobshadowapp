@@ -28,6 +28,7 @@ import { Route as RolesRouteImport } from './routes/roles'
 import { Route as SendToAFriendRouteImport } from './routes/send-to-a-friend'
 import { Route as ShareExperienceRouteImport } from './routes/share-experience'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedCompanyReportRouteImport } from './routes/_authenticated/company-report'
 import { Route as AuthenticatedMentorRouteImport } from './routes/_authenticated/mentor'
 import { Route as AuthenticatedMyAccountRouteImport } from './routes/_authenticated/my-account'
 import { Route as AuthenticatedParentRouteImport } from './routes/_authenticated/parent'
@@ -130,6 +131,12 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCompanyReportRoute =
+  AuthenticatedCompanyReportRouteImport.update({
+    id: '/company-report',
+    path: '/company-report',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedMentorRoute = AuthenticatedMentorRouteImport.update({
   id: '/mentor',
   path: '/mentor',
@@ -187,6 +194,7 @@ export interface FileRoutesByFullPath {
   '/send-to-a-friend': typeof SendToAFriendRoute
   '/share-experience': typeof ShareExperienceRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/company-report': typeof AuthenticatedCompanyReportRoute
   '/mentor': typeof AuthenticatedMentorRoute
   '/my-account': typeof AuthenticatedMyAccountRoute
   '/parent': typeof AuthenticatedParentRoute
@@ -214,6 +222,7 @@ export interface FileRoutesByTo {
   '/send-to-a-friend': typeof SendToAFriendRoute
   '/share-experience': typeof ShareExperienceRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/company-report': typeof AuthenticatedCompanyReportRoute
   '/mentor': typeof AuthenticatedMentorRoute
   '/my-account': typeof AuthenticatedMyAccountRoute
   '/parent': typeof AuthenticatedParentRoute
@@ -243,6 +252,7 @@ export interface FileRoutesById {
   '/send-to-a-friend': typeof SendToAFriendRoute
   '/share-experience': typeof ShareExperienceRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/company-report': typeof AuthenticatedCompanyReportRoute
   '/_authenticated/mentor': typeof AuthenticatedMentorRoute
   '/_authenticated/my-account': typeof AuthenticatedMyAccountRoute
   '/_authenticated/parent': typeof AuthenticatedParentRoute
@@ -272,6 +282,7 @@ export interface FileRouteTypes {
     | '/send-to-a-friend'
     | '/share-experience'
     | '/admin'
+    | '/company-report'
     | '/mentor'
     | '/my-account'
     | '/parent'
@@ -299,6 +310,7 @@ export interface FileRouteTypes {
     | '/send-to-a-friend'
     | '/share-experience'
     | '/admin'
+    | '/company-report'
     | '/mentor'
     | '/my-account'
     | '/parent'
@@ -327,6 +339,7 @@ export interface FileRouteTypes {
     | '/send-to-a-friend'
     | '/share-experience'
     | '/_authenticated/admin'
+    | '/_authenticated/company-report'
     | '/_authenticated/mentor'
     | '/_authenticated/my-account'
     | '/_authenticated/parent'
@@ -493,6 +506,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/company-report': {
+      id: '/_authenticated/company-report'
+      path: '/company-report'
+      fullPath: '/company-report'
+      preLoaderRoute: typeof AuthenticatedCompanyReportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/mentor': {
       id: '/_authenticated/mentor'
       path: '/mentor'
@@ -547,6 +567,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedCompanyReportRoute: typeof AuthenticatedCompanyReportRoute
   AuthenticatedMentorRoute: typeof AuthenticatedMentorRoute
   AuthenticatedMyAccountRoute: typeof AuthenticatedMyAccountRoute
   AuthenticatedParentRoute: typeof AuthenticatedParentRoute
@@ -557,6 +578,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedCompanyReportRoute: AuthenticatedCompanyReportRoute,
   AuthenticatedMentorRoute: AuthenticatedMentorRoute,
   AuthenticatedMyAccountRoute: AuthenticatedMyAccountRoute,
   AuthenticatedParentRoute: AuthenticatedParentRoute,

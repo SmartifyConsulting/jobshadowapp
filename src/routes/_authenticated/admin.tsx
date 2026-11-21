@@ -1163,13 +1163,56 @@ function AdminReports() {
   return <div className="bg-background">
     <div className="border-b border-border px-6 py-5"><h1 className="text-2xl">Reports</h1></div>
     <Tabs defaultValue="bookings">
-      <div className="overflow-x-auto border-b border-border px-6 py-3"><TabsList aria-label="Admin reports" className="h-auto justify-start">{["Bookings", "Evaluations", "Vouchers", "Activity Log", "Token Ledger"].map((label) => <TabsTrigger key={label} value={label.toLowerCase().replaceAll(' ', '-')} className="min-h-11">{label}</TabsTrigger>)}</TabsList></div>
+      <div className="overflow-x-auto border-b border-border px-6 py-3"><TabsList aria-label="Admin reports" className="h-auto justify-start">{["Bookings", "Evaluations", "Vouchers", "BEE / CPD", "Activity Log", "Token Ledger"].map((label) => <TabsTrigger key={label} value={label.toLowerCase().replaceAll(' / ', '-').replaceAll(' ', '-')} className="min-h-11">{label}</TabsTrigger>)}</TabsList></div>
       <TabsContent value="bookings" className="mt-0"><LiveBookings /></TabsContent>
       <TabsContent value="evaluations" className="mt-0"><Evaluations /></TabsContent>
       <TabsContent value="vouchers" className="mt-0"><VoucherReport /></TabsContent>
+      <TabsContent value="bee-cpd" className="mt-0"><BeeCpdReports /></TabsContent>
       <TabsContent value="activity-log" className="mt-0"><AdminLedgerReport table="activity_log" /></TabsContent>
       <TabsContent value="token-ledger" className="mt-0"><AdminLedgerReport table="ai_token_ledger" /></TabsContent>
     </Tabs>
+  </div>;
+}
+
+function BeeCpdReports() {
+  const [sendingId, setSendingId] = useState<number | null>(null);
+  const [sentId, setSentId] = useState<number | null>(null);
+  const companies = useQuery({
+    queryKey: ["admin", "bee-companies"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("companies").select("id, company, hr_email").order("company");
+      if (error) throw new Error(error.message);
+      return data ?? [];
+    },
+  });
+  async function emailReport(id: number) {
+    setSendingId(id);
+    setSentId(null);
+    const { error } = await supabase.rpc("email_company_bee_report", { _company: id });
+    setSendingId(null);
+    if (error) return notify(error.message);
+    setSentId(id);
+  }
+  return <div className="p-6">
+    <p className="text-sm text-muted-foreground">Sends each company's HR contact a B-BBEE Skills Development / CSI report of the job shadows they've hosted, with the demographic breakdown needed to claim CPD points and CSI spend credit. Companies can also view and export this themselves at <code>/company-report</code> once signed in with their HR email.</p>
+    <div className="mt-4 overflow-x-auto [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-track]:bg-muted">
+      <table className="w-full min-w-[600px] text-left text-xs">
+        <thead><tr><th className="border-b border-border px-3 py-2 font-medium">Company</th><th className="border-b border-border px-3 py-2 font-medium">HR email</th><th className="border-b border-border px-3 py-2 font-medium">Action</th></tr></thead>
+        <tbody>
+          {companies.isPending ? <tr><td colSpan={3} className="p-4">Loading…</td></tr> : (companies.data ?? []).map((c) => (
+            <tr key={c.id} className="border-b border-border/60">
+              <td className="px-3 py-2">{c.company}</td>
+              <td className="px-3 py-2">{c.hr_email || "—"}</td>
+              <td className="px-3 py-2">
+                <Button variant="outline" size="sm" disabled={!c.hr_email || sendingId === c.id} onClick={() => emailReport(c.id)}>
+                  {sendingId === c.id ? "Sending…" : sentId === c.id ? "Sent" : "Email report"}
+                </Button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   </div>;
 }
 

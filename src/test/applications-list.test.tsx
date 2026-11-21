@@ -14,14 +14,17 @@ describe("Unified Applications screen", () => {
     client.setQueryData(["admin", "combined-applications"], records);
     render(<QueryClientProvider client={client}><ApplicationsList onEditImported={() => {}} onDeleteImported={() => {}} /></QueryClientProvider>);
     expect(screen.getByRole("columnheader", { name: "Mentor" })).toBeVisible();
-    expect(screen.getByText("HR Person")).toBeVisible();
+    // Defaults to the Pending filter: only Bob (awaiting payment) shows, not Alice (booked/confirmed).
+    expect(screen.getByRole("button", { name: "Bob Pending" })).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Alice Booked" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Booked 1" }));
+    expect(screen.getByText("HR Person")).toBeVisible();
     expect(screen.getByRole("button", { name: "Alice Booked" })).toBeVisible();
     expect(screen.queryByRole("button", { name: "Bob Pending" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Imported Person" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "All 3" }));
     expect(screen.getByRole("button", { name: "Imported Person" })).toBeVisible();
-    fireEvent.click(screen.getByText(/Columns \(/));
+    fireEvent.click(screen.getByText(/Customise View \(/));
     fireEvent.click(screen.getByRole("button", { name: "Show all" }));
     expect(screen.getByRole("columnheader", { name: "Parent/guardian email" })).toBeVisible();
     expect(screen.getByRole("columnheader", { name: "Indemnity status" })).toBeVisible();
