@@ -92,7 +92,7 @@ function ProfileSettings() {
             <p className="text-xs text-muted-foreground">Manage your details, scholar account and bookings.</p>
           </div>
           <Tabs value={tab ?? "profile"} onValueChange={(v) => navigate({ search: { tab: v as Tab }, replace: true })} className="w-full">
-            <TabsList className="flex w-full flex-wrap justify-start rounded-lg bg-primary/90">
+            <TabsList className="flex w-full flex-wrap justify-start rounded-full bg-primary/90">
               <TabsTrigger value="profile" className="data-[state=active]:bg-card data-[state=active]:text-foreground text-primary-foreground text-xs gap-1.5"><UserCircle className="h-3.5 w-3.5" />Profile</TabsTrigger>
               <TabsTrigger value="account" className="data-[state=active]:bg-card data-[state=active]:text-foreground text-primary-foreground text-xs gap-1.5"><IdCard className="h-3.5 w-3.5" />My Account</TabsTrigger>
               <TabsTrigger value="bookings" className="data-[state=active]:bg-card data-[state=active]:text-foreground text-primary-foreground text-xs gap-1.5"><CalendarCheck className="h-3.5 w-3.5" />My Bookings</TabsTrigger>

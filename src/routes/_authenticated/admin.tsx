@@ -306,9 +306,9 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
     <div>
       {alphabetField && (
         <div className="flex flex-wrap gap-1.5 bg-background px-6 py-4" aria-label={`Filter ${title} alphabetically`}>
-          <button type="button" onClick={() => setLetter(null)} aria-pressed={letter === null} className={`rounded-md px-2.5 py-1.5 text-xs font-medium uppercase transition ${letter === null ? "bg-primary text-primary-foreground" : "bg-muted/70 text-foreground hover:bg-teal/20"}`}>All</button>
+          <button type="button" onClick={() => setLetter(null)} aria-pressed={letter === null} className={`rounded-full px-2.5 py-1.5 text-xs font-medium uppercase transition ${letter === null ? "bg-primary text-primary-foreground" : "bg-muted/70 text-foreground hover:bg-teal/20"}`}>All</button>
           {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((ch) => (
-            <button key={ch} type="button" onClick={() => setLetter(letter === ch ? null : ch)} disabled={!letterCounts.has(ch)} aria-pressed={letter === ch} className={`rounded-md px-2.5 py-1.5 text-xs font-medium uppercase transition ${letter === ch ? "bg-primary text-primary-foreground" : !letterCounts.has(ch) ? "bg-muted/30 text-muted-foreground/50" : "bg-muted/70 text-foreground hover:bg-teal/20"}`}>{ch}</button>
+            <button key={ch} type="button" onClick={() => setLetter(letter === ch ? null : ch)} disabled={!letterCounts.has(ch)} aria-pressed={letter === ch} className={`rounded-full px-2.5 py-1.5 text-xs font-medium uppercase transition ${letter === ch ? "bg-primary text-primary-foreground" : !letterCounts.has(ch) ? "bg-muted/30 text-muted-foreground/50" : "bg-muted/70 text-foreground hover:bg-teal/20"}`}>{ch}</button>
           ))}
         </div>
       )}
@@ -870,7 +870,7 @@ export function AdminUsers() {
         <div className="flex flex-wrap gap-1.5">
           <button
             type="button" aria-pressed={letter === null} onClick={() => { setLetter(null); setOpenGroups([]); }}
-            className={`rounded-md px-2.5 py-1.5 text-xs font-medium uppercase transition ${letter === null ? "bg-primary text-primary-foreground" : "bg-muted/70 text-foreground hover:bg-teal/20"}`}
+            className={`rounded-full px-2.5 py-1.5 text-xs font-medium uppercase transition ${letter === null ? "bg-primary text-primary-foreground" : "bg-muted/70 text-foreground hover:bg-teal/20"}`}
           >
             All
           </button>
@@ -881,7 +881,7 @@ export function AdminUsers() {
                 key={ch}
                 type="button" aria-pressed={letter === ch} onClick={() => { setLetter(ch); setOpenGroups([ch]); }}
                 disabled={count === 0}
-                className={`rounded-md px-2.5 py-1.5 text-xs font-medium uppercase transition ${letter === ch ? "bg-primary text-primary-foreground" : count === 0 ? "bg-muted/30 text-muted-foreground/50" : "bg-muted/70 text-foreground hover:bg-teal/20"}`}
+                className={`rounded-full px-2.5 py-1.5 text-xs font-medium uppercase transition ${letter === ch ? "bg-primary text-primary-foreground" : count === 0 ? "bg-muted/30 text-muted-foreground/50" : "bg-muted/70 text-foreground hover:bg-teal/20"}`}
               >
                 {ch}
               </button>
