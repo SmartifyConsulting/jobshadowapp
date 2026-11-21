@@ -21,7 +21,7 @@ export const STORIES_VIDEO = { id: "APy164TJ0tI", title: "JOB SHADOW Real Storie
 
 export const PARTNER_HERO = { title: "Open your doors. Change a trajectory.", sub: "Too many South African students drop out of their first degree because it wasn't what they imagined. A single day of shadowing can fix that." };
 export const PARTNER_BLOCKS = [
-  { type: "host", title: "Host companies", points: ["One day or one hour of your time", "We vet, brief and prepare every scholar", "Build employer brand with future talent", "Counts toward B-BBEE skills development"], cta: "Become a host" },
+  { type: "host", title: "Mentor companies", points: ["One day or one hour of your time", "We vet, brief and prepare every scholar", "Build employer brand with future talent", "Counts toward B-BBEE skills development"], cta: "Become a mentor" },
   { type: "school", title: "Schools", points: ["Structured exposure for Grades 9–12", "Supports subject choice & Life Orientation", "Group bookings and term calendars", "Progress reports for counsellors"], cta: "Partner your school" },
   { type: "sponsor", title: "Sponsors", points: ["Fund placements for under-resourced learners", "Choose a province, school or field", "Impact report with every sponsorship", "Section 18A tax certificates"], cta: "Sponsor a learner" },
 ] as const;

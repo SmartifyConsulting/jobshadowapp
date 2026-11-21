@@ -10,9 +10,9 @@ import { Calendar } from "@/components/ui/calendar";
 export const Route = createFileRoute("/_authenticated/mentor")({
   head: () => ({
     meta: [
-      { title: "Host Portal | JobShadow" },
+      { title: "Mentor Portal | JobShadow" },
       { name: "description", content: "Manage your Job Shadow placements and bookings." },
-      { property: "og:title", content: "Host Portal | JobShadow" },
+      { property: "og:title", content: "Mentor Portal | JobShadow" },
       { property: "og:description", content: "Manage your Job Shadow placements and bookings." },
       { property: "og:type", content: "website" },
       { name: "robots", content: "noindex" },
@@ -66,7 +66,7 @@ function MentorPortal() {
       <SiteHeader />
       <div className="flex min-w-0 flex-1 flex-col md:flex-row">
       <aside className="shrink-0 bg-cta text-cta-foreground shadow-warm md:w-60">
-        <p className="px-6 pt-4 text-xs font-bold uppercase tracking-widest text-foreground/70 md:pt-6">Host Portal</p>
+        <p className="px-6 pt-4 text-xs font-bold uppercase tracking-widest text-foreground/70 md:pt-6">Mentor Portal</p>
         <nav className="flex gap-1 overflow-x-auto px-3 py-3 md:block md:space-y-1">
           {MENU.map((m) => (
             <button key={m.id} onClick={() => setActive(m.id)} aria-pressed={active === m.id} className={`flex shrink-0 items-center gap-3 rounded-md border-l-2 px-3 py-2.5 text-left text-sm font-medium transition md:w-full ${active === m.id ? "border-primary bg-primary/10" : "border-transparent text-foreground/85 hover:bg-primary/5"}`}>
@@ -417,13 +417,15 @@ function BookingCard({ booking }: { booking: MentorBooking }) {
   const [notes, setNotes] = useState(booking.internship_notes ?? "");
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
 
   async function saveInternship() {
     setBusy(true);
     setSaved(false);
+    setErr(null);
     const { error } = await supabase.rpc("set_internship_preapproval", { _booking: booking.id, _preapproved: preapproved, _notes: (notes || null) as string });
     setBusy(false);
-    if (error) return window.alert(error.message);
+    if (error) return setErr(error.message);
     setSaved(true);
     qc.invalidateQueries({ queryKey: ["mentor-bookings"] });
   }
@@ -459,6 +461,7 @@ function BookingCard({ booking }: { booking: MentorBooking }) {
         <button onClick={saveInternship} disabled={busy} className="mt-2 rounded bg-primary px-3 py-1.5 text-xs font-bold uppercase text-primary-foreground disabled:opacity-50">
           {saved ? "Saved" : "Save"}
         </button>
+        {err && <p className="mt-1 text-xs text-destructive">{err}</p>}
       </div>
     </div>
   );

@@ -52,7 +52,7 @@ function AccountMenu({ displayName, avatarUrl, isAdmin, logout }: { displayName:
       <DropdownMenuSeparator />
       <DropdownMenuItem asChild><Link to="/profile">Profile</Link></DropdownMenuItem>
       {isAdmin && <DropdownMenuItem asChild><Link to="/admin">Admin Portal</Link></DropdownMenuItem>}
-      <DropdownMenuItem asChild><Link to="/mentor">Host Portal</Link></DropdownMenuItem>
+      <DropdownMenuItem asChild><Link to="/mentor">Mentor Portal</Link></DropdownMenuItem>
       <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>;
@@ -67,7 +67,7 @@ export function SiteAccountMenu() {
 }
 
 /** The full public-site header (logo, nav, social icons, account menu) — shared verbatim by
- * SiteLayout and the Admin/Host Portal shells, so those "look and feel" the same as every
+ * SiteLayout and the Admin/Mentor Portal shells, so those "look and feel" the same as every
  * other screen instead of reimplementing a slimmer version that drifts out of sync. */
 export function SiteHeader({ headerLogo }: { headerLogo?: ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -136,7 +136,7 @@ export function SiteLayout({ children, headerLogo, className = "" }: { children:
   );
 }
 
-/** The site footer, shared verbatim with SiteHeader by Admin/Host Portal. */
+/** The site footer, shared verbatim with SiteHeader by Admin/Mentor Portal. */
 export function SiteFooter() {
   return (
     <footer className="bg-brand-deep text-primary-foreground">

@@ -27,7 +27,7 @@ export const Route = createFileRoute("/contact")({
 });
 
 const FORM_COPY: Record<NonNullable<ContactType>, { heading: string; orgLabel: string; subject: string }> = {
-  host: { heading: "Become A Host", orgLabel: "Company name", subject: "New host application" },
+  host: { heading: "Become A Mentor", orgLabel: "Company name", subject: "New mentor application" },
   school: { heading: "Partner Your School", orgLabel: "School name", subject: "New school partnership application" },
   sponsor: { heading: "Sponsor A Learner", orgLabel: "Organisation / your name", subject: "New sponsor application" },
 };

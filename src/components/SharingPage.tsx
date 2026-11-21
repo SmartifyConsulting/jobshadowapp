@@ -88,6 +88,7 @@ const SHARE_ICONS = [Mail, Facebook] as const;
 function SendToFriendSection() {
   const [f, setF] = useState({ recipientFirstName: "", to: "", message: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [sent, setSent] = useState(false);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,6 +101,7 @@ function SendToFriendSection() {
     setErrors({});
     const body = `Hi ${r.data.recipientFirstName},\n\n${r.data.message}`;
     window.location.href = `mailto:${encodeURIComponent(r.data.to)}?subject=${encodeURIComponent("A friend thinks you'd like Job Shadow")}&body=${encodeURIComponent(body)}`;
+    setSent(true);
   };
 
   const input = "mt-1 w-full border-b border-current/40 bg-transparent px-1 py-1.5 text-sm placeholder:text-current/70 outline-none focus:border-primary";
@@ -116,16 +118,20 @@ function SendToFriendSection() {
           </div>
           <div className="rounded-xl border border-foreground/20 bg-background/20 p-4">
             <h2 className="font-display text-2xl uppercase">Your Message</h2>
-            <form onSubmit={submit} className="mt-3 grid gap-2">
-              <div className="grid gap-3 sm:grid-cols-2">
-              <label><span className="text-xs uppercase tracking-wide opacity-80">Recipient's first name</span><input className={input} value={f.recipientFirstName} onChange={(e) => setF({ ...f, recipientFirstName: e.target.value })} />{err("recipientFirstName")}</label>
-              <label><span className="text-xs uppercase tracking-wide opacity-80">Recipient email</span><input className={input} type="email" value={f.to} onChange={(e) => setF({ ...f, to: e.target.value })} />{err("to")}</label>
-              </div>
-              <div className="flex items-end gap-3">
-                <label className="min-w-0 flex-1"><span className="text-xs uppercase tracking-wide opacity-80">Message</span><textarea rows={3} className={input + ' min-h-20 [field-sizing:content]'} placeholder={DEFAULT_MESSAGE} value={f.message} onChange={(e) => setF({ ...f, message: e.target.value })} />{err("message")}</label>
-                <button className="mb-1 shrink-0 rounded-full bg-cta px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-cta-foreground">Send</button>
-              </div>
-            </form>
+            {sent ? (
+              <p className="mt-4 text-sm">Thanks! Your email app should now be open with your message ready to send.</p>
+            ) : (
+              <form onSubmit={submit} className="mt-3 grid gap-2">
+                <div className="grid gap-3 sm:grid-cols-2">
+                <label><span className="text-xs uppercase tracking-wide opacity-80">Recipient's first name</span><input className={input} value={f.recipientFirstName} onChange={(e) => setF({ ...f, recipientFirstName: e.target.value })} />{err("recipientFirstName")}</label>
+                <label><span className="text-xs uppercase tracking-wide opacity-80">Recipient email</span><input className={input} type="email" value={f.to} onChange={(e) => setF({ ...f, to: e.target.value })} />{err("to")}</label>
+                </div>
+                <div className="flex items-end gap-3">
+                  <label className="min-w-0 flex-1"><span className="text-xs uppercase tracking-wide opacity-80">Message</span><textarea rows={3} className={input + ' min-h-20 [field-sizing:content]'} placeholder={DEFAULT_MESSAGE} value={f.message} onChange={(e) => setF({ ...f, message: e.target.value })} />{err("message")}</label>
+                  <button className="mb-1 shrink-0 rounded-full bg-cta px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-cta-foreground">Send</button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       </section>
