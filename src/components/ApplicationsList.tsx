@@ -55,7 +55,7 @@ export function ApplicationsList({ onEditImported, onDeleteImported }: { onEditI
   const getAccountsFn = useServerFn(getAccounts);
   const [search, setSearch] = useState("");
   const [source, setSource] = useState("");
-  const [status, setStatus] = useState("all");
+  const [status, setStatus] = useState("pending");
   const [visibleColumns, setVisibleColumns] = useState<string[]>(DEFAULT_APPLICATION_COLUMNS);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const records = useQuery({ queryKey: ["admin", "combined-applications"], queryFn: async () => {

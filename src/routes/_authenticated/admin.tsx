@@ -1509,13 +1509,13 @@ function BookingSettings() {
               <div>
                 <p className="text-sm">Blackout dates <span className="text-xs text-muted-foreground">(no bookings allowed)</span></p>
                 <div className="mt-2 flex flex-wrap items-start gap-4">
-                  <Calendar mode="multiple" selected={blackoutDates} onSelect={(d) => setBlackoutDates(d ?? [])} className="rounded-md border border-warm-divider bg-background" />
+                  <Calendar mode="multiple" selected={blackoutDates} onSelect={(d) => setBlackoutDates(d ?? [])} className="rounded-md border border-warm-divider bg-background [&_[data-selected-single=true]]:bg-black [&_[data-selected-single=true]]:text-white [&_[data-selected-single=true]:hover]:bg-black [&_[data-selected-single=true]:hover]:text-white" />
                   <div className="flex flex-wrap gap-1.5">
                     {blackoutDates.length === 0 && <span className="text-xs text-muted-foreground">No blackout dates set.</span>}
                     {blackoutDates.map((d, i) => (
-                      <span key={i} className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs">
+                      <span key={i} className="flex items-center gap-1 rounded-full bg-black px-2.5 py-1 text-xs text-white">
                         {toUsDate(d)}
-                        <button type="button" onClick={() => setBlackoutDates((cur) => cur.filter((_, idx) => idx !== i))} aria-label={`Remove ${toUsDate(d)}`} className="text-muted-foreground hover:text-destructive"><X className="h-3 w-3" /></button>
+                        <button type="button" onClick={() => setBlackoutDates((cur) => cur.filter((_, idx) => idx !== i))} aria-label={`Remove ${toUsDate(d)}`} className="text-white/70 hover:text-destructive"><X className="h-3 w-3" /></button>
                       </span>
                     ))}
                   </div>
@@ -1543,13 +1543,13 @@ function BookingSettings() {
             </AccordionContent>
           </AccordionItem>
 
-          <AccordionItem value="docs" className={sectionClass}>
-            <AccordionTrigger className={triggerClass(BAND_COLORS[1]!)}>Documentation &amp; Approval</AccordionTrigger>
-            <AccordionContent className="space-y-5 bg-ivory px-5 py-5 text-foreground">
+          <div className={sectionClass}>
+            <div className={triggerClass(BAND_COLORS[1]!)}>Documentation &amp; Approval</div>
+            <div className="space-y-5 bg-ivory px-5 py-5 text-foreground">
               <NumberField label="Documentation deadline" suffix="days before the shadow date" value={f("documentation_deadline_days")} onChange={set("documentation_deadline_days")} hint="The latest all required paperwork (indemnities, consent) must be approved. Enforced as a floor under the minimum lead time above, so a request can't be made with too little time left to complete it." />
               <NumberField label="Booking request expiry" suffix="hours for a host to respond" value={f("request_expiry_hours")} onChange={set("request_expiry_hours")} hint={NOT_ENFORCED_HINT} />
-            </AccordionContent>
-          </AccordionItem>
+            </div>
+          </div>
 
           <AccordionItem value="cancel" className={sectionClass}>
             <AccordionTrigger className={triggerClass(BAND_COLORS[2]!)}>Cancellations &amp; Waitlists</AccordionTrigger>
