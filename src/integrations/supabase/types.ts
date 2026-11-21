@@ -814,11 +814,14 @@ export type Database = {
       scholar_profiles: {
         Row: {
           career_interests: string | null
+          citizenship: string | null
           contact_no: string
           created_at: string
           dietary: string | null
+          disability: string | null
           first_name: string | null
           full_name: string
+          gender: string | null
           guardian_contact: string | null
           guardian_email: string | null
           guardian_first_name: string | null
@@ -834,6 +837,7 @@ export type Database = {
           photo_path: string | null
           popi_accepted: boolean
           popi_accepted_at: string | null
+          population_group: string | null
           school: string
           school_type: string
           tc_accepted: boolean
@@ -843,11 +847,14 @@ export type Database = {
         }
         Insert: {
           career_interests?: string | null
+          citizenship?: string | null
           contact_no: string
           created_at?: string
           dietary?: string | null
+          disability?: string | null
           first_name?: string | null
           full_name: string
+          gender?: string | null
           guardian_contact?: string | null
           guardian_email?: string | null
           guardian_first_name?: string | null
@@ -863,6 +870,7 @@ export type Database = {
           photo_path?: string | null
           popi_accepted?: boolean
           popi_accepted_at?: string | null
+          population_group?: string | null
           school: string
           school_type: string
           tc_accepted?: boolean
@@ -872,11 +880,14 @@ export type Database = {
         }
         Update: {
           career_interests?: string | null
+          citizenship?: string | null
           contact_no?: string
           created_at?: string
           dietary?: string | null
+          disability?: string | null
           first_name?: string | null
           full_name?: string
+          gender?: string | null
           guardian_contact?: string | null
           guardian_email?: string | null
           guardian_first_name?: string | null
@@ -892,6 +903,7 @@ export type Database = {
           photo_path?: string | null
           popi_accepted?: boolean
           popi_accepted_at?: string | null
+          population_group?: string | null
           school?: string
           school_type?: string
           tc_accepted?: boolean
@@ -1014,6 +1026,10 @@ export type Database = {
       }
       complete_and_request_evaluations: { Args: never; Returns: undefined }
       confirm_test_payment: { Args: { _booking: string }; Returns: undefined }
+      email_company_bee_report: {
+        Args: { _company: number }
+        Returns: undefined
+      }
       get_booking_company_details: {
         Args: { _booking: string }
         Returns: {
@@ -1023,6 +1039,22 @@ export type Database = {
           company: string
           custom_indemnity_text: string
           location: string
+        }[]
+      }
+      get_company_bee_report: {
+        Args: { _company: number }
+        Returns: {
+          career: string
+          citizenship: string
+          days_per_shadow: number
+          disability: string
+          gender: string
+          mentor_name: string
+          population_group: string
+          scholar_name: string
+          school: string
+          shadow_date: string
+          status: string
         }[]
       }
       get_evaluation_context: {
@@ -1179,6 +1211,13 @@ export type Database = {
           max_applicants: number
           mode: string
           sector: string
+        }[]
+      }
+      list_my_hr_companies: {
+        Args: never
+        Returns: {
+          company: string
+          id: number
         }[]
       }
       list_partner_logos: {
