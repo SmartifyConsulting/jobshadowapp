@@ -925,10 +925,10 @@ export function AdminUsers() {
         ) : accounts.error ? (
           <p className="mt-6 text-destructive">{(accounts.error as Error).message}</p>
         ) : (
-          <Accordion type="multiple" value={openGroups} onValueChange={setOpenGroups} className="mt-3 space-y-0">
+          <Accordion type="multiple" value={openGroups} onValueChange={setOpenGroups} className="mt-3 border-t border-border">
             {[...new Set(rows.map((a) => accountInitial(a)))].sort((a, b) => a === "#" ? 1 : b === "#" ? -1 : a.localeCompare(b)).map((group) => (
-              <AccordionItem key={group} value={group} className="group overflow-hidden rounded-md border-[4px] border-ivory bg-ivory">
-                <AccordionTrigger className="justify-start gap-3 px-3 py-1.5 text-sm hover:no-underline [&>svg]:ml-auto"><span className="w-5 font-medium text-primary">{group}</span><span className="text-xs text-muted-foreground">{rows.filter((a) => (accountInitial(a)) === group).length} users</span></AccordionTrigger>
+              <AccordionItem key={group} value={group}>
+                <AccordionTrigger className="px-3 py-3 text-sm hover:no-underline hover:bg-muted/30"><span className="font-bold text-primary">{group}</span>&nbsp;<span className="text-muted-foreground">({rows.filter((a) => (accountInitial(a)) === group).length})</span></AccordionTrigger>
                 <AccordionContent className="pb-0">{view === "cards" ? <UserCards rows={rows.filter((a) => (accountInitial(a)) === group)} selectedId={selectedId} busyId={busyId} onSelect={setSelectedId} onEdit={(a) => setEditing({ ...a, roles: [...a.roles] })} onDelete={deleteAccountRow} onVerify={setIdVerified} /> : <div className="overflow-x-auto border-t border-border [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-track]:bg-muted">
                   <table className="w-full min-w-[820px] text-left text-xs">
                     <thead className="bg-background/40 text-foreground"><tr>{["First Name", "Last Name", "Email", "User type", "Documents", "Applications", "Actions"].map((heading) => <th key={heading} className="whitespace-nowrap px-3 py-2 font-normal">{heading}</th>)}</tr></thead>
