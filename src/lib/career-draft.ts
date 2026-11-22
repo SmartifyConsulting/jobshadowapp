@@ -5,7 +5,12 @@ const draftSchema = z.object({
   description: z.string().trim().min(1).max(3000),
   school_skills: z.array(skill).min(1).max(10),
   workplace_skills: z.array(skill).min(1).max(10),
+  ideal_for: z.string().trim().min(1).max(1000),
+  specialisations: z.array(skill).min(1).max(12),
+  subjects: z.array(skill).min(1).max(10),
 });
+
+export type CareerDraft = z.infer<typeof draftSchema>;
 
 export function parseCareerDraft(text: string) {
   try {

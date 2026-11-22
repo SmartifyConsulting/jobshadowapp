@@ -34,4 +34,19 @@ describe("Combined application records", () => {
     const rows = combineApplicationRecords([], [], [{ id: 1, paid: null, indemnity: false }], []);
     expect(rows[0]?.paid).toBeNull(); expect(rows[0]?.indemnity).toBe(false);
   });
+  it("includes imported learners without requests without inventing bookings or payment", () => {
+    const original = { id: 42, name: 'Student One', email: 'student@example.com', has_profile: true, is_spam: false };
+    const unknown = { id: 43, name: 'Unclassified Person', email: 'unknown@example.com', has_profile: false };
+    const rows = combineApplicationRecords([user], [], [], [], [], [original, unknown]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ source: 'Imported student', status: 'Imported profile', user, booking: null, paid: null, indemnity: null });
+    expect(applicationExportRow(rows[0]!)).toHaveProperty('imported_user_id', 42);
+    expect(original).not.toHaveProperty('status');
+  });
+  it("does not duplicate imported students already represented by an application", () => {
+    const rows = combineApplicationRecords([user], [{ id: 'book', user_id: user.id }], [], [], [], [{ id: 42, name: 'Student One', email: 'student@example.com', has_profile: true }]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.source).toBe('Booking');
+  });
+
 });

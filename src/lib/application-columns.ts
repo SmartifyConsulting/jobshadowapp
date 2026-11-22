@@ -29,7 +29,7 @@ export function applicationStage(record: ApplicationRecord): string {
   if (record.status === "rejected") return "rejected";
   if (record.status === "completed") return "completed";
   if (record.status === "confirmed") return "booked";
-  return record.source === "Imported" ? "imported" : "pending";
+  return record.source !== "Booking" ? "imported" : "pending";
 }
 const roles: Record<string, string> = { user: "Student", mentor: "Host", school: "School", hr_admin: "HR Admin", admin: "Admin" };
 const first = (...values: unknown[]) => values.find((value) => value !== undefined && value !== null && value !== "") ?? null;
@@ -42,8 +42,8 @@ export function applicationTableRow(record: ApplicationRecord): ApplicationData 
     amount_due: record.amount, paid_at: first(b["paid_at"]), indemnity_received: record.indemnity, created_at: first(b["created_at"], i["created_at"]),
   };
   row["student_contact"] = row["contact"]; row["student_id_number"] = row["id_number"]; row["student_school"] = row["school"];
-  const storedFirst = first(s["first_name"], i["first_name"]);
-  const storedLast = first(s["last_name"], i["last_name"]);
+  const storedFirst = first(s["first_name"], i["first_name"], record.importedUser?.["first_name"], u?.first_name);
+  const storedLast = first(s["last_name"], i["last_name"], record.importedUser?.["last_name"], u?.last_name);
   if (storedFirst || storedLast) {
     row["student_first_name"] = storedFirst; row["student_last_name"] = storedLast;
   } else {

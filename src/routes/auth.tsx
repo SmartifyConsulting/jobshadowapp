@@ -1,3 +1,4 @@
+import { HOW_TO_DESTINATIONS, isJourneyDestination, type JourneyDestination } from "@/lib/journey-progress";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,6 +6,7 @@ import { SiteLayout } from "@/components/SiteLayout";
 import { PasswordInput } from "@/components/PasswordInput";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (search: Record<string, unknown>): { contact?: "host" | "mentor" | undefined; go?: JourneyDestination | undefined } => ({ go: isJourneyDestination(search["go"]) ? search["go"] : undefined, contact: search["contact"] === "host" || search["contact"] === "mentor" ? search["contact"] : undefined }),
   head: () => ({
     meta: [
       { title: "Log in | JobShadow" },
@@ -20,6 +22,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { contact, go } = Route.useSearch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
@@ -43,6 +46,8 @@ function AuthPage() {
       }
       return setMsg("Email or password is incorrect.");
     }
+    if (go) { window.location.assign(HOW_TO_DESTINATIONS[go]); return; }
+    if (contact) { navigate({ to: "/contact", search: { type: contact } }); return; }
     const { data: u } = await supabase.auth.getUser();
     const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: u.user!.id, _role: "admin" });
     const { data: isParent } = await supabase.rpc("has_role", { _user_id: u.user!.id, _role: "parent" });

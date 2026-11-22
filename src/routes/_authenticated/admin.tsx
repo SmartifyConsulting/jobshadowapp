@@ -1,3 +1,6 @@
+import { CareerGuidance } from "@/components/CareerGuidance";
+import { getCareerGuidance } from "@/lib/career-guidance";
+import type { CareerDraft } from "@/lib/career-draft";
 import { individualMentorEmails, classifyCompanies, companyKey, type CompanyContacts } from "@/lib/company-classification";
 import { PersonNameFields } from "@/components/PersonNameFields";
 import { PhoneInput } from "@/components/PhoneInput";
@@ -206,7 +209,7 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
     setAddBusy(false);
     if (error) return notify(error.message, "error");
     setNewName("");
-    qc.invalidateQueries({ queryKey: ["admin", table] });
+    qc.invalidateQueries({ queryKey: ["admin", table] }); if (table === "companies") void qc.invalidateQueries({ queryKey: ["admin", "company-contact-classification"] });
   }
   async function loadAll(source: string) {
     return fetchAllRows(async (from, to) => {
@@ -222,7 +225,7 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
     setExportError(null);
     try {
       let all = await loadAll(table);
-      if (table === "careers") all = withCareerDescriptions(all).map((row) => ({ ...row, ideal_for: getCareerIdealFor(String(row["name"] ?? "")), school_skills: getCareerSkills(String(row["name"] ?? ""), row["school_skills"], row["workplace_skills"]).school, workplace_skills: getCareerSkills(String(row["name"] ?? ""), row["school_skills"], row["workplace_skills"]).workplace }));
+      if (table === "careers") all = withCareerDescriptions(all).map((row) => ({ ...row, ideal_for: getCareerGuidance(String(row["name"] ?? ""), String(row["description"] ?? ""), row).idealFor, specialisations: getCareerGuidance(String(row["name"] ?? ""), String(row["description"] ?? ""), row).specialisations, subjects: getCareerGuidance(String(row["name"] ?? ""), String(row["description"] ?? ""), row).subjects, school_skills: getCareerSkills(String(row["name"] ?? ""), row["school_skills"], row["workplace_skills"]).school, workplace_skills: getCareerSkills(String(row["name"] ?? ""), row["school_skills"], row["workplace_skills"]).workplace }));
       if (table === "legacy_applications") all = joinApplicationContacts(all, await loadAll("companies"));
       exportCsv(title, completeExportColumns(cols.filter((c) => !c.key.startsWith("_")), all), all);
     } catch (error) {
@@ -294,11 +297,11 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
     if (!(await confirmAction("Delete this record?", { danger: true, confirmLabel: "Delete" }))) return;
     const { error } = await (supabase.from(table as "careers") as any).delete().eq("id", row["id"]);
     if (error) return notify(error.message, "error");
-    qc.invalidateQueries({ queryKey: ["admin", table] });
+    qc.invalidateQueries({ queryKey: ["admin", table] }); if (table === "companies") void qc.invalidateQueries({ queryKey: ["admin", "company-contact-classification"] });
   }
 
   if (editing) {
-    const onDone = () => { setEditing(null); qc.invalidateQueries({ queryKey: ["admin", table] }); };
+    const onDone = () => { setEditing(null); qc.invalidateQueries({ queryKey: ["admin", table] }); if (table === "companies") void qc.invalidateQueries({ queryKey: ["admin", "company-contact-classification"] }); };
     const onCancel = () => setEditing(null);
     return indemnityEdit
       ? <ApplicationEditPanel table={table} row={editing} onDone={onDone} onCancel={onCancel} />
@@ -306,13 +309,12 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
   }
 
   if (creating) {
-    const onDone = () => { setCreating(false); qc.invalidateQueries({ queryKey: ["admin", table] }); };
+    const onDone = () => { setCreating(false); qc.invalidateQueries({ queryKey: ["admin", table] }); if (table === "companies") void qc.invalidateQueries({ queryKey: ["admin", "company-contact-classification"] }); };
     return <CreateRole onDone={onDone} onCancel={() => setCreating(false)} />;
   }
 
   return (
     <div className="bg-ivory">
-      {csvUpload && (table === "careers" || table === "sectors") && <NamedCsvUpload table={table} />}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border bg-ivory px-6 py-6 text-foreground">
         <h1 className="text-2xl font-medium">{title} {!isLoading && `(${rows.length})`}</h1>
         {dateCompanyFilter && (
@@ -326,7 +328,8 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
             </label>
           </div>
         )}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {csvUpload && (table === "careers" || table === "sectors") && <NamedCsvUpload table={table} />}
           {table === "companies" && (
             <Button onClick={() => setCreating(true)}>Add New Role</Button>
           )}
@@ -392,15 +395,14 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
                                   <span className="shrink-0 text-xs text-muted-foreground">{fmt(r["_student_count"])} students</span>
                                 </div>
                                 <div className="flex shrink-0 gap-1.5">
+                                  <button onClick={() => setEditing(r)} className="inline-flex items-center gap-1 rounded border border-warm-divider px-2 py-1 text-xs hover:text-primary"><Sparkles className="h-3 w-3" />AI wizard</button>
                                   <button onClick={() => setEditing(r)} className="rounded border border-warm-divider p-1.5 text-muted-foreground transition hover:text-primary" aria-label="Edit"><Pencil className="h-3 w-3" /></button>
                                   <button onClick={() => remove(r)} className="rounded p-1.5 text-muted-foreground transition hover:bg-destructive/5 hover:text-destructive" aria-label="Delete"><Trash2 className="h-3 w-3" /></button>
                                 </div>
                               </div>
                               {table === "careers" && descOpen && (
                                 <div className="bg-background/60 px-10 py-3 text-sm text-muted-foreground">
-                                  {r["description"] ? <RichText text={String(r["description"])} /> : <em>No description yet — edit this career to add one.</em>}
-                                  {getCareerIdealFor(String(r["name"] ?? "")) && <p className="mt-2 text-foreground"><strong>Ideal for:</strong> {getCareerIdealFor(String(r["name"] ?? ""))}</p>}
-                                  <CareerSkills {...getCareerSkills(String(r["name"] ?? ""), r["school_skills"], r["workplace_skills"])} />
+                                  <CareerGuidance name={String(r["name"] ?? "")} description={String(r["description"] ?? "")} saved={r} />
                                 </div>
                               )}
                             </Fragment>
@@ -769,7 +771,6 @@ function UserTableRow({ a, selectedId, busyId, expandedApplicationUser, onSelect
       </div></td>
       <td className="px-3 py-1.5">{lastName || "—"}</td>
       <td className="px-3 py-1.5"><span className="block max-w-48 truncate" title={a.email ?? ""}>{a.email || "—"}</span></td>
-      <td className="px-3 py-1.5"><div className="flex gap-1">{a.roles.length === 0 && <span className="text-xs text-muted-foreground">Unclassified</span>}{a.roles.map((role) => <span key={role} className="whitespace-nowrap rounded bg-muted px-1.5 py-1 text-[10px] text-foreground">{ROLE_LABELS[role]}</span>)}</div></td>
       <td className="px-3 py-1.5"><div className="flex items-center gap-2">
         <label className="flex items-center" title={a.id_verified === null ? 'No scholar profile to verify' : 'ID verified'}><input type="checkbox" className="accent-primary" checked={a.id_verified === true} disabled={a.id_verified === null || busyId === a.id} onChange={(e) => onVerify(a.id, e.target.checked)} aria-label={'ID verified for ' + label} /></label>
         <UserDocument path={a.id_file_path} kind="id" verified={a.id_verified === true} />
@@ -781,7 +782,7 @@ function UserTableRow({ a, selectedId, busyId, expandedApplicationUser, onSelect
         <button onClick={() => onDelete(a.id, label)} disabled={busyId === a.id} className="rounded p-1.5 text-muted-foreground transition hover:bg-destructive/5 hover:text-destructive disabled:opacity-50" aria-label={'Delete account for ' + label}><Trash2 className="h-3.5 w-3.5" /></button>
       </div></td>
     </tr>
-    {expanded && <tr id={'applications-' + a.id}><td colSpan={7} className="border-t border-border bg-muted/30 px-5 py-3">
+    {expanded && <tr id={'applications-' + a.id}><td colSpan={6} className="border-t border-border bg-muted/30 px-5 py-3">
       <div className="mb-2 flex justify-between text-xs text-muted-foreground"><span>Applications for {label}</span><span>{a.booking_count} bookings · Joined {new Date(a.created_at).toLocaleDateString()}</span></div>
       {applications.isLoading ? <p className="text-xs text-muted-foreground">Loading…</p> : !applications.data?.length ? <p className="text-xs text-muted-foreground">No applications recorded.</p> : (
         <table className="w-full text-left text-xs"><thead><tr>{["ID", "Company", "Career", "Dates", "Paid", "Indemnity", "Cancelled"].map((heading) => <th key={heading} className="px-2 py-2 font-medium">{heading}</th>)}</tr></thead><tbody>{applications.data.map((application) => <tr key={application.source + '-' + application.id} className="border-t border-border/70"><td className="px-2 py-2">{application.source} #{application.id}</td><td className="px-2 py-2">{application.company || '—'}</td><td className="px-2 py-2">{application.career || '—'}</td><td className="px-2 py-2">{application.dates || '—'}</td>{[application.paid, application.indemnity, application.cancelled].map((value, index) => <td key={index} className="px-2 py-2">{value === null ? 'Not recorded' : <BoolIcon value={index === 2 ? !value : value} />}</td>)}</tr>)}</tbody></table>
@@ -851,10 +852,12 @@ export function AdminUsers() {
   const [expandedApplicationUser, setExpandedApplicationUser] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [roleTab, setRoleTab] = useState<AccountRow["roles"][number] | "companies" | "unclassified" | "individual_mentor">("user");
-  const [contactsOpen, setContactsOpen] = useState(false);
+  const [showProviderAccounts, setShowProviderAccounts] = useState(false);
+  const isProvider = roleTab === "mentor" || roleTab === "individual_mentor";
   const isUnclassified = roleTab === "unclassified";
   const accountRole = roleTab === "companies" || isUnclassified ? "user" : roleTab === "individual_mentor" ? "mentor" : roleTab;
   const mentorCompanies = useQuery({ queryKey: ["admin", "company-contact-classification"], queryFn: () => fetchAllRows(async (from, to) => { const result = await supabase.from("companies").select("company,mentor_name,mentor_email,backup_mentor_name,backup_mentor_email").order("id").range(from, to); if (result.error) throw result.error; return result.data ?? []; }) });
+  const providerTypes = useMemo(() => classifyCompanies((mentorCompanies.data ?? []) as CompanyContacts[]), [mentorCompanies.data]);
   const soleMentors = useMemo(() => individualMentorEmails((mentorCompanies.data ?? []) as { company: string | null; mentor_email: string | null; backup_mentor_email: string | null }[]), [mentorCompanies.data]);
   const matchesRole = (a: AccountRow, tab = roleTab) => tab === "unclassified" ? a.roles.length === 0 : tab === "individual_mentor" ? a.roles.includes("mentor") && soleMentors.has((a.email ?? "").trim().toLowerCase()) : tab === "mentor" ? a.roles.includes("mentor") && !soleMentors.has((a.email ?? "").trim().toLowerCase()) : tab !== "companies" && a.roles.includes(tab);
   const [showSpam, setShowSpam] = useState(false);
@@ -942,16 +945,17 @@ export function AdminUsers() {
           </form>}
         </DialogContent>
       </Dialog>
-      {roleTab !== "companies" && <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-ivory px-6 py-6 text-foreground">
+      {roleTab !== "companies" && !isProvider && <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-ivory px-6 py-6 text-foreground">
         <h1 className="text-2xl font-medium">Users {!accounts.isLoading && `(${rows.length})`}</h1>
         <div role="group" aria-label="Users view" className="flex rounded border border-border p-0.5">
           {([['table', List, 'Table'], ['cards', LayoutGrid, 'Cards']] as const).map(([value, Icon, label]) => <button key={value} onClick={() => setView(value)} aria-pressed={view === value} className={'flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs transition ' + (view === value ? 'bg-background text-primary' : 'hover:bg-primary/5')}><Icon className="h-3.5 w-3.5" />{label}</button>)}
         </div>
       </div>}
-      <Tabs value={roleTab} onValueChange={(value) => { setRoleTab(value as AccountRow["roles"][number] | "companies" | "unclassified"); setLetter(null); setOpenGroups([]); setSelectedId(null); setContactsOpen(false); }}>
-        <div className="overflow-x-auto border-b border-border bg-ivory px-6 py-3"><TabsList aria-label="User types">{([["user", "Students"], ["mentor", "Hosts"], ["individual_mentor", "Mentors"], ["school", "Schools"], ["hr_admin", "HR Admin"], ["admin", "Admin"], ["companies", "Companies"], ["unclassified", "Unclassified"]] as const).map(([role, name]) => <TabsTrigger key={role} value={role}>{name}{role !== "companies" && ` (${(accounts.data ?? []).filter((user) => matchesRole(user, role) && (showSpam || !user.is_spam)).length})`}</TabsTrigger>)}</TabsList></div>
+      <Tabs value={roleTab} onValueChange={(value) => { setRoleTab(value as AccountRow["roles"][number] | "companies" | "unclassified"); setLetter(null); setOpenGroups([]); setSelectedId(null); setShowProviderAccounts(false); }}>
+        <div className="overflow-x-auto border-b border-border bg-ivory px-6 py-3"><TabsList aria-label="User types">{([["user", "Students"], ["mentor", "Hosts"], ["individual_mentor", "Mentors"], ["school", "Schools"], ["hr_admin", "HR Admin"], ["admin", "Admin"], ["companies", "Companies"], ["unclassified", "Unclassified"]] as const).map(([role, name]) => <TabsTrigger key={role} value={role}>{name}{role === "mentor" || role === "individual_mentor" ? ` (${[...providerTypes.values()].filter((type) => type === (role === "mentor" ? "host" : "mentor")).length})` : role !== "companies" && ` (${(accounts.data ?? []).filter((user) => matchesRole(user, role) && (showSpam || !user.is_spam)).length})`}</TabsTrigger>)}</TabsList></div>
       <TabsContent value={roleTab} className="mt-0">
-      {roleTab === "companies" ? <CompaniesList /> : <div className="flex flex-col items-start xl:flex-row">
+      {isProvider && <><CompaniesList key={roleTab} kind={roleTab === "mentor" ? "host" : "mentor"} /><button type="button" onClick={() => setShowProviderAccounts((open) => !open)} aria-expanded={showProviderAccounts} className="w-full border-t border-border px-6 py-4 text-left text-sm font-medium">Linked login accounts ({rows.length})</button></>}
+      {roleTab === "companies" ? <CompaniesList /> : isProvider && !showProviderAccounts ? null : <div className="flex flex-col items-start xl:flex-row">
       <div className={'min-w-0 w-full flex-1 px-4 py-2 text-foreground ' + 'bg-ivory'}>
         <div className="flex flex-wrap gap-1.5">
           <button
@@ -992,7 +996,7 @@ export function AdminUsers() {
                 <AccordionTrigger className="px-3 py-3 text-sm hover:no-underline hover:bg-muted/30"><span className="font-bold text-primary">{group}</span>&nbsp;<span className="text-muted-foreground">({rows.filter((a) => (accountInitial(a)) === group).length})</span></AccordionTrigger>
                 <AccordionContent className="pb-0">{view === "cards" ? <UserCards rows={rows.filter((a) => (accountInitial(a)) === group)} selectedId={selectedId} busyId={busyId} onSelect={setSelectedId} onEdit={(a) => setEditing({ ...a, roles: [...a.roles] })} onDelete={deleteAccountRow} onVerify={setIdVerified} /> : <div className="overflow-x-auto border-t border-border [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-track]:bg-muted">
                   <table className="w-full min-w-[820px] text-left text-xs">
-                    <thead className="bg-background/40 text-foreground"><tr>{["First Name", "Last Name", "Email", "User type", "Documents", "Applications", "Actions"].map((heading) => <th key={heading} className="whitespace-nowrap px-3 py-2 font-normal">{heading}</th>)}</tr></thead>
+                    <thead className="bg-background/40 text-foreground"><tr>{["First Name", "Last Name", "Email", "Documents", "Applications", "Actions"].map((heading) => <th key={heading} className="whitespace-nowrap px-3 py-2 font-normal">{heading}</th>)}</tr></thead>
                     <tbody>
                     {rows.filter((a) => (accountInitial(a)) === group).map((a) => (
                       <UserTableRow
@@ -1012,7 +1016,6 @@ export function AdminUsers() {
       </div>
       {selectedAccount && <UserDetailPanel account={selectedAccount} onClose={() => setSelectedId(null)} onEdit={() => setEditing({ ...selectedAccount, roles: [...selectedAccount.roles] })} />}
       </div>}
-      {(roleTab === "mentor" || roleTab === "individual_mentor") && <details key={roleTab} onToggle={(e) => setContactsOpen(e.currentTarget.open)} className="border-t border-border"><summary className="cursor-pointer bg-ivory px-6 py-4 text-sm font-medium">{roleTab === "mentor" ? "Host company records" : "Individual mentor records"} · includes contacts without logins</summary><p className="bg-ivory px-6 py-4 text-sm text-muted-foreground">Company contact records below include people without login accounts. Each placement retains its mentor and company details; editing a contact does not grant account access.</p>{contactsOpen && <CompaniesList key={roleTab} kind={roleTab === "mentor" ? "host" : "mentor"} />}</details>}
       </TabsContent>
       </Tabs>
     </div>
@@ -1954,7 +1957,7 @@ function EditRecord({ title, table, cols, row, onDone, onCancel }: { title: stri
             )
           )}
         </div>
-        {table === "careers" && <CareerDescriptionField career={String(vals["name"] ?? "")} value={(vals["description"] as string) ?? ""} onChange={(v) => setVals({ ...vals, description: v })} skills={getCareerSkills(String(vals["name"] ?? ""), vals["school_skills"], vals["workplace_skills"])} onSkillsChange={(skills) => setVals((current) => ({ ...current, school_skills: skills.school, workplace_skills: skills.workplace }))} onDraft={(draft) => setVals((current) => ({ ...current, description: draft.description, school_skills: draft.school_skills, workplace_skills: draft.workplace_skills }))} />}
+        {table === "careers" && <CareerDescriptionField career={String(vals["name"] ?? "")} value={(vals["description"] as string) ?? ""} onChange={(v) => setVals({ ...vals, description: v })} skills={getCareerSkills(String(vals["name"] ?? ""), vals["school_skills"], vals["workplace_skills"])} onSkillsChange={(skills) => setVals((current) => ({ ...current, school_skills: skills.school, workplace_skills: skills.workplace }))} guidance={getCareerGuidance(String(vals["name"] ?? ""), String(vals["description"] ?? ""), vals)} onGuidanceChange={(patch) => setVals((current) => ({ ...current, ...patch }))} onDraft={(draft) => setVals((current) => ({ ...current, ...draft }))} />}
         {err && <p className="mt-4 text-sm font-medium">{err}</p>}
         <button onClick={save} disabled={busy} className="mt-6 rounded-md bg-teal/20 hover:bg-teal/30 px-5 py-2.5 text-sm font-medium uppercase text-foreground">Update</button>
       </div>
@@ -1962,7 +1965,7 @@ function EditRecord({ title, table, cols, row, onDone, onCancel }: { title: stri
   );
 }
 
-export function CareerDescriptionField({ career, value, onChange, skills, onSkillsChange, onDraft }: { career: string; value: string; onChange: (v: string) => void; skills: { school: string[]; workplace: string[] }; onSkillsChange: (skills: { school: string[]; workplace: string[] }) => void; onDraft: (draft: { description: string; school_skills: string[]; workplace_skills: string[] }) => void }) {
+export function CareerDescriptionField({ career, value, onChange, skills, onSkillsChange, guidance, onGuidanceChange, onDraft }: { career: string; value: string; onChange: (v: string) => void; skills: { school: string[]; workplace: string[] }; onSkillsChange: (skills: { school: string[]; workplace: string[] }) => void; guidance: ReturnType<typeof getCareerGuidance>; onGuidanceChange: (patch: { ideal_for?: string; specialisations?: string[]; subjects?: string[] }) => void; onDraft: (draft: CareerDraft) => void }) {
   const draft = useServerFn(draftCareerDescription);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -1976,19 +1979,21 @@ export function CareerDescriptionField({ career, value, onChange, skills, onSkil
   return (
     <div className="mt-6 max-w-3xl">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-sm">Description</span>
+        <span className="text-sm font-semibold">Career Content</span>
         <button type="button" onClick={suggest} disabled={busy} className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs font-medium hover:border-primary hover:text-primary disabled:opacity-50">
           <Sparkles className="h-3.5 w-3.5" /> {busy ? "Writing…" : "AI wizard"}
         </button>
       </div>
       <textarea rows={4} value={value} onChange={(e) => onChange(e.target.value)} placeholder="A brief description of this career" className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary" />
-      <p className="mt-1 text-xs text-muted-foreground">Wrap career types in **double asterisks** to show them in bold.</p>
       {value && <div className="mt-2 rounded bg-muted/40 p-2 text-sm"><RichText text={value} /></div>}
       <fieldset className="mt-4 space-y-3"><legend className="text-sm font-semibold">Skills Required</legend>
         <p className="text-xs text-muted-foreground">Separate skills with commas. AI suggestions remain a draft until you click Update.</p>
         {([['school', 'School foundations'], ['workplace', 'Workplace skills']] as const).map(([key, label]) => <label key={key} className="block text-sm">{label}<input value={skills[key].join(', ')} onChange={(e) => onSkillsChange({ ...skills, [key]: e.target.value.split(',').map((skill) => skill.trimStart()) })} onBlur={() => onSkillsChange({ ...skills, [key]: skills[key].map((skill) => skill.trim()).filter(Boolean) })} className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary" /></label>)}
         <CareerSkills {...skills} />
       </fieldset>
+      <div className="mt-4 space-y-4"><label className="block text-sm">Ideal for<textarea rows={3} value={guidance.idealFor} onChange={(e) => onGuidanceChange({ ideal_for: e.target.value })} className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary" /></label>
+        {([['specialisations', 'Specialisations & Roles'], ['subjects', 'Suggested Subjects']] as const).map(([key, label]) => <label key={key} className="block text-sm">{label}<input value={guidance[key].join(', ')} onChange={(e) => onGuidanceChange({ [key]: e.target.value.split(',').map((value) => value.trimStart()) })} onBlur={() => onGuidanceChange({ [key]: guidance[key].map((value) => value.trim()).filter(Boolean) })} className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary" /></label>)}
+      </div>
       {err && <p className="mt-1 text-xs text-destructive">{err}</p>}
     </div>
   );

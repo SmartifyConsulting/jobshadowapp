@@ -1,6 +1,8 @@
+import { useHowToProgress } from "@/components/HowToProgress";
+import { HOW_TO_DESTINATIONS } from "@/lib/journey-progress";
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronDown, GraduationCap, Users, Building2, HandCoins, UserPlus, User, Search, CalendarDays, ClipboardCheck, Handshake, Star, Calendar, FileEdit, CheckCircle2, Briefcase, Bell, ArrowRight, FileCheck2, BadgeCheck } from "lucide-react";
-import { SiteLayout } from "@/components/SiteLayout";
+import { ChevronDown, GraduationCap, Users, Building2, UserPlus, User, Search, CalendarDays, ClipboardCheck, Handshake, Star, Calendar, FileEdit, CheckCircle2, Briefcase, Bell, ArrowRight } from "lucide-react";
+import { SiteLayout, useSiteSession } from "@/components/SiteLayout";
 import { YouTube } from "@/components/YouTube";
 import { VIDEOS } from "@/lib/content";
 
@@ -38,18 +40,9 @@ const HOST_STEPS: Step[] = [
   { icon: Bell, label: "Get feedback &\nbuild your profile" },
 ];
 
-const SPONSOR_STEPS: Step[] = [
-  { icon: UserPlus, label: "Register\nas a sponsor" },
-  { icon: User, label: "Create\nyour profile" },
-  { icon: Search, label: "Choose a province,\nschool or field" },
-  { icon: HandCoins, label: "Fund\nplacements" },
-  { icon: FileCheck2, label: "Receive\nimpact reports" },
-  { icon: BadgeCheck, label: "Get your\nSection 18A certificate" },
-];
-
-function StepRow({ title, icon: TitleIcon, steps }: { title: string; icon: typeof User; steps: Step[] }) {
+function StepRow({ title, icon: TitleIcon, steps, links, complete = [] }: { title: string; icon: typeof User; steps: Step[]; links: string[]; complete?: boolean[] }) {
   return (
-    <div className="relative rounded-xl border border-border bg-background pt-8 pb-3">
+    <nav aria-label={title} className="relative rounded-xl border border-border bg-background pt-8 pb-3">
       <div className="absolute -top-0.5 left-0 flex items-center gap-2 rounded-tl-xl bg-primary py-1.5 pl-4 pr-8 text-primary-foreground [clip-path:polygon(0_0,100%_0,calc(100%-1.25rem)_100%,0_100%)]">
         <TitleIcon className="h-[23px] w-[23px] shrink-0" />
         <span className="font-display text-lg uppercase">{title}</span>
@@ -57,16 +50,16 @@ function StepRow({ title, icon: TitleIcon, steps }: { title: string; icon: typeo
       <div className="mt-2 flex flex-wrap items-start justify-center gap-y-2 px-3">
         {steps.map((step, i) => (
           <div key={i} className="flex items-start">
-            <div className="flex w-[4.5rem] shrink-0 flex-col items-center text-center sm:w-20">
-              <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">{i + 1}</span>
+            <a href={links[i]} aria-label={step.label.replace(/\n/g, " ") + (complete[i] ? " — completed" : "")} className="flex w-[4.5rem] shrink-0 flex-col items-center rounded-md p-1 text-center outline-none transition hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary sm:w-20">
+              {complete[i] ? <CheckCircle2 className="h-5 w-5 rounded-full bg-cta text-cta-foreground" aria-hidden="true" /> : <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">{i + 1}</span>}
               <step.icon className="h-8 w-8 shrink-0 text-foreground" />
               <p className="mt-1 whitespace-pre-line text-[11px] font-semibold leading-tight">{step.label}</p>
-            </div>
+            </a>
             {i < steps.length - 1 && <ArrowRight className="mx-1 mt-1.5 h-4 w-4 shrink-0 text-primary" strokeWidth={2.75} />}
           </div>
         ))}
       </div>
-    </div>
+    </nav>
   );
 }
 
@@ -85,6 +78,10 @@ export const Route = createFileRoute("/how-to")({
 });
 
 function HowTo() {
+  const { data: session } = useSiteSession();
+  const progress = useHowToProgress(session?.user?.id, session?.roles ?? []);
+  const destination = (key: keyof typeof HOW_TO_DESTINATIONS) => session?.user ? HOW_TO_DESTINATIONS[key] : "/auth?go=" + key;
+  const providerLinks = (type: "mentor" | "host") => ["/contact?type=" + type, destination("providerProfile"), destination("providerAvailability"), "/contact", destination("providerBookings"), destination("providerBookings"), destination("providerExperience"), destination("providerProfile")];
   return (
     <SiteLayout>
       <div className="bg-cta text-cta-foreground">
@@ -95,10 +92,11 @@ function HowTo() {
       </div>
       <section className="bg-[#7CCCC8] px-5 py-5">
         <div className="mx-auto max-w-7xl space-y-3">
-          <StepRow title="For Students" icon={GraduationCap} steps={STUDENT_STEPS} />
-          <StepRow title="For Mentors" icon={Users} steps={MENTOR_STEPS} />
-          <StepRow title="For Hosts" icon={Building2} steps={HOST_STEPS} />
-          <StepRow title="For Sponsors" icon={HandCoins} steps={SPONSOR_STEPS} />
+          <StepRow title="For Students" icon={GraduationCap} steps={STUDENT_STEPS} complete={progress.data?.student ?? []} links={[session?.user ? destination("studentProfile") : "/register", ...(["studentProfile", "studentCareers", "studentRequest", "studentForms", "studentExperience", "studentFeedback"] as const).map(destination)]} />
+          <StepRow title="For Mentors" icon={Users} steps={MENTOR_STEPS} complete={progress.data?.mentor ?? []} links={providerLinks("mentor")} />
+          <StepRow title="For Hosts" icon={Building2} steps={HOST_STEPS} complete={progress.data?.host ?? []} links={providerLinks("host")} />
+          {progress.error && <p role="status" className="text-sm">Saved progress could not be loaded. You can still open each step.</p>}
+          <p className="text-xs">Green ticks show saved progress. Contact us for host indemnity and NDA forms; their completion is not tracked in the app yet.</p>
         </div>
       </section>
       <section className="bg-primary">

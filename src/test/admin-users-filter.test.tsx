@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { AccountRow } from "@/lib/users.server";
@@ -14,6 +14,7 @@ vi.mock("@/components/SiteLayout", () => ({ SiteHeader: () => null, SiteFooter: 
 vi.mock("@/lib/indemnity-ai.functions", () => ({ extractCompanyIndemnity: vi.fn() }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
 import { AdminUsers, Route, BookingSettings, CareerDescriptionField } from "@/routes/_authenticated/admin";
+import { draftCareerDescription } from "@/lib/career-ai.functions";
 import { accountInitial, alphabetInitial } from "@/lib/alphabet";
 
 const account = (id: string, name: string): AccountRow => ({
@@ -25,8 +26,9 @@ const account = (id: string, name: string): AccountRow => ({
 function mount(extra: AccountRow[] = []) {
   const client = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity, retry: false } } });
   client.setQueryData(["admin", "accounts"], [account("alice", "Alice Brown"), account("bob", "Bob Adams"), ...extra]);
-  client.setQueryData(["admin", "company-contact-classification"], []);
-  client.setQueryData(["admin", "companies", false], []);
+  const companies = [{ id: 1, company: "Group Company", mentor_name: "Alice Brown", mentor_email: "alice@example.com", backup_mentor_name: "Bob Adams", backup_mentor_email: "bob@example.com" }, { id: 2, company: "Solo Company", mentor_name: "Solo Person", mentor_email: "solo@example.com", backup_mentor_name: null, backup_mentor_email: null }];
+  client.setQueryData(["admin", "company-contact-classification"], companies);
+  client.setQueryData(["admin", "companies", false], companies);
   render(<QueryClientProvider client={client}><AdminUsers /></QueryClientProvider>);
   return client;
 }
@@ -77,8 +79,10 @@ describe("User alphabet chips", () => {
     const school = { ...account("school", "School Contact"), role: "school" as const, roles: ["school" as const] };
     const client = mount([school]);
     expect(screen.getByRole("heading", { name: "Users (2)" })).toBeVisible();
-    fireEvent.mouseDown(screen.getByRole("tab", { name: "Hosts (2)" }), { button: 0 });
-    fireEvent.click(screen.getByRole("button", { name: "A" }));
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Hosts (1)" }), { button: 0 });
+    expect(screen.getByText("Group Company")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Linked login accounts (2)" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "A" }).find((button) => !(button as HTMLButtonElement).disabled)!);
     expect(screen.getByRole("button", { name: "View details for Alice Brown" })).toBeVisible();
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Schools (1)" }), { button: 0 });
     expect(screen.getByRole("heading", { name: "Users (1)" })).toBeVisible();
@@ -136,6 +140,45 @@ describe("Booking settings frames", () => {
     fireEvent.change(screen.getByLabelText("Season starts"), { target: { value: "3" } });
     expect(screen.getByLabelText("February: Inactive")).toBeVisible();
     expect(screen.getByLabelText("Minimum request lead time", { exact: false })).toHaveValue(3);
+    client.clear();
+  });
+});
+
+
+describe("Visible provider directories and career wizard", () => {
+  it("opens the mentor contact directory directly without a login-account gate", () => {
+    const client = mount();
+    fireEvent.mouseDown(screen.getByRole('tab', { name: 'Mentors (1)' }), { button: 0 });
+    expect(screen.getByText('Solo Company')).toBeVisible();
+    expect(screen.queryByText('Group Company')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Linked login accounts (0)' })).toBeVisible();
+    client.clear();
+  });
+  it("exposes the wizard on career rows and fills all guidance fields only as a draft", async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity, retry: false } } });
+    client.setQueryData(['is-admin'], true);
+    client.setQueryData(['admin', 'accounts'], []);
+    client.setQueryData(['admin', 'company-contact-classification'], []);
+    client.setQueryData(['admin', 'sectors', false], []);
+    client.setQueryData(['admin', 'careers', false], [{ id: 1, name: 'Accountant', description: 'Original description' }]);
+    const draft = { description: 'Draft overview', ideal_for: 'Draft ideal person', specialisations: ['Draft role'], subjects: ['Accounting'], school_skills: ['Numeracy'], workplace_skills: ['Financial reporting'] };
+    vi.mocked(draftCareerDescription).mockResolvedValue(draft);
+    const Page = Route.options.component as () => React.JSX.Element;
+    render(<QueryClientProvider client={client}><Page /></QueryClientProvider>);
+    fireEvent.click(screen.getByRole('button', { name: 'Sectors and Careers' }));
+    expect(screen.getByRole('tab', { name: 'Sectors' })).toHaveAttribute('aria-selected', 'true');
+    fireEvent.mouseDown(screen.getByRole('tab', { name: 'Careers' }), { button: 0 });
+    const file = screen.getByLabelText('Upload careers CSV');
+    expect(file.closest('div.flex.flex-wrap.items-center.gap-3')).toContainElement(screen.getByRole('button', { name: 'Export' }));
+    fireEvent.click(screen.getByRole('button', { name: /^A.*1/ }));
+    expect(screen.getByRole('button', { name: 'AI wizard' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'AI wizard' }));
+    fireEvent.click(screen.getByRole('button', { name: 'AI wizard' }));
+    await waitFor(() => expect(screen.getByDisplayValue('Draft overview')).toBeVisible());
+    expect(screen.getByDisplayValue('Draft ideal person')).toBeVisible();
+    expect(screen.getByDisplayValue('Draft role')).toBeVisible();
+    expect(screen.getByDisplayValue('Accounting')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Update' })).toBeVisible();
     client.clear();
   });
 });

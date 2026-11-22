@@ -23,7 +23,7 @@ describe("Career skills", () => {
     expect(getCareerSkills("Accountant", null, null).workplace).toContain("Financial reporting");
   });
   it("validates structured AI drafts before replacing any content", () => {
-    const draft = { description: "Draft description", school_skills: ["Mathematics"], workplace_skills: ["CAD design", "CAD design"] };
+    const draft = { description: "Draft description", ideal_for: "People who enjoy technical problems.", specialisations: ["Design Engineer"], subjects: ["Mathematics"], school_skills: ["Mathematics"], workplace_skills: ["CAD design", "CAD design"] };
     expect(parseCareerDraft("```json\n" + JSON.stringify(draft) + "\n```").workplace_skills).toEqual(["CAD design"]);
     expect(() => parseCareerDraft('{"description":"Only a description"}')).toThrow("preserved");
     expect(() => parseCareerDraft("not json")).toThrow("preserved");

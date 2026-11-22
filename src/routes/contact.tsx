@@ -1,3 +1,4 @@
+import { PartnerApplicationForm } from "@/components/PartnerApplicationForm";
 import { CONTACT_AUDIENCES } from "@/lib/audiences";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
@@ -15,10 +16,10 @@ export const Route = createFileRoute("/contact")({
   }),
   head: () => ({
     meta: [
-      { title: "Contact JobShadow — Sponsor, host or partner" },
-      { name: "description", content: "Get in touch to sponsor a learner, host scholars or partner your school." },
+      { title: "Contact JobShadow — Host, mentor or partner" },
+      { name: "description", content: "Get in touch to mentor a scholar, become a host or partner your school." },
       { property: "og:title", content: "Contact JobShadow" },
-      { property: "og:description", content: "Sponsor, host or partner with JobShadow." },
+      { property: "og:description", content: "Host, mentor or partner with JobShadow." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -111,7 +112,7 @@ function Contact() {
           <div className="rounded-xl border border-primary-foreground/20 bg-primary-foreground/5 p-6">
             <h2 className="font-display text-2xl uppercase">{copy?.heading ?? "Send Us A Message"}</h2>
 
-            {sent ? (
+            {type === "host" || type === "mentor" ? <PartnerApplicationForm key={type} type={type} userId={session?.user?.id ?? null} email={signedInEmail} /> : sent ? (
               <p className="mt-6 text-sm">Your email app should now be open with your application ready to send.</p>
             ) : (
               <form onSubmit={submit} className="mt-6 grid gap-4">

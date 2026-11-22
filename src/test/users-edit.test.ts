@@ -6,9 +6,10 @@ const db = vi.hoisted(() => ({
 }));
 vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: {
   from: (table: string) => {
-    if (table === "profiles" || table === "scholar_profiles") return {
+    if (table === "profiles") return { upsert: async (values: unknown) => { db.profileUpdate(values); return { error: null }; } };
+    if (table === "scholar_profiles") return {
       update: (values: unknown) => ({ eq: async () => {
-        (table === "profiles" ? db.profileUpdate : db.scholarUpdate)(values);
+        db.scholarUpdate(values);
         return { error: null };
       } }),
     };
@@ -26,7 +27,7 @@ beforeEach(() => { vi.clearAllMocks(); db.roles = ["user", "mentor"]; });
 describe("Admin account editing", () => {
   it("retains all roles when only personal details change", async () => {
     await editAccount(edit);
-    expect(db.profileUpdate).toHaveBeenCalledWith({ display_name: "Test" });
+    expect(db.profileUpdate).toHaveBeenCalledWith({ user_id: "test-user", display_name: "Test" });
     expect(db.scholarUpdate).toHaveBeenCalledWith({ full_name: "Test User", school: "Test School", contact_no: "000", id_number: "TEST" });
     expect(db.roleInsert).not.toHaveBeenCalled();
     expect(db.roleDelete).not.toHaveBeenCalled();

@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
 const rpc = vi.hoisted(() => vi.fn().mockResolvedValue({ data: [], error: null }));
-vi.mock("@tanstack/react-router", () => ({ createFileRoute: () => (options: unknown) => ({ options }) }));
+vi.mock("@tanstack/react-router", () => ({ createFileRoute: () => (options: unknown) => ({ options, useSearch: () => ({}) }) }));
 vi.mock("@/components/SiteLayout", () => ({ SiteHeader: () => null, SiteFooter: () => null }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc } }));
 vi.mock("@/components/ui/calendar", () => ({ Calendar: ({ onSelect }: { onSelect: (dates: Date[]) => void }) => <button onClick={() => onSelect([new Date(2030, 5, 10)])}>Choose available date</button> }));

@@ -10,8 +10,9 @@ import { ImageCropModal } from "@/components/ImageCropModal";
 
 type Tab = "profile" | "bookings";
 export const Route = createFileRoute("/_authenticated/profile")({
-  validateSearch: (s: Record<string, unknown>): { tab?: Tab | undefined; entry?: "workflow" | undefined } => ({
+  validateSearch: (s: Record<string, unknown>): { tab?: Tab | undefined; entry?: "workflow" | undefined; step?: string | undefined } => ({
     tab: ["profile", "account", "bookings"].includes(s["tab"] as string) ? (s["tab"] === "account" ? "profile" : (s["tab"] as Tab)) : undefined,
+    step: ["profile", "careers", "request", "forms", "confirmation", "experience", "feedback"].includes(String(s["step"])) ? String(s["step"]) : undefined,
     entry: s["entry"] === "workflow" ? "workflow" : undefined,
   }),
   head: () => ({
@@ -32,7 +33,7 @@ function useUser() {
 }
 
 function ProfileSettings() {
-  const { tab, entry } = Route.useSearch();
+  const { tab, entry, step } = Route.useSearch();
   const inWorkflow = entry === "workflow";
   const navigate = Route.useNavigate();
   const qc = useQueryClient();
@@ -159,7 +160,7 @@ function ProfileSettings() {
             </TabsContent>
             <TabsContent value="bookings" className="mt-4 space-y-4">
               <div className="rounded-xl border border-primary bg-teal p-4 text-teal-foreground shadow-sm">
-                <AccountPanel withBookings />
+                <AccountPanel withBookings initialStep={step} />
               </div>
 
             </TabsContent>

@@ -3,9 +3,9 @@ import type { AccountRow } from "./users.server";
 
 export type ApplicationData = Record<string, unknown>;
 export type ApplicationRecord = {
-  key: string; source: "Booking" | "Imported"; reference: string;
+  key: string; source: "Booking" | "Imported" | "Imported student"; reference: string;
   user: AccountRow | null; scholar: ApplicationData | null;
-  host: ApplicationData | null; booking: ApplicationData | null; imported: ApplicationData | null;
+  host: ApplicationData | null; booking: ApplicationData | null; imported: ApplicationData | null; importedUser?: ApplicationData | null;
   name: string; email: string; career: string; company: string; date: string;
   status: string; paid: boolean | null; indemnity: boolean | null; amount: number | null;
 };
@@ -13,7 +13,7 @@ const text = (value: unknown) => value === null || value === undefined ? "" : St
 const emailKey = (value: unknown) => text(value).trim().toLowerCase();
 
 /** Preserve each source record. Only immutable user IDs or unique exact emails link people. */
-export function combineApplicationRecords(accounts: AccountRow[], bookings: ApplicationData[], imported: ApplicationData[], scholars: ApplicationData[], companies: ApplicationData[] = []): ApplicationRecord[] {
+export function combineApplicationRecords(accounts: AccountRow[], bookings: ApplicationData[], imported: ApplicationData[], scholars: ApplicationData[], companies: ApplicationData[] = [], importedUsers: ApplicationData[] = []): ApplicationRecord[] {
   const users = new Map(accounts.map((user) => [user.id, user]));
   const byEmail = new Map<string, AccountRow[]>();
   for (const user of accounts) {
@@ -23,7 +23,7 @@ export function combineApplicationRecords(accounts: AccountRow[], bookings: Appl
   const profiles = new Map(scholars.map((profile) => [text(profile["user_id"]), profile]));
   const hosts = new Map(companies.map((company) => [text(company["id"]), company]));
   const importedContacts = joinApplicationContacts(imported, companies);
-  return [
+  const records: ApplicationRecord[] = [
     ...bookings.map((booking): ApplicationRecord => {
       const user = users.get(text(booking["user_id"])) ?? null;
       const scholar = profiles.get(text(booking["user_id"])) ?? null;
@@ -50,12 +50,25 @@ export function combineApplicationRecords(accounts: AccountRow[], bookings: Appl
       };
     }),
   ];
+  for (const original of importedUsers) {
+    const email = emailKey(original['email']);
+    const matches = byEmail.get(email) ?? [];
+    const user = matches.length === 1 ? matches[0]! : null;
+    const scholar = user ? profiles.get(user.id) ?? null : null;
+    const learner = user?.roles.includes('user') || !!scholar || original['has_profile'] === true;
+    if (!learner) continue;
+    const existing = records.filter((record) => (user && record.user?.id === user.id) || (email && emailKey(record.email) === email));
+    if (existing.length) { for (const record of existing) record.importedUser ??= original; continue; }
+    records.push({ key: 'imported-student:' + text(original['id']), source: 'Imported student', reference: text(original['id']), user, scholar, host: null, booking: null, imported: null, importedUser: original,
+      name: text(scholar?.['full_name']) || user?.full_name || user?.display_name || text(original['name']) || 'Name not recorded', email: text(original['email']), career: '', company: '', date: '', status: 'Imported profile', paid: null, indemnity: null, amount: null });
+  }
+  return records;
 }
 
 /** All source fields remain in full exports, with prefixes to avoid name collisions. */
 export function applicationExportRow(record: ApplicationRecord) {
   const row: ApplicationData = { source: record.source, reference: record.reference, learner: record.name, email: record.email, career: record.career, company: record.company, date: record.date, status: record.status, paid: record.paid, indemnity: record.indemnity, amount_due: record.amount };
-  for (const [prefix, data] of [["user", record.user], ["scholar", record.scholar], ["booking", record.booking], ["application", record.imported], ["host", record.host]] as const) {
+  for (const [prefix, data] of [["user", record.user], ["scholar", record.scholar], ["booking", record.booking], ["application", record.imported], ["host", record.host], ["imported_user", record.importedUser]] as const) {
     for (const [key, value] of Object.entries(data ?? {})) row[`${prefix}_${key}`] = value && typeof value === "object" ? JSON.stringify(value) : value;
   }
   return row;

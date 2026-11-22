@@ -307,11 +307,17 @@ export type Database = {
           description: string | null
           id: number
           name: string
+          ideal_for: string | null
+          specialisations: string[] | null
+          subjects: string[] | null
           school_skills: string[] | null
           workplace_skills: string[] | null
         }
         Insert: {
           description?: string | null
+          ideal_for?: string | null
+          specialisations?: string[] | null
+          subjects?: string[] | null
           id: number
           name: string
           school_skills?: string[] | null
@@ -319,6 +325,9 @@ export type Database = {
         }
         Update: {
           description?: string | null
+          ideal_for?: string | null
+          specialisations?: string[] | null
+          subjects?: string[] | null
           id?: number
           name?: string
           school_skills?: string[] | null
@@ -734,6 +743,12 @@ export type Database = {
           title?: string
           updated_at?: string
         }
+        Relationships: []
+      }
+      partner_applications: {
+        Row: { id: string; user_id: string; applicant_type: string; company: string; first_name: string; last_name: string; email: string; phone: string; message: string; status: string; created_at: string; reviewed_at: string | null }
+        Insert: { id?: string; user_id: string; applicant_type: string; company: string; first_name: string; last_name: string; email: string; phone: string; message?: string; status?: string; created_at?: string; reviewed_at?: string | null }
+        Update: { status?: string; reviewed_at?: string | null }
         Relationships: []
       }
       profiles: {
@@ -1197,6 +1212,14 @@ export type Database = {
           scholar_user_id: string
           school: string
         }[]
+      }
+      submit_partner_application: {
+        Args: { _applicant_type: string; _company: string; _first_name: string; _last_name: string; _phone: string; _message?: string }
+        Returns: string
+      }
+      get_public_career_guidance: {
+        Args: Record<PropertyKey, never>
+        Returns: { name: string; description: string | null; school_skills: string[] | null; workplace_skills: string[] | null; ideal_for: string | null; specialisations: string[] | null; subjects: string[] | null }[]
       }
       get_public_career_details: {
         Args: Record<PropertyKey, never>

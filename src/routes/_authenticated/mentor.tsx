@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Calendar } from "@/components/ui/calendar";
 
 export const Route = createFileRoute("/_authenticated/mentor")({
+  validateSearch: (search: Record<string, unknown>): { section?: Section | undefined } => ({ section: ["calendar", "shadows", "messages", "profile", "settings"].includes(String(search["section"])) ? search["section"] as Section : undefined }),
   head: () => ({
     meta: [
       { title: "Mentor Portal | JobShadow" },
@@ -50,7 +51,9 @@ function todayKey() {
 }
 
 function MentorPortal() {
-  const [active, setActive] = useState<Section>("calendar");
+  const section = Route.useSearch().section;
+  const [active, setActive] = useState<Section>(section ?? "calendar");
+  useEffect(() => { if (section) setActive(section); }, [section]);
   const placements = useQuery({
     queryKey: ["mentor-placements"],
     queryFn: async () => ((await supabase.rpc("list_mentor_placements")).data ?? []) as Placement[],

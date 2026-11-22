@@ -41,7 +41,7 @@ function useUser() {
   return useQuery({ queryKey: ["me"], queryFn: async () => (await supabase.auth.getUser()).data.user });
 }
 
-export function AccountPanel({ withBookings = false }: { withBookings?: boolean }) {
+export function AccountPanel({ withBookings = false, initialStep }: { withBookings?: boolean; initialStep?: string | undefined }) {
   const { data: user } = useUser();
   const qc = useQueryClient();
   const profile = useQuery({
@@ -67,7 +67,7 @@ export function AccountPanel({ withBookings = false }: { withBookings?: boolean 
 
   if (profile.isLoading || !user) return <p>Loading…</p>;
   if (profile.error) return <p role="alert">Your profile could not be loaded. Please refresh before continuing.</p>;
-  if (withBookings) return <StudentJourney userId={user.id} profile={profile.data as Record<string, unknown> | null} />;
+  if (withBookings) return <StudentJourney userId={user.id} profile={profile.data as Record<string, unknown> | null} initialStep={initialStep} />;
   if (!profile.data || editing) return <ProfileForm userId={user.id} initialProfile={(profile.data as Record<string, unknown> | null) ?? undefined} onSaved={() => { setEditing(false); void qc.invalidateQueries({ queryKey: ["scholar-profile"] }); }} />;
   return (
     <div className="space-y-4">
@@ -332,8 +332,9 @@ export function Bookings({ selectedId }: { selectedId?: string | undefined } = {
   );
 }
 
-function StudentJourney({ userId, profile }: { userId: string; profile: Record<string, unknown> | null }) {
-  const [active, setActive] = useState("profile");
+function StudentJourney({ userId, profile, initialStep }: { userId: string; profile: Record<string, unknown> | null; initialStep?: string | undefined }) {
+  const [requestedActive, setActive] = useState(initialStep ?? "profile");
+  useEffect(() => { if (initialStep) setActive(initialStep); }, [initialStep]);
   const [editingProfile, setEditingProfile] = useState(false);
   const [career, setCareer] = useState("");
   const [selectedId, setSelectedId] = useState("");
@@ -355,8 +356,10 @@ function StudentJourney({ userId, profile }: { userId: string; profile: Record<s
     { id: "experience", title: "Do Your Job Shadow", icon: Briefcase, complete: current?.status === "completed", locked: !confirmed },
     { id: "feedback", title: "Share Feedback", icon: Star, complete: feedback.data?.already_submitted === true, locked: current?.status !== "completed" },
   ];
+  const active = steps.find((step) => step.id === requestedActive)?.locked ? !profile ? "profile" : !current ? "request" : !confirmed ? "forms" : "experience" : requestedActive;
   const selectedCareer = ROLES.find((role) => role.title === career);
   return <section className="min-w-0 space-y-5" aria-label="Student step wizard">
+    {active !== requestedActive && <p className="text-sm">Complete the current step before continuing to the step you selected.</p>}
     <JourneyStepper title="Your Job Shadow Journey" steps={steps} active={active} onChange={setActive} />
     <div className="min-w-0 rounded-lg border border-border bg-ivory p-4 text-foreground sm:p-6">
       {active === "profile" && (!profile || editingProfile ? <ProfileForm userId={userId} initialProfile={profile ?? undefined} onSaved={() => { setEditingProfile(false); setActive("careers"); }} /> : <div className="space-y-4"><h2 className="font-display text-2xl">Step 1: Complete Profile</h2><p className="text-sm">Your profile is saved. Review your details before choosing a career and host.</p><ScholarDetails p={profile} /><div className="flex flex-wrap gap-3"><Button variant="outline" onClick={() => setEditingProfile(true)}>Edit Profile</Button><Button onClick={() => setActive("careers")}>Continue to Explore Careers</Button></div></div>)}

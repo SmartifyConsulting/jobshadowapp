@@ -3,7 +3,7 @@ import { parseCareerDraft } from "./career-draft";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-/** Admin-only: drafts a brief career description; career types inside it are wrapped in **bold**. */
+/** Admin-only structured draft; saving remains a separate review action. */
 export const draftCareerDescription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ career: z.string().trim().min(1).max(200) }).parse(d))
@@ -12,13 +12,15 @@ export const draftCareerDescription = createServerFn({ method: "POST" })
     if (!isAdmin) throw new Error("Forbidden");
     const { recordAiUsage } = await import("./ai-usage.server");
     const { generateResponse, GatewayError } = await import("@lovable.dev/ai-gateway");
+    let response: unknown;
     try {
       const res = await generateResponse({
         model: "openai/gpt-6.1-sol",
         instructions:
-          "You write short career descriptions for South African high-school scholars. Write 2-3 plain sentences (max 60 words) describing the career. Then list the main types/specialisations within this career by name only, each wrapped in **double asterisks**, comma separated, with no explanation of each type. Return ONLY a JSON object with keys description (the requested description text), school_skills (3-5 concise school-level foundations), and workplace_skills (3-6 practical workplace skills). Skills must be arrays of strings. School foundations are useful preparation, not mandatory admissions criteria. Do not include personality traits in skills. No markdown fences.",
+          "Write career guidance for South African high-school scholars. Return ONLY a JSON object: description (2-3 plain sentences, maximum 60 words, with no specialisation list), ideal_for (1-2 sentences on interests, working preferences and strengths without stereotypes), specialisations (3-8 distinct roles or branches by name), school_skills (3-5 foundations), workplace_skills (3-6 practical skills), subjects (2-5 relevant school subject suggestions). All lists must be arrays of concise strings. Subjects are useful guidance, not guaranteed admission requirements. Do not claim regulated eligibility or invented qualifications. No markdown fences.",
         input: `Career: ${data.career}`,
       });
+      response = res;
       const text = res.output
         .flatMap((o) => (o.type === "message" ? o.content : []))
         .map((c) => (c.type === "output_text" ? c.text : ""))
@@ -28,7 +30,7 @@ export const draftCareerDescription = createServerFn({ method: "POST" })
       await recordAiUsage({ feature: "career_description", provider: "lovable", model: "openai/gpt-6.1-sol", actorUserId: context.userId, succeeded: true }, res);
       return draft;
     } catch (e) {
-      await recordAiUsage({ feature: "career_description", provider: "lovable", model: "openai/gpt-6.1-sol", actorUserId: context.userId, succeeded: false, errorCode: "provider_error" });
+      await recordAiUsage({ feature: "career_description", provider: "lovable", model: "openai/gpt-6.1-sol", actorUserId: context.userId, succeeded: false, errorCode: response ? "invalid_response" : "provider_error" }, response);
       if (e instanceof GatewayError) throw new Error("The AI helper is unavailable right now. Please try again later.");
       throw e;
     }

@@ -13,7 +13,11 @@ export function classifyCompanies(companies: CompanyContacts[]): Map<string, 'me
     }
     groups.set(name, people);
   }
-  return new Map([...groups].filter(([, people]) => people.size > 0).map(([name, people]) => [name, people.size === 1 ? 'mentor' : 'host']));
+  const types = new Map<string, 'mentor' | 'host'>([...groups].filter(([, people]) => people.size > 0).map(([name, people]) => [name, people.size === 1 ? 'mentor' : 'host']));
+  const affiliations = new Map<string, Set<string>>();
+  for (const company of companies) for (const email of [...contactEmails(company.mentor_email), ...contactEmails(company.backup_mentor_email)]) { const links = affiliations.get(email) ?? new Set<string>(); links.add(companyKey(company.company ?? '')); affiliations.set(email, links); }
+  for (const links of affiliations.values()) if (links.size > 1) for (const name of links) if (types.has(name)) types.set(name, 'host');
+  return types;
 }
 export function individualMentorEmails(companies: CompanyContacts[]): Set<string> {
   const types = classifyCompanies(companies);

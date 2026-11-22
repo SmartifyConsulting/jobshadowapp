@@ -1,3 +1,5 @@
+import { PartnerApplicationsList } from "./PartnerApplicationsList";
+import type { PartnerApplication } from "@/lib/partner-applications";
 import { applicationTableRow, applicationColumns, applicationStage, APPLICATION_STATUS_CHIPS, DEFAULT_APPLICATION_COLUMNS } from "@/lib/application-columns";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -56,20 +58,23 @@ export function ApplicationsList({ onEditImported, onDeleteImported }: { onEditI
   const getAccountsFn = useServerFn(getAccounts);
   const [search, setSearch] = useState("");
   const [source, setSource] = useState("");
-  const [status, setStatus] = useState("pending");
+  const [status, setStatus] = useState("all");
   const [visibleColumns, setVisibleColumns] = useState<string[]>(DEFAULT_APPLICATION_COLUMNS);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [typeTab, setTypeTab] = useState<"scholars" | "mentors" | "hosts">("scholars");
   const records = useQuery({ queryKey: ["admin", "combined-applications"], queryFn: async () => {
-    const [accounts, bookings, imported, scholars, companies] = await Promise.all([
+    const [accounts, bookings, imported, scholars, companies, importedUsers] = await Promise.all([
       getAccountsFn(),
       fetchAllRows(async (from, to) => { const r = await supabase.from("bookings").select("*").order("created_at", { ascending: false }).order("id").range(from, to); if (r.error) throw r.error; return r.data ?? []; }),
       fetchAllRows(async (from, to) => { const r = await supabase.from("legacy_applications").select("*").order("id", { ascending: false }).range(from, to); if (r.error) throw r.error; return r.data ?? []; }),
       fetchAllRows(async (from, to) => { const r = await supabase.from("scholar_profiles").select("*").order("user_id").range(from, to); if (r.error) throw r.error; return r.data ?? []; }),
       fetchAllRows(async (from, to) => { const r = await supabase.from("companies").select("*").order("id").range(from, to); if (r.error) throw r.error; return r.data ?? []; }),
+      fetchAllRows(async (from, to) => { const result = await supabase.from("legacy_users").select("*").order("id").range(from, to); if (result.error) throw result.error; return result.data ?? []; }),
     ]);
-    return { records: combineApplicationRecords(accounts, bookings, imported, scholars, companies), companies };
+    return { records: combineApplicationRecords(accounts, bookings, imported, scholars, companies, importedUsers), companies };
   } });
+  const partners = useQuery({ queryKey: ["admin", "partner-applications"], queryFn: async () => await fetchAllRows(async (from, to) => { const result = await supabase.from("partner_applications").select("*").order("created_at", { ascending: false }).order("id").range(from, to); if (result.error) throw result.error; return result.data ?? []; }) as PartnerApplication[] });
+  const allPartners = partners.data ?? [];
   const all = records.data?.records ?? [];
   const tableRows = all.map((record) => ({ record, data: applicationTableRow(record) }));
   const columns = applicationColumns(tableRows.map((row) => row.data));
@@ -90,13 +95,16 @@ export function ApplicationsList({ onEditImported, onDeleteImported }: { onEditI
   const rows = typeFiltered.filter(({ record }) => status === "all" || applicationStage(record) === status);
   const selected = all.find((record) => record.key === selectedKey);
   function download() {
-    const data = tableRows.map((row) => row.data);
-    const url = URL.createObjectURL(new Blob([toCsv(columns, data)], { type: "text/csv;charset=utf-8;" }));
-    const anchor = document.createElement("a"); anchor.href = url; anchor.download = "applications-full.csv"; anchor.click(); URL.revokeObjectURL(url);
+    const data = typeTab === "scholars" ? tableRows.map((row) => row.data) : allPartners.map((row) => ({ ...row }));
+    const exportColumns = typeTab === "scholars" ? columns : Object.keys(allPartners[0] ?? { id: "", applicant_type: "", company: "", first_name: "", last_name: "", email: "", phone: "", message: "", status: "", created_at: "", reviewed_at: "", user_id: "" }).map((key) => ({ key, label: label(key) }));
+    const url = URL.createObjectURL(new Blob([toCsv(exportColumns, data)], { type: "text/csv;charset=utf-8;" }));
+    const anchor = document.createElement("a"); anchor.href = url; anchor.download = typeTab === "scholars" ? "scholar-applications-full.csv" : "mentor-host-applications-full.csv"; anchor.click(); URL.revokeObjectURL(url);
   }
   return <section className="bg-ivory" data-slot="admin-list">
-    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-6"><h1 className="text-2xl font-medium">Applications ({rows.length})</h1><Button variant="outline" disabled={records.isPending || !!records.error} onClick={download}>Export all</Button></div>
-    <div className="flex flex-wrap items-end gap-4 px-6 py-4"><label className="text-sm">Search<input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name, email, career, company or reference" className="mt-1 block w-72 max-w-full rounded border border-input bg-background px-3 py-2" /></label><label className="text-sm">Source<select value={source} onChange={(e) => setSource(e.target.value)} className="mt-1 block rounded border border-input bg-background px-3 py-2"><option value="">All</option><option>Booking</option><option>Imported</option></select></label><Button variant="outline" size="icon" aria-label="Refresh" onClick={() => void records.refetch()} disabled={records.isFetching}><RefreshCw className={`h-4 w-4 ${records.isFetching ? "animate-spin" : ""}`} /></Button><Popover><PopoverTrigger asChild><Button variant="outline" className="ml-auto text-sm font-normal">Customise View ({shownColumns.length})</Button></PopoverTrigger><PopoverContent align="end" className="max-h-96 w-80 overflow-y-auto p-3 text-sm"><div className="mb-3 flex gap-3"><button type="button" onClick={() => setVisibleColumns(columns.map((column) => column.key))} className="text-primary underline">Show all</button><button type="button" onClick={() => setVisibleColumns(DEFAULT_APPLICATION_COLUMNS)} className="text-primary underline">Compact view</button></div>
+    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-6"><h1 className="text-2xl font-medium">Applications ({typeTab === "scholars" ? rows.length : allPartners.filter((row) => row.applicant_type === (typeTab === "mentors" ? "mentor" : "host")).length})</h1><Button variant="outline" disabled={typeTab === "scholars" ? records.isPending || !!records.error : partners.isPending || !!partners.error} onClick={download}>Export all</Button></div>
+    <Tabs value={typeTab} onValueChange={(value) => setTypeTab(value as typeof typeTab)} className="px-6 pb-3"><TabsList aria-label="Application types">{([['scholars', 'Scholars'], ['mentors', 'Mentors'], ['hosts', 'Hosts']] as const).map(([key, title]) => <TabsTrigger key={key} value={key}>{title} ({key === 'scholars' ? all.length : allPartners.filter((record) => record.applicant_type === (key === 'mentors' ? 'mentor' : 'host')).length})</TabsTrigger>)}</TabsList></Tabs>
+    {typeTab !== "scholars" ? <PartnerApplicationsList key={typeTab} kind={typeTab === "mentors" ? "mentor" : "host"} records={allPartners} loading={partners.isPending} error={partners.error?.message} onRefresh={() => void partners.refetch()} /> : <>
+    <div className="flex flex-wrap items-end gap-4 px-6 py-4"><label className="text-sm">Search<input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name, email, career, company or reference" className="mt-1 block w-72 max-w-full rounded border border-input bg-background px-3 py-2" /></label><label className="text-sm">Source<select value={source} onChange={(e) => setSource(e.target.value)} className="mt-1 block rounded border border-input bg-background px-3 py-2"><option value="">All</option><option>Booking</option><option>Imported</option><option>Imported student</option></select></label><Button variant="outline" size="icon" aria-label="Refresh" onClick={() => void records.refetch()} disabled={records.isFetching}><RefreshCw className={`h-4 w-4 ${records.isFetching ? "animate-spin" : ""}`} /></Button><Popover><PopoverTrigger asChild><Button variant="outline" className="ml-auto text-sm font-normal">Customise View ({shownColumns.length})</Button></PopoverTrigger><PopoverContent align="end" className="max-h-96 w-80 overflow-y-auto p-3 text-sm"><div className="mb-3 flex gap-3"><button type="button" onClick={() => setVisibleColumns(columns.map((column) => column.key))} className="text-primary underline">Show all</button><button type="button" onClick={() => setVisibleColumns(DEFAULT_APPLICATION_COLUMNS)} className="text-primary underline">Compact view</button></div>
       <p className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Visible columns (drag to reorder)</p>
       {shownColumns.map((column, index) => (
         <div
@@ -116,8 +124,6 @@ export function ApplicationsList({ onEditImported, onDeleteImported }: { onEditI
       <p className="mb-1 mt-3 text-xs font-semibold uppercase text-muted-foreground">Other columns</p>
       {columns.filter((column) => !visibleColumns.includes(column.key)).map((column) => <label key={column.key} className="flex items-center gap-2 py-1"><input type="checkbox" checked={false} onChange={() => setVisibleColumns([...visibleColumns, column.key])} />{column.label}</label>)}
     </PopoverContent></Popover></div>
-    <Tabs value={typeTab} onValueChange={(value) => setTypeTab(value as typeof typeTab)} className="px-6 pb-3"><TabsList aria-label="Application types">{([['scholars', 'Scholars'], ['mentors', 'Mentors'], ['hosts', 'Hosts']] as const).map(([key, title]) => <TabsTrigger key={key} value={key}>{title} ({key === 'scholars' ? all.length : 0})</TabsTrigger>)}</TabsList></Tabs>
-    {typeTab !== 'scholars' && <p role="status" className="px-6 pb-4 text-sm text-muted-foreground">No {typeTab === 'mentors' ? 'mentor' : 'company host'} applications are stored in the app. The Become a {typeTab === 'mentors' ? 'mentor' : 'host'} form currently opens an email draft; those messages are not recorded here.</p>}
     <div role="group" aria-label="Filter applications by status" className="flex flex-wrap gap-1.5 px-6 pb-4">{APPLICATION_STATUS_CHIPS.map(([key, title]) => <button key={key} type="button" aria-pressed={status === key} onClick={() => setStatus(key)} className={"rounded-full border px-3 py-1.5 text-xs font-medium " + (status === key ? "border-primary bg-primary text-primary-foreground" : "border-border bg-ivory hover:bg-teal/15")}>{title} <span className="ml-1 opacity-70">{typeFiltered.filter(({ record }) => key === "all" || applicationStage(record) === key).length}</span></button>)}</div>
     <div className="overflow-x-auto px-6 pb-6 [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-track]:bg-muted"><table className="w-full min-w-[1200px] text-left text-xs"><thead><tr>{shownColumns.map((column) => <th key={column.key} className="whitespace-nowrap border-b border-border px-3 py-2 font-medium">{column.label}</th>)}<th className="border-b border-border px-3 py-2 font-medium">Actions</th></tr></thead><tbody>
       {records.isPending ? <tr><td colSpan={shownColumns.length + 1} className="p-4">Loading…</td></tr> : records.error ? <tr><td colSpan={shownColumns.length + 1} role="alert" className="p-4 text-destructive">{records.error.message}</td></tr> : !rows.length ? <tr><td colSpan={shownColumns.length + 1} className="p-4">No applications match these filters.</td></tr> : rows.map(({ record, data }) => <tr key={record.key} className="border-b border-border hover:bg-background/40">{shownColumns.map((column) => <td key={column.key} className="px-3 py-2">{column.key === "reference" ? <button onClick={() => setSelectedKey(record.key)} className="max-w-40 truncate text-left text-primary hover:underline" title={record.reference}>{record.source} #{record.reference}</button> : ["student_name", "student_first_name", "learner", "name"].includes(column.key) ? <button onClick={() => setSelectedKey(record.key)} className="max-w-40 truncate text-left" title={record.email}>{String(data[column.key] ?? "")}</button> : column.key === "amount_due" && typeof data[column.key] === "number" ? "R " + Number(data[column.key]).toFixed(2) : <span className="block max-w-64 whitespace-pre-wrap break-words">{cellValue(data[column.key], column.key)}</span>}</td>)}<td className="px-3 py-2"><button type="button" onClick={() => setSelectedKey(record.key)} className="whitespace-nowrap rounded border border-border px-2 py-1">View details</button></td></tr>)}
@@ -131,6 +137,8 @@ export function ApplicationsList({ onEditImported, onDeleteImported }: { onEditI
       <RecordFields title="Host company and HR contacts" data={selected.host} />
       <RecordFields title="Booking, payment and reminder details" data={selected.booking} />
       <RecordFields title="Original imported application" data={selected.imported} />
+      <RecordFields title="Original imported student" data={selected.importedUser ?? null} />
     </>}</SheetContent></Sheet>
+    </>}
   </section>;
 }
