@@ -305,17 +305,9 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
   }
 
   return (
-    <div>
-      {alphabetField && (
-        <div className="flex flex-wrap gap-1.5 bg-background px-6 py-4" aria-label={`Filter ${title} alphabetically`}>
-          <button type="button" onClick={() => setLetter(null)} aria-pressed={letter === null} className={`rounded-full px-2.5 py-1.5 text-xs font-medium uppercase transition ${letter === null ? "bg-primary text-primary-foreground" : "bg-muted/70 text-foreground hover:bg-teal/20"}`}>All</button>
-          {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((ch) => (
-            <button key={ch} type="button" onClick={() => setLetter(letter === ch ? null : ch)} disabled={!letterCounts.has(ch)} aria-pressed={letter === ch} className={`rounded-full px-2.5 py-1.5 text-xs font-medium uppercase transition ${letter === ch ? "bg-primary text-primary-foreground" : !letterCounts.has(ch) ? "bg-muted/30 text-muted-foreground/50" : "bg-muted/70 text-foreground hover:bg-teal/20"}`}>{ch}</button>
-          ))}
-        </div>
-      )}
+    <div className="bg-ivory">
       {csvUpload && (table === "careers" || table === "sectors") && <NamedCsvUpload table={table} />}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border bg-background px-6 py-6 text-foreground">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border bg-ivory px-6 py-6 text-foreground">
         <h1 className="text-2xl font-medium">{title} {!isLoading && `(${rows.length})`}</h1>
         {dateCompanyFilter && (
           <div className="flex flex-wrap items-end gap-4">
@@ -330,7 +322,7 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
         )}
         <div className="flex items-center gap-3">
           {table === "companies" && (
-            <Button onClick={() => setCreating(true)} className="rounded-md bg-teal/20 hover:bg-teal/30 px-4 py-2 text-sm font-medium uppercase text-foreground">Add New Role</Button>
+            <Button onClick={() => setCreating(true)}>Add New Role</Button>
           )}
           {isNameOnly && (
             <div className="flex items-center gap-2">
@@ -338,20 +330,28 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 placeholder={`New ${title.replace(/s$/, "")} name`}
-                className="border-b border-input bg-transparent px-1 py-1 text-sm text-foreground outline-none placeholder:text-muted-foreground"
+                className="rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground"
               />
-              <Button onClick={addNamed} disabled={addBusy || !newName.trim()} className="rounded-md bg-teal/20 hover:bg-teal/30 px-4 py-2 text-sm font-medium uppercase text-foreground disabled:opacity-50">Add</Button>
+              <Button onClick={addNamed} disabled={addBusy || !newName.trim()}>Add</Button>
             </div>
           )}
-          <Button onClick={exportAll} disabled={isLoading || exporting} className="rounded-md bg-teal/20 hover:bg-teal/30 px-4 py-2 text-sm font-medium uppercase text-foreground">{exporting ? "Exporting…" : "Export"}</Button>
+          <Button variant="outline" onClick={exportAll} disabled={isLoading || exporting}>{exporting ? "Exporting…" : "Export"}</Button>
         </div>
       </div>
-      <div className="bg-background px-6 py-6 text-foreground">
+      {alphabetField && (
+        <div className="flex flex-wrap gap-1.5 border-b border-border bg-ivory px-6 py-4" aria-label={`Filter ${title} alphabetically`}>
+          <button type="button" onClick={() => setLetter(null)} aria-pressed={letter === null} className={`rounded-full px-2.5 py-1.5 text-xs font-medium uppercase transition ${letter === null ? "bg-primary text-primary-foreground" : "bg-muted/70 text-foreground hover:bg-teal/20"}`}>All</button>
+          {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((ch) => (
+            <button key={ch} type="button" onClick={() => setLetter(letter === ch ? null : ch)} disabled={!letterCounts.has(ch)} aria-pressed={letter === ch} className={`rounded-full px-2.5 py-1.5 text-xs font-medium uppercase transition ${letter === ch ? "bg-primary text-primary-foreground" : !letterCounts.has(ch) ? "bg-muted/30 text-muted-foreground/50" : "bg-muted/70 text-foreground hover:bg-teal/20"}`}>{ch}</button>
+          ))}
+        </div>
+      )}
+      <div className="bg-ivory px-6 py-6 text-foreground">
         {exportError && <p role="alert" className="mb-4 text-sm font-medium">{exportError}</p>}
         <div className="flex flex-wrap items-end gap-6">
           <label className="block max-w-sm text-sm">
-            Search Table
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Input Value" className="mt-1 w-full border-b border-input bg-transparent px-1 py-1 outline-none placeholder:text-muted-foreground" />
+            Search
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${title.toLowerCase()}`} className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none" />
           </label>
           {isUsers && (
             <label className="flex items-center gap-2 text-sm">
