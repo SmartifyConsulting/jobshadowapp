@@ -863,7 +863,7 @@ export function AdminUsers() {
         </div>
       </div>}
       <Tabs value={roleTab} onValueChange={(value) => { setRoleTab(value as AccountRow["roles"][number] | "companies" | "unclassified"); setLetter(null); setOpenGroups([]); setSelectedId(null); }}>
-        <div className="overflow-x-auto border-b border-border bg-ivory px-6 py-3"><TabsList aria-label="User types" className="h-auto">{([["user", "Students"], ["mentor", "Hosts"], ["school", "Schools"], ["hr_admin", "HR Admin"], ["admin", "Admin"], ["companies", "Companies"], ["unclassified", "Unclassified"]] as const).map(([role, name]) => <TabsTrigger key={role} value={role} className="min-h-11">{name}{role !== "companies" && ` (${(accounts.data ?? []).filter((user) => (role === "unclassified" ? user.roles.length === 0 : user.roles.includes(role)) && (showSpam || !user.is_spam)).length})`}</TabsTrigger>)}</TabsList></div>
+        <div className="overflow-x-auto border-b border-border bg-ivory px-6 py-3"><TabsList aria-label="User types">{([["user", "Students"], ["mentor", "Hosts"], ["school", "Schools"], ["hr_admin", "HR Admin"], ["admin", "Admin"], ["companies", "Companies"], ["unclassified", "Unclassified"]] as const).map(([role, name]) => <TabsTrigger key={role} value={role}>{name}{role !== "companies" && ` (${(accounts.data ?? []).filter((user) => (role === "unclassified" ? user.roles.length === 0 : user.roles.includes(role)) && (showSpam || !user.is_spam)).length})`}</TabsTrigger>)}</TabsList></div>
       <TabsContent value={roleTab} className="mt-0">
       {roleTab === "companies" ? <CompaniesList /> : <div className="flex flex-col items-start xl:flex-row">
       <div className={'min-w-0 w-full flex-1 px-4 py-2 text-foreground ' + 'bg-ivory'}>
@@ -1190,7 +1190,7 @@ function CompaniesList() {
 
 function CareersAndSectors() {
   return <Tabs defaultValue="sectors" className="bg-ivory">
-    <div className="overflow-x-auto border-b border-border px-6 py-3"><TabsList aria-label="Career management"><TabsTrigger value="sectors" className="min-h-11">Sectors</TabsTrigger><TabsTrigger value="careers" className="min-h-11">Careers</TabsTrigger></TabsList></div>
+    <div className="overflow-x-auto border-b border-border px-6 py-3"><TabsList aria-label="Career management"><TabsTrigger value="sectors">Sectors</TabsTrigger><TabsTrigger value="careers">Careers</TabsTrigger></TabsList></div>
     {(["sectors", "careers"] as const).map((id) => { const config = TABLES.find((entry) => entry.id === id)!; return <TabsContent key={id} value={id} className="mt-0"><DataTable title={config.singular} table={config.table} cols={config.cols} csvUpload /></TabsContent>; })}
   </Tabs>;
 }
@@ -1212,7 +1212,7 @@ function AdminReports() {
   return <div className="bg-background">
     <div className="border-b border-border px-6 py-5"><h1 className="text-2xl">Reports</h1></div>
     <Tabs defaultValue="bookings">
-      <div className="overflow-x-auto border-b border-border px-6 py-3"><TabsList aria-label="Admin reports" className="h-auto justify-start">{["Bookings", "Evaluations", "Vouchers", "BEE / CPD", "Activity Log", "Token Ledger"].map((label) => <TabsTrigger key={label} value={label.toLowerCase().replaceAll(' / ', '-').replaceAll(' ', '-')} className="min-h-11">{label}</TabsTrigger>)}</TabsList></div>
+      <div className="overflow-x-auto border-b border-border px-6 py-3"><TabsList aria-label="Admin reports" className="justify-start">{["Bookings", "Evaluations", "Vouchers", "BEE / CPD", "Activity Log", "Token Ledger"].map((label) => <TabsTrigger key={label} value={label.toLowerCase().replaceAll(' / ', '-').replaceAll(' ', '-')}>{label}</TabsTrigger>)}</TabsList></div>
       <TabsContent value="bookings" className="mt-0"><LiveBookings /></TabsContent>
       <TabsContent value="evaluations" className="mt-0"><Evaluations /></TabsContent>
       <TabsContent value="vouchers" className="mt-0"><VoucherReport /></TabsContent>
