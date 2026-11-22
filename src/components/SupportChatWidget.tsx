@@ -73,7 +73,7 @@ export function SupportChatWidget({ viewerRole }: { viewerRole?: string | undefi
         className="relative grid h-16 w-16 place-items-center rounded-full bg-white shadow-warm transition hover:brightness-105"
       >
         <span className="absolute top-1.5 left-1/2 -translate-x-1/2 rounded-full bg-primary px-2 py-0.5 text-[8px] font-bold uppercase leading-none tracking-wide text-primary-foreground">Ask</span>
-        <img src="/assets/jobshadow-logo-shadow-red.webp" alt="JobShadow" className="absolute bottom-1.5 h-9 w-9 object-contain" />
+        <img src="/assets/jobshadow-logo-shadow-red.webp" alt="JobShadow" className="absolute bottom-1.5 h-[54px] w-[54px] object-contain" />
       </button>}
     </div>
   );

@@ -7,11 +7,11 @@ import { SiteLayout, useSiteSession } from "@/components/SiteLayout";
 import { CONTACT_EMAIL } from "@/lib/data";
 import { PARTNER_BLOCKS, PARTNER_HERO } from "@/lib/content";
 
-type ContactType = "host" | "school" | "sponsor" | undefined;
+type ContactType = "host" | "school" | "mentor" | undefined;
 
 export const Route = createFileRoute("/contact")({
   validateSearch: (s: Record<string, unknown>): { type?: ContactType } => ({
-    type: s["type"] === "host" || s["type"] === "school" || s["type"] === "sponsor" ? s["type"] : undefined,
+    type: s["type"] === "host" || s["type"] === "school" || s["type"] === "mentor" ? s["type"] : undefined,
   }),
   head: () => ({
     meta: [
@@ -27,16 +27,16 @@ export const Route = createFileRoute("/contact")({
 });
 
 const FORM_COPY: Record<NonNullable<ContactType>, { heading: string; orgLabel: string; subject: string }> = {
-  host: { heading: "Become A Mentor", orgLabel: "Company name", subject: "New mentor application" },
+  host: { heading: "Become A Host", orgLabel: "Company name", subject: "New host application" },
   school: { heading: "Partner Your School", orgLabel: "School name", subject: "New school partnership application" },
-  sponsor: { heading: "Sponsor A Learner", orgLabel: "Organisation / your name", subject: "New sponsor application" },
+  mentor: { heading: "Become A Mentor", orgLabel: "Your name", subject: "New mentor application" },
 };
 
 
 const BLOCKS = {
   school: { color: "bg-teal text-teal-foreground", text: <>If you are a school and want to include job shadow as <strong>part of your life orientation program</strong></> },
   host: { color: "bg-accent text-accent-foreground", text: <>if you are a company who would like to be <strong>a part of our hosting</strong> program</> },
-  sponsor: { color: "bg-cta text-cta-foreground", text: <>if you are a company who would like to <strong>sponsor learners</strong> as part of your CSI Initiatives</> },
+  mentor: { color: "bg-cta text-cta-foreground", text: <>if you are an individual professional who would like to <strong>mentor a scholar</strong> for a day</> },
 };
 
 function Contact() {
