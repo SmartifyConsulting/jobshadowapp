@@ -42,7 +42,7 @@ function StepRow({ title, icon: TitleIcon, steps }: { title: string; icon: typeo
   return (
     <div className="relative rounded-xl border border-border bg-background pt-10 pb-6">
       <div className="absolute -top-0.5 left-0 flex items-center gap-2 rounded-tl-xl bg-primary py-2 pl-4 pr-8 text-primary-foreground [clip-path:polygon(0_0,100%_0,calc(100%-1.25rem)_100%,0_100%)]">
-        <TitleIcon className="h-5 w-5 shrink-0" />
+        <TitleIcon className="h-[23px] w-[23px] shrink-0" />
         <span className="font-display text-lg uppercase">{title}</span>
       </div>
       <div className="mt-4 flex flex-wrap items-start justify-center gap-y-5 px-3">
