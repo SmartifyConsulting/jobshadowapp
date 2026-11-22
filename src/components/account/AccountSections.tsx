@@ -135,7 +135,10 @@ function ProfileForm({ userId, initialProfile, onSaved }: { userId: string; init
     const { error } = initialProfile ? await supabase.from("scholar_profiles").update(patch).eq("user_id", userId) : await supabase.from("scholar_profiles").insert(patch);
     setBusy(false);
     if (error) return setErrors({ form: error.message });
+    await supabase.from("profiles").upsert({ user_id: userId, first_name: r.data.first_name, last_name: r.data.last_name, display_name: `${r.data.first_name} ${r.data.last_name}`.trim(), updated_at: new Date().toISOString() });
     await qc.invalidateQueries({ queryKey: ["scholar-profile"] });
+    await qc.invalidateQueries({ queryKey: ["profile"] });
+    await qc.invalidateQueries({ queryKey: ["site-session"] });
     onSaved?.();
   }
   return (
