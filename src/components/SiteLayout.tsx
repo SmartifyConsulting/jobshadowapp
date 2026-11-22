@@ -89,7 +89,7 @@ export function SiteHeader({ headerLogo }: { headerLogo?: ReactNode }) {
         <Link to="/" aria-label="JobShadow home" className={`flex shrink-0 items-end ${headerLogo ? "h-24 lg:h-28" : "h-28 lg:h-32"}`}>
           {headerLogo ?? <HeaderLogo className="h-24 w-auto lg:h-28" />}
         </Link>
-        <nav className="hidden min-w-0 flex-1 flex-wrap items-center justify-end gap-4 lg:ml-auto lg:flex">
+        <nav className="hidden min-w-0 flex-1 flex-wrap items-center justify-end gap-[17.6px] lg:ml-auto lg:flex">
           {SITE_NAV.map((n) => (
             <Link
               key={n.to}
