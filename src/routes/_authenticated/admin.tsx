@@ -838,13 +838,14 @@ export function AdminUsers() {
   }, [accounts.data, q, showSpam, letter, accountRole, isUnclassified]);
 
   const guessLastNamesFn = useServerFn(guessLastNamesFromEmails);
+  const [guessRequested, setGuessRequested] = useState(false);
   const missingLastNames = useMemo(() => rows
     .filter((a) => !accountNameParts(a).last && !!a.email)
     .slice(0, 150)
     .map((a) => ({ id: a.id, email: a.email!, firstName: accountNameParts(a).first || undefined })), [rows]);
   const lastNameGuesses = useQuery({
     queryKey: ["admin", "last-name-guesses", missingLastNames.map((m) => m.id).join(",")],
-    enabled: missingLastNames.length > 0,
+    enabled: guessRequested && missingLastNames.length > 0,
     staleTime: Infinity,
     queryFn: async () => (await guessLastNamesFn({ data: { entries: missingLastNames } })).guesses,
   });
@@ -908,7 +909,8 @@ export function AdminUsers() {
               </button>
             );
           })}
-          {!isUnclassified && <Button className="ml-auto" onClick={() => setCreateOpen(true)}>Add {ROLE_LABELS[accountRole]}</Button>}
+          {!guessRequested && missingLastNames.length > 0 && <Button variant="outline" className="ml-auto" onClick={() => setGuessRequested(true)}>Guess missing last names (AI)</Button>}
+          {!isUnclassified && <Button className={guessRequested || !missingLastNames.length ? "ml-auto" : ""} onClick={() => setCreateOpen(true)}>Add {ROLE_LABELS[accountRole]}</Button>}
         </div>
         <div className="mt-2 flex flex-wrap items-end gap-4">
           <label className="block max-w-sm text-sm">
