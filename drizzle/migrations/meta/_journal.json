@@ -470,6 +470,13 @@
       "when": 1794963400000,
       "tag": "0066_bee_cpd_report_by_hr_email",
       "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "7",
+      "when": 1794963500000,
+      "tag": "0067_split_application_student_names",
+      "breakpoints": true
     }
   ]
 }
