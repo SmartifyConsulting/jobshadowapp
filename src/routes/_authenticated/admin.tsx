@@ -1,3 +1,4 @@
+import { individualMentorEmails, classifyCompanies, companyKey, type CompanyContacts } from "@/lib/company-classification";
 import { PersonNameFields } from "@/components/PersonNameFields";
 import { PhoneInput } from "@/components/PhoneInput";
 import { getCareerIdealFor } from "@/lib/career-ideal-for";
@@ -14,6 +15,8 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import { Users as UsersIcon, FileText, ShoppingCart, Briefcase, GraduationCap, Pencil, Trash2, IdCard, Image as ImageIcon, Download, BadgeCheck, ChevronDown, LayoutGrid, List, X, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { RichText } from "@/components/RichText";
+import { CareerSkills } from "@/components/CareerSkills";
+import { getCareerSkills } from "@/lib/career-skills";
 import { draftCareerDescription } from "@/lib/career-ai.functions";
 import { accountInitial, alphabetInitial } from "@/lib/alphabet";
 import { withCareerDescriptions } from "@/lib/career-descriptions";
@@ -174,7 +177,7 @@ function exportCsv(title: string, cols: Col[], rows: Record<string, unknown>[]) 
   URL.revokeObjectURL(url);
 }
 
-function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnityEdit }: { title: string; table: string; cols: Col[]; csvUpload?: boolean | undefined; dateCompanyFilter?: boolean | undefined; indemnityEdit?: boolean | undefined }) {
+function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnityEdit, companyKind }: { title: string; table: string; cols: Col[]; csvUpload?: boolean | undefined; dateCompanyFilter?: boolean | undefined; indemnityEdit?: boolean | undefined; companyKind?: "mentor" | "host" | undefined }) {
   const qc = useQueryClient();
   const [q, setQ] = useState("");
   const [openDesc, setOpenDesc] = useState<Set<string>>(new Set());
@@ -219,7 +222,7 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
     setExportError(null);
     try {
       let all = await loadAll(table);
-      if (table === "careers") all = withCareerDescriptions(all).map((row) => ({ ...row, ideal_for: getCareerIdealFor(String(row["name"] ?? "")) }));
+      if (table === "careers") all = withCareerDescriptions(all).map((row) => ({ ...row, ideal_for: getCareerIdealFor(String(row["name"] ?? "")), school_skills: getCareerSkills(String(row["name"] ?? ""), row["school_skills"], row["workplace_skills"]).school, workplace_skills: getCareerSkills(String(row["name"] ?? ""), row["school_skills"], row["workplace_skills"]).workplace }));
       if (table === "legacy_applications") all = joinApplicationContacts(all, await loadAll("companies"));
       exportCsv(title, completeExportColumns(cols.filter((c) => !c.key.startsWith("_")), all), all);
     } catch (error) {
@@ -260,18 +263,21 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
       return table === "careers" ? withCareerDescriptions(rows) : rows;
     },
   });
+  const companyTypes = useMemo(() => classifyCompanies((data ?? []) as CompanyContacts[]), [data]);
   const companies = useMemo(() => ["All companies", ...new Set((data ?? []).map((r) => fmt(r["company"])).filter(Boolean))], [data]);
   const letterCounts = useMemo(() => {
     const counts = new Map<string, number>();
     if (alphabetField) (data ?? []).forEach((row) => {
+      if (companyKind && companyTypes.get(companyKey(String(row["company"] ?? ""))) !== companyKind) return;
       const initial = alphabetInitial(fmt(row[alphabetField]));
       if (initial) counts.set(initial, (counts.get(initial) ?? 0) + 1);
     });
     return counts;
-  }, [data, alphabetField]);
+  }, [data, alphabetField, companyKind, companyTypes]);
   const rows = useMemo(() => {
     const s = q.toLowerCase().trim();
     return (data ?? []).filter((r) => {
+      if (companyKind && companyTypes.get(companyKey(String(r["company"] ?? ""))) !== companyKind) return false;
       if (letter && alphabetField && alphabetInitial(fmt(r[alphabetField])) !== letter) return false;
       if (s && !cols.some((c) => fmt(r[c.key]).toLowerCase().includes(s))) return false;
       if (dateCompanyFilter) {
@@ -282,7 +288,7 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
       }
       return true;
     });
-  }, [data, q, cols, dateCompanyFilter, company, from, to, letter, alphabetField]);
+  }, [data, q, cols, dateCompanyFilter, company, from, to, letter, alphabetField, companyKind, companyTypes]);
 
   async function remove(row: Record<string, unknown>) {
     if (!(await confirmAction("Delete this record?", { danger: true, confirmLabel: "Delete" }))) return;
@@ -365,11 +371,10 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
             {[...new Set(rows.map((r) => alphabetInitial(fmt(r["name"]))))].sort((a, b) => a === "#" ? 1 : b === "#" ? -1 : a.localeCompare(b)).map((group) => {
               const groupRows = rows.filter((r) => alphabetInitial(fmt(r["name"])) === group);
               return (
-                <Accordion key={group} type="multiple" className="overflow-hidden border-x-[4px] border-b-[4px] border-ivory bg-ivory">
-                  <AccordionItem value={group} className="border-none">
-                    <AccordionTrigger className="min-h-11 justify-start gap-3 bg-ivory px-3 py-1.5 text-left text-foreground hover:no-underline [&>svg]:ml-auto">
-                      <span className="font-display text-lg uppercase">{group}</span>
-                      <span className="text-xs opacity-80">{groupRows.length} {groupRows.length === 1 ? title.replace(/s$/, "") : title}</span>
+                <Accordion key={group} type="multiple" className="overflow-hidden border-x border-border bg-ivory first:border-t last:border-b">
+                  <AccordionItem value={group}>
+                    <AccordionTrigger className="px-3 py-3 text-sm hover:no-underline hover:bg-muted/30">
+                      <span className="font-bold text-primary">{group}</span>&nbsp;<span className="text-muted-foreground">({groupRows.length})</span>
                     </AccordionTrigger>
                     <AccordionContent className="bg-ivory pb-0 text-foreground">
                       <div className="divide-y divide-warm-divider">
@@ -395,6 +400,7 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
                                 <div className="bg-background/60 px-10 py-3 text-sm text-muted-foreground">
                                   {r["description"] ? <RichText text={String(r["description"])} /> : <em>No description yet — edit this career to add one.</em>}
                                   {getCareerIdealFor(String(r["name"] ?? "")) && <p className="mt-2 text-foreground"><strong>Ideal for:</strong> {getCareerIdealFor(String(r["name"] ?? ""))}</p>}
+                                  <CareerSkills {...getCareerSkills(String(r["name"] ?? ""), r["school_skills"], r["workplace_skills"])} />
                                 </div>
                               )}
                             </Fragment>
@@ -844,9 +850,13 @@ export function AdminUsers() {
   const [openGroups, setOpenGroups] = useState<string[]>([]);
   const [expandedApplicationUser, setExpandedApplicationUser] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
-  const [roleTab, setRoleTab] = useState<AccountRow["roles"][number] | "companies" | "unclassified">("user");
+  const [roleTab, setRoleTab] = useState<AccountRow["roles"][number] | "companies" | "unclassified" | "individual_mentor">("user");
+  const [contactsOpen, setContactsOpen] = useState(false);
   const isUnclassified = roleTab === "unclassified";
-  const accountRole = roleTab === "companies" || isUnclassified ? "user" : roleTab;
+  const accountRole = roleTab === "companies" || isUnclassified ? "user" : roleTab === "individual_mentor" ? "mentor" : roleTab;
+  const mentorCompanies = useQuery({ queryKey: ["admin", "company-contact-classification"], queryFn: () => fetchAllRows(async (from, to) => { const result = await supabase.from("companies").select("company,mentor_name,mentor_email,backup_mentor_name,backup_mentor_email").order("id").range(from, to); if (result.error) throw result.error; return result.data ?? []; }) });
+  const soleMentors = useMemo(() => individualMentorEmails((mentorCompanies.data ?? []) as { company: string | null; mentor_email: string | null; backup_mentor_email: string | null }[]), [mentorCompanies.data]);
+  const matchesRole = (a: AccountRow, tab = roleTab) => tab === "unclassified" ? a.roles.length === 0 : tab === "individual_mentor" ? a.roles.includes("mentor") && soleMentors.has((a.email ?? "").trim().toLowerCase()) : tab === "mentor" ? a.roles.includes("mentor") && !soleMentors.has((a.email ?? "").trim().toLowerCase()) : tab !== "companies" && a.roles.includes(tab);
   const [showSpam, setShowSpam] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [letter, setLetter] = useState<string | null>(null);
@@ -894,14 +904,14 @@ export function AdminUsers() {
     const s = q.toLowerCase().trim();
     return (accounts.data ?? [])
       .filter((a) => {
-        if (isUnclassified ? a.roles.length > 0 : !a.roles.includes(accountRole)) return false;
+        if (!matchesRole(a)) return false;
         if (!showSpam && a.is_spam) return false;
         if (s && ![a.email, a.display_name, a.full_name, a.contact_no, a.school, a.id_number, ...a.roles.map((role) => ROLE_LABELS[role])].some((v) => (v ?? "").toLowerCase().includes(s))) return false;
         if (letter && accountInitial(a) !== letter) return false;
         return true;
       })
       .sort((a, b) => (a.display_name || a.full_name || a.email || "").localeCompare(b.display_name || b.full_name || b.email || ""));
-  }, [accounts.data, q, showSpam, letter, accountRole, isUnclassified]);
+  }, [accounts.data, q, showSpam, letter, accountRole, isUnclassified, soleMentors, roleTab]);
 
 
   const letterCounts = useMemo(() => {
@@ -913,11 +923,11 @@ export function AdminUsers() {
       if (first) counts.set(first, (counts.get(first) ?? 0) + 1);
     });
     return counts;
-  }, [accounts.data, showSpam, accountRole, isUnclassified]);
+  }, [accounts.data, showSpam, accountRole, isUnclassified, soleMentors, roleTab]);
 
   return (
     <div>
-      {createOpen && <CreateAccountDialog role={accountRole} label={ROLE_LABELS[accountRole]} onClose={() => setCreateOpen(false)} />}
+      {createOpen && <CreateAccountDialog role={accountRole} label={roleTab === "individual_mentor" ? "Mentor" : ROLE_LABELS[accountRole]} onClose={() => setCreateOpen(false)} />}
       <Dialog open={!!editing} onOpenChange={(open) => { if (!open && busyId !== editing?.id) setEditing(null); }}>
         <DialogContent className="max-h-[90vh] overflow-auto">
           <DialogHeader><DialogTitle>Edit user</DialogTitle></DialogHeader>
@@ -938,8 +948,8 @@ export function AdminUsers() {
           {([['table', List, 'Table'], ['cards', LayoutGrid, 'Cards']] as const).map(([value, Icon, label]) => <button key={value} onClick={() => setView(value)} aria-pressed={view === value} className={'flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs transition ' + (view === value ? 'bg-background text-primary' : 'hover:bg-primary/5')}><Icon className="h-3.5 w-3.5" />{label}</button>)}
         </div>
       </div>}
-      <Tabs value={roleTab} onValueChange={(value) => { setRoleTab(value as AccountRow["roles"][number] | "companies" | "unclassified"); setLetter(null); setOpenGroups([]); setSelectedId(null); }}>
-        <div className="overflow-x-auto border-b border-border bg-ivory px-6 py-3"><TabsList aria-label="User types">{([["user", "Students"], ["mentor", "Hosts"], ["school", "Schools"], ["hr_admin", "HR Admin"], ["admin", "Admin"], ["companies", "Companies"], ["unclassified", "Unclassified"]] as const).map(([role, name]) => <TabsTrigger key={role} value={role}>{name}{role !== "companies" && ` (${(accounts.data ?? []).filter((user) => (role === "unclassified" ? user.roles.length === 0 : user.roles.includes(role)) && (showSpam || !user.is_spam)).length})`}</TabsTrigger>)}</TabsList></div>
+      <Tabs value={roleTab} onValueChange={(value) => { setRoleTab(value as AccountRow["roles"][number] | "companies" | "unclassified"); setLetter(null); setOpenGroups([]); setSelectedId(null); setContactsOpen(false); }}>
+        <div className="overflow-x-auto border-b border-border bg-ivory px-6 py-3"><TabsList aria-label="User types">{([["user", "Students"], ["mentor", "Hosts"], ["individual_mentor", "Mentors"], ["school", "Schools"], ["hr_admin", "HR Admin"], ["admin", "Admin"], ["companies", "Companies"], ["unclassified", "Unclassified"]] as const).map(([role, name]) => <TabsTrigger key={role} value={role}>{name}{role !== "companies" && ` (${(accounts.data ?? []).filter((user) => matchesRole(user, role) && (showSpam || !user.is_spam)).length})`}</TabsTrigger>)}</TabsList></div>
       <TabsContent value={roleTab} className="mt-0">
       {roleTab === "companies" ? <CompaniesList /> : <div className="flex flex-col items-start xl:flex-row">
       <div className={'min-w-0 w-full flex-1 px-4 py-2 text-foreground ' + 'bg-ivory'}>
@@ -963,7 +973,7 @@ export function AdminUsers() {
               </button>
             );
           })}
-          {!isUnclassified && <Button className="ml-auto" onClick={() => setCreateOpen(true)}>Add {ROLE_LABELS[accountRole]}</Button>}
+          {!isUnclassified && <Button className="ml-auto" onClick={() => setCreateOpen(true)}>Add {roleTab === "individual_mentor" ? "Mentor" : ROLE_LABELS[accountRole]}</Button>}
         </div>
         <div className="mt-2 flex flex-wrap items-end gap-4">
           <label className="block max-w-sm text-sm">
@@ -1002,6 +1012,7 @@ export function AdminUsers() {
       </div>
       {selectedAccount && <UserDetailPanel account={selectedAccount} onClose={() => setSelectedId(null)} onEdit={() => setEditing({ ...selectedAccount, roles: [...selectedAccount.roles] })} />}
       </div>}
+      {(roleTab === "mentor" || roleTab === "individual_mentor") && <details key={roleTab} onToggle={(e) => setContactsOpen(e.currentTarget.open)} className="border-t border-border"><summary className="cursor-pointer bg-ivory px-6 py-4 text-sm font-medium">{roleTab === "mentor" ? "Host company records" : "Individual mentor records"} · includes contacts without logins</summary><p className="bg-ivory px-6 py-4 text-sm text-muted-foreground">Company contact records below include people without login accounts. Each placement retains its mentor and company details; editing a contact does not grant account access.</p>{contactsOpen && <CompaniesList key={roleTab} kind={roleTab === "mentor" ? "host" : "mentor"} />}</details>}
       </TabsContent>
       </Tabs>
     </div>
@@ -1235,9 +1246,9 @@ function Evaluations() {
 const BOOKING_STATUS_LABELS: Record<string, string> = { awaiting_payment: "Awaiting payment", indemnity_required: "Paid – indemnity needed", confirmed: "Confirmed", completed: "Completed", cancelled: "Cancelled" };
 
 
-function CompaniesList() {
+function CompaniesList({ kind }: { kind?: "mentor" | "host" } = {}) {
   const config = TABLES.find((entry) => entry.id === "companies")!;
-  return <DataTable title={config.singular} table={config.table} cols={config.cols} />;
+  return <DataTable title={kind === "mentor" ? "Mentor records" : kind === "host" ? "Host company records" : config.singular} table={config.table} cols={config.cols} companyKind={kind} />;
 }
 
 function CareersAndSectors() {
@@ -1572,17 +1583,15 @@ function DatesPicker({ value, onChange, allowWeekends = true, allowOffSeason = t
   );
 }
 
+function SettingsFrame({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
+  return <section className="overflow-hidden rounded-lg border border-warm-divider bg-ivory"><header className="border-b border-warm-divider px-5 py-4"><h2 className="text-base font-medium">{title}</h2><p className="mt-1 text-xs text-muted-foreground">{description}</p></header><div className="divide-y divide-warm-divider">{children}</div></section>;
+}
+
 function NumberField({ label, hint, value, onChange, suffix }: { label: string; hint?: string; value: string; onChange: (v: string) => void; suffix?: string }) {
-  return (
-    <label className="block text-sm">
-      {label}
-      <div className="mt-1 flex max-w-xs items-center gap-2">
-        <input type="number" min={0} value={value} onChange={(e) => onChange(e.target.value)} className="w-full border-b border-input bg-transparent px-1 py-1 outline-none" />
-        {suffix && <span className="shrink-0 text-xs text-muted-foreground">{suffix}</span>}
-      </div>
-      {hint && <p className="mt-1 max-w-md text-xs text-muted-foreground">{hint}</p>}
-    </label>
-  );
+  return <label className="grid items-start gap-4 px-5 py-5 text-sm md:grid-cols-[minmax(0,1fr)_minmax(14rem,0.6fr)]">
+    <span><span>{label}</span>{hint && <span className="mt-1 block max-w-xl text-xs text-muted-foreground">{hint}</span>}</span>
+    <span className="flex items-center gap-2"><input type="number" min={0} value={value} onChange={(e) => onChange(e.target.value)} className="min-w-0 w-20 border-b border-input bg-transparent px-1 py-1 outline-none" />{suffix && <span className="text-xs text-muted-foreground">{suffix}</span>}</span>
+  </label>;
 }
 
 function parseIntList(s: string): number[] {
@@ -1627,7 +1636,7 @@ function PublicHolidayFetcher({ onFetched }: { onFetched: (dates: Date[]) => voi
 
 const NOT_ENFORCED_HINT = "Stored, but not yet enforced anywhere in the app — that needs a workflow (host response tracking, waitlist, or self-service cancel/reschedule) this project doesn't have yet.";
 
-function BookingSettings() {
+export function BookingSettings() {
   const qc = useQueryClient();
   const settings = useQuery({
     queryKey: ["admin", "booking_settings"],
@@ -1688,7 +1697,7 @@ function BookingSettings() {
     qc.invalidateQueries({ queryKey: ["booking-settings"] });
   }
 
-  const sectionClass = "overflow-hidden rounded-lg border-[8px] border-ivory bg-ivory";
+  const sectionClass = "space-y-5 text-foreground";
   const tabTriggerClass = (color: string) => `rounded-md px-5 py-2.5 font-display text-sm uppercase data-[state=inactive]:opacity-60 ${color}`;
 
   return (
@@ -1703,18 +1712,25 @@ function BookingSettings() {
             <TabsTrigger value="notify" className={tabTriggerClass(BAND_COLORS[3]!)}>Notifications &amp; Messages</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="rules" className={sectionClass + " mt-3 space-y-5 px-5 py-5 text-foreground"}>
+          <TabsContent value="rules" className={sectionClass + " mt-6"}>
+              <SettingsFrame title="Scheduling Windows &amp; Lead Times" description="Control how early or far in advance students can request shadow dates.">
               <NumberField label="Minimum request lead time" suffix="days before the shadow date" value={f("min_lead_days")} onChange={set("min_lead_days")} hint="The earliest a student may submit a booking request relative to the shadow date." />
               <NumberField label="Maximum advance booking window" suffix="days ahead" value={f("max_advance_days")} onChange={set("max_advance_days")} hint="How far into the future a student can request a shadow." />
-              <div className="flex gap-4">
-                <NumberField label="Operating season starts" suffix="month (1-12)" value={f("season_start_month")} onChange={set("season_start_month")} />
-                <NumberField label="Operating season ends" suffix="month (1-12)" value={f("season_end_month")} onChange={set("season_end_month")} hint="Placements run only within this month range unless a listing explicitly allows off-season dates." />
+              </SettingsFrame>
+              <SettingsFrame title="Operating Season &amp; Request Caps" description="Define active placement months and concurrent student booking limits.">
+              <div className="grid items-start gap-4 px-5 py-5 md:grid-cols-2">
+                <div><p className="text-sm">Operating season range</p><p className="mt-1 text-xs text-muted-foreground">Placements run only within this month range unless a listing explicitly allows off-season dates.</p></div>
+                <div className="space-y-4"><div className="grid grid-cols-2 gap-4">{([['season_start_month', 'Season starts'], ['season_end_month', 'Season ends']] as const).map(([key, label]) => <label key={key} className="text-xs">{label}<select value={f(key)} onChange={(e) => set(key)(e.target.value)} className="mt-1 block w-full border-b border-input bg-transparent px-1 py-1 text-sm outline-none">{Array.from({ length: 12 }, (_, i) => <option key={i} value={i + 1}>{new Date(2020, i, 1).toLocaleString('en-ZA', { month: 'long' })}</option>)}</select></label>)}</div>
+                <div><p className="mb-1 text-xs text-muted-foreground">Annual Season Preview</p><ol className="grid grid-cols-12 gap-1" aria-label="Annual season preview">{Array.from({ length: 12 }, (_, i) => { const m = i + 1, start = Number(f('season_start_month')), end = Number(f('season_end_month')); const active = m >= start && m <= end; const name = new Date(2020, i, 1).toLocaleString('en-ZA', { month: 'long' }); return <li key={m} title={name + (active ? ': Active' : ': Inactive')} aria-label={name + (active ? ': Active' : ': Inactive')} className={'rounded px-1 py-1 text-center text-xs ' + (active ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground')}>{name[0]}</li>; })}</ol></div></div>
               </div>
               <NumberField label="Maximum pending requests per student" suffix="active requests" value={f("max_pending_requests")} onChange={set("max_pending_requests")} hint={NOT_ENFORCED_HINT} />
-              <div>
+              </SettingsFrame>
+              <SettingsFrame title="Blackout Dates &amp; Public Holidays" description="Block institutional dates and manage public holidays across all placements.">
+              <div className="px-5 py-5">
                 <p className="text-sm">Blackout dates <span className="text-xs text-muted-foreground">(no bookings allowed)</span></p>
+                <div className="mt-2 flex items-center justify-between text-xs"><span>Blocked dates ({blackoutDates.length})</span><button type="button" disabled={!blackoutDates.length} onClick={() => setBlackoutDates([])} className="text-primary hover:underline disabled:opacity-50">Clear all</button></div>
                 <div className="mt-2 flex flex-wrap items-start gap-4">
-                  <Calendar mode="multiple" selected={blackoutDates} onSelect={(d) => setBlackoutDates(d ?? [])} className="rounded-md border border-warm-divider bg-background [&_[data-selected-single=true]]:bg-black [&_[data-selected-single=true]]:text-white [&_[data-selected-single=true]:hover]:bg-black [&_[data-selected-single=true]:hover]:text-white" />
+                  <Calendar mode="multiple" selected={blackoutDates} onSelect={(d) => setBlackoutDates(d ?? [])} classNames={{ root: "w-full", months: "relative flex w-full flex-col" }} className="rounded-md border border-warm-divider bg-background [&_[data-selected-single=true]]:bg-black [&_[data-selected-single=true]]:text-white [&_[data-selected-single=true]:hover]:bg-black [&_[data-selected-single=true]:hover]:text-white" />
                   <div className="flex flex-wrap gap-1.5">
                     {blackoutDates.length === 0 && <span className="text-xs text-muted-foreground">No blackout dates set.</span>}
                     {blackoutDates.map((d, i) => (
@@ -1726,7 +1742,7 @@ function BookingSettings() {
                   </div>
                 </div>
               </div>
-              <div>
+              <div className="px-5 py-5">
                 <p className="text-sm">Public holidays <span className="text-xs text-muted-foreground">(always blocked, every placement, no override)</span></p>
                 <PublicHolidayFetcher onFetched={(dates) => setPublicHolidays((cur) => {
                   const seen = new Set(cur.map((d) => d.toDateString()));
@@ -1745,34 +1761,41 @@ function BookingSettings() {
                   </div>
                 </div>
               </div>
+              </SettingsFrame>
           </TabsContent>
 
-          <TabsContent value="docs" className={sectionClass + " mt-3 space-y-5 px-5 py-5 text-foreground"}>
+          <TabsContent value="docs" className={sectionClass + " mt-6"}>
+            <SettingsFrame title="Documentation & Approval" description="Manage paperwork deadlines and booking request expiry.">
               <NumberField label="Documentation deadline" suffix="days before the shadow date" value={f("documentation_deadline_days")} onChange={set("documentation_deadline_days")} hint="The latest all required paperwork (indemnities, consent) must be approved. Enforced as a floor under the minimum lead time above, so a request can't be made with too little time left to complete it." />
               <NumberField label="Booking request expiry" suffix="hours for a host to respond" value={f("request_expiry_hours")} onChange={set("request_expiry_hours")} hint={NOT_ENFORCED_HINT} />
+            </SettingsFrame>
           </TabsContent>
 
-          <TabsContent value="cancel" className={sectionClass + " mt-3 space-y-5 px-5 py-5 text-foreground"}>
+          <TabsContent value="cancel" className={sectionClass + " mt-6"}>
+            <SettingsFrame title="Cancellations & Waitlists" description="Configure cancellation, rescheduling and waitlist preferences.">
               <NumberField label="Cancellation cut-off" suffix="days before the shadow date" value={f("cancellation_cutoff_days")} onChange={set("cancellation_cutoff_days")} hint={NOT_ENFORCED_HINT} />
               <NumberField label="Reschedule minimum notice" suffix="days ahead" value={f("reschedule_min_notice_days")} onChange={set("reschedule_min_notice_days")} hint={NOT_ENFORCED_HINT} />
               <NumberField label="Waitlist expiry" suffix="hours to respond to an offered place" value={f("waitlist_expiry_hours")} onChange={set("waitlist_expiry_hours")} hint={NOT_ENFORCED_HINT} />
+            </SettingsFrame>
           </TabsContent>
 
-          <TabsContent value="notify" className={sectionClass + " mt-3 space-y-5 px-5 py-5 text-foreground"}>
-              <label className="block text-sm">
+          <TabsContent value="notify" className={sectionClass + " mt-6"}>
+            <SettingsFrame title="Notifications & Messages" description="Manage availability messages and reminder timing.">
+              <label className="block px-5 py-5 text-sm">
                 "No mentors available" message <span className="text-xs text-muted-foreground">(shown on /roles and the booking wizard whenever nothing is bookable)</span>
                 <textarea value={f("no_availability_message")} onChange={(e) => set("no_availability_message")(e.target.value)} className="mt-1 w-full border-b border-input bg-transparent px-1 py-1 outline-none" />
               </label>
-              <label className="block text-sm">
+              <label className="block px-5 py-5 text-sm">
                 Scholar reminders <span className="text-xs text-muted-foreground">(days before the shadow date, comma separated — e.g. "2, 1")</span>
                 <input value={f("scholar_reminder_days")} onChange={(e) => set("scholar_reminder_days")(e.target.value)} placeholder="2, 1" className="mt-1 w-full max-w-xs border-b border-input bg-transparent px-1 py-1 outline-none" />
                 <p className="mt-1 max-w-md text-xs text-muted-foreground">The lowest day (e.g. 1 = the day before) gets the packing-list wording (ID, signed indemnity form(s), questionnaire); any other day gets a general reminder.</p>
               </label>
-              <label className="block text-sm">
+              <label className="block px-5 py-5 text-sm">
                 Host reminders <span className="text-xs text-muted-foreground">(days before the shadow date, comma separated)</span>
                 <input value={f("mentor_reminder_days")} onChange={(e) => set("mentor_reminder_days")(e.target.value)} placeholder="1" className="mt-1 w-full max-w-xs border-b border-input bg-transparent px-1 py-1 outline-none" />
                 <p className="mt-1 max-w-md text-xs text-muted-foreground">Every host reminder includes the stand-in / contact-manager notice.</p>
               </label>
+            </SettingsFrame>
           </TabsContent>
         </Tabs>
 
@@ -1848,6 +1871,7 @@ function CompanyIndemnityUpload({ companyId, value, onChange }: { companyId: unk
 }
 
 function EditRecord({ title, table, cols, row, onDone, onCancel }: { title: string; table: string; cols: Col[]; row: Record<string, unknown>; onDone: () => void; onCancel: () => void }) {
+  const qc = useQueryClient();
   const [vals, setVals] = useState<Record<string, unknown>>(row);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -1860,6 +1884,7 @@ function EditRecord({ title, table, cols, row, onDone, onCancel }: { title: stri
     const { error } = await (supabase.from(table as "careers") as any).update(patch).eq("id", row["id"]);
     setBusy(false);
     if (error) return setErr(error.message);
+    if (table === "careers") qc.invalidateQueries({ queryKey: ["public-career-content"] });
     onDone();
   }
 
@@ -1929,7 +1954,7 @@ function EditRecord({ title, table, cols, row, onDone, onCancel }: { title: stri
             )
           )}
         </div>
-        {table === "careers" && <CareerDescriptionField career={String(vals["name"] ?? "")} value={(vals["description"] as string) ?? ""} onChange={(v) => setVals({ ...vals, description: v })} />}
+        {table === "careers" && <CareerDescriptionField career={String(vals["name"] ?? "")} value={(vals["description"] as string) ?? ""} onChange={(v) => setVals({ ...vals, description: v })} skills={getCareerSkills(String(vals["name"] ?? ""), vals["school_skills"], vals["workplace_skills"])} onSkillsChange={(skills) => setVals((current) => ({ ...current, school_skills: skills.school, workplace_skills: skills.workplace }))} onDraft={(draft) => setVals((current) => ({ ...current, description: draft.description, school_skills: draft.school_skills, workplace_skills: draft.workplace_skills }))} />}
         {err && <p className="mt-4 text-sm font-medium">{err}</p>}
         <button onClick={save} disabled={busy} className="mt-6 rounded-md bg-teal/20 hover:bg-teal/30 px-5 py-2.5 text-sm font-medium uppercase text-foreground">Update</button>
       </div>
@@ -1937,14 +1962,14 @@ function EditRecord({ title, table, cols, row, onDone, onCancel }: { title: stri
   );
 }
 
-function CareerDescriptionField({ career, value, onChange }: { career: string; value: string; onChange: (v: string) => void }) {
+export function CareerDescriptionField({ career, value, onChange, skills, onSkillsChange, onDraft }: { career: string; value: string; onChange: (v: string) => void; skills: { school: string[]; workplace: string[] }; onSkillsChange: (skills: { school: string[]; workplace: string[] }) => void; onDraft: (draft: { description: string; school_skills: string[]; workplace_skills: string[] }) => void }) {
   const draft = useServerFn(draftCareerDescription);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   async function suggest() {
     if (!career.trim()) return setErr("Enter the career name first.");
     setBusy(true); setErr(null);
-    try { onChange((await draft({ data: { career } })).description); }
+    try { onDraft(await draft({ data: { career } })); }
     catch (e) { setErr((e as Error).message); }
     finally { setBusy(false); }
   }
@@ -1959,6 +1984,11 @@ function CareerDescriptionField({ career, value, onChange }: { career: string; v
       <textarea rows={4} value={value} onChange={(e) => onChange(e.target.value)} placeholder="A brief description of this career" className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary" />
       <p className="mt-1 text-xs text-muted-foreground">Wrap career types in **double asterisks** to show them in bold.</p>
       {value && <div className="mt-2 rounded bg-muted/40 p-2 text-sm"><RichText text={value} /></div>}
+      <fieldset className="mt-4 space-y-3"><legend className="text-sm font-semibold">Skills Required</legend>
+        <p className="text-xs text-muted-foreground">Separate skills with commas. AI suggestions remain a draft until you click Update.</p>
+        {([['school', 'School foundations'], ['workplace', 'Workplace skills']] as const).map(([key, label]) => <label key={key} className="block text-sm">{label}<input value={skills[key].join(', ')} onChange={(e) => onSkillsChange({ ...skills, [key]: e.target.value.split(',').map((skill) => skill.trimStart()) })} onBlur={() => onSkillsChange({ ...skills, [key]: skills[key].map((skill) => skill.trim()).filter(Boolean) })} className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary" /></label>)}
+        <CareerSkills {...skills} />
+      </fieldset>
       {err && <p className="mt-1 text-xs text-destructive">{err}</p>}
     </div>
   );

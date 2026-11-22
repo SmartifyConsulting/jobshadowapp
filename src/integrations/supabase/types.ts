@@ -307,16 +307,22 @@ export type Database = {
           description: string | null
           id: number
           name: string
+          school_skills: string[] | null
+          workplace_skills: string[] | null
         }
         Insert: {
           description?: string | null
           id: number
           name: string
+          school_skills?: string[] | null
+          workplace_skills?: string[] | null
         }
         Update: {
           description?: string | null
           id?: number
           name?: string
+          school_skills?: string[] | null
+          workplace_skills?: string[] | null
         }
         Relationships: []
       }
@@ -1191,6 +1197,10 @@ export type Database = {
           scholar_user_id: string
           school: string
         }[]
+      }
+      get_public_career_details: {
+        Args: Record<PropertyKey, never>
+        Returns: { name: string; description: string | null; school_skills: string[] | null; workplace_skills: string[] | null }[]
       }
       get_public_career_content: {
         Args: never

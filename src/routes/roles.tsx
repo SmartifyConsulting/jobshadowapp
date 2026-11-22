@@ -1,3 +1,5 @@
+import { CareerSkills } from "@/components/CareerSkills";
+import { getCareerSkills } from "@/lib/career-skills";
 import { getCareerDescription } from "@/lib/career-descriptions";
 import { RichText } from "@/components/RichText";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -55,7 +57,7 @@ function Roles() {
     qc.invalidateQueries({ queryKey: ["career-favourites", session.user.id] });
   }
 
-  const savedContent = useQuery({ queryKey: ["public-career-content"], queryFn: async () => { const result = await supabase.rpc("get_public_career_content"); if (result.error) throw result.error; return result.data ?? []; } });
+  const savedContent = useQuery({ queryKey: ["public-career-content"], queryFn: async () => { const result = await supabase.rpc("get_public_career_details"); if (result.error) throw result.error; return result.data ?? []; } });
   const careerKey = (name: string) => name.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
   const descriptionFor = (title: string, fallback: string) => getCareerDescription(title, savedContent.data?.find((row) => careerKey(row.name) === careerKey(title))?.description) || fallback;
   const [location, setLocation] = useState("");
@@ -221,6 +223,7 @@ function Roles() {
                           <div className="mt-2 pl-9">
                             <RichText text={description} className="mt-1 block text-sm text-soft-grey" />
                             {r.idealFor && <p className="mt-2 text-sm text-charcoal"><strong>Ideal for:</strong> {r.idealFor}</p>}
+                            <CareerSkills {...getCareerSkills(r.title, savedContent.data?.find((row) => careerKey(row.name) === careerKey(r.title))?.school_skills, savedContent.data?.find((row) => careerKey(row.name) === careerKey(r.title))?.workplace_skills)} />
                             {r.video && <div className="mt-3 max-w-xl"><YouTube id={r.video} title={r.title} /></div>}
                             {count > 0 && (
                               <Link to="/auth" className="mt-3 inline-block rounded-full bg-cta px-5 py-2 text-xs font-semibold uppercase tracking-wider text-cta-foreground">Book this Job Shadow</Link>

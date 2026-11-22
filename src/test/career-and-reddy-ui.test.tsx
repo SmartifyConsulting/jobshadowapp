@@ -13,12 +13,18 @@ afterEach(cleanup);
 describe("Career guidance and chat placement", () => {
   it("shows suitability guidance only when a career is expanded", () => {
     const client = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity, retry: false } } });
+    client.setQueryData(["public-career-content"], [{ name: "Accountant", description: "Saved admin description", school_skills: ["Custom school skill"], workplace_skills: ["Custom workplace skill"] }]);
     client.setQueryData(["placements"], []); client.setQueryData(["no-availability-message"], null);
     const Page = Route.options.component as () => React.JSX.Element;
     render(<QueryClientProvider client={client}><Page /></QueryClientProvider>);
     expect(screen.queryByText("Ideal for:")).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Skills Required" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByText("Accountant").closest("button")!);
     expect(screen.getByText("Ideal for:")).toBeVisible();
+    expect(screen.getByText("Saved admin description")).toBeVisible();
+    expect(screen.getByText("Custom school skill")).toBeVisible();
+    expect(screen.getByText("Custom workplace skill")).toBeVisible();
+    expect(screen.queryByText("Financial reporting")).not.toBeInTheDocument();
     expect(screen.getByText(/People who enjoy numbers, organised records/)).toBeVisible();
     fireEvent.click(screen.getByText("Accountant").closest("button")!);
     expect(screen.queryByText("Ideal for:")).not.toBeInTheDocument();

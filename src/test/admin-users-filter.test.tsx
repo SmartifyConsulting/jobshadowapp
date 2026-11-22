@@ -6,13 +6,14 @@ import type { AccountRow } from "@/lib/users.server";
 vi.mock("@tanstack/react-router", () => ({ createFileRoute: () => (options: unknown) => ({ options }) }));
 vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
 vi.mock("@/lib/users.functions", () => ({ getAccounts: vi.fn(), updateAccount: vi.fn(), removeAccount: vi.fn(), createAccount: vi.fn() }));
+vi.mock("@/lib/public-holidays.functions", () => ({ lookupPublicHolidays: vi.fn() }));
 vi.mock("@/lib/email.functions", () => ({ sendQueuedEmails: vi.fn() }));
 vi.mock("@/lib/career-ai.functions", () => ({ draftCareerDescription: vi.fn() }));
 vi.mock("@/lib/csv-import.functions", () => ({ mapCsvColumns: vi.fn() }));
 vi.mock("@/components/SiteLayout", () => ({ SiteHeader: () => null, SiteFooter: () => null }));
 vi.mock("@/lib/indemnity-ai.functions", () => ({ extractCompanyIndemnity: vi.fn() }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
-import { AdminUsers, Route } from "@/routes/_authenticated/admin";
+import { AdminUsers, Route, BookingSettings, CareerDescriptionField } from "@/routes/_authenticated/admin";
 import { accountInitial, alphabetInitial } from "@/lib/alphabet";
 
 const account = (id: string, name: string): AccountRow => ({
@@ -24,6 +25,8 @@ const account = (id: string, name: string): AccountRow => ({
 function mount(extra: AccountRow[] = []) {
   const client = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity, retry: false } } });
   client.setQueryData(["admin", "accounts"], [account("alice", "Alice Brown"), account("bob", "Bob Adams"), ...extra]);
+  client.setQueryData(["admin", "company-contact-classification"], []);
+  client.setQueryData(["admin", "companies", false], []);
   render(<QueryClientProvider client={client}><AdminUsers /></QueryClientProvider>);
   return client;
 }
@@ -106,7 +109,7 @@ describe("Booking status chips", () => {
     expect(screen.queryByRole("button", { name: "Companies" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Evaluations" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Reports" }));
-    expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Bookings", "Evaluations", "Vouchers", "Activity Log", "Token Ledger"]);
+    expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Bookings", "Evaluations", "Vouchers", "BEE / CPD", "Mentor Coverage", "Activity Log", "Token Ledger"]);
     expect(screen.getByText("Alice Confirmed")).toBeVisible();
     expect(screen.getByText("Bob Awaiting")).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Confirmed 1" }));
@@ -115,6 +118,24 @@ describe("Booking status chips", () => {
     expect(screen.getByRole("button", { name: "Confirmed 1" })).toHaveAttribute("aria-pressed", "true");
     fireEvent.click(screen.getByRole("button", { name: "All 2" }));
     expect(screen.getByText("Bob Awaiting")).toBeVisible();
+    client.clear();
+  });
+});
+
+
+describe("Booking settings frames", () => {
+  it("groups controls and updates the season preview without saving", () => {
+    const client = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity, retry: false } } });
+    client.setQueryData(["admin", "booking_settings"], { min_lead_days: 3, max_advance_days: 90, season_start_month: 2, season_end_month: 10, blackout_dates: [], public_holidays: [], scholar_reminder_days: [], mentor_reminder_days: [] });
+    render(<QueryClientProvider client={client}><BookingSettings /></QueryClientProvider>);
+    expect(screen.getByRole("heading", { name: "Scheduling Windows & Lead Times" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Operating Season & Request Caps" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Blackout Dates & Public Holidays" })).toBeVisible();
+    expect(screen.getByLabelText("February: Active")).toBeVisible();
+    expect(screen.getByLabelText("January: Inactive")).toBeVisible();
+    fireEvent.change(screen.getByLabelText("Season starts"), { target: { value: "3" } });
+    expect(screen.getByLabelText("February: Inactive")).toBeVisible();
+    expect(screen.getByLabelText("Minimum request lead time", { exact: false })).toHaveValue(3);
     client.clear();
   });
 });

@@ -11,9 +11,14 @@ describe("Unified Applications screen", () => {
   it("filters booked records, restores all records and exposes retained headings", () => {
     const records = combineApplicationRecords([], [{ id: "booked", user_id: "a", company_id: 1, status: "confirmed" }, { id: "pending", user_id: "b", status: "awaiting_payment" }], [{ id: 9, name: "Imported Person" }], [{ user_id: "a", full_name: "Alice Booked" }, { user_id: "b", full_name: "Bob Pending" }], [{ id: 1, mentor_name: "Host Person", hr_contact_name: "HR Person" }]);
     const client = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity, retry: false } } });
-    client.setQueryData(["admin", "combined-applications"], records);
+    client.setQueryData(["admin", "combined-applications"], { records, companies: [{ id: 1, mentor_name: "Host Person", hr_contact_name: "HR Person" }] });
     render(<QueryClientProvider client={client}><ApplicationsList onEditImported={() => {}} onDeleteImported={() => {}} /></QueryClientProvider>);
     expect(screen.getByRole("columnheader", { name: "Mentor" })).toBeVisible();
+    expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Scholars (3)", "Mentors (0)", "Hosts (0)"]);
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Mentors (0)" }), { button: 0 });
+    expect(screen.getByRole("status")).toHaveTextContent("No mentor applications are stored");
+    expect(screen.queryByRole("button", { name: "Bob" })).not.toBeInTheDocument();
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Scholars (3)" }), { button: 0 });
     // Defaults to the Pending filter: only Bob (awaiting payment) shows, not Alice (booked/confirmed).
     expect(screen.getByRole("button", { name: "Bob" })).toBeVisible();
     expect(screen.getByText("Pending", { selector: "span" })).toBeVisible();

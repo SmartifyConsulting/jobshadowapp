@@ -1,0 +1,2554 @@
+{
+  "Accountant": {
+    "school": [
+      "Numeracy",
+      "Accounting basics",
+      "Analytical reasoning"
+    ],
+    "workplace": [
+      "Financial reporting",
+      "Budgeting",
+      "Spreadsheet analysis",
+      "Tax compliance"
+    ]
+  },
+  "Actuarial Analyst": {
+    "school": [
+      "Mathematics",
+      "Statistics",
+      "Logical reasoning"
+    ],
+    "workplace": [
+      "Statistical modelling",
+      "Data analysis",
+      "Programming",
+      "Risk estimation"
+    ]
+  },
+  "Actuarial Science & Data Analyst": {
+    "school": [
+      "Mathematics",
+      "Statistics",
+      "Logical reasoning"
+    ],
+    "workplace": [
+      "Statistical modelling",
+      "Data analysis",
+      "Programming",
+      "Risk estimation"
+    ]
+  },
+  "Actuarial Scientist": {
+    "school": [
+      "Mathematics",
+      "Statistics",
+      "Logical reasoning"
+    ],
+    "workplace": [
+      "Statistical modelling",
+      "Data analysis",
+      "Programming",
+      "Risk estimation"
+    ]
+  },
+  "Actuary": {
+    "school": [
+      "Mathematics",
+      "Statistics",
+      "Logical reasoning"
+    ],
+    "workplace": [
+      "Statistical modelling",
+      "Data analysis",
+      "Programming",
+      "Risk estimation"
+    ]
+  },
+  "Agricultural Economist": {
+    "school": [
+      "Mathematics",
+      "Economics",
+      "Research skills"
+    ],
+    "workplace": [
+      "Market analysis",
+      "Economic modelling",
+      "Agricultural cost analysis",
+      "Report writing"
+    ]
+  },
+  "Anaesthesiologist": {
+    "school": [
+      "Life Sciences",
+      "Physical Sciences",
+      "Mathematics"
+    ],
+    "workplace": [
+      "Clinical assessment",
+      "Patient communication",
+      "Clinical reasoning",
+      "Patient safety"
+    ]
+  },
+  "Analyst Developer": {
+    "school": [
+      "Logical reasoning",
+      "Mathematics",
+      "Computing basics"
+    ],
+    "workplace": [
+      "Programming",
+      "Debugging",
+      "Software testing",
+      "Version control"
+    ]
+  },
+  "Analytics And Modelling": {
+    "school": [
+      "Mathematics",
+      "Statistics",
+      "Logical reasoning"
+    ],
+    "workplace": [
+      "Statistical modelling",
+      "Data analysis",
+      "Programming",
+      "Risk estimation"
+    ]
+  },
+  "Animator 3D & Visual Effects Compositor": {
+    "school": [
+      "Visual Arts",
+      "Computing basics",
+      "Storytelling"
+    ],
+    "workplace": [
+      "3D modelling",
+      "Animation timing",
+      "Visual storytelling",
+      "Digital production"
+    ]
+  },
+  "Animator 3D AND Visual Effects Compositor": {
+    "school": [
+      "Visual Arts",
+      "Computing basics",
+      "Storytelling"
+    ],
+    "workplace": [
+      "3D modelling",
+      "Animation timing",
+      "Visual storytelling",
+      "Digital production"
+    ]
+  },
+  "Architect": {
+    "school": [
+      "Mathematics",
+      "Visual Arts",
+      "Technical drawing"
+    ],
+    "workplace": [
+      "CAD drawing",
+      "Spatial planning",
+      "Design communication",
+      "Material specification"
+    ]
+  },
+  "Astronomer And Astrophysicist": {
+    "school": [
+      "Mathematics",
+      "Physical Sciences",
+      "Computing basics"
+    ],
+    "workplace": [
+      "Scientific programming",
+      "Observation analysis",
+      "Mathematical modelling",
+      "Research reporting"
+    ]
+  },
+  "Back End Developer": {
+    "school": [
+      "Logical reasoning",
+      "Mathematics",
+      "Computing basics"
+    ],
+    "workplace": [
+      "Server-side programming",
+      "Database design",
+      "API development",
+      "Software testing"
+    ]
+  },
+  "Book Keeper": {
+    "school": [
+      "Numeracy",
+      "Accounting basics",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Transaction recording",
+      "Bank reconciliation",
+      "Spreadsheet use",
+      "Record accuracy"
+    ]
+  },
+  "Bookkeeper": {
+    "school": [
+      "Numeracy",
+      "Accounting basics",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Transaction recording",
+      "Bank reconciliation",
+      "Spreadsheet use",
+      "Record accuracy"
+    ]
+  },
+  "Brand Specialist": {
+    "school": [
+      "Writing",
+      "Numeracy",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Audience research",
+      "Campaign planning",
+      "Content creation",
+      "Performance analysis"
+    ]
+  },
+  "Business Analyst": {
+    "school": [
+      "Logical reasoning",
+      "Numeracy",
+      "Written communication"
+    ],
+    "workplace": [
+      "Requirements analysis",
+      "Process mapping",
+      "Stakeholder interviewing",
+      "Data interpretation"
+    ]
+  },
+  "Business Analyst (IT Mobile)": {
+    "school": [
+      "Logical reasoning",
+      "Numeracy",
+      "Written communication"
+    ],
+    "workplace": [
+      "Requirements analysis",
+      "Process mapping",
+      "Stakeholder interviewing",
+      "Data interpretation"
+    ]
+  },
+  "Chartered Accountant": {
+    "school": [
+      "Numeracy",
+      "Accounting basics",
+      "Analytical reasoning"
+    ],
+    "workplace": [
+      "Financial reporting",
+      "Budgeting",
+      "Spreadsheet analysis",
+      "Tax compliance"
+    ]
+  },
+  "Chef At Restaurant": {
+    "school": [
+      "Numeracy",
+      "Reading comprehension",
+      "Practical coordination"
+    ],
+    "workplace": [
+      "Food preparation",
+      "Food hygiene",
+      "Menu planning",
+      "Kitchen teamwork"
+    ]
+  },
+  "Chef School": {
+    "school": [
+      "Numeracy",
+      "Reading comprehension",
+      "Practical coordination"
+    ],
+    "workplace": [
+      "Food preparation",
+      "Food hygiene",
+      "Menu planning",
+      "Kitchen teamwork"
+    ]
+  },
+  "Chemical Engineer": {
+    "school": [
+      "Mathematics",
+      "Chemistry",
+      "Physical Sciences"
+    ],
+    "workplace": [
+      "Process design",
+      "Process modelling",
+      "Quality control",
+      "Process safety"
+    ]
+  },
+  "Chemicals Monitoring Manager": {
+    "school": [
+      "Mathematics",
+      "Chemistry",
+      "Physical Sciences"
+    ],
+    "workplace": [
+      "Process design",
+      "Process modelling",
+      "Quality control",
+      "Process safety"
+    ]
+  },
+  "Chief Financial Officer (CFO)": {
+    "school": [
+      "Numeracy",
+      "Accounting basics",
+      "Analytical reasoning"
+    ],
+    "workplace": [
+      "Financial reporting",
+      "Budgeting",
+      "Spreadsheet analysis",
+      "Tax compliance"
+    ]
+  },
+  "Chief Investment Officer (CIO)": {
+    "school": [
+      "Mathematics",
+      "Economics",
+      "Analytical reasoning"
+    ],
+    "workplace": [
+      "Investment research",
+      "Portfolio analysis",
+      "Financial modelling",
+      "Risk assessment"
+    ]
+  },
+  "Chief Operating Officer (COO)": {
+    "school": [
+      "Numeracy",
+      "Communication",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Resource planning",
+      "Process coordination",
+      "Performance monitoring",
+      "Team leadership"
+    ]
+  },
+  "Chiropractor": {
+    "school": [
+      "Life Sciences",
+      "Physical Sciences",
+      "Communication"
+    ],
+    "workplace": [
+      "Movement assessment",
+      "Rehabilitation planning",
+      "Clinical observation",
+      "Patient education"
+    ]
+  },
+  "Cloud Engineer": {
+    "school": [
+      "Logical reasoning",
+      "Computing basics",
+      "Mathematics"
+    ],
+    "workplace": [
+      "Cloud configuration",
+      "Automation",
+      "System monitoring",
+      "Infrastructure security"
+    ]
+  },
+  "Company Secretary": {
+    "school": [
+      "Reading comprehension",
+      "Written communication",
+      "Research skills"
+    ],
+    "workplace": [
+      "Policy interpretation",
+      "Compliance monitoring",
+      "Governance records",
+      "Ethical judgement"
+    ]
+  },
+  "Compliance & Governance": {
+    "school": [
+      "Reading comprehension",
+      "Written communication",
+      "Research skills"
+    ],
+    "workplace": [
+      "Policy interpretation",
+      "Compliance monitoring",
+      "Governance records",
+      "Ethical judgement"
+    ]
+  },
+  "Compliance Officer": {
+    "school": [
+      "Reading comprehension",
+      "Written communication",
+      "Research skills"
+    ],
+    "workplace": [
+      "Policy interpretation",
+      "Compliance monitoring",
+      "Governance records",
+      "Ethical judgement"
+    ]
+  },
+  "Core Infastructure Support": {
+    "school": [
+      "Computing basics",
+      "Logical reasoning",
+      "Communication"
+    ],
+    "workplace": [
+      "Hardware troubleshooting",
+      "System administration",
+      "Technical support",
+      "Issue documentation"
+    ]
+  },
+  "Core Infrastructure Engineering": {
+    "school": [
+      "Computing basics",
+      "Logical reasoning",
+      "Communication"
+    ],
+    "workplace": [
+      "Hardware troubleshooting",
+      "System administration",
+      "Technical support",
+      "Issue documentation"
+    ]
+  },
+  "Core Infrastructure Support": {
+    "school": [
+      "Computing basics",
+      "Logical reasoning",
+      "Communication"
+    ],
+    "workplace": [
+      "Hardware troubleshooting",
+      "System administration",
+      "Technical support",
+      "Issue documentation"
+    ]
+  },
+  "Corporate Communications Manager": {
+    "school": [
+      "Writing",
+      "Reading comprehension",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Message planning",
+      "Internal communication",
+      "Editing",
+      "Stakeholder communication"
+    ]
+  },
+  "Corporate Operations Manager": {
+    "school": [
+      "Numeracy",
+      "Communication",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Resource planning",
+      "Process coordination",
+      "Performance monitoring",
+      "Team leadership"
+    ]
+  },
+  "Credit Controller": {
+    "school": [
+      "Numeracy",
+      "Written communication",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Account reconciliation",
+      "Payment tracking",
+      "Credit assessment",
+      "Customer negotiation"
+    ]
+  },
+  "Customer Loyalty": {
+    "school": [
+      "Writing",
+      "Numeracy",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Audience research",
+      "Campaign planning",
+      "Content creation",
+      "Performance analysis"
+    ]
+  },
+  "CVM (Customer Value Management)": {
+    "school": [
+      "Writing",
+      "Numeracy",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Audience research",
+      "Campaign planning",
+      "Content creation",
+      "Performance analysis"
+    ]
+  },
+  "Cyber Security": {
+    "school": [
+      "Logical reasoning",
+      "Computing basics",
+      "Research skills"
+    ],
+    "workplace": [
+      "Security monitoring",
+      "Vulnerability assessment",
+      "Incident response",
+      "Risk documentation"
+    ]
+  },
+  "Data Analyst": {
+    "school": [
+      "Mathematics",
+      "Statistics",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Spreadsheet analysis",
+      "SQL",
+      "Data visualisation",
+      "Data interpretation"
+    ]
+  },
+  "Data Engineer": {
+    "school": [
+      "Mathematics",
+      "Logical reasoning",
+      "Computing basics"
+    ],
+    "workplace": [
+      "SQL",
+      "Data pipelines",
+      "Data modelling",
+      "Data quality checks"
+    ]
+  },
+  "Designer": {
+    "school": [
+      "Visual Arts",
+      "Digital literacy",
+      "Communication"
+    ],
+    "workplace": [
+      "Visual layout",
+      "Typography",
+      "Design software",
+      "Design presentation"
+    ]
+  },
+  "DevOps (Development Operations) Engineer": {
+    "school": [
+      "Logical reasoning",
+      "Computing basics",
+      "Mathematics"
+    ],
+    "workplace": [
+      "Cloud configuration",
+      "Automation",
+      "System monitoring",
+      "Infrastructure security"
+    ]
+  },
+  "DevOps Engineer (Cloud Services)": {
+    "school": [
+      "Logical reasoning",
+      "Computing basics",
+      "Mathematics"
+    ],
+    "workplace": [
+      "Cloud configuration",
+      "Automation",
+      "System monitoring",
+      "Infrastructure security"
+    ]
+  },
+  "Digital Advertising Technologist": {
+    "school": [
+      "Writing",
+      "Numeracy",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Audience research",
+      "Campaign planning",
+      "Content creation",
+      "Performance analysis"
+    ]
+  },
+  "Digital Delivery Assistant": {
+    "school": [
+      "Numeracy",
+      "Communication",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Task planning",
+      "Schedule tracking",
+      "Risk tracking",
+      "Team coordination"
+    ]
+  },
+  "Digital Gaming": {
+    "school": [
+      "Visual Arts",
+      "Computing basics",
+      "Storytelling"
+    ],
+    "workplace": [
+      "3D modelling",
+      "Animation timing",
+      "Visual storytelling",
+      "Digital production"
+    ]
+  },
+  "Digital Media": {
+    "school": [
+      "Writing",
+      "Numeracy",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Audience research",
+      "Campaign planning",
+      "Content creation",
+      "Performance analysis"
+    ]
+  },
+  "Digital Services": {
+    "school": [
+      "Digital literacy",
+      "Communication",
+      "Analytical reasoning"
+    ],
+    "workplace": [
+      "Technology planning",
+      "Service management",
+      "Change coordination",
+      "Stakeholder communication"
+    ]
+  },
+  "Digital Transformation Specialist": {
+    "school": [
+      "Digital literacy",
+      "Communication",
+      "Analytical reasoning"
+    ],
+    "workplace": [
+      "Technology planning",
+      "Service management",
+      "Change coordination",
+      "Stakeholder communication"
+    ]
+  },
+  "Editor - Film/Television": {
+    "school": [
+      "Communication",
+      "Digital literacy",
+      "Creative analysis"
+    ],
+    "workplace": [
+      "Media editing",
+      "Production coordination",
+      "Audio-visual quality control",
+      "Story structure"
+    ]
+  },
+  "Editor – Film/Television": {
+    "school": [
+      "Communication",
+      "Digital literacy",
+      "Creative analysis"
+    ],
+    "workplace": [
+      "Media editing",
+      "Production coordination",
+      "Audio-visual quality control",
+      "Story structure"
+    ]
+  },
+  "Editor-In-Chief": {
+    "school": [
+      "Reading comprehension",
+      "Writing",
+      "Research skills"
+    ],
+    "workplace": [
+      "Copy editing",
+      "Fact checking",
+      "Editorial planning",
+      "Team coordination"
+    ]
+  },
+  "Electrical Engineer": {
+    "school": [
+      "Mathematics",
+      "Physical Sciences",
+      "Technical drawing"
+    ],
+    "workplace": [
+      "Circuit analysis",
+      "Electrical troubleshooting",
+      "Technical documentation",
+      "Electrical safety"
+    ]
+  },
+  "Electrician Explosion Prevention Practitioner": {
+    "school": [
+      "Life Sciences",
+      "Physical Sciences",
+      "Mathematics"
+    ],
+    "workplace": [
+      "Clinical assessment",
+      "Patient communication",
+      "Clinical reasoning",
+      "Patient safety"
+    ]
+  },
+  "Employee Engagement Specialist (Industrial Psychologist)": {
+    "school": [
+      "Life Sciences",
+      "Reading comprehension",
+      "Statistics basics"
+    ],
+    "workplace": [
+      "Behavioural assessment",
+      "Active listening",
+      "Research methods",
+      "Ethical practice"
+    ]
+  },
+  "Entrepreneur": {
+    "school": [
+      "Numeracy",
+      "Communication",
+      "Economics basics"
+    ],
+    "workplace": [
+      "Business planning",
+      "Customer research",
+      "Cash-flow management",
+      "Problem solving"
+    ]
+  },
+  "Explosion Prevention Practitioner": {
+    "school": [
+      "Life Sciences",
+      "Physical Sciences",
+      "Mathematics"
+    ],
+    "workplace": [
+      "Clinical assessment",
+      "Patient communication",
+      "Clinical reasoning",
+      "Patient safety"
+    ]
+  },
+  "Farm Manager": {
+    "school": [
+      "Life Sciences",
+      "Geography",
+      "Numeracy"
+    ],
+    "workplace": [
+      "Production planning",
+      "Resource management",
+      "Soil and crop monitoring",
+      "Workplace safety"
+    ]
+  },
+  "Fashion Designer": {
+    "school": [
+      "Visual Arts",
+      "Numeracy",
+      "Practical coordination"
+    ],
+    "workplace": [
+      "Pattern development",
+      "Textile selection",
+      "Garment construction",
+      "Design sketching"
+    ]
+  },
+  "Fashion Designer And Fashion Production": {
+    "school": [
+      "Visual Arts",
+      "Numeracy",
+      "Practical coordination"
+    ],
+    "workplace": [
+      "Pattern development",
+      "Textile selection",
+      "Garment construction",
+      "Design sketching"
+    ]
+  },
+  "Fashion Designers": {
+    "school": [
+      "Visual Arts",
+      "Numeracy",
+      "Practical coordination"
+    ],
+    "workplace": [
+      "Pattern development",
+      "Textile selection",
+      "Garment construction",
+      "Design sketching"
+    ]
+  },
+  "Finance Business Partner For Technology": {
+    "school": [
+      "Numeracy",
+      "Accounting basics",
+      "Analytical reasoning"
+    ],
+    "workplace": [
+      "Financial reporting",
+      "Budgeting",
+      "Spreadsheet analysis",
+      "Tax compliance"
+    ]
+  },
+  "Finance Manager": {
+    "school": [
+      "Numeracy",
+      "Accounting basics",
+      "Analytical reasoning"
+    ],
+    "workplace": [
+      "Financial reporting",
+      "Budgeting",
+      "Spreadsheet analysis",
+      "Tax compliance"
+    ]
+  },
+  "Finance Transformation Speciallist": {
+    "school": [
+      "Numeracy",
+      "Accounting basics",
+      "Analytical reasoning"
+    ],
+    "workplace": [
+      "Financial reporting",
+      "Budgeting",
+      "Spreadsheet analysis",
+      "Tax compliance"
+    ]
+  },
+  "Financial Manager": {
+    "school": [
+      "Numeracy",
+      "Accounting basics",
+      "Analytical reasoning"
+    ],
+    "workplace": [
+      "Financial reporting",
+      "Budgeting",
+      "Spreadsheet analysis",
+      "Tax compliance"
+    ]
+  },
+  "Food Scientist": {
+    "school": [
+      "Chemistry",
+      "Life Sciences",
+      "Mathematics"
+    ],
+    "workplace": [
+      "Food analysis",
+      "Laboratory testing",
+      "Food safety",
+      "Product development"
+    ]
+  },
+  "Forestry And Agriculture": {
+    "school": [
+      "Life Sciences",
+      "Geography",
+      "Numeracy"
+    ],
+    "workplace": [
+      "Production planning",
+      "Resource management",
+      "Soil and crop monitoring",
+      "Workplace safety"
+    ]
+  },
+  "Fraud Specialist": {
+    "school": [
+      "Numeracy",
+      "Research skills",
+      "Critical thinking"
+    ],
+    "workplace": [
+      "Evidence analysis",
+      "Risk assessment",
+      "Investigation reporting",
+      "Data interpretation"
+    ]
+  },
+  "Front End Developer": {
+    "school": [
+      "Logical reasoning",
+      "Computing basics",
+      "Communication"
+    ],
+    "workplace": [
+      "HTML and CSS",
+      "JavaScript",
+      "Accessibility",
+      "Interface testing"
+    ]
+  },
+  "General Practitioner": {
+    "school": [
+      "Life Sciences",
+      "Physical Sciences",
+      "Mathematics"
+    ],
+    "workplace": [
+      "Clinical assessment",
+      "Patient communication",
+      "Clinical reasoning",
+      "Patient safety"
+    ]
+  },
+  "Geologist": {
+    "school": [
+      "Geography",
+      "Physical Sciences",
+      "Mathematics"
+    ],
+    "workplace": [
+      "Rock identification",
+      "Geological mapping",
+      "Field sampling",
+      "Data interpretation"
+    ]
+  },
+  "Graphic Designer": {
+    "school": [
+      "Visual Arts",
+      "Digital literacy",
+      "Communication"
+    ],
+    "workplace": [
+      "Visual layout",
+      "Typography",
+      "Design software",
+      "Design presentation"
+    ]
+  },
+  "Hospital Experience": {
+    "school": [
+      "Life Sciences",
+      "Communication",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Patient confidentiality",
+      "Team communication",
+      "Hygiene procedures",
+      "Accurate record keeping"
+    ]
+  },
+  "Human Resource Communicator": {
+    "school": [
+      "Writing",
+      "Reading comprehension",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Message planning",
+      "Internal communication",
+      "Editing",
+      "Stakeholder communication"
+    ]
+  },
+  "Human Resource Consultant": {
+    "school": [
+      "Communication",
+      "Reading comprehension",
+      "Numeracy"
+    ],
+    "workplace": [
+      "Recruitment",
+      "Employee relations",
+      "Policy interpretation",
+      "People data analysis"
+    ]
+  },
+  "Human Resources - Emerging Talent Specialist": {
+    "school": [
+      "Communication",
+      "Reading comprehension",
+      "Numeracy"
+    ],
+    "workplace": [
+      "Recruitment",
+      "Employee relations",
+      "Policy interpretation",
+      "People data analysis"
+    ]
+  },
+  "Human Resources - Learning & Development Specialist": {
+    "school": [
+      "Communication",
+      "Reading comprehension",
+      "Numeracy"
+    ],
+    "workplace": [
+      "Recruitment",
+      "Employee relations",
+      "Policy interpretation",
+      "People data analysis"
+    ]
+  },
+  "Human Resources Manager": {
+    "school": [
+      "Communication",
+      "Reading comprehension",
+      "Numeracy"
+    ],
+    "workplace": [
+      "Recruitment",
+      "Employee relations",
+      "Policy interpretation",
+      "People data analysis"
+    ]
+  },
+  "Hydrogeologist": {
+    "school": [
+      "Geography",
+      "Physical Sciences",
+      "Mathematics"
+    ],
+    "workplace": [
+      "Groundwater assessment",
+      "Field sampling",
+      "Hydrological modelling",
+      "Environmental reporting"
+    ]
+  },
+  "Ideation Specialist": {
+    "school": [
+      "Creative thinking",
+      "Research skills",
+      "Communication"
+    ],
+    "workplace": [
+      "Problem framing",
+      "Idea facilitation",
+      "Prototyping",
+      "Concept evaluation"
+    ]
+  },
+  "Innivation Specialist": {
+    "school": [
+      "Creative thinking",
+      "Research skills",
+      "Communication"
+    ],
+    "workplace": [
+      "Problem framing",
+      "Idea facilitation",
+      "Prototyping",
+      "Concept evaluation"
+    ]
+  },
+  "Innovation Specialist": {
+    "school": [
+      "Creative thinking",
+      "Research skills",
+      "Communication"
+    ],
+    "workplace": [
+      "Problem framing",
+      "Idea facilitation",
+      "Prototyping",
+      "Concept evaluation"
+    ]
+  },
+  "Interior Architect": {
+    "school": [
+      "Mathematics",
+      "Visual Arts",
+      "Technical drawing"
+    ],
+    "workplace": [
+      "CAD drawing",
+      "Spatial planning",
+      "Design communication",
+      "Material specification"
+    ]
+  },
+  "Interior Designer": {
+    "school": [
+      "Mathematics",
+      "Visual Arts",
+      "Technical drawing"
+    ],
+    "workplace": [
+      "CAD drawing",
+      "Spatial planning",
+      "Design communication",
+      "Material specification"
+    ]
+  },
+  "IoT (Internet Of Things) Solution Architect": {
+    "school": [
+      "Mathematics",
+      "Visual Arts",
+      "Technical drawing"
+    ],
+    "workplace": [
+      "CAD drawing",
+      "Spatial planning",
+      "Design communication",
+      "Material specification"
+    ]
+  },
+  "IT Manager": {
+    "school": [
+      "Digital literacy",
+      "Communication",
+      "Analytical reasoning"
+    ],
+    "workplace": [
+      "Technology planning",
+      "Service management",
+      "Change coordination",
+      "Stakeholder communication"
+    ]
+  },
+  "It Tech": {
+    "school": [
+      "Computing basics",
+      "Logical reasoning",
+      "Communication"
+    ],
+    "workplace": [
+      "Hardware troubleshooting",
+      "System administration",
+      "Technical support",
+      "Issue documentation"
+    ]
+  },
+  "Kennel Assistant": {
+    "school": [
+      "Life Sciences",
+      "Observation",
+      "Communication"
+    ],
+    "workplace": [
+      "Animal handling",
+      "Hygiene procedures",
+      "Feeding routines",
+      "Animal welfare observation"
+    ]
+  },
+  "Landscape Architect": {
+    "school": [
+      "Geography",
+      "Visual Arts",
+      "Mathematics"
+    ],
+    "workplace": [
+      "Site analysis",
+      "Landscape planning",
+      "Design drawing",
+      "Environmental design"
+    ]
+  },
+  "Law (Human Resources)": {
+    "school": [
+      "Reading comprehension",
+      "Persuasive writing",
+      "Research skills"
+    ],
+    "workplace": [
+      "Legal research",
+      "Case analysis",
+      "Legal drafting",
+      "Client communication"
+    ]
+  },
+  "Lawyer": {
+    "school": [
+      "Reading comprehension",
+      "Persuasive writing",
+      "Research skills"
+    ],
+    "workplace": [
+      "Legal research",
+      "Case analysis",
+      "Legal drafting",
+      "Client communication"
+    ]
+  },
+  "Lead Developer": {
+    "school": [
+      "Logical reasoning",
+      "Mathematics",
+      "Computing basics"
+    ],
+    "workplace": [
+      "Programming",
+      "Debugging",
+      "Software testing",
+      "Version control"
+    ]
+  },
+  "Learning Support Therapist": {
+    "school": [
+      "Reading comprehension",
+      "Written communication",
+      "Subject knowledge"
+    ],
+    "workplace": [
+      "Lesson planning",
+      "Assessment",
+      "Inclusive teaching",
+      "Classroom communication"
+    ]
+  },
+  "Machine Learning Software Developer": {
+    "school": [
+      "Mathematics",
+      "Statistics",
+      "Computing basics"
+    ],
+    "workplace": [
+      "Programming",
+      "Model evaluation",
+      "Data preparation",
+      "Machine learning methods"
+    ]
+  },
+  "Management Accountant": {
+    "school": [
+      "Numeracy",
+      "Accounting basics",
+      "Analytical reasoning"
+    ],
+    "workplace": [
+      "Financial reporting",
+      "Budgeting",
+      "Spreadsheet analysis",
+      "Tax compliance"
+    ]
+  },
+  "Marketing Specialist": {
+    "school": [
+      "Writing",
+      "Numeracy",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Audience research",
+      "Campaign planning",
+      "Content creation",
+      "Performance analysis"
+    ]
+  },
+  "Marketing Specialist In Data & Analytics": {
+    "school": [
+      "Writing",
+      "Numeracy",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Audience research",
+      "Campaign planning",
+      "Content creation",
+      "Performance analysis"
+    ]
+  },
+  "Mechanical Area Manager": {
+    "school": [
+      "Mathematics",
+      "Physical Sciences",
+      "Technical drawing"
+    ],
+    "workplace": [
+      "CAD design",
+      "Mechanical analysis",
+      "Systems troubleshooting",
+      "Engineering safety"
+    ]
+  },
+  "Mechanical Engineer": {
+    "school": [
+      "Mathematics",
+      "Physical Sciences",
+      "Technical drawing"
+    ],
+    "workplace": [
+      "CAD design",
+      "Mechanical analysis",
+      "Systems troubleshooting",
+      "Engineering safety"
+    ]
+  },
+  "Mechanical Engineer (Senior)": {
+    "school": [
+      "Mathematics",
+      "Physical Sciences",
+      "Technical drawing"
+    ],
+    "workplace": [
+      "CAD design",
+      "Mechanical analysis",
+      "Systems troubleshooting",
+      "Engineering safety"
+    ]
+  },
+  "Mechanical Engineering Manager": {
+    "school": [
+      "Mathematics",
+      "Physical Sciences",
+      "Technical drawing"
+    ],
+    "workplace": [
+      "CAD design",
+      "Mechanical analysis",
+      "Systems troubleshooting",
+      "Engineering safety"
+    ]
+  },
+  "Mechanical, Electrical, Mining Related Engineering": {
+    "school": [
+      "Mathematics",
+      "Physical Sciences",
+      "Technical drawing"
+    ],
+    "workplace": [
+      "Circuit analysis",
+      "Electrical troubleshooting",
+      "Technical documentation",
+      "Electrical safety"
+    ]
+  },
+  "Medical Laboratory Scientist": {
+    "school": [
+      "Life Sciences",
+      "Chemistry",
+      "Mathematics"
+    ],
+    "workplace": [
+      "Sample handling",
+      "Laboratory testing",
+      "Quality control",
+      "Result interpretation"
+    ]
+  },
+  "Megatronics": {
+    "school": [
+      "Mathematics",
+      "Physical Sciences",
+      "Technical drawing"
+    ],
+    "workplace": [
+      "CAD design",
+      "Mechanical analysis",
+      "Systems troubleshooting",
+      "Engineering safety"
+    ]
+  },
+  "Messaging & International Voice": {
+    "school": [
+      "Mathematics",
+      "Physical Sciences",
+      "Computing basics"
+    ],
+    "workplace": [
+      "Network configuration",
+      "Connectivity troubleshooting",
+      "Network monitoring",
+      "Technical documentation"
+    ]
+  },
+  "Mining Engineer": {
+    "school": [
+      "Mathematics",
+      "Physical Sciences",
+      "Geography"
+    ],
+    "workplace": [
+      "Mine planning",
+      "Geotechnical interpretation",
+      "Production analysis",
+      "Mining safety"
+    ]
+  },
+  "Network Engineer (Placement For Tertiary Students Only)": {
+    "school": [
+      "Mathematics",
+      "Physical Sciences",
+      "Computing basics"
+    ],
+    "workplace": [
+      "Network configuration",
+      "Connectivity troubleshooting",
+      "Network monitoring",
+      "Technical documentation"
+    ]
+  },
+  "Network Specialist": {
+    "school": [
+      "Mathematics",
+      "Physical Sciences",
+      "Computing basics"
+    ],
+    "workplace": [
+      "Network configuration",
+      "Connectivity troubleshooting",
+      "Network monitoring",
+      "Technical documentation"
+    ]
+  },
+  "NPS Assurance": {
+    "school": [
+      "Writing",
+      "Numeracy",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Audience research",
+      "Campaign planning",
+      "Content creation",
+      "Performance analysis"
+    ]
+  },
+  "Occupational Therapist": {
+    "school": [
+      "Life Sciences",
+      "Physical Sciences",
+      "Communication"
+    ],
+    "workplace": [
+      "Movement assessment",
+      "Rehabilitation planning",
+      "Clinical observation",
+      "Patient education"
+    ]
+  },
+  "Optometrist": {
+    "school": [
+      "Life Sciences",
+      "Physical Sciences",
+      "Mathematics"
+    ],
+    "workplace": [
+      "Vision assessment",
+      "Optical measurement",
+      "Clinical observation",
+      "Patient communication"
+    ]
+  },
+  "Otorhinolaryngologist (ENT)": {
+    "school": [
+      "Life Sciences",
+      "Physical Sciences",
+      "Mathematics"
+    ],
+    "workplace": [
+      "Clinical assessment",
+      "Patient communication",
+      "Clinical reasoning",
+      "Patient safety"
+    ]
+  },
+  "Personal Assistant (PA)": {
+    "school": [
+      "Writing",
+      "Digital literacy",
+      "Numeracy"
+    ],
+    "workplace": [
+      "Diary management",
+      "Document preparation",
+      "Meeting coordination",
+      "Confidential record keeping"
+    ]
+  },
+  "Photographer": {
+    "school": [
+      "Visual Arts",
+      "Digital literacy",
+      "Observation"
+    ],
+    "workplace": [
+      "Composition",
+      "Lighting",
+      "Camera operation",
+      "Image editing"
+    ]
+  },
+  "Physiotherapist": {
+    "school": [
+      "Life Sciences",
+      "Physical Sciences",
+      "Communication"
+    ],
+    "workplace": [
+      "Movement assessment",
+      "Rehabilitation planning",
+      "Clinical observation",
+      "Patient education"
+    ]
+  },
+  "Pilot": {
+    "school": [
+      "Mathematics",
+      "Physical Sciences",
+      "Communication"
+    ],
+    "workplace": [
+      "Navigation",
+      "Flight planning",
+      "Situational awareness",
+      "Safety procedures"
+    ]
+  },
+  "Plane Mechanic": {
+    "school": [
+      "Mathematics",
+      "Physical Sciences",
+      "Technical drawing"
+    ],
+    "workplace": [
+      "Aircraft inspection",
+      "Mechanical troubleshooting",
+      "Maintenance documentation",
+      "Safety procedures"
+    ]
+  },
+  "Plastic Surgeon": {
+    "school": [
+      "Life Sciences",
+      "Physical Sciences",
+      "Mathematics"
+    ],
+    "workplace": [
+      "Clinical assessment",
+      "Patient communication",
+      "Clinical reasoning",
+      "Patient safety"
+    ]
+  },
+  "Post Production Producer": {
+    "school": [
+      "Communication",
+      "Digital literacy",
+      "Creative analysis"
+    ],
+    "workplace": [
+      "Media editing",
+      "Production coordination",
+      "Audio-visual quality control",
+      "Story structure"
+    ]
+  },
+  "Principal Specialist: Business Decision": {
+    "school": [
+      "Mathematics",
+      "Economics",
+      "Research skills"
+    ],
+    "workplace": [
+      "Scenario analysis",
+      "Strategic planning",
+      "Data interpretation",
+      "Decision presentation"
+    ]
+  },
+  "Process Engineer": {
+    "school": [
+      "Mathematics",
+      "Chemistry",
+      "Physical Sciences"
+    ],
+    "workplace": [
+      "Process design",
+      "Process modelling",
+      "Quality control",
+      "Process safety"
+    ]
+  },
+  "Process Improvement Analyst": {
+    "school": [
+      "Logical reasoning",
+      "Numeracy",
+      "Written communication"
+    ],
+    "workplace": [
+      "Requirements analysis",
+      "Process mapping",
+      "Stakeholder interviewing",
+      "Data interpretation"
+    ]
+  },
+  "Product Owner": {
+    "school": [
+      "Communication",
+      "Logical reasoning",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Backlog prioritisation",
+      "Agile planning",
+      "Facilitation",
+      "Requirements clarification"
+    ]
+  },
+  "Project Leader": {
+    "school": [
+      "Numeracy",
+      "Communication",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Task planning",
+      "Schedule tracking",
+      "Risk tracking",
+      "Team coordination"
+    ]
+  },
+  "Project Manager": {
+    "school": [
+      "Numeracy",
+      "Communication",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Task planning",
+      "Schedule tracking",
+      "Risk tracking",
+      "Team coordination"
+    ]
+  },
+  "Project Section Leader (Drawing Office)": {
+    "school": [
+      "Mathematics",
+      "Visual Arts",
+      "Technical drawing"
+    ],
+    "workplace": [
+      "CAD drawing",
+      "Spatial planning",
+      "Design communication",
+      "Material specification"
+    ]
+  },
+  "Property And Facilities Manager": {
+    "school": [
+      "Numeracy",
+      "Communication",
+      "Technical literacy"
+    ],
+    "workplace": [
+      "Maintenance planning",
+      "Contract coordination",
+      "Budget monitoring",
+      "Safety checks"
+    ]
+  },
+  "Psychologist": {
+    "school": [
+      "Life Sciences",
+      "Reading comprehension",
+      "Statistics basics"
+    ],
+    "workplace": [
+      "Behavioural assessment",
+      "Active listening",
+      "Research methods",
+      "Ethical practice"
+    ]
+  },
+  "Quality Assurance": {
+    "school": [
+      "Logical reasoning",
+      "Numeracy",
+      "Written communication"
+    ],
+    "workplace": [
+      "Test planning",
+      "Defect reporting",
+      "Quality measurement",
+      "Process checking"
+    ]
+  },
+  "Radio Network Specialist": {
+    "school": [
+      "Mathematics",
+      "Physical Sciences",
+      "Computing basics"
+    ],
+    "workplace": [
+      "Network configuration",
+      "Connectivity troubleshooting",
+      "Network monitoring",
+      "Technical documentation"
+    ]
+  },
+  "Retail Model Designer": {
+    "school": [
+      "Visual Arts",
+      "Digital literacy",
+      "Communication"
+    ],
+    "workplace": [
+      "Visual layout",
+      "Typography",
+      "Design software",
+      "Design presentation"
+    ]
+  },
+  "Risk Review Specialist": {
+    "school": [
+      "Numeracy",
+      "Research skills",
+      "Critical thinking"
+    ],
+    "workplace": [
+      "Evidence analysis",
+      "Risk assessment",
+      "Investigation reporting",
+      "Data interpretation"
+    ]
+  },
+  "Robotics Process Automation Business Analyst (RPA)": {
+    "school": [
+      "Logical reasoning",
+      "Numeracy",
+      "Written communication"
+    ],
+    "workplace": [
+      "Requirements analysis",
+      "Process mapping",
+      "Stakeholder interviewing",
+      "Data interpretation"
+    ]
+  },
+  "Robotics Process Automation Developer": {
+    "school": [
+      "Logical reasoning",
+      "Mathematics",
+      "Computing basics"
+    ],
+    "workplace": [
+      "Programming",
+      "Debugging",
+      "Software testing",
+      "Version control"
+    ]
+  },
+  "Sales Manager": {
+    "school": [
+      "Communication",
+      "Numeracy",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Sales planning",
+      "Negotiation",
+      "Customer relationship management",
+      "Sales analysis"
+    ]
+  },
+  "SCM (Supply Chain Management) Enablement Specialist": {
+    "school": [
+      "Mathematics",
+      "Economics",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Procurement analysis",
+      "Inventory planning",
+      "Process coordination",
+      "Supplier communication"
+    ]
+  },
+  "Scrum Master": {
+    "school": [
+      "Communication",
+      "Logical reasoning",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Backlog prioritisation",
+      "Agile planning",
+      "Facilitation",
+      "Requirements clarification"
+    ]
+  },
+  "Security Specialist": {
+    "school": [
+      "Logical reasoning",
+      "Computing basics",
+      "Research skills"
+    ],
+    "workplace": [
+      "Security monitoring",
+      "Vulnerability assessment",
+      "Incident response",
+      "Risk documentation"
+    ]
+  },
+  "Senior Credit Controller": {
+    "school": [
+      "Numeracy",
+      "Written communication",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Account reconciliation",
+      "Payment tracking",
+      "Credit assessment",
+      "Customer negotiation"
+    ]
+  },
+  "Senior Data Scientist": {
+    "school": [
+      "Mathematics",
+      "Statistics",
+      "Logical reasoning"
+    ],
+    "workplace": [
+      "Statistical modelling",
+      "Data analysis",
+      "Programming",
+      "Risk estimation"
+    ]
+  },
+  "Senior Mechanical Engineer": {
+    "school": [
+      "Mathematics",
+      "Physical Sciences",
+      "Technical drawing"
+    ],
+    "workplace": [
+      "CAD design",
+      "Mechanical analysis",
+      "Systems troubleshooting",
+      "Engineering safety"
+    ]
+  },
+  "Senior Spec AWS Engineer": {
+    "school": [
+      "Logical reasoning",
+      "Computing basics",
+      "Mathematics"
+    ],
+    "workplace": [
+      "Cloud configuration",
+      "Automation",
+      "System monitoring",
+      "Infrastructure security"
+    ]
+  },
+  "Service Fulfilment Manager": {
+    "school": [
+      "Numeracy",
+      "Communication",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Resource planning",
+      "Process coordination",
+      "Performance monitoring",
+      "Team leadership"
+    ]
+  },
+  "Social Enterprise Manager": {
+    "school": [
+      "Numeracy",
+      "Communication",
+      "Economics basics"
+    ],
+    "workplace": [
+      "Business planning",
+      "Customer research",
+      "Cash-flow management",
+      "Problem solving"
+    ]
+  },
+  "Software Developer": {
+    "school": [
+      "Logical reasoning",
+      "Mathematics",
+      "Computing basics"
+    ],
+    "workplace": [
+      "Programming",
+      "Debugging",
+      "Software testing",
+      "Version control"
+    ]
+  },
+  "Software Engineer": {
+    "school": [
+      "Logical reasoning",
+      "Mathematics",
+      "Computing basics"
+    ],
+    "workplace": [
+      "Programming",
+      "Debugging",
+      "Software testing",
+      "Version control"
+    ]
+  },
+  "Software Engineer (Integrity Systems)": {
+    "school": [
+      "Logical reasoning",
+      "Mathematics",
+      "Computing basics"
+    ],
+    "workplace": [
+      "Programming",
+      "Debugging",
+      "Software testing",
+      "Version control"
+    ]
+  },
+  "Software Engineer (Loyalty Domain)": {
+    "school": [
+      "Logical reasoning",
+      "Mathematics",
+      "Computing basics"
+    ],
+    "workplace": [
+      "Programming",
+      "Debugging",
+      "Software testing",
+      "Version control"
+    ]
+  },
+  "Software Engineer (Software Architecture)": {
+    "school": [
+      "Logical reasoning",
+      "Mathematics",
+      "Computing basics"
+    ],
+    "workplace": [
+      "Programming",
+      "Debugging",
+      "Software testing",
+      "Version control"
+    ]
+  },
+  "Solution Architech": {
+    "school": [
+      "Logical reasoning",
+      "Mathematics",
+      "Computing basics"
+    ],
+    "workplace": [
+      "System design",
+      "Integration planning",
+      "Architecture modelling",
+      "Technical communication"
+    ]
+  },
+  "Solution Architect": {
+    "school": [
+      "Mathematics",
+      "Visual Arts",
+      "Technical drawing"
+    ],
+    "workplace": [
+      "CAD drawing",
+      "Spatial planning",
+      "Design communication",
+      "Material specification"
+    ]
+  },
+  "Sound Engineer": {
+    "school": [
+      "Communication",
+      "Digital literacy",
+      "Creative analysis"
+    ],
+    "workplace": [
+      "Media editing",
+      "Production coordination",
+      "Audio-visual quality control",
+      "Story structure"
+    ]
+  },
+  "Specialist Technical Analysis (application Development)": {
+    "school": [
+      "Logical reasoning",
+      "Mathematics",
+      "Computing basics"
+    ],
+    "workplace": [
+      "Programming",
+      "Debugging",
+      "Software testing",
+      "Version control"
+    ]
+  },
+  "Specialist Tehcnical Analysis (Application Development)": {
+    "school": [
+      "Logical reasoning",
+      "Mathematics",
+      "Computing basics"
+    ],
+    "workplace": [
+      "Programming",
+      "Debugging",
+      "Software testing",
+      "Version control"
+    ]
+  },
+  "Speech Therapist": {
+    "school": [
+      "Life Sciences",
+      "Language skills",
+      "Listening"
+    ],
+    "workplace": [
+      "Communication assessment",
+      "Therapy planning",
+      "Progress monitoring",
+      "Family guidance"
+    ]
+  },
+  "Strategic Planner": {
+    "school": [
+      "Mathematics",
+      "Economics",
+      "Research skills"
+    ],
+    "workplace": [
+      "Scenario analysis",
+      "Strategic planning",
+      "Data interpretation",
+      "Decision presentation"
+    ]
+  },
+  "Talent Acquisition D&I Transformation": {
+    "school": [
+      "Communication",
+      "Reading comprehension",
+      "Numeracy"
+    ],
+    "workplace": [
+      "Recruitment",
+      "Employee relations",
+      "Policy interpretation",
+      "People data analysis"
+    ]
+  },
+  "Teacher": {
+    "school": [
+      "Reading comprehension",
+      "Written communication",
+      "Subject knowledge"
+    ],
+    "workplace": [
+      "Lesson planning",
+      "Assessment",
+      "Inclusive teaching",
+      "Classroom communication"
+    ]
+  },
+  "Teacher - Drama": {
+    "school": [
+      "Dramatic Arts",
+      "Reading comprehension",
+      "Written communication"
+    ],
+    "workplace": [
+      "Lesson planning",
+      "Assessment",
+      "Inclusive teaching",
+      "Classroom communication"
+    ]
+  },
+  "Teacher - English": {
+    "school": [
+      "English language",
+      "Reading comprehension",
+      "Written communication"
+    ],
+    "workplace": [
+      "Lesson planning",
+      "Assessment",
+      "Inclusive teaching",
+      "Classroom communication"
+    ]
+  },
+  "Teacher (High School) Accounting": {
+    "school": [
+      "Accounting",
+      "Reading comprehension",
+      "Written communication"
+    ],
+    "workplace": [
+      "Lesson planning",
+      "Assessment",
+      "Inclusive teaching",
+      "Classroom communication"
+    ]
+  },
+  "Teacher (High School) Afrikaans Language": {
+    "school": [
+      "Afrikaans language",
+      "Reading comprehension",
+      "Written communication"
+    ],
+    "workplace": [
+      "Lesson planning",
+      "Assessment",
+      "Inclusive teaching",
+      "Classroom communication"
+    ]
+  },
+  "Teacher (High School) Dramatic Arts": {
+    "school": [
+      "Dramatic Arts",
+      "Reading comprehension",
+      "Written communication"
+    ],
+    "workplace": [
+      "Lesson planning",
+      "Assessment",
+      "Inclusive teaching",
+      "Classroom communication"
+    ]
+  },
+  "Teacher (High School) English Language": {
+    "school": [
+      "English language",
+      "Reading comprehension",
+      "Written communication"
+    ],
+    "workplace": [
+      "Lesson planning",
+      "Assessment",
+      "Inclusive teaching",
+      "Classroom communication"
+    ]
+  },
+  "Teacher (High School) French Language": {
+    "school": [
+      "French language",
+      "Reading comprehension",
+      "Written communication"
+    ],
+    "workplace": [
+      "Lesson planning",
+      "Assessment",
+      "Inclusive teaching",
+      "Classroom communication"
+    ]
+  },
+  "Teacher (High School) Geography": {
+    "school": [
+      "Geography",
+      "Reading comprehension",
+      "Written communication"
+    ],
+    "workplace": [
+      "Lesson planning",
+      "Assessment",
+      "Inclusive teaching",
+      "Classroom communication"
+    ]
+  },
+  "Teacher (High School) History": {
+    "school": [
+      "History",
+      "Reading comprehension",
+      "Written communication"
+    ],
+    "workplace": [
+      "Lesson planning",
+      "Assessment",
+      "Inclusive teaching",
+      "Classroom communication"
+    ]
+  },
+  "Teacher (High School) Life Sciences": {
+    "school": [
+      "Life Sciences",
+      "Reading comprehension",
+      "Written communication"
+    ],
+    "workplace": [
+      "Lesson planning",
+      "Assessment",
+      "Inclusive teaching",
+      "Classroom communication"
+    ]
+  },
+  "Teacher (High School) Mathematics": {
+    "school": [
+      "Mathematics",
+      "Reading comprehension",
+      "Written communication"
+    ],
+    "workplace": [
+      "Lesson planning",
+      "Assessment",
+      "Inclusive teaching",
+      "Classroom communication"
+    ]
+  },
+  "Teacher (High School) Physical Science": {
+    "school": [
+      "Physical Sciences",
+      "Reading comprehension",
+      "Written communication"
+    ],
+    "workplace": [
+      "Lesson planning",
+      "Assessment",
+      "Inclusive teaching",
+      "Classroom communication"
+    ]
+  },
+  "Teacher (High School) Visual Arts": {
+    "school": [
+      "Visual Arts",
+      "Reading comprehension",
+      "Written communication"
+    ],
+    "workplace": [
+      "Lesson planning",
+      "Assessment",
+      "Inclusive teaching",
+      "Classroom communication"
+    ]
+  },
+  "Teacher (High School) Zulu Language": {
+    "school": [
+      "isiZulu language",
+      "Reading comprehension",
+      "Written communication"
+    ],
+    "workplace": [
+      "Lesson planning",
+      "Assessment",
+      "Inclusive teaching",
+      "Classroom communication"
+    ]
+  },
+  "Teacher/Educator - Primary/Preparatory (Remedial Teacher)": {
+    "school": [
+      "Reading comprehension",
+      "Written communication",
+      "Subject knowledge"
+    ],
+    "workplace": [
+      "Lesson planning",
+      "Assessment",
+      "Inclusive teaching",
+      "Classroom communication"
+    ]
+  },
+  "Teacher/Educator – Mathematics Teacher (High School)": {
+    "school": [
+      "Mathematics",
+      "Reading comprehension",
+      "Written communication"
+    ],
+    "workplace": [
+      "Lesson planning",
+      "Assessment",
+      "Inclusive teaching",
+      "Classroom communication"
+    ]
+  },
+  "Teacher/Educator – Primary/Preparatory (RemedialTeacher)": {
+    "school": [
+      "Reading comprehension",
+      "Written communication",
+      "Subject knowledge"
+    ],
+    "workplace": [
+      "Lesson planning",
+      "Assessment",
+      "Inclusive teaching",
+      "Classroom communication"
+    ]
+  },
+  "Technical Support (Placement For Tertiary Students Only)": {
+    "school": [
+      "Computing basics",
+      "Logical reasoning",
+      "Communication"
+    ],
+    "workplace": [
+      "Hardware troubleshooting",
+      "System administration",
+      "Technical support",
+      "Issue documentation"
+    ]
+  },
+  "Technology Architect": {
+    "school": [
+      "Mathematics",
+      "Visual Arts",
+      "Technical drawing"
+    ],
+    "workplace": [
+      "CAD drawing",
+      "Spatial planning",
+      "Design communication",
+      "Material specification"
+    ]
+  },
+  "Technology Governance Specialist": {
+    "school": [
+      "Reading comprehension",
+      "Written communication",
+      "Research skills"
+    ],
+    "workplace": [
+      "Policy interpretation",
+      "Compliance monitoring",
+      "Governance records",
+      "Ethical judgement"
+    ]
+  },
+  "Test": {
+    "school": [],
+    "workplace": []
+  },
+  "User Experience Designer": {
+    "school": [
+      "Visual communication",
+      "Research skills",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "User research",
+      "Prototyping",
+      "Usability testing",
+      "Interaction design"
+    ]
+  },
+  "User Experience Designer (UX)/ User Interface Designer": {
+    "school": [
+      "Visual communication",
+      "Research skills",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "User research",
+      "Prototyping",
+      "Usability testing",
+      "Interaction design"
+    ]
+  },
+  "Veterinarian": {
+    "school": [
+      "Life Sciences",
+      "Physical Sciences",
+      "Mathematics"
+    ],
+    "workplace": [
+      "Animal assessment",
+      "Clinical reasoning",
+      "Animal handling",
+      "Owner communication"
+    ]
+  },
+  "Veterinarian (Face-to-Face Incl. Consultation)": {
+    "school": [
+      "Life Sciences",
+      "Physical Sciences",
+      "Mathematics"
+    ],
+    "workplace": [
+      "Animal assessment",
+      "Clinical reasoning",
+      "Animal handling",
+      "Owner communication"
+    ]
+  },
+  "Veterinarian (Face-to-Face Incl. Surgery)": {
+    "school": [
+      "Life Sciences",
+      "Physical Sciences",
+      "Mathematics"
+    ],
+    "workplace": [
+      "Animal assessment",
+      "Clinical reasoning",
+      "Animal handling",
+      "Owner communication"
+    ]
+  },
+  "Veterinary – Kennel Assistant": {
+    "school": [
+      "Life Sciences",
+      "Observation",
+      "Communication"
+    ],
+    "workplace": [
+      "Animal handling",
+      "Hygiene procedures",
+      "Feeding routines",
+      "Animal welfare observation"
+    ]
+  },
+  "Veterinary – Nurse": {
+    "school": [
+      "Life Sciences",
+      "Mathematics",
+      "Communication"
+    ],
+    "workplace": [
+      "Animal nursing",
+      "Clinical monitoring",
+      "Infection prevention",
+      "Team communication"
+    ]
+  },
+  "Veterinary – Practice Manager": {
+    "school": [
+      "Numeracy",
+      "Communication",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Practice administration",
+      "Staff scheduling",
+      "Budget monitoring",
+      "Client service"
+    ]
+  },
+  "Veterinary – Receptionist": {
+    "school": [
+      "Communication",
+      "Numeracy",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Appointment scheduling",
+      "Client communication",
+      "Record keeping",
+      "Payment processing"
+    ]
+  },
+  "Veterinary Nurse": {
+    "school": [
+      "Life Sciences",
+      "Mathematics",
+      "Communication"
+    ],
+    "workplace": [
+      "Animal nursing",
+      "Clinical monitoring",
+      "Infection prevention",
+      "Team communication"
+    ]
+  },
+  "Veterinary Practice Manager": {
+    "school": [
+      "Numeracy",
+      "Communication",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Practice administration",
+      "Staff scheduling",
+      "Budget monitoring",
+      "Client service"
+    ]
+  },
+  "Veterinary Receptionist": {
+    "school": [
+      "Communication",
+      "Numeracy",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Appointment scheduling",
+      "Client communication",
+      "Record keeping",
+      "Payment processing"
+    ]
+  },
+  "Video Marketing": {
+    "school": [
+      "Writing",
+      "Numeracy",
+      "Digital literacy"
+    ],
+    "workplace": [
+      "Audience research",
+      "Campaign planning",
+      "Content creation",
+      "Performance analysis"
+    ]
+  },
+  "Viticulturist & Wine Maker": {
+    "school": [
+      "Life Sciences",
+      "Chemistry",
+      "Mathematics"
+    ],
+    "workplace": [
+      "Vineyard monitoring",
+      "Fermentation control",
+      "Quality assessment",
+      "Production planning"
+    ]
+  },
+  "Web Designer": {
+    "school": [
+      "Visual Arts",
+      "Digital literacy",
+      "Communication"
+    ],
+    "workplace": [
+      "Page layout",
+      "Responsive design",
+      "Accessibility",
+      "Design prototyping"
+    ]
+  }
+}

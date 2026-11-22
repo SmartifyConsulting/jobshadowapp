@@ -1,5 +1,5 @@
 import { applicationTableRow, applicationColumns, applicationStage, APPLICATION_STATUS_CHIPS, DEFAULT_APPLICATION_COLUMNS } from "@/lib/application-columns";
-import { Fragment, useMemo, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Download, Pencil, RefreshCw } from "lucide-react";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { GripVertical } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BoolIcon } from "@/components/BoolIcon";
 
 const label = (key: string) => key.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
@@ -58,7 +59,7 @@ export function ApplicationsList({ onEditImported, onDeleteImported }: { onEditI
   const [status, setStatus] = useState("pending");
   const [visibleColumns, setVisibleColumns] = useState<string[]>(DEFAULT_APPLICATION_COLUMNS);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
-  const [groupBy, setGroupBy] = useState<"company" | "date" | "user_types" | "mentor">("company");
+  const [typeTab, setTypeTab] = useState<"scholars" | "mentors" | "hosts">("scholars");
   const records = useQuery({ queryKey: ["admin", "combined-applications"], queryFn: async () => {
     const [accounts, bookings, imported, scholars, companies] = await Promise.all([
       getAccountsFn(),
@@ -67,9 +68,9 @@ export function ApplicationsList({ onEditImported, onDeleteImported }: { onEditI
       fetchAllRows(async (from, to) => { const r = await supabase.from("scholar_profiles").select("*").order("user_id").range(from, to); if (r.error) throw r.error; return r.data ?? []; }),
       fetchAllRows(async (from, to) => { const r = await supabase.from("companies").select("*").order("id").range(from, to); if (r.error) throw r.error; return r.data ?? []; }),
     ]);
-    return combineApplicationRecords(accounts, bookings, imported, scholars, companies);
+    return { records: combineApplicationRecords(accounts, bookings, imported, scholars, companies), companies };
   } });
-  const all = records.data ?? [];
+  const all = records.data?.records ?? [];
   const tableRows = all.map((record) => ({ record, data: applicationTableRow(record) }));
   const columns = applicationColumns(tableRows.map((row) => row.data));
   const shownColumns = visibleColumns.flatMap((key) => { const column = columns.find((item) => item.key === key); return column ? [column] : []; });
@@ -85,15 +86,8 @@ export function ApplicationsList({ onEditImported, onDeleteImported }: { onEditI
   }
   const [draggedKey, setDraggedKey] = useState<string | null>(null);
   const matches = tableRows.filter(({ record, data }) => (!source || record.source === source) && (!search.trim() || Object.values(data).some((value) => String(value ?? "").toLowerCase().includes(search.trim().toLowerCase()))));
-  const rows = matches.filter(({ record }) => status === "all" || applicationStage(record) === status);
-  const groupedRows = useMemo(() => {
-    const groups = new Map<string, typeof rows>();
-    for (const row of rows) {
-      const key = String(row.data[groupBy] ?? "").trim() || "Not recorded";
-      groups.set(key, [...(groups.get(key) ?? []), row]);
-    }
-    return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
-  }, [rows, groupBy]);
+  const typeFiltered = typeTab === "scholars" ? matches : [];
+  const rows = typeFiltered.filter(({ record }) => status === "all" || applicationStage(record) === status);
   const selected = all.find((record) => record.key === selectedKey);
   function download() {
     const data = tableRows.map((row) => row.data);
@@ -102,7 +96,7 @@ export function ApplicationsList({ onEditImported, onDeleteImported }: { onEditI
   }
   return <section className="bg-ivory" data-slot="admin-list">
     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-6"><h1 className="text-2xl font-medium">Applications ({rows.length})</h1><Button variant="outline" disabled={records.isPending || !!records.error} onClick={download}>Export all</Button></div>
-    <div className="flex flex-wrap items-end gap-4 px-6 py-4"><label className="text-sm">Search<input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name, email, career, company or reference" className="mt-1 block w-72 max-w-full rounded border border-input bg-background px-3 py-2" /></label><label className="text-sm">Source<select value={source} onChange={(e) => setSource(e.target.value)} className="mt-1 block rounded border border-input bg-background px-3 py-2"><option value="">All</option><option>Booking</option><option>Imported</option></select></label><label className="text-sm">Group by<select value={groupBy} onChange={(e) => setGroupBy(e.target.value as typeof groupBy)} className="mt-1 block rounded border border-input bg-background px-3 py-2"><option value="company">Company</option><option value="date">Date</option><option value="user_types">User type</option><option value="mentor">Mentor</option></select></label><Button variant="outline" size="icon" aria-label="Refresh" onClick={() => void records.refetch()} disabled={records.isFetching}><RefreshCw className={`h-4 w-4 ${records.isFetching ? "animate-spin" : ""}`} /></Button><Popover><PopoverTrigger asChild><Button variant="outline" className="ml-auto text-sm font-normal">Customise View ({shownColumns.length})</Button></PopoverTrigger><PopoverContent align="end" className="max-h-96 w-80 overflow-y-auto p-3 text-sm"><div className="mb-3 flex gap-3"><button type="button" onClick={() => setVisibleColumns(columns.map((column) => column.key))} className="text-primary underline">Show all</button><button type="button" onClick={() => setVisibleColumns(DEFAULT_APPLICATION_COLUMNS)} className="text-primary underline">Compact view</button></div>
+    <div className="flex flex-wrap items-end gap-4 px-6 py-4"><label className="text-sm">Search<input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name, email, career, company or reference" className="mt-1 block w-72 max-w-full rounded border border-input bg-background px-3 py-2" /></label><label className="text-sm">Source<select value={source} onChange={(e) => setSource(e.target.value)} className="mt-1 block rounded border border-input bg-background px-3 py-2"><option value="">All</option><option>Booking</option><option>Imported</option></select></label><Button variant="outline" size="icon" aria-label="Refresh" onClick={() => void records.refetch()} disabled={records.isFetching}><RefreshCw className={`h-4 w-4 ${records.isFetching ? "animate-spin" : ""}`} /></Button><Popover><PopoverTrigger asChild><Button variant="outline" className="ml-auto text-sm font-normal">Customise View ({shownColumns.length})</Button></PopoverTrigger><PopoverContent align="end" className="max-h-96 w-80 overflow-y-auto p-3 text-sm"><div className="mb-3 flex gap-3"><button type="button" onClick={() => setVisibleColumns(columns.map((column) => column.key))} className="text-primary underline">Show all</button><button type="button" onClick={() => setVisibleColumns(DEFAULT_APPLICATION_COLUMNS)} className="text-primary underline">Compact view</button></div>
       <p className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Visible columns (drag to reorder)</p>
       {shownColumns.map((column, index) => (
         <div
@@ -122,12 +116,11 @@ export function ApplicationsList({ onEditImported, onDeleteImported }: { onEditI
       <p className="mb-1 mt-3 text-xs font-semibold uppercase text-muted-foreground">Other columns</p>
       {columns.filter((column) => !visibleColumns.includes(column.key)).map((column) => <label key={column.key} className="flex items-center gap-2 py-1"><input type="checkbox" checked={false} onChange={() => setVisibleColumns([...visibleColumns, column.key])} />{column.label}</label>)}
     </PopoverContent></Popover></div>
-    <div role="group" aria-label="Filter applications by status" className="flex flex-wrap gap-1.5 px-6 pb-4">{APPLICATION_STATUS_CHIPS.map(([key, title]) => <button key={key} type="button" aria-pressed={status === key} onClick={() => setStatus(key)} className={"rounded-full border px-3 py-1.5 text-xs font-medium " + (status === key ? "border-primary bg-primary text-primary-foreground" : "border-border bg-ivory hover:bg-teal/15")}>{title} <span className="ml-1 opacity-70">{matches.filter(({ record }) => key === "all" || applicationStage(record) === key).length}</span></button>)}</div>
+    <Tabs value={typeTab} onValueChange={(value) => setTypeTab(value as typeof typeTab)} className="px-6 pb-3"><TabsList aria-label="Application types">{([['scholars', 'Scholars'], ['mentors', 'Mentors'], ['hosts', 'Hosts']] as const).map(([key, title]) => <TabsTrigger key={key} value={key}>{title} ({key === 'scholars' ? all.length : 0})</TabsTrigger>)}</TabsList></Tabs>
+    {typeTab !== 'scholars' && <p role="status" className="px-6 pb-4 text-sm text-muted-foreground">No {typeTab === 'mentors' ? 'mentor' : 'company host'} applications are stored in the app. The Become a {typeTab === 'mentors' ? 'mentor' : 'host'} form currently opens an email draft; those messages are not recorded here.</p>}
+    <div role="group" aria-label="Filter applications by status" className="flex flex-wrap gap-1.5 px-6 pb-4">{APPLICATION_STATUS_CHIPS.map(([key, title]) => <button key={key} type="button" aria-pressed={status === key} onClick={() => setStatus(key)} className={"rounded-full border px-3 py-1.5 text-xs font-medium " + (status === key ? "border-primary bg-primary text-primary-foreground" : "border-border bg-ivory hover:bg-teal/15")}>{title} <span className="ml-1 opacity-70">{typeFiltered.filter(({ record }) => key === "all" || applicationStage(record) === key).length}</span></button>)}</div>
     <div className="overflow-x-auto px-6 pb-6 [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-track]:bg-muted"><table className="w-full min-w-[1200px] text-left text-xs"><thead><tr>{shownColumns.map((column) => <th key={column.key} className="whitespace-nowrap border-b border-border px-3 py-2 font-medium">{column.label}</th>)}<th className="border-b border-border px-3 py-2 font-medium">Actions</th></tr></thead><tbody>
-      {records.isPending ? <tr><td colSpan={shownColumns.length + 1} className="p-4">Loading…</td></tr> : records.error ? <tr><td colSpan={shownColumns.length + 1} role="alert" className="p-4 text-destructive">{records.error.message}</td></tr> : !rows.length ? <tr><td colSpan={shownColumns.length + 1} className="p-4">No applications match these filters.</td></tr> : groupedRows.map(([groupLabel, groupRows]) => <Fragment key={groupLabel}>
-        <tr><td colSpan={shownColumns.length + 1} className="border-b border-border bg-muted/40 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{groupLabel} ({groupRows.length})</td></tr>
-        {groupRows.map(({ record, data }) => <tr key={record.key} className="border-b border-border hover:bg-background/40">{shownColumns.map((column) => <td key={column.key} className="px-3 py-2">{column.key === "reference" ? <button onClick={() => setSelectedKey(record.key)} className="max-w-40 truncate text-left text-primary hover:underline" title={record.reference}>{record.source} #{record.reference}</button> : ["student_name", "student_first_name", "learner", "name"].includes(column.key) ? <button onClick={() => setSelectedKey(record.key)} className="max-w-40 truncate text-left" title={record.email}>{String(data[column.key] ?? "")}</button> : column.key === "amount_due" && typeof data[column.key] === "number" ? "R " + Number(data[column.key]).toFixed(2) : <span className="block max-w-64 whitespace-pre-wrap break-words">{cellValue(data[column.key], column.key)}</span>}</td>)}<td className="px-3 py-2"><button type="button" onClick={() => setSelectedKey(record.key)} className="whitespace-nowrap rounded border border-border px-2 py-1">View details</button></td></tr>)}
-      </Fragment>)}
+      {records.isPending ? <tr><td colSpan={shownColumns.length + 1} className="p-4">Loading…</td></tr> : records.error ? <tr><td colSpan={shownColumns.length + 1} role="alert" className="p-4 text-destructive">{records.error.message}</td></tr> : !rows.length ? <tr><td colSpan={shownColumns.length + 1} className="p-4">No applications match these filters.</td></tr> : rows.map(({ record, data }) => <tr key={record.key} className="border-b border-border hover:bg-background/40">{shownColumns.map((column) => <td key={column.key} className="px-3 py-2">{column.key === "reference" ? <button onClick={() => setSelectedKey(record.key)} className="max-w-40 truncate text-left text-primary hover:underline" title={record.reference}>{record.source} #{record.reference}</button> : ["student_name", "student_first_name", "learner", "name"].includes(column.key) ? <button onClick={() => setSelectedKey(record.key)} className="max-w-40 truncate text-left" title={record.email}>{String(data[column.key] ?? "")}</button> : column.key === "amount_due" && typeof data[column.key] === "number" ? "R " + Number(data[column.key]).toFixed(2) : <span className="block max-w-64 whitespace-pre-wrap break-words">{cellValue(data[column.key], column.key)}</span>}</td>)}<td className="px-3 py-2"><button type="button" onClick={() => setSelectedKey(record.key)} className="whitespace-nowrap rounded border border-border px-2 py-1">View details</button></td></tr>)}
     </tbody></table></div>
     <Sheet open={!!selected} onOpenChange={(open) => { if (!open) setSelectedKey(null); }}><SheetContent className="w-full overflow-y-auto bg-ivory sm:max-w-xl"><SheetHeader><SheetTitle>{selected?.name ?? "Application details"}</SheetTitle><SheetDescription>{selected ? `${selected.source} #${selected.reference}` : ""}</SheetDescription></SheetHeader>{selected && <>
       {!selected.user && <p className="my-3 text-xs text-muted-foreground">No unique user account is linked to this record. The original application details are preserved.</p>}
