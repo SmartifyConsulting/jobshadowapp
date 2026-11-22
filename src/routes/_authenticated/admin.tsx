@@ -915,10 +915,6 @@ export function AdminUsers() {
             Search
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name, email, school, company or career" className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none" />
           </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={showSpam} onChange={(e) => setShowSpam(e.target.checked)} />
-            Show spam-flagged accounts
-          </label>
         </div>
         {accounts.isLoading ? (
           <p className="mt-6">Loading…</p>
