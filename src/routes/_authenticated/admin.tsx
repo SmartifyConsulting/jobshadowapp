@@ -17,6 +17,7 @@ import { RichText } from "@/components/RichText";
 import { draftCareerDescription } from "@/lib/career-ai.functions";
 import { accountInitial, alphabetInitial } from "@/lib/alphabet";
 import { withCareerDescriptions } from "@/lib/career-descriptions";
+import { ROLE_TITLES } from "@/lib/data";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
@@ -1212,15 +1213,61 @@ function AdminReports() {
   return <div className="bg-background">
     <div className="border-b border-border px-6 py-5"><h1 className="text-2xl">Reports</h1></div>
     <Tabs defaultValue="bookings">
-      <div className="overflow-x-auto border-b border-border px-6 py-3"><TabsList aria-label="Admin reports" className="justify-start">{["Bookings", "Evaluations", "Vouchers", "BEE / CPD", "Activity Log", "Token Ledger"].map((label) => <TabsTrigger key={label} value={label.toLowerCase().replaceAll(' / ', '-').replaceAll(' ', '-')}>{label}</TabsTrigger>)}</TabsList></div>
+      <div className="overflow-x-auto border-b border-border px-6 py-3"><TabsList aria-label="Admin reports" className="justify-start">{["Bookings", "Evaluations", "Vouchers", "BEE / CPD", "Mentor Coverage", "Activity Log", "Token Ledger"].map((label) => <TabsTrigger key={label} value={label.toLowerCase().replaceAll(' / ', '-').replaceAll(' ', '-')}>{label}</TabsTrigger>)}</TabsList></div>
       <TabsContent value="bookings" className="mt-0"><LiveBookings /></TabsContent>
       <TabsContent value="evaluations" className="mt-0"><Evaluations /></TabsContent>
       <TabsContent value="vouchers" className="mt-0"><VoucherReport /></TabsContent>
       <TabsContent value="bee-cpd" className="mt-0"><BeeCpdReports /></TabsContent>
+      <TabsContent value="mentor-coverage" className="mt-0"><MentorCoverageReport /></TabsContent>
       <TabsContent value="activity-log" className="mt-0"><AdminLedgerReport table="activity_log" /></TabsContent>
       <TabsContent value="token-ledger" className="mt-0"><AdminLedgerReport table="ai_token_ledger" /></TabsContent>
     </Tabs>
   </div>;
+}
+
+function MentorCoverageReport() {
+  const companies = useQuery({
+    queryKey: ["admin", "mentor-coverage"],
+    queryFn: async () => {
+      const result = await supabase.from("companies").select("career, active, dates");
+      if (result.error) throw result.error;
+      return result.data ?? [];
+    },
+  });
+  const [filter, setFilter] = useState<"all" | "zero" | "inactive">("zero");
+  const rows = useMemo(() => {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const hasOpenDates = (dates: string | null) => (dates ?? "").split(",").some((d) => { const [m, day, y] = d.trim().split("/").map(Number); return m && day && y && new Date(y, m - 1, day) >= today; });
+    return ROLE_TITLES.map((career) => {
+      const forCareer = (companies.data ?? []).filter((c) => (c.career ?? "").trim().toLowerCase() === career.trim().toLowerCase());
+      const availableNow = forCareer.filter((c) => c.active && hasOpenDates(c.dates)).length;
+      return { career, total: forCareer.length, availableNow };
+    }).sort((a, b) => a.availableNow - b.availableNow || a.total - b.total || a.career.localeCompare(b.career));
+  }, [companies.data]);
+  const shown = rows.filter((r) => filter === "all" ? true : filter === "zero" ? r.total === 0 : r.availableNow === 0);
+  return (
+    <div className="bg-background p-6">
+      <p className="mb-4 max-w-2xl text-sm text-muted-foreground">Careers the public Careers page shows as "0 of 5 mentors available" so the site never looks empty — this view shows the real picture so you know exactly where mentor recruitment is needed. "No mentors at all" means zero companies have ever been registered for that career; "Registered, not currently available" means a company exists but is inactive or has no open dates right now.</p>
+      <div role="group" aria-label="Filter by coverage" className="mb-4 flex flex-wrap gap-1.5">
+        {([["zero", "No mentors at all"], ["inactive", "Not currently available"], ["all", "All careers"]] as const).map(([key, label]) => <button key={key} type="button" aria-pressed={filter === key} onClick={() => setFilter(key)} className={`rounded-full border px-3 py-1.5 text-xs font-medium ${filter === key ? "border-primary bg-primary text-primary-foreground" : "border-border hover:bg-muted"}`}>{label}</button>)}
+      </div>
+      {companies.isPending ? <p>Loading…</p> : companies.error ? <p role="alert" className="text-destructive">{companies.error.message}</p> : (
+        <table className="w-full max-w-2xl text-left text-sm">
+          <thead><tr><th className="border-b border-border py-2 font-medium">Career</th><th className="border-b border-border py-2 font-medium">Registered mentors</th><th className="border-b border-border py-2 font-medium">Available now</th></tr></thead>
+          <tbody>
+            {shown.map((r) => (
+              <tr key={r.career} className="border-b border-border">
+                <td className="py-2">{r.career}</td>
+                <td className="py-2">{r.total === 0 ? <span className="rounded-full bg-destructive/15 px-2 py-0.5 text-xs font-semibold text-destructive">No mentors at all</span> : r.total}</td>
+                <td className="py-2">{r.total > 0 && r.availableNow === 0 ? <span className="rounded-full bg-accent/60 px-2 py-0.5 text-xs font-semibold">Not currently available</span> : r.availableNow}</td>
+              </tr>
+            ))}
+            {!shown.length && <tr><td colSpan={3} className="py-4 text-muted-foreground">No careers match this filter.</td></tr>}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
 }
 
 function BeeCpdReports() {

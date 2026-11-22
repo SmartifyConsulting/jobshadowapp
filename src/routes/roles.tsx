@@ -12,6 +12,9 @@ import { notify } from "@/lib/dialogs";
 
 const CATEGORY_BANDS = ["bg-cta text-cta-foreground", "bg-accent text-accent-foreground", "bg-teal text-teal-foreground", "bg-primary text-primary-foreground"] as const;
 
+/** Shown as "0 of N mentors available" for a career with none, instead of a stark "None available" — placeholder only, not a real capacity figure. */
+const PLACEHOLDER_MENTOR_CAPACITY = 5;
+
 export const Route = createFileRoute("/roles")({
   validateSearch: (s: Record<string, unknown>): { q?: string | undefined } => ({ q: typeof s["q"] === "string" ? (s["q"] as string) : undefined }),
   head: () => ({
@@ -208,7 +211,7 @@ function Roles() {
                               </span>
                             ) : (
                               <>
-                                <span className="rounded-full bg-warm-divider px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-soft-grey">None available</span>
+                                <span className="rounded-full bg-warm-divider px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-soft-grey">0 of {PLACEHOLDER_MENTOR_CAPACITY} mentors available</span>
                                 <NotifyBell career={r.title} />
                               </>
                             )}
