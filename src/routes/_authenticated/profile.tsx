@@ -8,10 +8,10 @@ import { UserCircle, IdCard, CalendarCheck } from "lucide-react";
 import { AccountPanel } from "@/components/account/AccountSections";
 import { ImageCropModal } from "@/components/ImageCropModal";
 
-type Tab = "profile" | "account" | "bookings";
+type Tab = "profile" | "bookings";
 export const Route = createFileRoute("/_authenticated/profile")({
   validateSearch: (s: Record<string, unknown>): { tab?: Tab | undefined; entry?: "workflow" | undefined } => ({
-    tab: ["profile", "account", "bookings"].includes(s["tab"] as string) ? (s["tab"] as Tab) : undefined,
+    tab: ["profile", "account", "bookings"].includes(s["tab"] as string) ? (s["tab"] === "account" ? "profile" : (s["tab"] as Tab)) : undefined,
     entry: s["entry"] === "workflow" ? "workflow" : undefined,
   }),
   head: () => ({
@@ -98,7 +98,6 @@ function ProfileSettings() {
           <Tabs value={inWorkflow ? "bookings" : (tab ?? "profile")} onValueChange={(v) => navigate({ search: { tab: v as Tab }, replace: true })} className="w-full">
             {!inWorkflow && <TabsList className="flex w-full flex-wrap justify-start rounded-full bg-primary/90">
               <TabsTrigger value="profile" className="data-[state=active]:bg-card data-[state=active]:text-foreground text-primary-foreground text-xs gap-1.5"><UserCircle className="h-3.5 w-3.5" />Profile</TabsTrigger>
-              <TabsTrigger value="account" className="data-[state=active]:bg-card data-[state=active]:text-foreground text-primary-foreground text-xs gap-1.5"><IdCard className="h-3.5 w-3.5" />My Account</TabsTrigger>
               <TabsTrigger value="bookings" className="data-[state=active]:bg-card data-[state=active]:text-foreground text-primary-foreground text-xs gap-1.5"><CalendarCheck className="h-3.5 w-3.5" />My Bookings</TabsTrigger>
             </TabsList>}
             <TabsContent value="profile" className="mt-4">
@@ -152,12 +151,10 @@ function ProfileSettings() {
             {saved ? "Saved" : "Save"}
           </button>
         </div>
-      
+
               </div>
-            </TabsContent>
-            <TabsContent value="account" className="mt-4">
-              <div className="rounded-xl border border-primary bg-card p-4 shadow-sm space-y-4">
-                <div className="flex items-center gap-3"><IdCard className="h-4 w-4 text-primary" /><h2 className="text-sm font-semibold">My Account</h2></div>
+              <div className="mt-4 rounded-xl border border-primary bg-card p-4 shadow-sm space-y-4">
+                <div className="flex items-center gap-3"><IdCard className="h-4 w-4 text-primary" /><h2 className="text-sm font-semibold">Scholar Details</h2></div>
                 <AccountPanel />
               </div>
             </TabsContent>

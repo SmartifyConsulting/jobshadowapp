@@ -841,6 +841,7 @@ export type Database = {
           school: string
           school_type: string
           tc_accepted: boolean
+          tc_accepted_at: string | null
           updated_at: string
           user_id: string
           where_heard: string | null
@@ -874,6 +875,7 @@ export type Database = {
           school: string
           school_type: string
           tc_accepted?: boolean
+          tc_accepted_at?: string | null
           updated_at?: string
           user_id: string
           where_heard?: string | null
@@ -907,6 +909,7 @@ export type Database = {
           school?: string
           school_type?: string
           tc_accepted?: boolean
+          tc_accepted_at?: string | null
           updated_at?: string
           user_id?: string
           where_heard?: string | null

@@ -12,7 +12,6 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { TERMS } from "@/lib/terms";
 import { Button } from "@/components/ui/button";
 
 const STATUS: Record<string, string> = {
@@ -33,6 +32,9 @@ function fromIsoDate(iso: string) {
   if (!y || !m || !d) return "";
   return `${m}/${d}/${y}`;
 }
+function formatAcceptedAt(iso: string) {
+  return new Date(iso).toLocaleString("en-ZA", { dateStyle: "medium", timeStyle: "short" });
+}
 
 function useUser() {
   return useQuery({ queryKey: ["me"], queryFn: async () => (await supabase.auth.getUser()).data.user });
@@ -40,16 +42,50 @@ function useUser() {
 
 export function AccountPanel({ withBookings = false }: { withBookings?: boolean }) {
   const { data: user } = useUser();
+  const qc = useQueryClient();
   const profile = useQuery({
     queryKey: ["scholar-profile", user?.id],
     enabled: !!user,
     queryFn: async () => { const result = await supabase.from("scholar_profiles").select("*").eq("user_id", user!.id).maybeSingle(); if (result.error) throw result.error; return result.data; },
   });
+  const [editing, setEditing] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteErr, setDeleteErr] = useState<string | null>(null);
+
+  async function deleteProfile() {
+    if (!user) return;
+    setDeleting(true);
+    setDeleteErr(null);
+    const { error } = await supabase.from("scholar_profiles").delete().eq("user_id", user.id);
+    setDeleting(false);
+    if (error) return setDeleteErr(error.message);
+    setConfirmingDelete(false);
+    await qc.invalidateQueries({ queryKey: ["scholar-profile"] });
+  }
+
   if (profile.isLoading || !user) return <p>Loading…</p>;
   if (profile.error) return <p role="alert">Your profile could not be loaded. Please refresh before continuing.</p>;
   if (withBookings) return <StudentJourney userId={user.id} profile={profile.data as Record<string, unknown> | null} />;
-  if (!profile.data) return <ProfileForm userId={user.id} />;
-  return <ScholarDetails p={profile.data as Record<string, unknown>} />;
+  if (!profile.data || editing) return <ProfileForm userId={user.id} initialProfile={(profile.data as Record<string, unknown> | null) ?? undefined} onSaved={() => { setEditing(false); void qc.invalidateQueries({ queryKey: ["scholar-profile"] }); }} />;
+  return (
+    <div className="space-y-4">
+      <ScholarDetails p={profile.data as Record<string, unknown>} />
+      <div className="flex flex-wrap items-center gap-3">
+        <Button variant="outline" onClick={() => setEditing(true)}>Edit Profile</Button>
+        {!confirmingDelete ? (
+          <Button variant="outline" className="text-destructive hover:text-destructive" onClick={() => setConfirmingDelete(true)}>Delete Profile</Button>
+        ) : (
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <span>Delete your profile? This can&apos;t be undone.</span>
+            <Button variant="destructive" disabled={deleting} onClick={deleteProfile}>{deleting ? "Deleting…" : "Yes, delete"}</Button>
+            <Button variant="outline" onClick={() => setConfirmingDelete(false)}>Cancel</Button>
+          </div>
+        )}
+      </div>
+      {deleteErr && <p role="alert" className="text-sm text-destructive">{deleteErr}</p>}
+    </div>
+  );
 }
 
 function ScholarDetails({ p }: { p: Record<string, unknown> }) {
@@ -93,7 +129,7 @@ const profileSchema = z.object({
 
 function ProfileForm({ userId, initialProfile, onSaved }: { userId: string; initialProfile?: Record<string, unknown> | undefined; onSaved?: (() => void) | undefined }) {
   const qc = useQueryClient();
-  const [f, setF] = useState<Record<string, string | boolean>>(() => ({ school_type: "Public School", tc_accepted: false, popi_accepted: false, info_accurate: false, ...Object.fromEntries(Object.entries(initialProfile ?? {}).filter(([, value]) => typeof value === "string" || typeof value === "boolean")), contact_no: initialProfile?.["contact_no"] ? phoneWithCountryCode(String(initialProfile["contact_no"]), "ZA") : "", guardian_contact: initialProfile?.["guardian_contact"] ? phoneWithCountryCode(String(initialProfile["guardian_contact"]), "ZA") : "" }));
+  const [f, setF] = useState<Record<string, string | boolean>>(() => ({ school_type: "Public School", tc_accepted: false, popi_accepted: false, ...Object.fromEntries(Object.entries(initialProfile ?? {}).filter(([, value]) => typeof value === "string" || typeof value === "boolean")), info_accurate: true, contact_no: initialProfile?.["contact_no"] ? phoneWithCountryCode(String(initialProfile["contact_no"]), "ZA") : "", guardian_contact: initialProfile?.["guardian_contact"] ? phoneWithCountryCode(String(initialProfile["guardian_contact"]), "ZA") : "" }));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [files, setFiles] = useState<{ id?: File | undefined; photo?: File | undefined }>({});
@@ -131,7 +167,7 @@ function ProfileForm({ userId, initialProfile, onSaved }: { userId: string; init
       setBusy(false);
       return setErrors({ form: (ex as Error).message });
     }
-    const patch = { ...r.data, career_interests: r.data.career_interests ?? null, dietary: r.data.dietary ?? null, guardian_id: r.data.guardian_id ?? null, population_group: r.data.population_group || null, gender: r.data.gender || null, disability: r.data.disability || null, citizenship: r.data.citizenship || null, user_id: userId, id_file_path, photo_path, ...(!initialProfile || initialProfile["popi_accepted"] !== true ? { popi_accepted_at: new Date().toISOString() } : {}) };
+    const patch = { ...r.data, career_interests: r.data.career_interests ?? null, dietary: r.data.dietary ?? null, guardian_id: r.data.guardian_id ?? null, population_group: r.data.population_group || null, gender: r.data.gender || null, disability: r.data.disability || null, citizenship: r.data.citizenship || null, user_id: userId, id_file_path, photo_path, ...(!initialProfile || initialProfile["tc_accepted"] !== true ? { tc_accepted_at: new Date().toISOString() } : {}), ...(!initialProfile || initialProfile["popi_accepted"] !== true ? { popi_accepted_at: new Date().toISOString() } : {}) };
     const { error } = initialProfile ? await supabase.from("scholar_profiles").update(patch).eq("user_id", userId) : await supabase.from("scholar_profiles").insert(patch);
     setBusy(false);
     if (error) return setErrors({ form: error.message });
@@ -216,41 +252,22 @@ function ProfileForm({ userId, initialProfile, onSaved }: { userId: string; init
           {field("guardian_id", "ID / Passport Number", "ID or passport number")}
         </div>
       </fieldset>
-      <details className="group min-w-0 w-full rounded-md bg-cta px-4 py-4 text-cta-foreground">
-        <summary className="flex cursor-pointer list-none items-center gap-3 font-display text-2xl">
-          <ChevronDown className="h-6 w-6 shrink-0 transition group-open:rotate-180" /> Terms &amp; Conditions
-        </summary>
-        <Link to="/legal" target="_blank" className="mt-3 block text-sm font-bold underline">View full Terms &amp; Privacy Policy</Link>
-        <div className="mt-3 max-h-64 space-y-2 overflow-y-auto break-words text-xs">
-          {TERMS.map((t, i) => <p key={i}>{t}</p>)}
-        </div>
-        <label className="mt-3 flex items-center gap-2 text-sm">
+      <div className="min-w-0 w-full space-y-1 rounded-md bg-cta px-4 py-3 text-cta-foreground">
+        <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={!!f["tc_accepted"]} onChange={(e) => setF({ ...f, tc_accepted: e.target.checked })} />
-          I agree with the Terms &amp; Conditions
+          I agree with the <Link to="/legal" target="_blank" className="font-bold underline">Terms &amp; Conditions</Link>
         </label>
-      </details>
+        {typeof initialProfile?.["tc_accepted_at"] === "string" && <p className="pl-6 text-xs opacity-80">Agreed {formatAcceptedAt(initialProfile["tc_accepted_at"])}</p>}
+      </div>
       {errors["tc_accepted"] && <p className="text-xs text-destructive">{errors["tc_accepted"]}</p>}
-      <details className="group min-w-0 w-full rounded-md bg-cta px-4 py-4 text-cta-foreground">
-        <summary className="flex cursor-pointer list-none items-center gap-3 font-display text-2xl">
-          <ChevronDown className="h-6 w-6 shrink-0 transition group-open:rotate-180" /> POPI Consent
-        </summary>
-        <div className="mt-3 max-h-64 space-y-2 overflow-y-auto break-words text-xs">
-          <p>In terms of the Protection of Personal Information Act 4 of 2013 ("POPIA"), we need your consent, as parent or legal guardian, to collect and process the Job Shadow-er's personal information above (including name, ID/passport number, school, a copy of their ID, and a photo) for the purpose of:</p>
-          <p>registering the scholar for a Job Shadow placement; sharing their name, school and relevant details with the host company and mentor so the placement can take place; verifying their identity and age; and contacting you and the scholar about the booking (confirmations, indemnity requirements and scheduling).</p>
-          <p>Your information will not be sold or used for any purpose beyond operating the Job Shadow booking and placement process, and will be retained only for as long as reasonably necessary for that purpose. You may request access to, correction of, or deletion of this information at any time by emailing info@jobshadow.co.za.</p>
-          <p>As the scholar's parent or legal guardian, I consent to Job Shadow collecting and processing the above personal information on this basis.</p>
-        </div>
-        <label className="mt-3 flex items-center gap-2 text-sm">
+      <div className="min-w-0 w-full space-y-1 rounded-md bg-cta px-4 py-3 text-cta-foreground">
+        <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={!!f["popi_accepted"]} onChange={(e) => setF({ ...f, popi_accepted: e.target.checked })} />
-          As parent/guardian, I give POPI consent to process this information
+          As parent/guardian, I give <Link to="/legal" target="_blank" className="font-bold underline">POPI consent</Link> to process this information
         </label>
-      </details>
+        {typeof initialProfile?.["popi_accepted_at"] === "string" && <p className="pl-6 text-xs opacity-80">Agreed {formatAcceptedAt(initialProfile["popi_accepted_at"])}</p>}
+      </div>
       {errors["popi_accepted"] && <p className="text-xs text-destructive">{errors["popi_accepted"]}</p>}
-      <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" checked={!!f["info_accurate"]} onChange={(e) => setF({ ...f, info_accurate: e.target.checked })} />
-        I acknowledge that my information supplied is verified and true
-      </label>
-      {errors["info_accurate"] && <p className="text-xs text-destructive">{errors["info_accurate"]}</p>}
       {errors["form"] && <p className="text-sm text-destructive">{errors["form"]}</p>}
       <Button type="submit" disabled={busy} className="bg-primary text-primary-foreground">{initialProfile ? "Save Profile" : "Complete Profile & Continue"}</Button>
     </form>
