@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 const STATUS: Record<string, string> = {
   awaiting_payment: "Awaiting payment",
@@ -183,78 +184,82 @@ function ProfileForm({ userId, initialProfile, onSaved }: { userId: string; init
         <h1 className="font-display text-4xl">Personal Details</h1>
         <h5 className="mt-1 font-semibold">NOTE: no more than one scholar per registration.</h5>
       </div>
-      <fieldset className="min-w-0 rounded-md border border-current/20 p-4">
-        <legend className="px-2 font-semibold">Scholar Details</legend>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="sm:col-span-2"><PersonNameFields id="learner-name" label="Name" originalName={String(initialProfile?.["full_name"] ?? "")} required firstName={String(f["first_name"] ?? "")} lastName={String(f["last_name"] ?? "")} onChange={(first, last, full) => setF({ ...f, first_name: first, last_name: last, full_name: full })} />{(errors["first_name"] || errors["last_name"]) && <p className="text-xs text-destructive">{errors["first_name"] || errors["last_name"]}</p>}</div>
-          {field("contact_no", "Tel No", "Tel no")}
-          {field("id_number", "ID / passport number", "Id no")}
-          <div>
-            <Label htmlFor="id-scan">Scan of ID</Label>
-            <Input id="id-scan" type="file" accept="image/*,application/pdf" onChange={(e) => setFiles({ ...files, id: e.target.files?.[0] })} />
-          </div>
-          <div>
-            <Label htmlFor="profile-photo">Profile Photo</Label>
-            <Input id="profile-photo" type="file" accept="image/*" onChange={(e) => setFiles({ ...files, photo: e.target.files?.[0] })} />
-          </div>
-        </div>
-      </fieldset>
-      <fieldset className="min-w-0 rounded-md border border-current/20 p-4">
-        <legend className="px-2 font-semibold">School &amp; Interests</legend>
-        <div className="grid gap-4 sm:grid-cols-2">
-          {field("school", "Current School", "Current school")}
-          <div>
-            <div className="flex flex-wrap gap-x-4 gap-y-2 pt-7 text-sm">
-              {["Public School", "Private School", "Home School"].map((t) => (
-                <label key={t} className="flex items-center gap-1">
-                  <input type="radio" name="school_type" checked={f["school_type"] === t} onChange={() => setF({ ...f, school_type: t })} /> {t}
-                </label>
-              ))}
+      <Tabs defaultValue="personal" className="w-full">
+        <TabsList className="flex w-full flex-wrap justify-start">
+          <TabsTrigger value="personal">Personal Details</TabsTrigger>
+          <TabsTrigger value="school">School &amp; Interests</TabsTrigger>
+          <TabsTrigger value="diversity">Diversity Information</TabsTrigger>
+          <TabsTrigger value="guardian">Parent / Guardian</TabsTrigger>
+        </TabsList>
+        <TabsContent value="personal" className="mt-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2"><PersonNameFields id="learner-name" label="Name" originalName={String(initialProfile?.["full_name"] ?? "")} required firstName={String(f["first_name"] ?? "")} lastName={String(f["last_name"] ?? "")} onChange={(first, last, full) => setF({ ...f, first_name: first, last_name: last, full_name: full })} />{(errors["first_name"] || errors["last_name"]) && <p className="text-xs text-destructive">{errors["first_name"] || errors["last_name"]}</p>}</div>
+            {field("contact_no", "Tel No", "Tel no")}
+            {field("id_number", "ID / passport number", "Id no")}
+            <div>
+              <Label htmlFor="id-scan">Scan of ID</Label>
+              <Input id="id-scan" type="file" accept="image/*,application/pdf" onChange={(e) => setFiles({ ...files, id: e.target.files?.[0] })} />
+            </div>
+            <div>
+              <Label htmlFor="profile-photo">Profile Photo</Label>
+              <Input id="profile-photo" type="file" accept="image/*" onChange={(e) => setFiles({ ...files, photo: e.target.files?.[0] })} />
             </div>
           </div>
-          {field("career_interests", "Career interests")}
-          {field("dietary", "Dietary requirements/allergies")}
-        </div>
-      </fieldset>
-      <fieldset className="min-w-0 rounded-md border border-current/20 p-4">
-        <legend className="px-2 font-semibold">Optional: Diversity Information</legend>
-        <p className="text-xs text-muted-foreground">Entirely optional and self-declared. Host companies use this only in aggregate to report their Job Shadow hosting toward their B-BBEE Skills Development / CSI scorecard - it's never shown to anyone individually or used to screen applicants.</p>
-        <div className="mt-3 grid gap-4 sm:grid-cols-2">
-          <label className="block text-sm">Population group
-            <select value={String(f["population_group"] ?? "")} onChange={(e) => setF({ ...f, population_group: e.target.value })} className="mt-1 w-full rounded border border-input bg-background px-2 py-2">
-              <option value="">Prefer not to say</option>
-              <option>African</option><option>Coloured</option><option>Indian</option><option>White</option><option>Other</option>
-            </select>
-          </label>
-          <label className="block text-sm">Gender
-            <select value={String(f["gender"] ?? "")} onChange={(e) => setF({ ...f, gender: e.target.value })} className="mt-1 w-full rounded border border-input bg-background px-2 py-2">
-              <option value="">Prefer not to say</option>
-              <option>Female</option><option>Male</option><option>Other</option>
-            </select>
-          </label>
-          <label className="block text-sm">Disability status
-            <select value={String(f["disability"] ?? "")} onChange={(e) => setF({ ...f, disability: e.target.value })} className="mt-1 w-full rounded border border-input bg-background px-2 py-2">
-              <option value="">Prefer not to say</option>
-              <option>None</option><option>Disabled</option>
-            </select>
-          </label>
-          <label className="block text-sm">Citizenship
-            <select value={String(f["citizenship"] ?? "")} onChange={(e) => setF({ ...f, citizenship: e.target.value })} className="mt-1 w-full rounded border border-input bg-background px-2 py-2">
-              <option value="">Prefer not to say</option>
-              <option>South African</option><option>Other</option>
-            </select>
-          </label>
-        </div>
-      </fieldset>
-      <fieldset className="min-w-0 rounded-md border border-current/20 p-4">
-        <legend className="px-2 font-semibold">Parent / Guardian</legend>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="sm:col-span-2"><PersonNameFields id="guardian-name" originalName={String(initialProfile?.["guardian_name"] ?? "")} required firstName={String(f["guardian_first_name"] ?? "")} lastName={String(f["guardian_last_name"] ?? "")} onChange={(first, last, full) => setF({ ...f, guardian_first_name: first, guardian_last_name: last, guardian_name: full })} />{(errors["guardian_first_name"] || errors["guardian_last_name"]) && <p className="text-xs text-destructive">{errors["guardian_first_name"] || errors["guardian_last_name"]}</p>}</div>
-          {field("guardian_contact", "Contact Number", "Contact number")}
-          {field("guardian_email", "Email Address", "name@example.com")}
-          {field("guardian_id", "ID / Passport Number", "ID or passport number")}
-        </div>
-      </fieldset>
+        </TabsContent>
+        <TabsContent value="school" className="mt-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            {field("school", "Current School", "Current school")}
+            <div>
+              <div className="flex flex-wrap gap-x-4 gap-y-2 pt-7 text-sm">
+                {["Public School", "Private School", "Home School"].map((t) => (
+                  <label key={t} className="flex items-center gap-1">
+                    <input type="radio" name="school_type" checked={f["school_type"] === t} onChange={() => setF({ ...f, school_type: t })} /> {t}
+                  </label>
+                ))}
+              </div>
+            </div>
+            {field("career_interests", "Career interests")}
+            {field("dietary", "Dietary requirements/allergies")}
+          </div>
+        </TabsContent>
+        <TabsContent value="diversity" className="mt-4">
+          <p className="text-xs text-muted-foreground">Entirely optional and self-declared. Host companies use this only in aggregate to report their Job Shadow hosting toward their B-BBEE Skills Development / CSI scorecard - it's never shown to anyone individually or used to screen applicants.</p>
+          <div className="mt-3 grid gap-4 sm:grid-cols-2">
+            <label className="block text-sm">Population group
+              <select value={String(f["population_group"] ?? "")} onChange={(e) => setF({ ...f, population_group: e.target.value })} className="mt-1 w-full rounded border border-input bg-background px-2 py-2">
+                <option value="">Prefer not to say</option>
+                <option>African</option><option>Coloured</option><option>Indian</option><option>White</option><option>Other</option>
+              </select>
+            </label>
+            <label className="block text-sm">Gender
+              <select value={String(f["gender"] ?? "")} onChange={(e) => setF({ ...f, gender: e.target.value })} className="mt-1 w-full rounded border border-input bg-background px-2 py-2">
+                <option value="">Prefer not to say</option>
+                <option>Female</option><option>Male</option><option>Other</option>
+              </select>
+            </label>
+            <label className="block text-sm">Disability status
+              <select value={String(f["disability"] ?? "")} onChange={(e) => setF({ ...f, disability: e.target.value })} className="mt-1 w-full rounded border border-input bg-background px-2 py-2">
+                <option value="">Prefer not to say</option>
+                <option>None</option><option>Disabled</option>
+              </select>
+            </label>
+            <label className="block text-sm">Citizenship
+              <select value={String(f["citizenship"] ?? "")} onChange={(e) => setF({ ...f, citizenship: e.target.value })} className="mt-1 w-full rounded border border-input bg-background px-2 py-2">
+                <option value="">Prefer not to say</option>
+                <option>South African</option><option>Other</option>
+              </select>
+            </label>
+          </div>
+        </TabsContent>
+        <TabsContent value="guardian" className="mt-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2"><PersonNameFields id="guardian-name" originalName={String(initialProfile?.["guardian_name"] ?? "")} required firstName={String(f["guardian_first_name"] ?? "")} lastName={String(f["guardian_last_name"] ?? "")} onChange={(first, last, full) => setF({ ...f, guardian_first_name: first, guardian_last_name: last, guardian_name: full })} />{(errors["guardian_first_name"] || errors["guardian_last_name"]) && <p className="text-xs text-destructive">{errors["guardian_first_name"] || errors["guardian_last_name"]}</p>}</div>
+            {field("guardian_contact", "Contact Number", "Contact number")}
+            {field("guardian_email", "Email Address", "name@example.com")}
+            {field("guardian_id", "ID / Passport Number", "ID or passport number")}
+          </div>
+        </TabsContent>
+      </Tabs>
       <div className="min-w-0 w-full space-y-1 rounded-md bg-cta px-4 py-3 text-cta-foreground">
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={!!f["tc_accepted"]} onChange={(e) => setF({ ...f, tc_accepted: e.target.checked })} />

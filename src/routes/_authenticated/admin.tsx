@@ -15,6 +15,7 @@ import { Users as UsersIcon, FileText, ShoppingCart, Briefcase, GraduationCap, P
 import { supabase } from "@/integrations/supabase/client";
 import { RichText } from "@/components/RichText";
 import { draftCareerDescription } from "@/lib/career-ai.functions";
+import { guessLastNamesFromEmails } from "@/lib/guess-last-names.functions";
 import { accountInitial, alphabetInitial } from "@/lib/alphabet";
 import { withCareerDescriptions } from "@/lib/career-descriptions";
 import { ROLE_TITLES } from "@/lib/data";
@@ -702,6 +703,14 @@ function UserDocument({ path, kind, verified = false }: { path: string | null; k
 
 const ROLE_LABELS: Record<AccountRow["roles"][number], string> = { user: "Student", mentor: "Host", hr_admin: "HR Admin", school: "School", admin: "Admin", parent: "Parent" };
 
+function accountNameParts(a: AccountRow) {
+  const first = a.first_name || a.scholar_first_name || "";
+  const last = a.last_name || a.scholar_last_name || "";
+  if (first || last) return { first, last };
+  const parts = (a.display_name || a.full_name || "").trim().split(/\s+/).filter(Boolean);
+  return { first: parts[0] ?? "", last: parts.slice(1).join(" ") };
+}
+
 function UserFilePreview({ path, label }: { path: string | null; label: string }) {
   const preview = useQuery({
     queryKey: ["admin", "file-preview", path], enabled: !!path, staleTime: 240_000,
@@ -828,6 +837,18 @@ export function AdminUsers() {
       .sort((a, b) => (a.display_name || a.full_name || a.email || "").localeCompare(b.display_name || b.full_name || b.email || ""));
   }, [accounts.data, q, showSpam, letter, accountRole, isUnclassified]);
 
+  const guessLastNamesFn = useServerFn(guessLastNamesFromEmails);
+  const missingLastNames = useMemo(() => rows
+    .filter((a) => !accountNameParts(a).last && !!a.email)
+    .slice(0, 150)
+    .map((a) => ({ id: a.id, email: a.email!, firstName: accountNameParts(a).first || undefined })), [rows]);
+  const lastNameGuesses = useQuery({
+    queryKey: ["admin", "last-name-guesses", missingLastNames.map((m) => m.id).join(",")],
+    enabled: missingLastNames.length > 0,
+    staleTime: Infinity,
+    queryFn: async () => (await guessLastNamesFn({ data: { entries: missingLastNames } })).guesses,
+  });
+
   const letterCounts = useMemo(() => {
     const counts = new Map<string, number>();
     (accounts.data ?? []).forEach((a) => {
@@ -910,18 +931,21 @@ export function AdminUsers() {
                 <AccordionTrigger className="justify-start gap-3 px-3 py-1.5 text-sm hover:no-underline [&>svg]:ml-auto"><span className="w-5 font-medium text-primary">{group}</span><span className="text-xs text-muted-foreground">{rows.filter((a) => (accountInitial(a)) === group).length} users</span></AccordionTrigger>
                 <AccordionContent className="pb-0">{view === "cards" ? <UserCards rows={rows.filter((a) => (accountInitial(a)) === group)} selectedId={selectedId} busyId={busyId} onSelect={setSelectedId} onEdit={(a) => setEditing({ ...a, roles: [...a.roles] })} onDelete={deleteAccountRow} onVerify={setIdVerified} /> : <div className="overflow-x-auto border-t border-border [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-track]:bg-muted">
                   <table className="w-full min-w-[820px] text-left text-xs">
-                    <thead className="bg-background/40 text-foreground"><tr>{["Name", "User type", "Documents", "Applications", "Actions"].map((heading) => <th key={heading} className="whitespace-nowrap px-3 py-2 font-normal">{heading}</th>)}</tr></thead>
+                    <thead className="bg-background/40 text-foreground"><tr>{["First Name", "Last Name", "User type", "Documents", "Applications", "Actions"].map((heading) => <th key={heading} className="whitespace-nowrap px-3 py-2 font-normal">{heading}</th>)}</tr></thead>
                     <tbody>
                     {rows.filter((a) => (accountInitial(a)) === group).map((a) => {
                       const avatarUrl = a.avatar_path ? supabase.storage.from("avatars").getPublicUrl(a.avatar_path).data.publicUrl : null;
                       const label = a.display_name || a.full_name || a.email || a.id;
+                      const { first: firstName, last: lastName } = accountNameParts(a);
+                      const guessedLast = !lastName ? lastNameGuesses.data?.[a.id] : null;
                       return <Fragment key={a.id}>
                         <tr className={'border-t border-warm-divider transition-colors hover:bg-teal/5 ' + (selectedId === a.id ? 'bg-teal/10' : '')}>
                           <td className="px-3 py-1.5"><div className="flex items-center gap-2" title={'Joined ' + new Date(a.created_at).toLocaleDateString()}>
                             {avatarUrl ? <img src={avatarUrl} alt="" className="h-7 w-7 shrink-0 rounded-full object-cover" /> : <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-teal/15 text-[11px] uppercase">{label.slice(0, 1)}</span>}
-                            <button onClick={() => setSelectedId(a.id)} className="max-w-40 truncate text-left font-medium hover:text-primary" title={label} aria-label={'View details for ' + label}>{label}</button>
+                            <button onClick={() => setSelectedId(a.id)} className="max-w-32 truncate text-left font-medium hover:text-primary" title={label} aria-label={'View details for ' + label}>{firstName || "—"}</button>
                             {a.is_spam && <span className="text-[10px] text-destructive">Spam</span>}
                           </div></td>
+                          <td className="px-3 py-1.5">{lastName ? lastName : guessedLast ? <span className="italic text-muted-foreground" title="AI-guessed from the email address — unconfirmed">{guessedLast}?</span> : "—"}</td>
                           <td className="px-3 py-1.5"><div className="flex gap-1">{a.roles.length === 0 && <span className="text-xs text-muted-foreground">Unclassified</span>}{a.roles.map((role) => <span key={role} className="whitespace-nowrap rounded bg-muted px-1.5 py-1 text-[10px] text-foreground">{ROLE_LABELS[role]}</span>)}</div></td>
                           <td className="px-3 py-1.5"><div className="flex items-center gap-2">
                             <label className="flex items-center" title={a.id_verified === null ? 'No scholar profile to verify' : 'ID verified'}><input type="checkbox" className="accent-primary" checked={a.id_verified === true} disabled={a.id_verified === null || busyId === a.id} onChange={(e) => setIdVerified(a.id, e.target.checked)} aria-label={'ID verified for ' + label} /></label>
@@ -934,7 +958,7 @@ export function AdminUsers() {
                             <button onClick={() => deleteAccountRow(a.id, label)} disabled={busyId === a.id} className="rounded p-1.5 text-muted-foreground transition hover:bg-destructive/5 hover:text-destructive disabled:opacity-50" aria-label={'Delete account for ' + label}><Trash2 className="h-3.5 w-3.5" /></button>
                           </div></td>
                         </tr>
-                        {expandedApplicationUser === a.id && <tr id={'applications-' + a.id}><td colSpan={5} className="border-t border-border bg-muted/30 px-5 py-3">
+                        {expandedApplicationUser === a.id && <tr id={'applications-' + a.id}><td colSpan={6} className="border-t border-border bg-muted/30 px-5 py-3">
                           <div className="mb-2 flex justify-between text-xs text-muted-foreground"><span>Applications for {label}</span><span>{a.booking_count} bookings · Joined {new Date(a.created_at).toLocaleDateString()}</span></div>
                           <table className="w-full text-left text-xs"><thead><tr>{["ID", "Company", "Career", "Dates", "Paid", "Indemnity", "Cancelled"].map((heading) => <th key={heading} className="px-2 py-2 font-medium">{heading}</th>)}</tr></thead><tbody>{a.applications.map((application) => <tr key={application.source + '-' + application.id} className="border-t border-border/70"><td className="px-2 py-2">{application.source} #{application.id}</td><td className="px-2 py-2">{application.company || '—'}</td><td className="px-2 py-2">{application.career || '—'}</td><td className="px-2 py-2">{application.dates || '—'}</td>{[application.paid, application.indemnity, application.cancelled].map((value, index) => <td key={index} className="px-2 py-2">{value === null ? 'Not recorded' : <BoolIcon value={index === 2 ? !value : value} />}</td>)}</tr>)}</tbody></table>
                         </td></tr>}

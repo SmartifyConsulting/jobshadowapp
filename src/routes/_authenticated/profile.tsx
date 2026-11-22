@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteLayout } from "@/components/SiteLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserCircle, IdCard, CalendarCheck } from "lucide-react";
+import { UserCircle, CalendarCheck } from "lucide-react";
 import { AccountPanel } from "@/components/account/AccountSections";
 import { ImageCropModal } from "@/components/ImageCropModal";
 
@@ -154,7 +154,6 @@ function ProfileSettings() {
 
               </div>
               <div className="mt-4 rounded-xl border border-primary bg-card p-4 shadow-sm space-y-4">
-                <div className="flex items-center gap-3"><IdCard className="h-4 w-4 text-primary" /><h2 className="text-sm font-semibold">Scholar Details</h2></div>
                 <AccountPanel />
               </div>
             </TabsContent>
