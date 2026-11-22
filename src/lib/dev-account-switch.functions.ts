@@ -1,9 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-/** Dev-only test personas for the account switcher (see SiteLayout.tsx DevAccountSwitcher).
- * Never rendered or callable in production — gated both client-side (import.meta.env.DEV)
- * and here on the server (NODE_ENV check) as defense in depth. */
+/** Named test personas for the profile switcher (see SiteLayout.tsx DevAccountSwitcher).
+ * Deliberately allowed in production, but only usable by someone already signed in as one of
+ * these four accounts — the switcher is hidden from everyone else client-side, and the server
+ * function below independently re-checks the caller's own email against this list, so the UI
+ * gate can't be bypassed by calling the function directly. */
 export const DEV_PERSONAS = [
   { email: "info@georgiaadams.co.za", label: "Georgia Adams — Admin", role: "admin" as const },
   { email: "georgia.adams@smartify.co.za", label: "Internet Solutions — Company", role: "hr_admin" as const },
@@ -17,9 +20,11 @@ export const DEV_PERSONA_PASSWORD = "JobShadowDevSwitch!2026";
 /** Ensures a dev persona's auth account, role and demo profile data exist, so its profile is
  * immediately viewable when you switch to it. Idempotent — safe to call every time you switch. */
 export const bootstrapDevPersona = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ email: z.string().trim().toLowerCase().email() }).parse(d))
-  .handler(async ({ data }) => {
-    if (process.env["NODE_ENV"] === "production") throw new Error("Dev account switching is disabled in production.");
+  .handler(async ({ context, data }) => {
+    const callerEmail = typeof context.claims["email"] === "string" ? (context.claims["email"] as string).toLowerCase() : "";
+    if (!DEV_PERSONAS.some((p) => p.email.toLowerCase() === callerEmail)) throw new Error("Only the four named test accounts can use the profile switcher.");
     const persona = DEV_PERSONAS.find((p) => p.email.toLowerCase() === data.email);
     if (!persona) throw new Error("Unknown dev persona.");
 

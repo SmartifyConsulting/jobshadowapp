@@ -65,7 +65,7 @@ function DevAccountSwitcher() {
 
   return <>
     <DropdownMenuSeparator />
-    <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-muted-foreground">Switch profile (dev only)</DropdownMenuLabel>
+    <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-muted-foreground">Switch profile</DropdownMenuLabel>
     {DEV_PERSONAS.map((p) => (
       <DropdownMenuItem key={p.email} disabled={switching === p.email} onClick={() => void switchTo(p.email)}>
         {switching === p.email ? "Switching…" : p.label}
@@ -74,7 +74,8 @@ function DevAccountSwitcher() {
   </>;
 }
 
-function AccountMenu({ displayName, avatarUrl, isAdmin, logout }: { displayName: string; avatarUrl: string | null; isAdmin: boolean; logout: () => void }) {
+function AccountMenu({ displayName, avatarUrl, isAdmin, email, logout }: { displayName: string; avatarUrl: string | null; isAdmin: boolean; email: string | null; logout: () => void }) {
+  const canSwitchProfiles = !!email && DEV_PERSONAS.some((p) => p.email.toLowerCase() === email.toLowerCase());
   return <DropdownMenu>
     <DropdownMenuTrigger aria-label="Open account menu" className="rounded-full transition hover:ring-2 hover:ring-primary-foreground/40">
       {avatarUrl ? <img src={avatarUrl} alt="" className="h-8 w-8 rounded-full object-cover" /> : <span className="grid h-8 w-8 place-items-center rounded-full bg-primary-foreground/20 text-xs uppercase">{displayName.slice(0, 1)}</span>}
@@ -86,7 +87,7 @@ function AccountMenu({ displayName, avatarUrl, isAdmin, logout }: { displayName:
       {isAdmin && <DropdownMenuItem asChild><Link to="/admin">Admin Portal</Link></DropdownMenuItem>}
       <DropdownMenuItem asChild><Link to="/mentor">Mentor Portal</Link></DropdownMenuItem>
       <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
-      {import.meta.env.DEV && <DevAccountSwitcher />}
+      {canSwitchProfiles && <DevAccountSwitcher />}
     </DropdownMenuContent>
   </DropdownMenu>;
 }
@@ -96,7 +97,7 @@ export function SiteAccountMenu() {
   const navigate = useNavigate();
   if (!session?.user) return null;
   const name = session.displayName || (session.user.user_metadata?.["name"] as string | undefined) || session.user.email || "Account";
-  return <AccountMenu displayName={name} avatarUrl={session.avatarUrl} isAdmin={session.isAdmin} logout={() => { void supabase.auth.signOut().then(() => navigate({ to: "/" })); }} />;
+  return <AccountMenu displayName={name} avatarUrl={session.avatarUrl} isAdmin={session.isAdmin} email={session.user.email ?? null} logout={() => { void supabase.auth.signOut().then(() => navigate({ to: "/" })); }} />;
 }
 
 /** The full public-site header (logo, nav, social icons, account menu) — shared verbatim by
@@ -142,9 +143,9 @@ export function SiteHeader({ headerLogo }: { headerLogo?: ReactNode }) {
             ))}
             {user && <NotificationInbox userId={user.id} />}
           </div>
-          {user && <AccountMenu displayName={displayName} avatarUrl={avatarUrl} isAdmin={isAdmin} logout={logout} />}
+          {user && <AccountMenu displayName={displayName} avatarUrl={avatarUrl} isAdmin={isAdmin} email={user.email ?? null} logout={logout} />}
         </nav>
-        <div className="absolute right-5 flex items-center gap-3 lg:hidden">{user && <NotificationInbox userId={user.id} />}{user && <AccountMenu displayName={displayName} avatarUrl={avatarUrl} isAdmin={isAdmin} logout={logout} />}<button className="rounded p-2" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button></div>
+        <div className="absolute right-5 flex items-center gap-3 lg:hidden">{user && <NotificationInbox userId={user.id} />}{user && <AccountMenu displayName={displayName} avatarUrl={avatarUrl} isAdmin={isAdmin} email={user.email ?? null} logout={logout} />}<button className="rounded p-2" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button></div>
       </div>
       {open && (
         <nav className="flex flex-col gap-3 border-t border-primary-foreground/20 px-5 py-4 font-semibold lg:hidden">
