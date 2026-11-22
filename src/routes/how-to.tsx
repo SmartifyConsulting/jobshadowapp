@@ -49,18 +49,18 @@ const SPONSOR_STEPS: Step[] = [
 
 function StepRow({ title, icon: TitleIcon, steps }: { title: string; icon: typeof User; steps: Step[] }) {
   return (
-    <div className="relative rounded-xl border border-border bg-background pt-10 pb-6">
-      <div className="absolute -top-0.5 left-0 flex items-center gap-2 rounded-tl-xl bg-primary py-2 pl-4 pr-8 text-primary-foreground [clip-path:polygon(0_0,100%_0,calc(100%-1.25rem)_100%,0_100%)]">
+    <div className="relative rounded-xl border border-border bg-background pt-8 pb-3">
+      <div className="absolute -top-0.5 left-0 flex items-center gap-2 rounded-tl-xl bg-primary py-1.5 pl-4 pr-8 text-primary-foreground [clip-path:polygon(0_0,100%_0,calc(100%-1.25rem)_100%,0_100%)]">
         <TitleIcon className="h-[23px] w-[23px] shrink-0" />
         <span className="font-display text-lg uppercase">{title}</span>
       </div>
-      <div className="mt-4 flex flex-wrap items-start justify-center gap-y-5 px-3">
+      <div className="mt-2 flex flex-wrap items-start justify-center gap-y-2 px-3">
         {steps.map((step, i) => (
           <div key={i} className="flex items-start">
             <div className="flex w-[4.5rem] shrink-0 flex-col items-center text-center sm:w-20">
               <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">{i + 1}</span>
               <step.icon className="h-8 w-8 shrink-0 text-foreground" />
-              <p className="mt-2 whitespace-pre-line text-[11px] font-semibold leading-tight">{step.label}</p>
+              <p className="mt-1 whitespace-pre-line text-[11px] font-semibold leading-tight">{step.label}</p>
             </div>
             {i < steps.length - 1 && <ArrowRight className="mx-1 mt-1.5 h-4 w-4 shrink-0 text-primary" strokeWidth={2.75} />}
           </div>
@@ -93,8 +93,8 @@ function HowTo() {
           <span className="font-display text-2xl uppercase">How To</span>
         </div>
       </div>
-      <section className="bg-[#7CCCC8] px-5 py-8">
-        <div className="mx-auto max-w-7xl space-y-6">
+      <section className="bg-[#7CCCC8] px-5 py-5">
+        <div className="mx-auto max-w-7xl space-y-3">
           <StepRow title="For Students" icon={GraduationCap} steps={STUDENT_STEPS} />
           <StepRow title="For Mentors" icon={Users} steps={MENTOR_STEPS} />
           <StepRow title="For Hosts" icon={Building2} steps={HOST_STEPS} />
