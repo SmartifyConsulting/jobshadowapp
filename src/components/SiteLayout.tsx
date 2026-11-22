@@ -1,12 +1,14 @@
 import { NotificationInbox } from "@/components/NotificationInbox";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Menu, X, Facebook, Instagram } from "lucide-react";
 import { HeaderLogo } from "@/components/BrandLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { SupportChatWidget } from "@/components/SupportChatWidget";
+import { bootstrapDevPersona, DEV_PERSONAS, DEV_PERSONA_PASSWORD } from "@/lib/dev-account-switch.functions";
 
 export const SITE_NAV = [
   { to: "/", label: "Home" },
@@ -42,6 +44,36 @@ const SOCIAL = [
   { href: "https://www.instagram.com/jobshadowbookings", icon: Instagram, label: "Instagram" },
 ];
 
+function DevAccountSwitcher() {
+  const bootstrap = useServerFn(bootstrapDevPersona);
+  const qc = useQueryClient();
+  const [switching, setSwitching] = useState<string | null>(null);
+
+  async function switchTo(email: string) {
+    setSwitching(email);
+    try {
+      await bootstrap({ data: { email } });
+      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signInWithPassword({ email, password: DEV_PERSONA_PASSWORD });
+      if (error) throw error;
+      await qc.invalidateQueries();
+      window.location.href = "/";
+    } finally {
+      setSwitching(null);
+    }
+  }
+
+  return <>
+    <DropdownMenuSeparator />
+    <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-muted-foreground">Switch profile (dev only)</DropdownMenuLabel>
+    {DEV_PERSONAS.map((p) => (
+      <DropdownMenuItem key={p.email} disabled={switching === p.email} onClick={() => void switchTo(p.email)}>
+        {switching === p.email ? "Switching…" : p.label}
+      </DropdownMenuItem>
+    ))}
+  </>;
+}
+
 function AccountMenu({ displayName, avatarUrl, isAdmin, logout }: { displayName: string; avatarUrl: string | null; isAdmin: boolean; logout: () => void }) {
   return <DropdownMenu>
     <DropdownMenuTrigger aria-label="Open account menu" className="rounded-full transition hover:ring-2 hover:ring-primary-foreground/40">
@@ -54,6 +86,7 @@ function AccountMenu({ displayName, avatarUrl, isAdmin, logout }: { displayName:
       {isAdmin && <DropdownMenuItem asChild><Link to="/admin">Admin Portal</Link></DropdownMenuItem>}
       <DropdownMenuItem asChild><Link to="/mentor">Mentor Portal</Link></DropdownMenuItem>
       <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
+      {import.meta.env.DEV && <DevAccountSwitcher />}
     </DropdownMenuContent>
   </DropdownMenu>;
 }

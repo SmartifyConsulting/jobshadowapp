@@ -463,6 +463,13 @@
       "when": 1794963300000,
       "tag": "0065_profile_crud_and_tc_timestamp",
       "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "7",
+      "when": 1794963400000,
+      "tag": "0066_bee_cpd_report_by_hr_email",
+      "breakpoints": true
     }
   ]
 }

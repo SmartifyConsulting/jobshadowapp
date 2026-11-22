@@ -1030,7 +1030,7 @@ export type Database = {
       complete_and_request_evaluations: { Args: never; Returns: undefined }
       confirm_test_payment: { Args: { _booking: string }; Returns: undefined }
       email_company_bee_report: {
-        Args: { _company: number }
+        Args: { _hr_email: string }
         Returns: undefined
       }
       get_booking_company_details: {
@@ -1045,7 +1045,7 @@ export type Database = {
         }[]
       }
       get_company_bee_report: {
-        Args: { _company: number }
+        Args: { _hr_email: string }
         Returns: {
           career: string
           citizenship: string
@@ -1220,7 +1220,7 @@ export type Database = {
         Args: never
         Returns: {
           company: string
-          id: number
+          hr_email: string
         }[]
       }
       list_partner_logos: {

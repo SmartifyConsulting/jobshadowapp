@@ -1271,23 +1271,33 @@ function MentorCoverageReport() {
 }
 
 function BeeCpdReports() {
-  const [sendingId, setSendingId] = useState<number | null>(null);
-  const [sentId, setSentId] = useState<number | null>(null);
+  const [sendingEmail, setSendingEmail] = useState<string | null>(null);
+  const [sentEmail, setSentEmail] = useState<string | null>(null);
   const companies = useQuery({
     queryKey: ["admin", "bee-companies"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("companies").select("id, company, hr_email").order("company");
+      const { data, error } = await supabase.from("companies").select("company, hr_email").order("company");
       if (error) throw new Error(error.message);
-      return data ?? [];
+      // Group by hr_email: the companies table has one row per career/placement listing, so the
+      // same real company (same HR contact) can have several rows — one entry per HR contact here.
+      const byEmail = new Map<string, { company: string; hr_email: string }>();
+      for (const c of data ?? []) {
+        if (!c.hr_email) continue;
+        const key = c.hr_email.toLowerCase();
+        const existing = byEmail.get(key);
+        if (!existing) byEmail.set(key, { company: c.company ?? "", hr_email: c.hr_email });
+        else if (c.company && !existing.company.split(", ").includes(c.company)) existing.company = [...existing.company.split(", "), c.company].filter(Boolean).sort().join(", ");
+      }
+      return [...byEmail.values()].sort((a, b) => a.company.localeCompare(b.company));
     },
   });
-  async function emailReport(id: number) {
-    setSendingId(id);
-    setSentId(null);
-    const { error } = await supabase.rpc("email_company_bee_report", { _company: id });
-    setSendingId(null);
+  async function emailReport(hrEmail: string) {
+    setSendingEmail(hrEmail);
+    setSentEmail(null);
+    const { error } = await supabase.rpc("email_company_bee_report", { _hr_email: hrEmail });
+    setSendingEmail(null);
     if (error) return notify(error.message);
-    setSentId(id);
+    setSentEmail(hrEmail);
   }
   return <div className="p-6">
     <p className="text-sm text-muted-foreground">Sends each company's HR contact a B-BBEE Skills Development / CSI report of the job shadows they've hosted, with the demographic breakdown needed to claim CPD points and CSI spend credit. Companies can also view and export this themselves at <code>/company-report</code> once signed in with their HR email.</p>
@@ -1296,12 +1306,12 @@ function BeeCpdReports() {
         <thead><tr><th className="border-b border-border px-3 py-2 font-medium">Company</th><th className="border-b border-border px-3 py-2 font-medium">HR email</th><th className="border-b border-border px-3 py-2 font-medium">Action</th></tr></thead>
         <tbody>
           {companies.isPending ? <tr><td colSpan={3} className="p-4">Loading…</td></tr> : (companies.data ?? []).map((c) => (
-            <tr key={c.id} className="border-b border-border/60">
+            <tr key={c.hr_email} className="border-b border-border/60">
               <td className="px-3 py-2">{c.company}</td>
               <td className="px-3 py-2">{c.hr_email || "—"}</td>
               <td className="px-3 py-2">
-                <Button variant="outline" size="sm" disabled={!c.hr_email || sendingId === c.id} onClick={() => emailReport(c.id)}>
-                  {sendingId === c.id ? "Sending…" : sentId === c.id ? "Sent" : "Email report"}
+                <Button variant="outline" size="sm" disabled={!c.hr_email || sendingEmail === c.hr_email} onClick={() => emailReport(c.hr_email)}>
+                  {sendingEmail === c.hr_email ? "Sending…" : sentEmail === c.hr_email ? "Sent" : "Email report"}
                 </Button>
               </td>
             </tr>

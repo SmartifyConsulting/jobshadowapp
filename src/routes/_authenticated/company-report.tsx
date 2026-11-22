@@ -24,17 +24,17 @@ function CompanyReportPage() {
     queryFn: async () => {
       const { data, error } = await supabase.rpc("list_my_hr_companies");
       if (error) throw new Error(error.message);
-      return (data ?? []) as { id: number; company: string }[];
+      return (data ?? []) as { hr_email: string; company: string }[];
     },
   });
-  const [selected, setSelected] = useState<number | null>(null);
-  const companyId = selected ?? companies.data?.[0]?.id ?? null;
+  const [selected, setSelected] = useState<string | null>(null);
+  const hrEmail = selected ?? companies.data?.[0]?.hr_email ?? null;
 
   const report = useQuery({
-    queryKey: ["company-bee-report", companyId],
-    enabled: companyId !== null,
+    queryKey: ["company-bee-report", hrEmail],
+    enabled: hrEmail !== null,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_company_bee_report", { _company: companyId! });
+      const { data, error } = await supabase.rpc("get_company_bee_report", { _hr_email: hrEmail! });
       if (error) throw new Error(error.message);
       return (data ?? []) as ReportRow[];
     },
@@ -60,12 +60,12 @@ function CompanyReportPage() {
           {companies.data?.length === 0 && <p className="text-sm text-muted-foreground">No company is registered with your email as the HR contact.</p>}
           {companies.data && companies.data.length > 1 && (
             <label className="block max-w-xs text-sm">Company
-              <select value={companyId ?? ""} onChange={(e) => setSelected(Number(e.target.value))} className="mt-1 w-full rounded border border-input bg-background px-2 py-2">
-                {companies.data.map((c) => <option key={c.id} value={c.id}>{c.company}</option>)}
+              <select value={hrEmail ?? ""} onChange={(e) => setSelected(e.target.value)} className="mt-1 w-full rounded border border-input bg-background px-2 py-2">
+                {companies.data.map((c) => <option key={c.hr_email} value={c.hr_email}>{c.company}</option>)}
               </select>
             </label>
           )}
-          {companyId !== null && (
+          {hrEmail !== null && (
             <div className="rounded-xl border border-primary bg-card p-5 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-lg font-semibold">{report.data?.length ?? 0} job shadow(s)</h2>
