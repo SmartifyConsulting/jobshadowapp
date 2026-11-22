@@ -15,7 +15,6 @@ import { Users as UsersIcon, FileText, ShoppingCart, Briefcase, GraduationCap, P
 import { supabase } from "@/integrations/supabase/client";
 import { RichText } from "@/components/RichText";
 import { draftCareerDescription } from "@/lib/career-ai.functions";
-import { guessLastNamesFromEmails } from "@/lib/guess-last-names.functions";
 import { accountInitial, alphabetInitial } from "@/lib/alphabet";
 import { withCareerDescriptions } from "@/lib/career-descriptions";
 import { ROLE_TITLES } from "@/lib/data";
@@ -837,18 +836,6 @@ export function AdminUsers() {
       .sort((a, b) => (a.display_name || a.full_name || a.email || "").localeCompare(b.display_name || b.full_name || b.email || ""));
   }, [accounts.data, q, showSpam, letter, accountRole, isUnclassified]);
 
-  const guessLastNamesFn = useServerFn(guessLastNamesFromEmails);
-  const [guessRequested, setGuessRequested] = useState(false);
-  const missingLastNames = useMemo(() => rows
-    .filter((a) => !accountNameParts(a).last && !!a.email)
-    .slice(0, 150)
-    .map((a) => ({ id: a.id, email: a.email!, firstName: accountNameParts(a).first || undefined })), [rows]);
-  const lastNameGuesses = useQuery({
-    queryKey: ["admin", "last-name-guesses", missingLastNames.map((m) => m.id).join(",")],
-    enabled: guessRequested && missingLastNames.length > 0,
-    staleTime: Infinity,
-    queryFn: async () => (await guessLastNamesFn({ data: { entries: missingLastNames } })).guesses,
-  });
 
   const letterCounts = useMemo(() => {
     const counts = new Map<string, number>();
@@ -909,8 +896,7 @@ export function AdminUsers() {
               </button>
             );
           })}
-          {!guessRequested && missingLastNames.length > 0 && <Button variant="outline" className="ml-auto" onClick={() => setGuessRequested(true)}>Guess missing last names (AI)</Button>}
-          {!isUnclassified && <Button className={guessRequested || !missingLastNames.length ? "ml-auto" : ""} onClick={() => setCreateOpen(true)}>Add {ROLE_LABELS[accountRole]}</Button>}
+          {!isUnclassified && <Button className="ml-auto" onClick={() => setCreateOpen(true)}>Add {ROLE_LABELS[accountRole]}</Button>}
         </div>
         <div className="mt-2 flex flex-wrap items-end gap-4">
           <label className="block max-w-sm text-sm">
@@ -935,7 +921,6 @@ export function AdminUsers() {
                       const avatarUrl = a.avatar_path ? supabase.storage.from("avatars").getPublicUrl(a.avatar_path).data.publicUrl : null;
                       const label = a.display_name || a.full_name || a.email || a.id;
                       const { first: firstName, last: lastName } = accountNameParts(a);
-                      const guessedLast = !lastName ? lastNameGuesses.data?.[a.id] : null;
                       return <Fragment key={a.id}>
                         <tr className={'border-t border-warm-divider transition-colors hover:bg-teal/5 ' + (selectedId === a.id ? 'bg-teal/10' : '')}>
                           <td className="px-3 py-1.5"><div className="flex items-center gap-2" title={'Joined ' + new Date(a.created_at).toLocaleDateString()}>
@@ -943,7 +928,7 @@ export function AdminUsers() {
                             <button onClick={() => setSelectedId(a.id)} className="max-w-32 truncate text-left font-medium hover:text-primary" title={label} aria-label={'View details for ' + label}>{firstName || "—"}</button>
                             {a.is_spam && <span className="text-[10px] text-destructive">Spam</span>}
                           </div></td>
-                          <td className="px-3 py-1.5">{lastName ? lastName : guessedLast ? <span className="italic text-muted-foreground" title="AI-guessed from the email address — unconfirmed">{guessedLast}?</span> : "—"}</td>
+                          <td className="px-3 py-1.5">{lastName || "—"}</td>
                           <td className="px-3 py-1.5"><span className="block max-w-48 truncate" title={a.email ?? ""}>{a.email || "—"}</span></td>
                           <td className="px-3 py-1.5"><div className="flex gap-1">{a.roles.length === 0 && <span className="text-xs text-muted-foreground">Unclassified</span>}{a.roles.map((role) => <span key={role} className="whitespace-nowrap rounded bg-muted px-1.5 py-1 text-[10px] text-foreground">{ROLE_LABELS[role]}</span>)}</div></td>
                           <td className="px-3 py-1.5"><div className="flex items-center gap-2">
