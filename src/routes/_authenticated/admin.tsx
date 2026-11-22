@@ -879,7 +879,6 @@ export function AdminUsers() {
       </Dialog>
       {roleTab !== "companies" && <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-ivory px-6 py-6 text-foreground">
         <h1 className="text-2xl font-medium">Users {!accounts.isLoading && `(${rows.length})`}</h1>
-        {!isUnclassified && <Button onClick={() => setCreateOpen(true)}>Add {ROLE_LABELS[accountRole]}</Button>}
         <div role="group" aria-label="Users view" className="flex rounded border border-border p-0.5">
           {([['table', List, 'Table'], ['cards', LayoutGrid, 'Cards']] as const).map(([value, Icon, label]) => <button key={value} onClick={() => setView(value)} aria-pressed={view === value} className={'flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs transition ' + (view === value ? 'bg-background text-primary' : 'hover:bg-primary/5')}><Icon className="h-3.5 w-3.5" />{label}</button>)}
         </div>
@@ -909,6 +908,7 @@ export function AdminUsers() {
               </button>
             );
           })}
+          {!isUnclassified && <Button className="ml-auto" onClick={() => setCreateOpen(true)}>Add {ROLE_LABELS[accountRole]}</Button>}
         </div>
         <div className="mt-2 flex flex-wrap items-end gap-4">
           <label className="block max-w-sm text-sm">
