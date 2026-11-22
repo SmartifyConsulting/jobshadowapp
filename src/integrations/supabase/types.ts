@@ -841,6 +841,7 @@ export type Database = {
           school: string
           school_type: string
           tc_accepted: boolean
+          tc_accepted_at: string | null
           updated_at: string
           user_id: string
           where_heard: string | null
@@ -874,6 +875,7 @@ export type Database = {
           school: string
           school_type: string
           tc_accepted?: boolean
+          tc_accepted_at?: string | null
           updated_at?: string
           user_id: string
           where_heard?: string | null
@@ -907,6 +909,7 @@ export type Database = {
           school?: string
           school_type?: string
           tc_accepted?: boolean
+          tc_accepted_at?: string | null
           updated_at?: string
           user_id?: string
           where_heard?: string | null
@@ -1013,6 +1016,45 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_list_accounts: {
+        Args: never
+        Returns: {
+          avatar_path: string
+          booking_count: number
+          contact_no: string
+          created_at: string
+          display_name: string
+          email: string
+          first_name: string
+          full_name: string
+          has_profile: boolean
+          has_scholar_profile: boolean
+          id: string
+          id_file_path: string
+          id_number: string
+          id_verified: boolean
+          is_spam: boolean
+          last_name: string
+          photo_path: string
+          roles: string[]
+          scholar_first_name: string
+          scholar_last_name: string
+          school: string
+        }[]
+      }
+      admin_user_applications: {
+        Args: { _user_id: string }
+        Returns: {
+          cancelled: boolean
+          career: string
+          company: string
+          dates: string
+          id: string
+          indemnity: boolean
+          paid: boolean
+          source: string
+        }[]
+      }
       can_read_own_notification: {
         Args: { _notification: string }
         Returns: boolean
