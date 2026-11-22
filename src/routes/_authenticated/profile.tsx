@@ -10,7 +10,10 @@ import { ImageCropModal } from "@/components/ImageCropModal";
 
 type Tab = "profile" | "account" | "bookings";
 export const Route = createFileRoute("/_authenticated/profile")({
-  validateSearch: (s: Record<string, unknown>): { tab?: Tab | undefined } => ({ tab: ["profile", "account", "bookings"].includes(s["tab"] as string) ? (s["tab"] as Tab) : undefined }),
+  validateSearch: (s: Record<string, unknown>): { tab?: Tab | undefined; entry?: "workflow" | undefined } => ({
+    tab: ["profile", "account", "bookings"].includes(s["tab"] as string) ? (s["tab"] as Tab) : undefined,
+    entry: s["entry"] === "workflow" ? "workflow" : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Profile | JobShadow" },
@@ -29,7 +32,8 @@ function useUser() {
 }
 
 function ProfileSettings() {
-  const { tab } = Route.useSearch();
+  const { tab, entry } = Route.useSearch();
+  const inWorkflow = entry === "workflow";
   const navigate = Route.useNavigate();
   const qc = useQueryClient();
   const { data: user } = useUser();
@@ -88,15 +92,15 @@ function ProfileSettings() {
       <section className="bg-muted/40">
         <div className="mx-auto max-w-7xl space-y-4 px-5 py-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Profile</h1>
-            <p className="text-xs text-muted-foreground">Manage your details, scholar account and bookings.</p>
+            <h1 className="text-3xl font-bold text-foreground">{inWorkflow ? "Your Job Shadow Booking" : "Profile"}</h1>
+            <p className="text-xs text-muted-foreground">{inWorkflow ? "Complete your profile and booking below." : "Manage your details, scholar account and bookings."}</p>
           </div>
-          <Tabs value={tab ?? "profile"} onValueChange={(v) => navigate({ search: { tab: v as Tab }, replace: true })} className="w-full">
-            <TabsList className="flex w-full flex-wrap justify-start rounded-full bg-primary/90">
+          <Tabs value={inWorkflow ? "bookings" : (tab ?? "profile")} onValueChange={(v) => navigate({ search: { tab: v as Tab }, replace: true })} className="w-full">
+            {!inWorkflow && <TabsList className="flex w-full flex-wrap justify-start rounded-full bg-primary/90">
               <TabsTrigger value="profile" className="data-[state=active]:bg-card data-[state=active]:text-foreground text-primary-foreground text-xs gap-1.5"><UserCircle className="h-3.5 w-3.5" />Profile</TabsTrigger>
               <TabsTrigger value="account" className="data-[state=active]:bg-card data-[state=active]:text-foreground text-primary-foreground text-xs gap-1.5"><IdCard className="h-3.5 w-3.5" />My Account</TabsTrigger>
               <TabsTrigger value="bookings" className="data-[state=active]:bg-card data-[state=active]:text-foreground text-primary-foreground text-xs gap-1.5"><CalendarCheck className="h-3.5 w-3.5" />My Bookings</TabsTrigger>
-            </TabsList>
+            </TabsList>}
             <TabsContent value="profile" className="mt-4">
               <div className="rounded-xl border border-primary bg-card p-4 shadow-sm space-y-6">
                 <div className="flex items-center gap-3"><UserCircle className="h-4 w-4 text-primary" /><h2 className="text-sm font-semibold">Profile</h2></div>
