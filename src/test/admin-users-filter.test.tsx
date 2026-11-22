@@ -80,6 +80,7 @@ describe("User alphabet chips", () => {
     const client = mount([school]);
     expect(screen.getByRole("heading", { name: "Users (2)" })).toBeVisible();
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Hosts (1)" }), { button: 0 });
+    fireEvent.click(screen.getByRole("button", { name: "G" }));
     expect(screen.getByText("Group Company")).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Linked login accounts (2)" }));
     fireEvent.click(screen.getAllByRole("button", { name: "A" }).find((button) => !(button as HTMLButtonElement).disabled)!);
@@ -149,6 +150,7 @@ describe("Visible provider directories and career wizard", () => {
   it("opens the mentor contact directory directly without a login-account gate", () => {
     const client = mount();
     fireEvent.mouseDown(screen.getByRole('tab', { name: 'Mentors (1)' }), { button: 0 });
+    fireEvent.click(screen.getByRole('button', { name: 'S' }));
     expect(screen.getByText('Solo Company')).toBeVisible();
     expect(screen.queryByText('Group Company')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Linked login accounts (0)' })).toBeVisible();

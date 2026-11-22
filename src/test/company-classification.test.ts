@@ -1,3 +1,4 @@
+import { providerGroups } from "@/lib/provider-directory";
 import { describe, expect, it } from "vitest";
 import { classifyCompanies, contactEmails, individualMentorEmails } from "@/lib/company-classification";
 
@@ -17,4 +18,14 @@ describe("Mentor company links", () => {
     expect(individualMentorEmails([contact("First", "Person", "same@example.com"), contact("Second", "Person", "same@example.com")]).size).toBe(0);
     expect(classifyCompanies([{ company: "Unknown", mentor_email: null, backup_mentor_email: null }]).has("unknown")).toBe(false);
   });
+  it("groups repeated placements once while retaining every editable source record", () => {
+    const records = [{ ...contact('Solo Company', 'Solo Person', 'solo@example.com'), id: 1, career: 'Accountant', original_field: 'retained' }, { ...contact('Solo Company', 'Solo Person', 'solo@example.com'), id: 2, career: 'Auditor' }];
+    const groups = providerGroups(records);
+    expect(groups).toHaveLength(1);
+    expect(groups[0]?.names).toEqual(['Solo Person']);
+    expect(groups[0]?.careers).toEqual(['Accountant', 'Auditor']);
+    expect(groups[0]?.records).toEqual(records);
+    expect(groups[0]?.records[0]?.['original_field']).toBe('retained');
+  });
+
 });

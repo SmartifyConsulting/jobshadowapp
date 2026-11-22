@@ -1,3 +1,5 @@
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { providerGroups } from "@/lib/provider-directory";
 import { CareerGuidance } from "@/components/CareerGuidance";
 import { getCareerGuidance } from "@/lib/career-guidance";
 import type { CareerDraft } from "@/lib/career-draft";
@@ -954,7 +956,7 @@ export function AdminUsers() {
       <Tabs value={roleTab} onValueChange={(value) => { setRoleTab(value as AccountRow["roles"][number] | "companies" | "unclassified"); setLetter(null); setOpenGroups([]); setSelectedId(null); setShowProviderAccounts(false); }}>
         <div className="overflow-x-auto border-b border-border bg-ivory px-6 py-3"><TabsList aria-label="User types">{([["user", "Students"], ["mentor", "Hosts"], ["individual_mentor", "Mentors"], ["school", "Schools"], ["hr_admin", "HR Admin"], ["admin", "Admin"], ["companies", "Companies"], ["unclassified", "Unclassified"]] as const).map(([role, name]) => <TabsTrigger key={role} value={role}>{name}{role === "mentor" || role === "individual_mentor" ? ` (${[...providerTypes.values()].filter((type) => type === (role === "mentor" ? "host" : "mentor")).length})` : role !== "companies" && ` (${(accounts.data ?? []).filter((user) => matchesRole(user, role) && (showSpam || !user.is_spam)).length})`}</TabsTrigger>)}</TabsList></div>
       <TabsContent value={roleTab} className="mt-0">
-      {isProvider && <><CompaniesList key={roleTab} kind={roleTab === "mentor" ? "host" : "mentor"} /><button type="button" onClick={() => setShowProviderAccounts((open) => !open)} aria-expanded={showProviderAccounts} className="w-full border-t border-border px-6 py-4 text-left text-sm font-medium">Linked login accounts ({rows.length})</button></>}
+      {isProvider && <><ProviderDirectory key={roleTab} kind={roleTab === "mentor" ? "host" : "mentor"} /><button type="button" onClick={() => setShowProviderAccounts((open) => !open)} aria-expanded={showProviderAccounts} className="w-full border-t border-border px-6 py-4 text-left text-sm font-medium">Linked login accounts ({rows.length})</button></>}
       {roleTab === "companies" ? <CompaniesList /> : isProvider && !showProviderAccounts ? null : <div className="flex flex-col items-start xl:flex-row">
       <div className={'min-w-0 w-full flex-1 px-4 py-2 text-foreground ' + 'bg-ivory'}>
         <div className="flex flex-wrap gap-1.5">
@@ -1248,6 +1250,42 @@ function Evaluations() {
 
 const BOOKING_STATUS_LABELS: Record<string, string> = { awaiting_payment: "Awaiting payment", indemnity_required: "Paid – indemnity needed", confirmed: "Confirmed", completed: "Completed", cancelled: "Cancelled" };
 
+
+
+function ProviderDirectory({ kind }: { kind: "mentor" | "host" }) {
+  const qc = useQueryClient();
+  const config = TABLES.find((entry) => entry.id === "companies")!;
+  const data = useQuery({ queryKey: ["admin", "companies", false], queryFn: () => fetchAllRows(async (from, to) => { const result = await supabase.from("companies").select("*").order("id", { ascending: false }).range(from, to); if (result.error) throw result.error; return result.data ?? []; }) });
+  const [search, setSearch] = useState("");
+  const [letter, setLetter] = useState<string | null>(null);
+  const [open, setOpen] = useState<string[]>([]);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [editing, setEditing] = useState<Record<string, unknown> | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const all = data.data ?? [];
+  const groups = providerGroups(all).filter((group) => group.kind === kind).sort((a, b) => (kind === 'mentor' ? a.names[0] || a.company : a.company).localeCompare(kind === 'mentor' ? b.names[0] || b.company : b.company));
+  const initial = (group: typeof groups[number]) => alphabetInitial(kind === 'mentor' ? group.names[0] || group.company : group.company);
+  const matches = groups.filter((group) => (!letter || initial(group) === letter) && (!search.trim() || [group.company, ...group.names, ...group.emails, ...group.careers].join(' ').toLowerCase().includes(search.trim().toLowerCase())));
+  const detail = groups.find((group) => group.key === selected);
+  const refresh = () => { setEditing(null); setCreating(false); void qc.invalidateQueries({ queryKey: ['admin', 'companies'] }); void qc.invalidateQueries({ queryKey: ['admin', 'company-contact-classification'] }); };
+  async function remove(record: Record<string, unknown>) {
+    if (!(await confirmAction('Delete this placement record? Other placements and contact records are kept.', { danger: true, confirmLabel: 'Delete placement' }))) return;
+    const result = await supabase.from('companies').delete().eq('id', Number(record['id']));
+    if (result.error) return setErr(result.error.message); refresh();
+  }
+  if (editing) return <EditRecord title="Companies" table="companies" cols={config.cols} row={editing} onDone={refresh} onCancel={() => setEditing(null)} />;
+  if (creating) return <CreateRole onDone={refresh} onCancel={() => setCreating(false)} />;
+  return <section className="bg-ivory">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-5"><h1 className="text-2xl font-medium">{kind === 'mentor' ? 'Mentors' : 'Hosts'} ({groups.length})</h1><div className="flex gap-2"><Button onClick={() => setCreating(true)}>Add placement</Button><Button variant="outline" disabled={data.isPending || !!data.error} onClick={() => exportCsv('Company contacts full', completeExportColumns(config.cols, all), all)}>Export all</Button></div></div>
+    <div className="space-y-3 px-4 py-3"><div className="flex flex-wrap gap-1.5" aria-label="Filter providers alphabetically">{['All', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')].map((ch) => <button key={ch} disabled={ch !== 'All' && !groups.some((group) => initial(group) === ch)} aria-pressed={ch === 'All' ? !letter : letter === ch} onClick={() => { setLetter(ch === 'All' ? null : ch); setOpen(ch === 'All' ? [] : [ch]); }} className={'rounded-full px-2.5 py-1.5 text-xs font-medium uppercase transition disabled:opacity-30 ' + ((ch === 'All' ? !letter : letter === ch) ? 'bg-primary text-primary-foreground' : 'bg-muted/70 text-foreground hover:bg-teal/20')}>{ch}</button>)}</div>
+    <label className="block max-w-sm text-sm">Search<input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name, company, email or career" className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></label>
+    {err && <p role="alert" className="text-sm text-destructive">{err}</p>}
+    {data.isPending ? <p className="py-4 text-sm">Loading…</p> : data.error ? <p role="alert" className="py-4 text-sm text-destructive">Unable to load contact records.</p> : <Accordion type="multiple" value={open} onValueChange={setOpen} className="border-t border-border">{[...new Set(matches.map(initial))].sort().map((ch) => <AccordionItem key={ch} value={ch}><AccordionTrigger className="px-3 py-3 text-sm hover:no-underline hover:bg-muted/30"><span className="font-bold text-primary">{ch}</span>&nbsp;<span className="text-muted-foreground">({matches.filter((group) => initial(group) === ch).length})</span></AccordionTrigger><AccordionContent className="pb-0"><div className="overflow-x-auto"><table className="w-full min-w-[650px] text-left text-xs"><thead><tr>{[kind === 'mentor' ? 'Mentor' : 'Company', kind === 'mentor' ? 'Company' : 'Mentors', 'Email', 'Careers', 'Actions'].map((heading) => <th key={heading} className="px-3 py-2 font-normal">{heading}</th>)}</tr></thead><tbody>{matches.filter((group) => initial(group) === ch).map((group) => <tr key={group.key} className="border-t border-warm-divider hover:bg-teal/5"><td className="px-3 py-2 font-medium">{kind === 'mentor' ? group.names.join(' · ') || 'Name not recorded' : group.company}</td><td className="max-w-64 truncate px-3 py-2" title={kind === 'mentor' ? group.company : group.names.join(', ')}>{kind === 'mentor' ? group.company : group.names.join(', ') || 'Name not recorded'}</td><td className="max-w-64 truncate px-3 py-2" title={group.emails.join(', ')}>{group.emails.join(', ') || 'Not recorded'}</td><td className="px-3 py-2">{group.careers.length}</td><td className="px-3 py-2"><button onClick={() => setSelected(group.key)} className="whitespace-nowrap rounded border border-border px-2 py-1">View / edit</button></td></tr>)}</tbody></table></div></AccordionContent></AccordionItem>)}{!matches.length && <p className="py-4 text-sm text-muted-foreground">No matching contact records.</p>}</Accordion>}
+    </div>
+    <Sheet open={!!detail} onOpenChange={(value) => { if (!value) setSelected(null); }}><SheetContent className="w-full overflow-y-auto bg-ivory sm:max-w-xl"><SheetHeader><SheetTitle>{detail?.company}</SheetTitle><SheetDescription>{kind === 'mentor' ? 'Individual mentor and linked placements' : 'Host company and contributing mentors'}</SheetDescription></SheetHeader>{detail && <div className="mt-4 space-y-4"><p className="text-sm">{detail.names.join(' · ')}</p><p className="break-words text-xs text-muted-foreground">{detail.emails.join(', ')}</p>{detail.records.map((record) => <details key={String(record['id'])} className="rounded border border-border p-3"><summary className="cursor-pointer text-sm font-medium">{String(record['career'] || 'Placement')} · {String(record['location'] || 'Location not recorded')}</summary><div className="mt-3 flex gap-2"><Button variant="outline" onClick={() => { setSelected(null); setEditing(record); }}>Edit placement</Button><Button variant="outline" onClick={() => void remove(record)}>Delete placement</Button></div><dl className="mt-3 space-y-3 text-xs">{Object.entries(record).map(([key, value]) => <div key={key}><dt className="text-muted-foreground">{key.replaceAll('_', ' ')}</dt><dd className="mt-1 whitespace-pre-wrap break-words">{value == null ? 'Not recorded' : typeof value === 'object' ? JSON.stringify(value) : String(value)}</dd></div>)}</dl></details>)}</div>}</SheetContent></Sheet>
+  </section>;
+}
 
 function CompaniesList({ kind }: { kind?: "mentor" | "host" } = {}) {
   const config = TABLES.find((entry) => entry.id === "companies")!;
