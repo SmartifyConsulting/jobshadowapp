@@ -88,7 +88,7 @@ function Home() {
   }
 
   return (
-    <SiteLayout className="home-reference">
+    <SiteLayout className="home-reference" headerLogo={<img src="/assets/jobshadow-logo-shadow-yellow.png" alt="JobShadow" className="h-full w-auto object-contain" />}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ORG_JSON_LD }} />
       <section
         className="relative overflow-hidden text-primary-foreground"

@@ -205,9 +205,9 @@ export function SiteFooter() {
         </div>
       </div>
       <div>
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-5 gap-y-2 px-5 py-2">
+        <div className="relative mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-5 gap-y-2 px-5 py-2">
           <p className="text-xs opacity-80">© JobShadow {new Date().getFullYear()}</p>
-          <Link to="/legal" className="text-xs underline opacity-80 hover:opacity-100">Legal, Privacy &amp; Consent</Link>
+          <Link to="/legal" className="text-xs underline opacity-80 hover:opacity-100 sm:absolute sm:left-1/2 sm:-translate-x-1/2">Legal, Privacy &amp; Consent</Link>
         </div>
       </div>
     </footer>
