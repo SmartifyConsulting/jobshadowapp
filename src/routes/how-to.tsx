@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronDown, GraduationCap, Users, Building2, UserPlus, User, Search, CalendarDays, ClipboardCheck, Handshake, Star, Calendar, FileEdit, CheckCircle2, Briefcase, Bell, ArrowRight } from "lucide-react";
+import { ChevronDown, GraduationCap, Users, Building2, HandCoins, UserPlus, User, Search, CalendarDays, ClipboardCheck, Handshake, Star, Calendar, FileEdit, CheckCircle2, Briefcase, Bell, ArrowRight, FileCheck2, BadgeCheck } from "lucide-react";
 import { SiteLayout } from "@/components/SiteLayout";
 import { YouTube } from "@/components/YouTube";
 import { VIDEOS } from "@/lib/content";
@@ -36,6 +36,15 @@ const HOST_STEPS: Step[] = [
   { icon: CheckCircle2, label: "Confirm\na booking" },
   { icon: Briefcase, label: "Host the\nexperience" },
   { icon: Bell, label: "Get feedback &\nbuild your profile" },
+];
+
+const SPONSOR_STEPS: Step[] = [
+  { icon: UserPlus, label: "Register\nas a sponsor" },
+  { icon: User, label: "Create\nyour profile" },
+  { icon: Search, label: "Choose a province,\nschool or field" },
+  { icon: HandCoins, label: "Fund\nplacements" },
+  { icon: FileCheck2, label: "Receive\nimpact reports" },
+  { icon: BadgeCheck, label: "Get your\nSection 18A certificate" },
 ];
 
 function StepRow({ title, icon: TitleIcon, steps }: { title: string; icon: typeof User; steps: Step[] }) {
@@ -89,6 +98,7 @@ function HowTo() {
           <StepRow title="For Students" icon={GraduationCap} steps={STUDENT_STEPS} />
           <StepRow title="For Mentors" icon={Users} steps={MENTOR_STEPS} />
           <StepRow title="For Hosts" icon={Building2} steps={HOST_STEPS} />
+          <StepRow title="For Sponsors" icon={HandCoins} steps={SPONSOR_STEPS} />
         </div>
       </section>
       <section className="bg-primary">
