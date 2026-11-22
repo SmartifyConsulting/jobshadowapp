@@ -38,10 +38,10 @@ export function SupportChatWidget({ viewerRole }: { viewerRole?: string | undefi
     <div className="fixed bottom-5 right-5 z-50">
       {open && (
         <div className="relative w-80 max-w-[calc(100vw-2.5rem)]">
-        <div role="dialog" aria-label="Ask Reddy" className="flex h-[28rem] max-h-[calc(100dvh-3rem)] flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-xl sm:max-h-[calc(100dvh-3rem)]">
+        <div role="dialog" aria-label="Ask JobShadow" className="flex h-[28rem] max-h-[calc(100dvh-3rem)] flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-xl sm:max-h-[calc(100dvh-3rem)]">
           <div className="flex items-center justify-between bg-primary px-4 py-3 text-primary-foreground">
             <div className="flex items-center gap-2">
-              <p className="font-display text-lg uppercase tracking-wide">Ask Reddy</p>
+              <p className="font-display text-lg uppercase tracking-wide">Ask JobShadow</p>
             </div>
             <button onClick={() => setOpen(false)} aria-label="Close support chat" className="rounded p-1 hover:bg-primary-foreground/10"><X className="h-4 w-4" /></button>
           </div>

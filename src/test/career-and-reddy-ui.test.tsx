@@ -27,7 +27,7 @@ describe("Career guidance and chat placement", () => {
   it("places Reddy inside the chat dialog beside the opening message", () => {
     render(<SupportChatWidget />);
     fireEvent.click(screen.getByRole("button", { name: "Open support chat" }));
-    const chat = screen.getByRole("dialog", { name: "Ask Reddy" });
+    const chat = screen.getByRole("dialog", { name: "Ask JobShadow" });
     expect(within(chat).getByRole("img", { name: "Reddy" })).toBeVisible();
     expect(within(chat).getByText(/Hi, I'm Reddy/)).toBeVisible();
     fireEvent.click(within(chat).getByRole("button", { name: "Close support chat" }));
