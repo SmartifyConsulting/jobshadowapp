@@ -91,10 +91,10 @@ function ProfileSettings() {
     <SiteLayout>
       <section className="bg-muted/40">
         <div className="mx-auto max-w-7xl space-y-4 px-5 py-8">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">{inWorkflow ? "Your Job Shadow Booking" : "Profile"}</h1>
-            <p className="text-xs text-muted-foreground">{inWorkflow ? "Complete your profile and booking below." : "Manage your details, scholar account and bookings."}</p>
-          </div>
+          {!inWorkflow && <div>
+            <h1 className="text-3xl font-bold text-foreground">Profile</h1>
+            <p className="text-xs text-muted-foreground">Manage your details, scholar account and bookings.</p>
+          </div>}
           <Tabs value={inWorkflow ? "bookings" : (tab ?? "profile")} onValueChange={(v) => navigate({ search: { tab: v as Tab }, replace: true })} className="w-full">
             {!inWorkflow && <TabsList className="flex w-full flex-wrap justify-start rounded-full bg-primary/90">
               <TabsTrigger value="profile" className="data-[state=active]:bg-card data-[state=active]:text-foreground text-primary-foreground text-xs gap-1.5"><UserCircle className="h-3.5 w-3.5" />Profile</TabsTrigger>

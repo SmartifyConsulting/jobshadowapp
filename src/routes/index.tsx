@@ -78,7 +78,7 @@ function Home() {
   const [showSignUp, setShowSignUp] = useState(false);
 
   function focusSignIn() {
-    if (signedIn) { void navigate({ to: "/profile", search: { tab: "bookings", entry: "workflow" } }); return; }
+    if (signedIn) { void navigate({ to: "/my-account" }); return; }
     setShowSignIn(true);
     setShowSignUp(false);
     requestAnimationFrame(() => {
@@ -100,7 +100,7 @@ function Home() {
           <button
             type="button"
             onClick={focusSignIn}
-            className="mt-12 rounded-none bg-cta px-9 py-4 text-lg font-semibold uppercase tracking-[0.2em] text-cta-foreground shadow-warm transition hover:-translate-y-0.5 hover:brightness-110"
+            className="mt-12 rounded-2xl bg-cta px-9 py-4 text-lg font-semibold uppercase tracking-[0.2em] text-cta-foreground shadow-warm transition hover:-translate-y-0.5 hover:brightness-110"
           >
             Book Job Shadow
           </button>

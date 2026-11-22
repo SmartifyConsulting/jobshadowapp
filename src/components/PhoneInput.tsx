@@ -22,7 +22,7 @@ export function PhoneInput({ id, label = "Mobile Number", value, onChange, requi
   function change(next: typeof draft) { setDraft(next); const full = phoneWithCountryCode(next.national, next.country); emitted.current = full; onChange(full); }
   return <div className="flex min-w-0 gap-2">
     <select aria-label={label + " Country Code"} value={draft.country} disabled={disabled} onChange={(event) => change({ ...draft, country: event.target.value as CountryCode })} className="h-9 w-32 max-w-[42%] shrink-0 rounded-md border border-input bg-transparent px-2 text-xs outline-none [&>option]:bg-background [&>option]:text-foreground">
-      {countries.map(({ country, name, code }) => <option key={country} value={country}>{country} +{code} — {name}</option>)}
+      {countries.map(({ country, name, code }) => <option key={country} value={country} title={name}>{country} +{code}</option>)}
     </select>
     <Input id={id} type="tel" inputMode="tel" autoComplete="tel-national" aria-label={label} className="min-w-0 flex-1" placeholder="Mobile number" required={required} disabled={disabled} value={draft.national} onChange={(event) => change({ ...draft, national: event.target.value })} />
   </div>;
