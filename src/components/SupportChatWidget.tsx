@@ -70,9 +70,10 @@ export function SupportChatWidget({ viewerRole }: { viewerRole?: string | undefi
       )}
       {!open && <button
         onClick={() => setOpen(true)} aria-label="Open support chat"
-        className="grid h-16 w-16 place-items-center rounded-full bg-white p-2 shadow-warm transition hover:brightness-105"
+        className="flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-full bg-white shadow-warm transition hover:brightness-105"
       >
-        <img src="/assets/jobshadow-logo-shadow-red.webp" alt="Ask JobShadow" className="h-full w-full object-contain" />
+        <span className="text-[9px] font-bold uppercase leading-none tracking-wide text-primary">Ask</span>
+        <img src="/assets/jobshadow-logo-shadow-red.webp" alt="JobShadow" className="h-12 w-12 translate-y-0.5 object-contain" />
       </button>}
     </div>
   );
