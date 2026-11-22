@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { X, Send } from "lucide-react";
 import { askSupportChat } from "@/lib/support-chat.functions";
-import { BrandLogo } from "@/components/BrandLogo";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -71,10 +70,9 @@ export function SupportChatWidget({ viewerRole }: { viewerRole?: string | undefi
       )}
       {!open && <button
         onClick={() => setOpen(true)} aria-label="Open support chat"
-        className="grid h-16 w-16 place-items-center gap-0.5 rounded-full bg-white shadow-warm transition hover:brightness-105"
+        className="grid h-16 w-16 place-items-center rounded-full bg-white p-2 shadow-warm transition hover:brightness-105"
       >
-        <span className="text-[10px] font-bold uppercase tracking-wide text-primary">Ask</span>
-        <BrandLogo className="h-8 w-8" />
+        <img src="/assets/jobshadow-logo-shadow-red.webp" alt="Ask JobShadow" className="h-full w-full object-contain" />
       </button>}
     </div>
   );

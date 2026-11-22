@@ -6,7 +6,6 @@ import { RegisterForm } from "@/components/RegisterForm";
 import { PasswordInput } from "@/components/PasswordInput";
 import { supabase } from "@/integrations/supabase/client";
 import arrow from "@/assets/yellow-arrow.png.asset.json";
-import headline from "@/assets/hero-headline.png.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -96,7 +95,7 @@ function Home() {
         <img src={arrow.url} alt="" aria-hidden width={326} height={1080} className="pointer-events-none absolute top-8 right-[4%] hidden h-[calc(100%-4rem)] w-auto md:block" />
         <div className="relative mx-auto flex max-w-5xl flex-col items-center px-5 pb-32 pt-16 text-center sm:pt-20 md:pt-24">
           <h1 className="sr-only">Be sure about the career and life you choose with Job Shadow.</h1>
-          <img src={headline.url} alt="" width={1263} height={338} className="w-full max-w-4xl" />
+          <img src="/assets/jobshadow-logo-shadow-yellow.png" alt="" width={358} height={195} className="w-full max-w-sm" />
           <button
             type="button"
             onClick={focusSignIn}
