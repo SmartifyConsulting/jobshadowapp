@@ -1016,6 +1016,45 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_list_accounts: {
+        Args: never
+        Returns: {
+          id: string
+          email: string | null
+          created_at: string
+          roles: string[]
+          has_scholar_profile: boolean
+          first_name: string | null
+          last_name: string | null
+          scholar_first_name: string | null
+          scholar_last_name: string | null
+          display_name: string | null
+          avatar_path: string | null
+          full_name: string | null
+          contact_no: string | null
+          school: string | null
+          id_number: string | null
+          id_file_path: string | null
+          photo_path: string | null
+          id_verified: boolean | null
+          has_profile: boolean
+          is_spam: boolean
+          booking_count: number
+        }[]
+      }
+      admin_user_applications: {
+        Args: { _user_id: string }
+        Returns: {
+          id: string
+          source: string
+          company: string | null
+          career: string | null
+          dates: string | null
+          paid: boolean | null
+          indemnity: boolean | null
+          cancelled: boolean | null
+        }[]
+      }
       can_read_own_notification: {
         Args: { _notification: string }
         Returns: boolean

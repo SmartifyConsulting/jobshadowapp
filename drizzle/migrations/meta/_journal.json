@@ -477,6 +477,13 @@
       "when": 1794963500000,
       "tag": "0067_split_application_student_names",
       "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1794963600000,
+      "tag": "0068_lean_admin_accounts_rpc",
+      "breakpoints": true
     }
   ]
 }

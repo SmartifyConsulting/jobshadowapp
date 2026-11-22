@@ -26,7 +26,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
 import { sendQueuedEmails } from "@/lib/email.functions";
-import { getAccounts, updateAccount, removeAccount } from "@/lib/users.functions";
+import { updateAccount, removeAccount } from "@/lib/users.functions";
+import type { AccountApplication } from "@/lib/user-applications";
 import { extractCompanyIndemnity } from "@/lib/indemnity-ai.functions";
 import { lookupPublicHolidays } from "@/lib/public-holidays.functions";
 import { confirmAction, notify } from "@/lib/dialogs";
@@ -702,6 +703,21 @@ function UserDocument({ path, kind, verified = false }: { path: string | null; k
 
 const ROLE_LABELS: Record<AccountRow["roles"][number], string> = { user: "Student", mentor: "Host", hr_admin: "HR Admin", school: "School", admin: "Admin", parent: "Parent" };
 
+/** Per-user application/booking history, fetched lazily only when a row is expanded or selected -
+ * not eagerly embedded for every account, which used to mean loading it for hundreds of users on
+ * every page view regardless of whether anyone looked at it. */
+function useUserApplications(userId: string | null) {
+  return useQuery({
+    queryKey: ["admin", "user-applications", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("admin_user_applications", { _user_id: userId! });
+      if (error) throw new Error(error.message);
+      return (data ?? []) as AccountApplication[];
+    },
+  });
+}
+
 function accountNameParts(a: AccountRow) {
   const first = a.first_name || a.scholar_first_name || "";
   const last = a.last_name || a.scholar_last_name || "";
@@ -728,8 +744,49 @@ function UserFilePreview({ path, label }: { path: string | null; label: string }
   </section>;
 }
 
+function UserTableRow({ a, selectedId, busyId, expandedApplicationUser, onSelect, onEdit, onDelete, onVerify, onToggleExpand }: {
+  a: AccountRow; selectedId: string | null; busyId: string | null; expandedApplicationUser: string | null;
+  onSelect: (id: string) => void; onEdit: () => void; onDelete: (id: string, label: string) => void;
+  onVerify: (id: string, verified: boolean) => void; onToggleExpand: () => void;
+}) {
+  const avatarUrl = a.avatar_path ? supabase.storage.from("avatars").getPublicUrl(a.avatar_path).data.publicUrl : null;
+  const label = a.display_name || a.full_name || a.email || a.id;
+  const { first: firstName, last: lastName } = accountNameParts(a);
+  const expanded = expandedApplicationUser === a.id;
+  const applications = useUserApplications(expanded ? a.id : null);
+  return <Fragment>
+    <tr className={'border-t border-warm-divider transition-colors hover:bg-teal/5 ' + (selectedId === a.id ? 'bg-teal/10' : '')}>
+      <td className="px-3 py-1.5"><div className="flex items-center gap-2" title={'Joined ' + new Date(a.created_at).toLocaleDateString()}>
+        {avatarUrl ? <img src={avatarUrl} alt="" className="h-7 w-7 shrink-0 rounded-full object-cover" /> : <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-teal/15 text-[11px] uppercase">{label.slice(0, 1)}</span>}
+        <button onClick={() => onSelect(a.id)} className="max-w-32 truncate text-left font-medium hover:text-primary" title={label} aria-label={'View details for ' + label}>{firstName || "—"}</button>
+        {a.is_spam && <span className="text-[10px] text-destructive">Spam</span>}
+      </div></td>
+      <td className="px-3 py-1.5">{lastName || "—"}</td>
+      <td className="px-3 py-1.5"><span className="block max-w-48 truncate" title={a.email ?? ""}>{a.email || "—"}</span></td>
+      <td className="px-3 py-1.5"><div className="flex gap-1">{a.roles.length === 0 && <span className="text-xs text-muted-foreground">Unclassified</span>}{a.roles.map((role) => <span key={role} className="whitespace-nowrap rounded bg-muted px-1.5 py-1 text-[10px] text-foreground">{ROLE_LABELS[role]}</span>)}</div></td>
+      <td className="px-3 py-1.5"><div className="flex items-center gap-2">
+        <label className="flex items-center" title={a.id_verified === null ? 'No scholar profile to verify' : 'ID verified'}><input type="checkbox" className="accent-primary" checked={a.id_verified === true} disabled={a.id_verified === null || busyId === a.id} onChange={(e) => onVerify(a.id, e.target.checked)} aria-label={'ID verified for ' + label} /></label>
+        <UserDocument path={a.id_file_path} kind="id" verified={a.id_verified === true} />
+        <UserDocument path={a.photo_path} kind="photo" />
+      </div></td>
+      <td className="px-3 py-1.5"><button aria-expanded={expanded} aria-controls={'applications-' + a.id} onClick={onToggleExpand} className="flex items-center gap-2 whitespace-nowrap rounded px-1.5 py-1 text-xs hover:bg-muted" title={a.booking_count + ' bookings'}>{a.booking_count}<ChevronDown className={'h-3 w-3 transition ' + (expanded ? 'rotate-180' : '')} /><span className="sr-only">Applications for {label}</span></button></td>
+      <td className="px-3 py-1.5"><div className="flex items-center gap-1.5">
+        <button onClick={onEdit} disabled={busyId === a.id} className="flex items-center gap-1.5 rounded border border-border px-2 py-1 text-xs transition hover:border-primary/30 hover:text-primary disabled:opacity-50" aria-label={'Edit ' + label}><Pencil className="h-3.5 w-3.5" />Edit</button>
+        <button onClick={() => onDelete(a.id, label)} disabled={busyId === a.id} className="rounded p-1.5 text-muted-foreground transition hover:bg-destructive/5 hover:text-destructive disabled:opacity-50" aria-label={'Delete account for ' + label}><Trash2 className="h-3.5 w-3.5" /></button>
+      </div></td>
+    </tr>
+    {expanded && <tr id={'applications-' + a.id}><td colSpan={7} className="border-t border-border bg-muted/30 px-5 py-3">
+      <div className="mb-2 flex justify-between text-xs text-muted-foreground"><span>Applications for {label}</span><span>{a.booking_count} bookings · Joined {new Date(a.created_at).toLocaleDateString()}</span></div>
+      {applications.isLoading ? <p className="text-xs text-muted-foreground">Loading…</p> : !applications.data?.length ? <p className="text-xs text-muted-foreground">No applications recorded.</p> : (
+        <table className="w-full text-left text-xs"><thead><tr>{["ID", "Company", "Career", "Dates", "Paid", "Indemnity", "Cancelled"].map((heading) => <th key={heading} className="px-2 py-2 font-medium">{heading}</th>)}</tr></thead><tbody>{applications.data.map((application) => <tr key={application.source + '-' + application.id} className="border-t border-border/70"><td className="px-2 py-2">{application.source} #{application.id}</td><td className="px-2 py-2">{application.company || '—'}</td><td className="px-2 py-2">{application.career || '—'}</td><td className="px-2 py-2">{application.dates || '—'}</td>{[application.paid, application.indemnity, application.cancelled].map((value, index) => <td key={index} className="px-2 py-2">{value === null ? 'Not recorded' : <BoolIcon value={index === 2 ? !value : value} />}</td>)}</tr>)}</tbody></table>
+      )}
+    </td></tr>}
+  </Fragment>;
+}
+
 function UserDetailPanel({ account: a, onClose, onEdit }: { account: AccountRow; onClose: () => void; onEdit: () => void }) {
   const label = a.display_name || a.full_name || a.email || a.id;
+  const applications = useUserApplications(a.id);
   return <aside aria-label="Selected user details" className="w-full shrink-0 border-t border-border bg-background p-5 xl:sticky xl:top-0 xl:max-h-screen xl:w-72 xl:overflow-y-auto xl:border-l xl:border-t-0">
     <div className="mb-4 flex items-start justify-between gap-3"><div><h2 className="font-sans text-sm font-medium">{label}</h2><div className="mt-1 flex flex-wrap gap-1">{a.roles.length === 0 && <span className="text-xs text-muted-foreground">Unclassified</span>}{a.roles.map((role) => <span key={role} className="rounded bg-teal/15 px-1.5 py-0.5 text-[10px]">{ROLE_LABELS[role]}</span>)}</div></div><button onClick={onClose} aria-label="Close user details" className="rounded p-1 text-muted-foreground hover:bg-muted"><X className="h-4 w-4" /></button></div>
     <dl className="space-y-2 text-xs">
@@ -737,7 +794,7 @@ function UserDetailPanel({ account: a, onClose, onEdit }: { account: AccountRow;
     </dl>
     <div className="my-4 flex items-center justify-between"><span className="flex items-center gap-1 text-xs text-muted-foreground"><BoolIcon value={!!a.id_verified} /> {a.id_verified ? 'ID verified' : 'ID not verified'}</span><button onClick={onEdit} className="flex items-center gap-1 text-xs text-primary"><Pencil className="h-3 w-3" />Edit user</button></div>
     <div className="space-y-4 border-t border-border py-4"><UserFilePreview path={a.id_file_path} label="Uploaded ID" /><UserFilePreview path={a.photo_path} label="Uploaded photo" /></div>
-    <section className="border-t border-border pt-4"><h3 className="mb-3 text-xs font-medium">Application history ({a.applications.length})</h3><div className="space-y-3">{a.applications.length ? a.applications.map((application) => <article key={application.source + application.id} className="border-b border-border/60 pb-3 text-xs"><p className="font-medium">{application.career || 'Career not recorded'}</p><p className="text-muted-foreground">{application.company || 'Company not recorded'} · {application.dates || 'Dates not recorded'}</p><p className="mt-1 text-[10px]">{application.source} #{application.id}</p><p className="mt-1 flex flex-wrap items-center gap-x-1 text-[10px] text-muted-foreground"><span className="flex items-center gap-1">Paid: {application.paid === null ? 'Not recorded' : <BoolIcon value={application.paid} />}</span> · <span className="flex items-center gap-1">Indemnity: {application.indemnity === null ? 'Not recorded' : <BoolIcon value={application.indemnity} />}</span> · <span className="flex items-center gap-1">Cancelled: {application.cancelled === null ? 'Not recorded' : <BoolIcon value={!application.cancelled} />}</span></p></article>) : <p className="text-xs text-muted-foreground">No applications recorded.</p>}</div></section>
+    <section className="border-t border-border pt-4"><h3 className="mb-3 text-xs font-medium">Application history {applications.data ? `(${applications.data.length})` : ""}</h3><div className="space-y-3">{applications.isLoading ? <p className="text-xs text-muted-foreground">Loading…</p> : applications.data?.length ? applications.data.map((application) => <article key={application.source + application.id} className="border-b border-border/60 pb-3 text-xs"><p className="font-medium">{application.career || 'Career not recorded'}</p><p className="text-muted-foreground">{application.company || 'Company not recorded'} · {application.dates || 'Dates not recorded'}</p><p className="mt-1 text-[10px]">{application.source} #{application.id}</p><p className="mt-1 flex flex-wrap items-center gap-x-1 text-[10px] text-muted-foreground"><span className="flex items-center gap-1">Paid: {application.paid === null ? 'Not recorded' : <BoolIcon value={application.paid} />}</span> · <span className="flex items-center gap-1">Indemnity: {application.indemnity === null ? 'Not recorded' : <BoolIcon value={application.indemnity} />}</span> · <span className="flex items-center gap-1">Cancelled: {application.cancelled === null ? 'Not recorded' : <BoolIcon value={!application.cancelled} />}</span></p></article>) : <p className="text-xs text-muted-foreground">No applications recorded.</p>}</div></section>
   </aside>;
 }
 
@@ -758,17 +815,27 @@ function UserCards({ rows, selectedId, busyId, onSelect, onEdit, onDelete, onVer
         <button onClick={() => onEdit(a)} disabled={busyId === a.id} className="ml-auto flex items-center gap-1 rounded border border-border px-2 py-1 text-xs"><Pencil className="h-3 w-3" />Edit</button>
         <button onClick={() => onDelete(a.id, label)} disabled={busyId === a.id} aria-label={'Delete account for ' + label} className="p-1 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
       </div>
-      <button onClick={() => onSelect(a.id)} className="mt-3 text-xs text-primary">View details · {a.applications.length} applications</button>
+      <button onClick={() => onSelect(a.id)} className="mt-3 text-xs text-primary">View details · {a.booking_count} bookings</button>
     </article>;
   })}</div>;
 }
 
 export function AdminUsers() {
   const qc = useQueryClient();
-  const getAccountsFn = useServerFn(getAccounts);
   const updateRoleFn = useServerFn(updateAccount);
   const removeAccountFn = useServerFn(removeAccount);
-  const accounts = useQuery({ queryKey: ["admin", "accounts"], queryFn: () => getAccountsFn() });
+  const accounts = useQuery({
+    queryKey: ["admin", "accounts"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("admin_list_accounts");
+      if (error) throw new Error(error.message);
+      const rolePriority = ["admin", "hr_admin", "mentor", "school", "user"] as const;
+      return (data ?? []).map((row): AccountRow => {
+        const roles = row.roles as AccountRow["roles"];
+        return { ...row, roles, role: rolePriority.find((r) => roles.includes(r)) ?? null, applications: [] };
+      });
+    },
+  });
   const [q, setQ] = useState("");
   const [view, setView] = useState<"table" | "cards">("table");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -829,7 +896,7 @@ export function AdminUsers() {
       .filter((a) => {
         if (isUnclassified ? a.roles.length > 0 : !a.roles.includes(accountRole)) return false;
         if (!showSpam && a.is_spam) return false;
-        if (s && ![a.email, a.display_name, a.full_name, a.contact_no, a.school, a.id_number, ...a.roles.map((role) => ROLE_LABELS[role]), ...a.applications.flatMap((application) => [application.company, application.career, application.dates])].some((v) => (v ?? "").toLowerCase().includes(s))) return false;
+        if (s && ![a.email, a.display_name, a.full_name, a.contact_no, a.school, a.id_number, ...a.roles.map((role) => ROLE_LABELS[role])].some((v) => (v ?? "").toLowerCase().includes(s))) return false;
         if (letter && accountInitial(a) !== letter) return false;
         return true;
       })
@@ -917,37 +984,13 @@ export function AdminUsers() {
                   <table className="w-full min-w-[820px] text-left text-xs">
                     <thead className="bg-background/40 text-foreground"><tr>{["First Name", "Last Name", "Email", "User type", "Documents", "Applications", "Actions"].map((heading) => <th key={heading} className="whitespace-nowrap px-3 py-2 font-normal">{heading}</th>)}</tr></thead>
                     <tbody>
-                    {rows.filter((a) => (accountInitial(a)) === group).map((a) => {
-                      const avatarUrl = a.avatar_path ? supabase.storage.from("avatars").getPublicUrl(a.avatar_path).data.publicUrl : null;
-                      const label = a.display_name || a.full_name || a.email || a.id;
-                      const { first: firstName, last: lastName } = accountNameParts(a);
-                      return <Fragment key={a.id}>
-                        <tr className={'border-t border-warm-divider transition-colors hover:bg-teal/5 ' + (selectedId === a.id ? 'bg-teal/10' : '')}>
-                          <td className="px-3 py-1.5"><div className="flex items-center gap-2" title={'Joined ' + new Date(a.created_at).toLocaleDateString()}>
-                            {avatarUrl ? <img src={avatarUrl} alt="" className="h-7 w-7 shrink-0 rounded-full object-cover" /> : <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-teal/15 text-[11px] uppercase">{label.slice(0, 1)}</span>}
-                            <button onClick={() => setSelectedId(a.id)} className="max-w-32 truncate text-left font-medium hover:text-primary" title={label} aria-label={'View details for ' + label}>{firstName || "—"}</button>
-                            {a.is_spam && <span className="text-[10px] text-destructive">Spam</span>}
-                          </div></td>
-                          <td className="px-3 py-1.5">{lastName || "—"}</td>
-                          <td className="px-3 py-1.5"><span className="block max-w-48 truncate" title={a.email ?? ""}>{a.email || "—"}</span></td>
-                          <td className="px-3 py-1.5"><div className="flex gap-1">{a.roles.length === 0 && <span className="text-xs text-muted-foreground">Unclassified</span>}{a.roles.map((role) => <span key={role} className="whitespace-nowrap rounded bg-muted px-1.5 py-1 text-[10px] text-foreground">{ROLE_LABELS[role]}</span>)}</div></td>
-                          <td className="px-3 py-1.5"><div className="flex items-center gap-2">
-                            <label className="flex items-center" title={a.id_verified === null ? 'No scholar profile to verify' : 'ID verified'}><input type="checkbox" className="accent-primary" checked={a.id_verified === true} disabled={a.id_verified === null || busyId === a.id} onChange={(e) => setIdVerified(a.id, e.target.checked)} aria-label={'ID verified for ' + label} /></label>
-                            <UserDocument path={a.id_file_path} kind="id" verified={a.id_verified === true} />
-                            <UserDocument path={a.photo_path} kind="photo" />
-                          </div></td>
-                          <td className="px-3 py-1.5"><button disabled={!a.applications.length} aria-expanded={expandedApplicationUser === a.id} aria-controls={'applications-' + a.id} onClick={() => setExpandedApplicationUser(expandedApplicationUser === a.id ? null : a.id)} className="flex items-center gap-2 whitespace-nowrap rounded px-1.5 py-1 text-xs hover:bg-muted disabled:text-muted-foreground" title={a.booking_count + ' bookings'}>{a.applications.length}<ChevronDown className={'h-3 w-3 transition ' + (expandedApplicationUser === a.id ? 'rotate-180' : '')} /><span className="sr-only">Applications for {label}</span></button></td>
-                          <td className="px-3 py-1.5"><div className="flex items-center gap-1.5">
-                            <button onClick={() => setEditing({ ...a, roles: [...a.roles] })} disabled={busyId === a.id} className="flex items-center gap-1.5 rounded border border-border px-2 py-1 text-xs transition hover:border-primary/30 hover:text-primary disabled:opacity-50" aria-label={'Edit ' + label}><Pencil className="h-3.5 w-3.5" />Edit</button>
-                            <button onClick={() => deleteAccountRow(a.id, label)} disabled={busyId === a.id} className="rounded p-1.5 text-muted-foreground transition hover:bg-destructive/5 hover:text-destructive disabled:opacity-50" aria-label={'Delete account for ' + label}><Trash2 className="h-3.5 w-3.5" /></button>
-                          </div></td>
-                        </tr>
-                        {expandedApplicationUser === a.id && <tr id={'applications-' + a.id}><td colSpan={7} className="border-t border-border bg-muted/30 px-5 py-3">
-                          <div className="mb-2 flex justify-between text-xs text-muted-foreground"><span>Applications for {label}</span><span>{a.booking_count} bookings · Joined {new Date(a.created_at).toLocaleDateString()}</span></div>
-                          <table className="w-full text-left text-xs"><thead><tr>{["ID", "Company", "Career", "Dates", "Paid", "Indemnity", "Cancelled"].map((heading) => <th key={heading} className="px-2 py-2 font-medium">{heading}</th>)}</tr></thead><tbody>{a.applications.map((application) => <tr key={application.source + '-' + application.id} className="border-t border-border/70"><td className="px-2 py-2">{application.source} #{application.id}</td><td className="px-2 py-2">{application.company || '—'}</td><td className="px-2 py-2">{application.career || '—'}</td><td className="px-2 py-2">{application.dates || '—'}</td>{[application.paid, application.indemnity, application.cancelled].map((value, index) => <td key={index} className="px-2 py-2">{value === null ? 'Not recorded' : <BoolIcon value={index === 2 ? !value : value} />}</td>)}</tr>)}</tbody></table>
-                        </td></tr>}
-                      </Fragment>;
-                    })}
+                    {rows.filter((a) => (accountInitial(a)) === group).map((a) => (
+                      <UserTableRow
+                        key={a.id} a={a} selectedId={selectedId} busyId={busyId} expandedApplicationUser={expandedApplicationUser}
+                        onSelect={setSelectedId} onEdit={() => setEditing({ ...a, roles: [...a.roles] })} onDelete={deleteAccountRow}
+                        onVerify={setIdVerified} onToggleExpand={() => setExpandedApplicationUser(expandedApplicationUser === a.id ? null : a.id)}
+                      />
+                    ))}
                     </tbody>
                   </table>
                 </div>}</AccordionContent>
