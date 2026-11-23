@@ -1,4 +1,4 @@
-/** Preserve company links; classify named people, not the number of addresses in a field. */
+/** A company is a host only with 2+ distinct mentors; one mentor = independent mentor. Preserve company links; classify named people, not the number of addresses in a field. */
 export type CompanyContacts = { company: string | null; mentor_email: string | null; backup_mentor_email: string | null; mentor_name?: string | null; backup_mentor_name?: string | null };
 export const companyKey = (name: string) => name.trim().toLowerCase().replace(/\s+/g, ' ');
 export const contactEmails = (value: string | null | undefined) => [...new Set((value ?? '').split(/[,;]/).map((email) => email.trim().toLowerCase()).filter((email) => /^[^ @]+@[^ @]+\.[^ @]+$/.test(email)))];
@@ -14,9 +14,6 @@ export function classifyCompanies(companies: CompanyContacts[]): Map<string, 'me
     groups.set(name, people);
   }
   const types = new Map<string, 'mentor' | 'host'>([...groups].filter(([, people]) => people.size > 0).map(([name, people]) => [name, people.size === 1 ? 'mentor' : 'host']));
-  const affiliations = new Map<string, Set<string>>();
-  for (const company of companies) for (const email of [...contactEmails(company.mentor_email), ...contactEmails(company.backup_mentor_email)]) { const links = affiliations.get(email) ?? new Set<string>(); links.add(companyKey(company.company ?? '')); affiliations.set(email, links); }
-  for (const links of affiliations.values()) if (links.size > 1) for (const name of links) if (types.has(name)) types.set(name, 'host');
   return types;
 }
 export function individualMentorEmails(companies: CompanyContacts[]): Set<string> {
