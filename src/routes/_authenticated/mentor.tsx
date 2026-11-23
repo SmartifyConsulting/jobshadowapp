@@ -118,7 +118,6 @@ function MentorPortal() {
     <div className="flex min-h-screen flex-col bg-ivory">
       <SiteHeader />
       <main className="min-w-0 flex-1 p-4 md:p-6">
-        <p className="mb-3 text-xs font-bold uppercase tracking-widest text-black">Mentor Portal</p>
         <HostProfile
           initialTab={
             requestedSection === "settings"

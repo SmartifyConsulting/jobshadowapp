@@ -66,7 +66,7 @@ describe("Host availability settings", () => {
     );
     expect(screen.queryByRole("navigation", { name: "Mentor navigation" })).toBeNull();
     expect(await screen.findByRole("heading", { name: "Profile" })).toBeVisible();
-    expect(screen.getByText("Mentor Portal")).toHaveClass("text-black");
+    expect(screen.queryByText("Mentor Portal")).toBeNull();
     fireEvent.mouseDown(await screen.findByRole("tab", { name: "Availability & Bookings" }), {
       button: 0,
       ctrlKey: false,
