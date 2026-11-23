@@ -164,6 +164,15 @@ function AdminPage() {
   );
 }
 
+/** Shared page header for every admin screen, so the tab bar (or whatever follows) always sits at
+ * the same height - use this instead of hand-rolling a header block per screen. */
+function AdminScreenHeader({ title, actions }: { title: React.ReactNode; actions?: React.ReactNode }) {
+  return <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-ivory px-6 py-6 text-foreground">
+    <h1 className="text-2xl font-medium">{title}</h1>
+    {actions}
+  </div>;
+}
+
 function fmt(v: unknown) {
   if (v === null || v === undefined) return "";
   if (typeof v === "boolean") return v ? "Yes" : "No";
@@ -956,12 +965,11 @@ export function AdminUsers() {
           </form>}
         </DialogContent>
       </Dialog>
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-ivory px-6 py-6 text-foreground">
-        <h1 className="text-2xl font-medium">Users {!accounts.isLoading && `(${rows.length})`}</h1>
+      <AdminScreenHeader title={`Users ${!accounts.isLoading ? `(${rows.length})` : ""}`} actions={
         <div role="group" aria-label="Users view" className="flex rounded border border-border p-0.5">
           {([['table', List, 'Table'], ['cards', LayoutGrid, 'Cards']] as const).map(([value, Icon, label]) => <button key={value} onClick={() => setView(value)} aria-pressed={view === value} className={'flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs transition ' + (view === value ? 'bg-background text-primary' : 'hover:bg-primary/5')}><Icon className="h-3.5 w-3.5" />{label}</button>)}
         </div>
-      </div>
+      } />
       <Tabs value={roleTab} onValueChange={(value) => { setRoleTab(value as AccountRow["roles"][number] | "unclassified" | "individual_mentor"); setLetter(null); setOpenGroups([]); setSelectedId(null); }}>
         <div className="overflow-x-auto border-b border-border bg-ivory px-6 py-3"><TabsList aria-label="User types">{([["user", "Students"], ["mentor", "Hosts"], ["individual_mentor", "Mentors"], ["school", "Schools"], ["admin", "Admin"], ["unclassified", "Unclassified"]] as const).map(([role, name]) => <TabsTrigger key={role} value={role}>{name} ({(accounts.data ?? []).filter((user) => matchesRole(user, role) && (showSpam || !user.is_spam)).length})</TabsTrigger>)}</TabsList></div>
       <TabsContent value={roleTab} className="mt-0">
@@ -1310,6 +1318,7 @@ function CompanyPlacements() {
 
 function CareersAndSectors() {
   return <Tabs defaultValue="sectors" className="bg-ivory">
+    <AdminScreenHeader title="Career Management" />
     <div className="overflow-x-auto border-b border-border px-6 py-3"><TabsList aria-label="Career management"><TabsTrigger value="sectors">Sectors</TabsTrigger><TabsTrigger value="careers">Careers</TabsTrigger></TabsList></div>
     {(["sectors", "careers"] as const).map((id) => { const config = TABLES.find((entry) => entry.id === id)!; return <TabsContent key={id} value={id} className="mt-0"><DataTable title={config.singular} table={config.table} cols={config.cols} csvUpload /></TabsContent>; })}
   </Tabs>;
@@ -1330,7 +1339,7 @@ function ApplicationsScreen() {
 
 function AdminReports() {
   return <div className="bg-background">
-    <div className="border-b border-border px-6 py-5"><h1 className="text-2xl">Reports</h1></div>
+    <AdminScreenHeader title="Reports" />
     <Tabs defaultValue="bookings">
       <div className="overflow-x-auto border-b border-border px-6 py-3"><TabsList aria-label="Admin reports" className="justify-start">{["Bookings", "Evaluations", "Vouchers", "BEE / CPD", "Mentor Coverage", "Activity Log", "Token Ledger"].map((label) => <TabsTrigger key={label} value={label.toLowerCase().replaceAll(' / ', '-').replaceAll(' ', '-')}>{label}</TabsTrigger>)}</TabsList></div>
       <TabsContent value="bookings" className="mt-0"><LiveBookings /></TabsContent>
@@ -1759,7 +1768,7 @@ export function BookingSettings() {
 
   return (
     <div>
-      <div className="border-b border-border bg-background px-6 py-6 text-foreground"><h1 className="text-2xl font-medium">Booking Settings</h1></div>
+      <AdminScreenHeader title="Booking Settings" />
       <div className="w-full space-y-3 bg-background px-6 py-6 text-foreground">
         <Tabs defaultValue="rules" className="w-full">
           <TabsList className="flex h-auto flex-wrap justify-start gap-2 bg-transparent p-0">
