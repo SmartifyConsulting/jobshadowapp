@@ -597,10 +597,10 @@ function HostProfile({
           <ProfessionalFrame title="CV" className="lg:col-span-2">
             {" "}
             <div className="mt-3">
-              <p className="text-sm font-semibold">
+              <p className="text-xs font-medium">
                 CV (private — admin only, never shown to scholars)
               </p>
-              <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded bg-muted px-3 py-2 text-xs font-semibold">
+              <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded bg-muted px-3 py-2 text-xs font-medium">
                 <Upload className="h-3.5 w-3.5" />{" "}
                 {cvBusy ? "Uploading…" : cvPath ? "Replace CV" : "Upload CV"}
                 <input
@@ -655,19 +655,19 @@ function HostProfile({
             confidence to book, without naming you. Your name, email and phone are never shown here.
           </p>
           <ProfessionalFrame title="Experience & Bio">
-            <label className="block text-sm font-semibold">
+            <label className="block text-xs font-medium">
               <span className="sr-only">Experience / Bio</span>
               <textarea
                 rows={4}
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 placeholder="A few sentences about your role and experience."
-                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm font-normal placeholder:font-normal outline-none"
               />
             </label>
           </ProfessionalFrame>
           <ProfessionalFrame title="Expertise & Qualifications">
-            <label className="block text-sm font-semibold">
+            <label className="block text-xs font-medium">
               <span className="flex items-center gap-1.5">
                 <Award className="h-4 w-4" /> Specialties (comma separated)
               </span>
@@ -675,28 +675,28 @@ function HostProfile({
                 value={specialties}
                 onChange={(e) => setSpecialties(e.target.value)}
                 placeholder="e.g. Corporate law, Contract negotiation"
-                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm font-normal placeholder:font-normal outline-none"
               />
             </label>
-            <label className="mt-3 block text-sm font-semibold">
+            <label className="mt-3 block text-xs font-medium">
               Certifications / qualifications
               <textarea
                 rows={2}
                 value={certifications}
                 onChange={(e) => setCertifications(e.target.value)}
-                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm font-normal placeholder:font-normal outline-none"
               />
             </label>
           </ProfessionalFrame>
           <ProfessionalFrame title="Professional Links" className="lg:col-span-2">
-            <label className="block text-sm font-semibold">
+            <label className="block text-xs font-medium">
               LinkedIn / professional profile URL
               <input
                 type="url"
                 value={linkedinUrl}
                 onChange={(e) => setLinkedinUrl(e.target.value)}
                 placeholder="https://linkedin.com/in/..."
-                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm font-normal placeholder:font-normal outline-none"
               />
             </label>
           </ProfessionalFrame>
