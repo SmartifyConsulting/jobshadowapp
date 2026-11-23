@@ -124,7 +124,7 @@ function HostCalendar({ bookings }: { bookings: MentorBooking[] }) {
             <span className="text-sm">{d}</span>
             {(counts.get(key(d)) ?? 0) > 0 && (
               <span className="absolute bottom-1 right-1 rounded-full bg-cta px-2 py-0.5 text-[10px] font-bold text-cta-foreground">
-                {counts.get(key(d))}<span className="hidden sm:inline"> student{counts.get(key(d)) === 1 ? "" : "s"}</span>
+                {counts.get(key(d))}<span className="hidden sm:inline"> scholar{counts.get(key(d)) === 1 ? "" : "s"}</span>
               </span>
             )}
           </button>
@@ -133,7 +133,7 @@ function HostCalendar({ bookings }: { bookings: MentorBooking[] }) {
       {day && (
         <div className="space-y-3">
           <h2 className="text-sm font-semibold">Booked on {day}</h2>
-          {selected.length === 0 ? <p className="text-sm text-muted-foreground">No students booked on this day.</p> : selected.map((b) => <BookingCard key={b.id} booking={b} />)}
+          {selected.length === 0 ? <p className="text-sm text-muted-foreground">No scholars booked on this day.</p> : selected.map((b) => <BookingCard key={b.id} booking={b} />)}
         </div>
       )}
     </section>
@@ -271,7 +271,7 @@ function HostProfile() {
     <section className="max-w-2xl space-y-5">
       <h1 className="text-2xl font-bold">Profile</h1>
       <p className="text-sm text-muted-foreground">
-        Shown to students and HR before your identity is revealed — it's what gives them confidence to book, without naming you. Your name, email and phone are never shown here.
+        Shown to scholars and HR before your identity is revealed — it's what gives them confidence to book, without naming you. Your name, email and phone are never shown here.
       </p>
 
       <div className="rounded-lg border bg-card p-4">
@@ -297,7 +297,7 @@ function HostProfile() {
           <input type="url" value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} placeholder="https://linkedin.com/in/..." className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none" />
         </label>
         <div className="mt-3">
-          <p className="text-sm font-semibold">CV (private — admin only, never shown to students)</p>
+          <p className="text-sm font-semibold">CV (private — admin only, never shown to scholars)</p>
           <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded bg-muted px-3 py-2 text-xs font-semibold">
             <Upload className="h-3.5 w-3.5" /> {cvBusy ? "Uploading…" : cvPath ? "Replace CV" : "Upload CV"}
             <input type="file" accept=".pdf,.doc,.docx" hidden disabled={cvBusy} onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadCv(f); }} />
@@ -369,7 +369,7 @@ function HostSettings() {
           <input type="checkbox" checked={paused} onChange={(e) => setPaused(e.target.checked)} />
           Temporarily pause new booking requests
         </label>
-        <p className="mt-1 text-xs text-muted-foreground">Your placements stay listed, but students can't book a new job shadow with you while this is on.</p>
+        <p className="mt-1 text-xs text-muted-foreground">Your placements stay listed, but scholars can't book a new job shadow with you while this is on.</p>
       </div>
 
       <div className="grid gap-4 rounded-lg border bg-card p-4 sm:grid-cols-2">

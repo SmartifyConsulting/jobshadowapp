@@ -1,7 +1,7 @@
 import { useHowToProgress } from "@/components/HowToProgress";
 import { HOW_TO_DESTINATIONS } from "@/lib/journey-progress";
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronDown, GraduationCap, Users, Building2, School, UserPlus, User, Search, CalendarDays, ClipboardCheck, Handshake, Star, Calendar, FileEdit, CheckCircle2, Briefcase, Bell, ArrowRight } from "lucide-react";
+import { ChevronDown, Users, UserPlus, User, Search, CalendarDays, ClipboardCheck, Handshake, Star, Calendar, FileEdit, CheckCircle2, Bell, ArrowRight } from "lucide-react";
 import { SiteLayout, useSiteSession } from "@/components/SiteLayout";
 import { YouTube } from "@/components/YouTube";
 import { VIDEOS } from "@/lib/content";
@@ -9,7 +9,7 @@ import { VIDEOS } from "@/lib/content";
 type Step = { icon: typeof User; label: string };
 
 const STUDENT_STEPS: Step[] = [
-  { icon: UserPlus, label: "Register\nas a student" },
+  { icon: UserPlus, label: "Register\nas a scholar" },
   { icon: User, label: "Create\nyour profile" },
   { icon: Search, label: "Explore\ncareers" },
   { icon: CalendarDays, label: "Request\na booking" },
@@ -29,16 +29,6 @@ const MENTOR_STEPS: Step[] = [
   { icon: Bell, label: "Get feedback &\nbuild your profile" },
 ];
 
-const HOST_STEPS: Step[] = [
-  { icon: UserPlus, label: "Register\nas a host" },
-  { icon: User, label: "Create\nyour profile" },
-  { icon: Calendar, label: "Set\navailability" },
-  { icon: FileEdit, label: "Complete\nhost forms (indemnity & NDA)" },
-  { icon: Users, label: "Receive\nbooking requests" },
-  { icon: CheckCircle2, label: "Confirm\na booking" },
-  { icon: Briefcase, label: "Host the\nexperience" },
-  { icon: Bell, label: "Get feedback &\nbuild your profile" },
-];
 
 const SCHOOL_STEPS: Step[] = [
   { icon: UserPlus, label: "Register\nas a school" },
@@ -50,14 +40,10 @@ const SCHOOL_STEPS: Step[] = [
   { icon: Bell, label: "Get feedback\n& reports" },
 ];
 
-function StepRow({ title, icon: TitleIcon, steps, links, complete = [] }: { title: string; icon: typeof User; steps: Step[]; links: string[]; complete?: boolean[] }) {
+function StepRow({ steps, links, complete = [] }: { steps: Step[]; links: string[]; complete?: boolean[] }) {
   return (
-    <nav aria-label={title} className="relative rounded-xl border border-border bg-background pt-8 pb-3">
-      <div className="absolute -top-0.5 left-0 flex items-center gap-2 rounded-tl-xl bg-primary py-1.5 pl-4 pr-8 text-primary-foreground [clip-path:polygon(0_0,100%_0,calc(100%-1.25rem)_100%,0_100%)]">
-        <TitleIcon className="h-[23px] w-[23px] shrink-0" />
-        <span className="font-display text-lg uppercase">{title}</span>
-      </div>
-      <div className="mt-2 flex flex-wrap items-start justify-center gap-y-2 px-3">
+    <nav aria-label="How-to steps" className="relative rounded-xl border border-border bg-background py-4">
+      <div className="flex flex-wrap items-start justify-center gap-y-2 px-3">
         {steps.map((step, i) => (
           <div key={i} className="flex items-start">
             <a href={links[i]} aria-label={step.label.replace(/\n/g, " ") + (complete[i] ? " — completed" : "")} className="flex w-[4.5rem] shrink-0 flex-col items-center rounded-md p-1 text-center outline-none transition hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary sm:w-20">
@@ -92,6 +78,13 @@ function HowTo() {
   const progress = useHowToProgress(session?.user?.id, session?.roles ?? []);
   const destination = (key: keyof typeof HOW_TO_DESTINATIONS) => session?.user ? HOW_TO_DESTINATIONS[key] : "/auth?go=" + key;
   const providerLinks = (type: "mentor" | "host") => ["/contact?type=" + type, destination("providerProfile"), destination("providerAvailability"), "/contact", destination("providerBookings"), destination("providerBookings"), destination("providerExperience"), destination("providerProfile")];
+  const roles = session?.roles ?? [];
+  const view: "mentor" | "school" | "scholar" = roles.includes("mentor") || roles.includes("hr_admin") ? "mentor" : roles.includes("school") ? "school" : "scholar";
+  const content = {
+    scholar: { steps: STUDENT_STEPS, complete: progress.data?.student ?? [], links: [session?.user ? destination("studentProfile") : "/register", ...(["studentProfile", "studentCareers", "studentRequest", "studentForms", "studentExperience", "studentFeedback"] as const).map(destination)] },
+    mentor: { steps: MENTOR_STEPS, complete: progress.data?.mentor ?? [], links: providerLinks("mentor") },
+    school: { steps: SCHOOL_STEPS, complete: [] as boolean[], links: ["/contact?type=school", ...Array(SCHOOL_STEPS.length - 1).fill("/contact")] },
+  }[view];
   return (
     <SiteLayout>
       <div className="bg-cta text-cta-foreground">
@@ -102,10 +95,8 @@ function HowTo() {
       </div>
       <section className="bg-[#7CCCC8] px-5 py-5">
         <div className="mx-auto max-w-7xl space-y-3">
-          <StepRow title="For Students" icon={GraduationCap} steps={STUDENT_STEPS} complete={progress.data?.student ?? []} links={[session?.user ? destination("studentProfile") : "/register", ...(["studentProfile", "studentCareers", "studentRequest", "studentForms", "studentExperience", "studentFeedback"] as const).map(destination)]} />
-          <StepRow title="For Mentors" icon={Users} steps={MENTOR_STEPS} complete={progress.data?.mentor ?? []} links={providerLinks("mentor")} />
-          <StepRow title="For Hosts" icon={Building2} steps={HOST_STEPS} complete={progress.data?.host ?? []} links={providerLinks("host")} />
-          <StepRow title="For Schools" icon={School} steps={SCHOOL_STEPS} links={["/contact?type=school", ...Array(SCHOOL_STEPS.length - 1).fill("/contact")]} />
+          <p className="text-sm font-semibold">Click on each step to complete it.</p>
+          <StepRow steps={content.steps} complete={content.complete} links={content.links} />
           {progress.error && <p role="status" className="text-sm">Saved progress could not be loaded. You can still open each step.</p>}
           <p className="text-xs">Green ticks show saved progress. Contact us for host indemnity and NDA forms; their completion is not tracked in the app yet.</p>
         </div>

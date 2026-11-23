@@ -145,7 +145,7 @@ export function ApplicationsList({ onEditImported, onDeleteImported }: { onEditI
       <RecordFields title="Host company and HR contacts" data={selected.host} />
       <RecordFields title="Booking, payment and reminder details" data={selected.booking} />
       <RecordFields title="Original imported application" data={selected.imported} />
-      <RecordFields title="Original imported student" data={selected.importedUser ?? null} />
+      <RecordFields title="Original imported scholar" data={selected.importedUser ?? null} />
     </>}</SheetContent></Sheet>
     </>}
   </section>;

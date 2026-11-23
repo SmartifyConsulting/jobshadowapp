@@ -384,7 +384,7 @@ function StudentJourney({ userId, profile, initialStep }: { userId: string; prof
   ];
   const active = steps.find((step) => step.id === requestedActive)?.locked ? !profile ? "profile" : !current ? "request" : !confirmed ? "forms" : "experience" : requestedActive;
   const selectedCareer = ROLES.find((role) => role.title === career);
-  return <section className="min-w-0 space-y-5" aria-label="Student step wizard">
+  return <section className="min-w-0 space-y-5" aria-label="Scholar step wizard">
     {active !== requestedActive && <p className="text-sm">Complete the current step before continuing to the step you selected.</p>}
     <JourneyStepper title="Your Job Shadow Journey" steps={steps} active={active} onChange={setActive} />
     <div className="min-w-0 rounded-lg border border-border bg-ivory p-4 text-foreground sm:p-6">

@@ -74,7 +74,7 @@ function DevAccountSwitcher() {
   </>;
 }
 
-function AccountMenu({ displayName, avatarUrl, isAdmin, email, logout }: { displayName: string; avatarUrl: string | null; isAdmin: boolean; email: string | null; logout: () => void }) {
+function AccountMenu({ displayName, avatarUrl, isAdmin, roles, email, logout }: { displayName: string; avatarUrl: string | null; isAdmin: boolean; roles: string[]; email: string | null; logout: () => void }) {
   const canSwitchProfiles = !!email && DEV_PERSONAS.some((p) => p.email.toLowerCase() === email.toLowerCase());
   return <DropdownMenu>
     <DropdownMenuTrigger aria-label="Open account menu" className="rounded-full transition hover:ring-2 hover:ring-primary-foreground/40">
@@ -85,7 +85,8 @@ function AccountMenu({ displayName, avatarUrl, isAdmin, email, logout }: { displ
       <DropdownMenuSeparator />
       <DropdownMenuItem asChild><Link to="/profile">Profile</Link></DropdownMenuItem>
       {isAdmin && <DropdownMenuItem asChild><Link to="/admin">Admin Portal</Link></DropdownMenuItem>}
-      <DropdownMenuItem asChild><Link to="/mentor">Mentor Portal</Link></DropdownMenuItem>
+      {roles.includes("mentor") && <DropdownMenuItem asChild><Link to="/mentor">Mentor Portal</Link></DropdownMenuItem>}
+      {roles.includes("hr_admin") && <DropdownMenuItem asChild><Link to="/company-report">Company Portal</Link></DropdownMenuItem>}
       <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
       {canSwitchProfiles && <DevAccountSwitcher />}
     </DropdownMenuContent>
@@ -97,7 +98,7 @@ export function SiteAccountMenu() {
   const navigate = useNavigate();
   if (!session?.user) return null;
   const name = session.displayName || (session.user.user_metadata?.["name"] as string | undefined) || session.user.email || "Account";
-  return <AccountMenu displayName={name} avatarUrl={session.avatarUrl} isAdmin={session.isAdmin} email={session.user.email ?? null} logout={() => { void supabase.auth.signOut().then(() => navigate({ to: "/" })); }} />;
+  return <AccountMenu displayName={name} avatarUrl={session.avatarUrl} isAdmin={session.isAdmin} roles={session.roles} email={session.user.email ?? null} logout={() => { void supabase.auth.signOut().then(() => navigate({ to: "/" })); }} />;
 }
 
 /** The full public-site header (logo, nav, social icons, account menu) — shared verbatim by
@@ -109,6 +110,7 @@ export function SiteHeader({ headerLogo, fullWidth }: { headerLogo?: ReactNode; 
   const { data: session } = useSession();
   const user = session?.user ?? null;
   const isAdmin = session?.isAdmin ?? false;
+  const roles = session?.roles ?? [];
   const displayName = session?.displayName || (user?.user_metadata?.["name"] as string | undefined) || user?.email || "Account";
   const avatarUrl = session?.avatarUrl ?? null;
 
@@ -143,9 +145,9 @@ export function SiteHeader({ headerLogo, fullWidth }: { headerLogo?: ReactNode; 
             ))}
             {user && <NotificationInbox userId={user.id} />}
           </div>
-          {user && <AccountMenu displayName={displayName} avatarUrl={avatarUrl} isAdmin={isAdmin} email={user.email ?? null} logout={logout} />}
+          {user && <AccountMenu displayName={displayName} avatarUrl={avatarUrl} isAdmin={isAdmin} roles={roles} email={user.email ?? null} logout={logout} />}
         </nav>
-        <div className="absolute right-5 flex items-center gap-3 lg:hidden">{user && <NotificationInbox userId={user.id} />}{user && <AccountMenu displayName={displayName} avatarUrl={avatarUrl} isAdmin={isAdmin} email={user.email ?? null} logout={logout} />}<button className="rounded p-2" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button></div>
+        <div className="absolute right-5 flex items-center gap-3 lg:hidden">{user && <NotificationInbox userId={user.id} />}{user && <AccountMenu displayName={displayName} avatarUrl={avatarUrl} isAdmin={isAdmin} roles={roles} email={user.email ?? null} logout={logout} />}<button className="rounded p-2" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button></div>
       </div>
       {open && (
         <nav className="flex flex-col gap-3 border-t border-primary-foreground/20 px-5 py-4 font-semibold lg:hidden">

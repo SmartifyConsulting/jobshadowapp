@@ -88,8 +88,8 @@ const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string
     { key: "discount", label: "Discount", field: "number" }, { key: "available_from", label: "From", field: "date" },
     { key: "available_until", label: "Until", field: "date" }, { key: "usage_limit", label: "Limit", field: "number" } ] },
   { id: "settings", label: "Booking Settings", icon: FileText, table: "booking_settings", singular: "Settings", custom: true, cols: [] },
-  { id: "sectors", label: "Sectors", icon: FileText, table: "sectors", singular: "Sectors", csvUpload: true, cols: [{ key: "name", label: "Sector Name" }, { key: "_student_count", label: "Students" }] },
-  { id: "careers", label: "Sectors and Careers", icon: Briefcase, table: "careers", singular: "Careers", csvUpload: true, cols: [{ key: "name", label: "Career Name" }, { key: "_student_count", label: "Students" }] },
+  { id: "sectors", label: "Sectors", icon: FileText, table: "sectors", singular: "Sectors", csvUpload: true, cols: [{ key: "name", label: "Sector Name" }, { key: "_student_count", label: "Scholars" }] },
+  { id: "careers", label: "Sectors and Careers", icon: Briefcase, table: "careers", singular: "Careers", csvUpload: true, cols: [{ key: "name", label: "Career Name" }, { key: "_student_count", label: "Scholars" }] },
   { id: "emails", label: "Email Archive", icon: FileText, table: "email_outbox", singular: "Emails", custom: true, cols: [] },
   { id: "evaluations", label: "Evaluations", icon: FileText, table: "evaluations", singular: "Evaluations", custom: true, cols: [] },
   { id: "legal", label: "Legal Content", icon: FileText, table: "legal_documents", singular: "Legal Content", custom: true, cols: [] },
@@ -405,7 +405,7 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
                                     <button type="button" aria-expanded={descOpen} aria-label={descOpen ? "Hide description" : "Show description"} onClick={() => setOpenDesc((prev) => { const n = new Set(prev); n.has(rid) ? n.delete(rid) : n.add(rid); return n; })} className="grid h-5 w-5 shrink-0 place-items-center rounded border border-warm-divider text-xs font-bold text-muted-foreground hover:text-primary">{descOpen ? "−" : "+"}</button>
                                   )}
                                   <div className="min-w-0"><span className="block truncate text-sm font-medium leading-tight">{fmt(r["name"])}</span>{!descOpen && r["description"] ? <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{String(r["description"]).replace(/\*\*/g, "").split("\n")[0]}</p> : null}</div>
-                                  <span className="shrink-0 text-xs text-muted-foreground">{fmt(r["_student_count"])} students</span>
+                                  <span className="shrink-0 text-xs text-muted-foreground">{fmt(r["_student_count"])} scholars</span>
                                 </div>
                                 <div className="flex shrink-0 gap-1.5">
                                   <button onClick={() => setEditing(r)} className="inline-flex items-center gap-1 rounded border border-warm-divider px-2 py-1 text-xs hover:text-primary"><Sparkles className="h-3 w-3" />AI wizard</button>
@@ -1617,7 +1617,7 @@ function LiveBookings() {
         <div className="flex flex-wrap items-end gap-6">
           <label className="block max-w-sm text-sm">
             Search
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Student, career, company, mentor, HR, date" className="mt-1 w-full border-b border-input bg-transparent px-1 py-1 outline-none" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Scholar, career, company, mentor, HR, date" className="mt-1 w-full border-b border-input bg-transparent px-1 py-1 outline-none" />
           </label>
           <div role="group" aria-label="Filter bookings by status" className="flex flex-wrap gap-1.5">
             {[["", "All"], ...Object.entries(BOOKING_STATUS_LABELS)].map(([key, label]) => <button key={key} type="button" aria-pressed={status === key} onClick={() => setStatus(key!)} className={"rounded-full border px-3 py-1.5 text-xs font-medium transition " + (status === key ? "border-primary bg-primary text-primary-foreground" : "border-border bg-ivory text-foreground hover:bg-teal/15")}>
@@ -1630,7 +1630,7 @@ function LiveBookings() {
           <table className="w-full min-w-[1100px] text-left text-xs">
             <thead>
               <tr className="border-b border-border font-medium">
-                {["Date", "Status", "Career", "Company", "Student", "School", "Mentor", "HR contact"].map((h) => <th key={h} className="whitespace-nowrap px-3 py-2">{h}</th>)}
+                {["Date", "Status", "Career", "Company", "Scholar", "School", "Mentor", "HR contact"].map((h) => <th key={h} className="whitespace-nowrap px-3 py-2">{h}</th>)}
               </tr>
             </thead>
             <tbody>
@@ -1840,17 +1840,17 @@ export function BookingSettings() {
           </TabsList>
 
           <TabsContent value="rules" className={sectionClass + " mt-6"}>
-              <SettingsFrame title="Scheduling Windows &amp; Lead Times" description="Control how early or far in advance students can request shadow dates." icon={Clock} tint="bg-rose-100 text-rose-600">
-              <NumberField label="Minimum request lead time" suffix="days before the shadow date" value={f("min_lead_days")} onChange={set("min_lead_days")} hint="The earliest a student may submit a booking request relative to the shadow date." />
-              <NumberField label="Maximum advance booking window" suffix="days ahead" value={f("max_advance_days")} onChange={set("max_advance_days")} hint="How far into the future a student can request a shadow." />
+              <SettingsFrame title="Scheduling Windows &amp; Lead Times" description="Control how early or far in advance scholars can request shadow dates." icon={Clock} tint="bg-rose-100 text-rose-600">
+              <NumberField label="Minimum request lead time" suffix="days before the shadow date" value={f("min_lead_days")} onChange={set("min_lead_days")} hint="The earliest a scholar may submit a booking request relative to the shadow date." />
+              <NumberField label="Maximum advance booking window" suffix="days ahead" value={f("max_advance_days")} onChange={set("max_advance_days")} hint="How far into the future a scholar can request a shadow." />
               </SettingsFrame>
-              <SettingsFrame title="Operating Season &amp; Request Caps" description="Define active placement months and concurrent student booking limits." icon={CalendarIcon} tint="bg-orange-100 text-orange-600">
+              <SettingsFrame title="Operating Season &amp; Request Caps" description="Define active placement months and concurrent scholar booking limits." icon={CalendarIcon} tint="bg-orange-100 text-orange-600">
               <div className="grid items-start gap-4 px-5 py-5 md:grid-cols-2">
                 <div><p className="text-sm">Operating season range</p><p className="mt-1 text-xs text-muted-foreground">Placements run only within this month range unless a listing explicitly allows off-season dates.</p></div>
                 <div className="space-y-4"><div className="grid grid-cols-2 gap-4">{([['season_start_month', 'Season starts'], ['season_end_month', 'Season ends']] as const).map(([key, label]) => <label key={key} className="text-xs">{label}<select value={f(key)} onChange={(e) => set(key)(e.target.value)} className="mt-1 block w-full border-b border-input bg-transparent px-1 py-1 text-sm outline-none">{Array.from({ length: 12 }, (_, i) => <option key={i} value={i + 1}>{new Date(2020, i, 1).toLocaleString('en-ZA', { month: 'long' })}</option>)}</select></label>)}</div>
                 <div><p className="mb-1 text-xs text-muted-foreground">Annual Season Preview</p><ol className="grid grid-cols-12 gap-1" aria-label="Annual season preview">{Array.from({ length: 12 }, (_, i) => { const m = i + 1, start = Number(f('season_start_month')), end = Number(f('season_end_month')); const active = m >= start && m <= end; const name = new Date(2020, i, 1).toLocaleString('en-ZA', { month: 'long' }); return <li key={m} title={name + (active ? ': Active' : ': Inactive')} aria-label={name + (active ? ': Active' : ': Inactive')} className={'rounded px-1 py-1 text-center text-xs ' + (active ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground')}>{name[0]}</li>; })}</ol></div></div>
               </div>
-              <NumberField label="Maximum pending requests per student" suffix="active requests" value={f("max_pending_requests")} onChange={set("max_pending_requests")} hint={NOT_ENFORCED_HINT} />
+              <NumberField label="Maximum pending requests per scholar" suffix="active requests" value={f("max_pending_requests")} onChange={set("max_pending_requests")} hint={NOT_ENFORCED_HINT} />
               </SettingsFrame>
               <SettingsFrame title="Blackout Dates &amp; Public Holidays" description="Block institutional dates and manage public holidays across all placements." icon={CalendarX} tint="bg-slate-100 text-slate-600">
               <div className="px-5 py-5">
