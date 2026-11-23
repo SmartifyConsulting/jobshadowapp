@@ -106,7 +106,7 @@ describe("Secondary information selectors", () => {
     const change = vi.fn();
     render(<DietaryNeedsPicker value="Peanut allergy" onChange={change} />);
     expect(screen.getByLabelText("Dietary details")).toHaveValue("Peanut allergy");
-    fireEvent.change(screen.getByRole("combobox", { name: "Dietary Needs" }), {
+    fireEvent.change(screen.getByRole("combobox", { name: "Dietary Requirements" }), {
       target: { value: "Vegan" },
     });
     expect(change).toHaveBeenCalledWith("Vegan");

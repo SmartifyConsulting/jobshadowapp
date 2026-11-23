@@ -188,11 +188,11 @@ export const SCHOLAR_DETAIL_TABS: { id: string; label: string; rows: [string, st
     id: "school",
     label: "Secondary Information",
     rows: [
-      ["Dietary needs", "dietary"],
       ["Population group", "population_group"],
       ["Gender", "gender"],
       ["Disability status", "disability"],
       ["Citizenship", "citizenship"],
+      ["Dietary Requirements", "dietary"],
     ],
   },
 ];
@@ -701,13 +701,6 @@ export function ProfileForm({
             </div>
           </TabsContent>
           <TabsContent value="school" className="mt-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <DietaryNeedsPicker
-                value={String(f["dietary"] ?? "")}
-                onChange={(value) => setF({ ...f, dietary: value })}
-              />
-            </div>
-
             <p className="text-xs text-muted-foreground">
               Optional. These details support your host’s CSI reporting.
             </p>
@@ -764,6 +757,12 @@ export function ProfileForm({
                   <option>Other</option>
                 </select>
               </label>
+            </div>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <DietaryNeedsPicker
+                value={String(f["dietary"] ?? "")}
+                onChange={(value) => setF({ ...f, dietary: value })}
+              />
             </div>
           </TabsContent>
         </Tabs>

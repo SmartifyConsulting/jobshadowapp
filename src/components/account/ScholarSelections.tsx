@@ -22,7 +22,7 @@ export function DietaryNeedsPicker({
   return (
     <div className="space-y-2">
       <label className="text-sm font-medium" htmlFor="dietary">
-        Dietary Needs
+        Dietary Requirements
       </label>
       <select
         id="dietary"
