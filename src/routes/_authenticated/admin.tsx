@@ -1,3 +1,4 @@
+import { fetchAllAccounts } from "@/lib/admin-accounts";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { providerGroups, mentorGroups } from "@/lib/provider-directory";
 import { CareerGuidance } from "@/components/CareerGuidance";
@@ -883,15 +884,7 @@ export function AdminUsers() {
   const removeAccountFn = useServerFn(removeAccount);
   const accounts = useQuery({
     queryKey: ["admin", "accounts"],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("admin_list_accounts");
-      if (error) throw new Error(error.message);
-      const rolePriority = ["admin", "hr_admin", "mentor", "school", "user"] as const;
-      return (data ?? []).map((row): AccountRow => {
-        const roles = row.roles as AccountRow["roles"];
-        return { ...row, roles, role: rolePriority.find((r) => roles.includes(r)) ?? null, applications: [] };
-      });
-    },
+    queryFn: fetchAllAccounts,
   });
   const [q, setQ] = useState("");
   const [view, setView] = useState<"table" | "cards">("table");

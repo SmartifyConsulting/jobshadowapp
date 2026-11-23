@@ -7,17 +7,9 @@ import { Download, Pencil, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAllRows, toCsv } from "@/lib/admin-export";
 import { combineApplicationRecords, type ApplicationData, type ApplicationRecord } from "@/lib/application-records";
-import type { AccountRow } from "@/lib/users.server";
+import { fetchAllAccounts } from "@/lib/admin-accounts";
 
-const ROLE_PRIORITY = ["admin", "hr_admin", "mentor", "school", "user"] as const;
-async function fetchAccountsLean(): Promise<AccountRow[]> {
-  const { data, error } = await supabase.rpc("admin_list_accounts");
-  if (error) throw new Error(error.message);
-  return (data ?? []).map((row): AccountRow => {
-    const roles = row.roles as AccountRow["roles"];
-    return { ...row, roles, role: ROLE_PRIORITY.find((r) => roles.includes(r)) ?? null, applications: [] };
-  });
-}
+const fetchAccountsLean = fetchAllAccounts;
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
