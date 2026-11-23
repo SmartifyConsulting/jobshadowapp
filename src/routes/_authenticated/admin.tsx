@@ -5418,9 +5418,7 @@ function EditRecord({
       >
         <div
           className={
-            table === "careers"
-              ? "grid items-center gap-3 sm:grid-cols-[minmax(12rem,1fr)_auto_auto]"
-              : "grid gap-5 sm:grid-cols-3"
+            table === "careers" ? "flex flex-wrap items-center gap-3" : "grid gap-5 sm:grid-cols-3"
           }
         >
           {table === "companies" && (
@@ -5516,7 +5514,7 @@ function EditRecord({
                     onChange={(e) => setVals({ ...vals, [c.key]: e.target.value })}
                     className={
                       table === "careers"
-                        ? "min-w-0 flex-1 border-b border-input bg-transparent px-1 py-1 outline-none focus:border-primary"
+                        ? "w-56 max-w-full border-b border-input bg-transparent px-1 py-1 outline-none focus:border-primary"
                         : "mt-1 w-full border-b border-input bg-transparent px-1 py-1 outline-none focus:border-primary"
                     }
                   />
@@ -5527,7 +5525,7 @@ function EditRecord({
           {table === "careers" && (
             <>
               <label className="flex items-center gap-2 whitespace-nowrap text-sm">
-                Mentor target
+                Target
                 <input
                   type="number"
                   min="0"
@@ -5536,11 +5534,11 @@ function EditRecord({
                   onChange={(e) =>
                     setVals({ ...vals, mentor_target_count: Number(e.target.value) })
                   }
-                  className="w-24 rounded border border-input bg-transparent px-2 py-1"
+                  className="w-12 rounded border border-input bg-transparent px-1 py-1"
                 />
               </label>
               <label className="flex items-center gap-2 whitespace-nowrap text-sm">
-                Actual mentors available
+                Actual
                 <input
                   type="number"
                   min="0"
@@ -5557,7 +5555,7 @@ function EditRecord({
                       mentor_available_count: e.target.value === "" ? null : Number(e.target.value),
                     })
                   }
-                  className="w-24 rounded border border-input bg-transparent px-2 py-1"
+                  className="w-12 rounded border border-input bg-transparent px-1 py-1"
                 />
               </label>
             </>
