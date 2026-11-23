@@ -5,7 +5,6 @@ afterEach(cleanup);
 describe("portal-only role navigation", () => {
   it.each([
     ["admin", "Users", "/admin?section=users"],
-    ["mentor", "Calendar", "/mentor?section=calendar"],
     ["school", "Overview", "/school?section=overview"],
     ["hr_admin", "Mentors", "/company-report?section=mentors"],
   ])("shows %s navigation inside the matching portal", (role, label, href) => {
@@ -23,6 +22,10 @@ describe("portal-only role navigation", () => {
       }
     },
   );
+  it("keeps the mentor portal free of a sidebar", () => {
+    render(<RoleNavigation roles={["mentor"]} pathname="/mentor" />);
+    expect(screen.queryByRole("navigation")).toBeNull();
+  });
   it("does not show a menu for an unrelated portal", () => {
     render(<RoleNavigation roles={["mentor"]} pathname="/admin" />);
     expect(screen.queryByRole("navigation")).toBeNull();

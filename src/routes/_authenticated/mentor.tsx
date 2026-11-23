@@ -9,17 +9,7 @@ import { CountrySelect } from "@/components/CountrySelect";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import {
-  CalendarDays,
-  Briefcase,
-  MessageSquare,
-  ChevronLeft,
-  ChevronRight,
-  X,
-  UserCircle,
-  Award,
-  Upload,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, X, UserCircle, Award, Upload } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
 import { PortalLoading } from "@/components/PortalLoading";
 import { bookingDayKey, countByDay, filterHostBookings } from "@/lib/host-bookings";
@@ -90,13 +80,6 @@ const STATUS: Record<string, string> = {
 };
 
 type Section = "calendar" | "shadows" | "messages" | "profile" | "settings";
-const MENU: { id: Section; label: string; icon: typeof CalendarDays }[] = [
-  { id: "profile", label: "Profile", icon: UserCircle },
-  { id: "calendar", label: "Calendar", icon: CalendarDays },
-  { id: "shadows", label: "Job Shadows", icon: Briefcase },
-  { id: "messages", label: "Messages", icon: MessageSquare },
-];
-
 function todayKey() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -104,83 +87,52 @@ function todayKey() {
 
 function MentorPortal() {
   const requestedSection = Route.useSearch().section;
-  const section = requestedSection === "settings" ? "profile" : requestedSection;
-  const [active, setActive] = useState<Section>(section ?? "calendar");
-  useEffect(() => {
-    if (section) setActive(section);
-  }, [section]);
+  const ownIdentity = useOwnIdentity();
   const placements = useQuery({
     queryKey: ["mentor-placements"],
-    queryFn: async () => ((await supabase.rpc("list_mentor_placements")).data ?? []) as Placement[],
+    queryFn: async () => {
+      const r = await supabase.rpc("list_mentor_placements");
+      if (r.error) throw r.error;
+      return (r.data ?? []) as Placement[];
+    },
   });
   const bookings = useQuery({
     queryKey: ["mentor-bookings"],
-    queryFn: async () =>
-      ((await supabase.rpc("list_mentor_bookings")).data ?? []) as MentorBooking[],
-  });
-  const ownIdentity = useOwnIdentity(active === "profile");
-  const initialHostProfile = useQuery({
-    queryKey: ["host-profile"],
-    enabled: active === "profile",
-    staleTime: 15_000,
     queryFn: async () => {
-      const result = await supabase.rpc("get_my_host_profile");
-      if (result.error) throw result.error;
-      return result.data;
+      const r = await supabase.rpc("list_mentor_bookings");
+      if (r.error) throw r.error;
+      return (r.data ?? []) as MentorBooking[];
     },
   });
-  const all = bookings.data ?? [];
-  if (
-    active === "profile"
-      ? ownIdentity.pending || initialHostProfile.isPending
-      : placements.isPending || bookings.isPending
-  )
-    return <PortalLoading />;
-
+  const profile = useQuery({
+    queryKey: ["host-profile"],
+    staleTime: 15_000,
+    queryFn: async () => {
+      const r = await supabase.rpc("get_my_host_profile");
+      if (r.error) throw r.error;
+      return r.data;
+    },
+  });
+  if (ownIdentity.pending || profile.isPending) return <PortalLoading portal={false} />;
   return (
-    <div className="flex min-h-screen flex-col bg-muted/40">
-      <SiteHeader portal />
-      <div className="flex min-w-0 flex-1 flex-col md:flex-row">
-        <aside className="shrink-0 bg-cta text-black shadow-warm md:w-60">
-          <p className="px-6 pt-4 text-xs font-bold uppercase tracking-widest text-black md:pt-6">
-            Mentor Portal
-          </p>
-          <nav
-            aria-label="Mentor navigation"
-            className="sticky top-32 flex max-h-[calc(100dvh-8rem)] gap-1 overflow-auto px-3 py-3 font-sans text-black md:block md:space-y-1"
-          >
-            {MENU.map((m) => (
-              <button
-                key={m.id}
-                onClick={() => setActive(m.id)}
-                aria-pressed={active === m.id}
-                className={`flex shrink-0 items-center gap-3 rounded-md border-l-2 px-3 py-2.5 text-left text-sm font-medium transition md:w-full ${active === m.id ? "border-primary bg-primary/10" : "border-transparent text-black hover:bg-primary/5"}`}
-              >
-                <m.icon className="h-4 w-4" /> {m.label}
-              </button>
-            ))}
-          </nav>
-        </aside>
-        <div className="min-w-0 flex-1">
-          <main className="space-y-6 p-6">
-            {bookings.isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
-            {active === "calendar" && <HostCalendar bookings={all} />}
-            {active === "shadows" && (
-              <JobShadows
-                bookings={all}
-                placements={placements.data ?? []}
-                loadingPlacements={placements.isLoading}
-              />
-            )}
-            {active === "messages" && <HostMessages />}
-            {active === "profile" && (
-              <HostProfile
-                initialTab={requestedSection === "settings" ? "availability" : "personal"}
-              />
-            )}
-          </main>
-        </div>
-      </div>
+    <div className="flex min-h-screen flex-col bg-ivory">
+      <SiteHeader />
+      <main className="min-w-0 flex-1 p-4 md:p-6">
+        <p className="mb-3 text-xs font-bold uppercase tracking-widest text-black">Mentor Portal</p>
+        <HostProfile
+          initialTab={
+            requestedSection === "settings"
+              ? "availability"
+              : requestedSection === "calendar" || requestedSection === "shadows"
+                ? "shadows"
+                : "personal"
+          }
+          bookings={bookings.data ?? []}
+          placements={placements.data ?? []}
+          loadingPlacements={placements.isPending}
+          loadingBookings={bookings.isPending}
+        />
+      </main>
       <SiteFooter />
     </div>
   );
@@ -207,9 +159,9 @@ function HostCalendar({ bookings }: { bookings: MentorBooking[] }) {
     ? bookings.filter((b) => bookingDayKey(b.shadow_date) === day && b.status !== "cancelled")
     : [];
   return (
-    <section className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Calendar</h1>
+    <section aria-label="Job Shadows Calendar" className="w-full space-y-2 lg:w-1/2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-lg font-bold">Calendar</h2>
         <div className="flex items-center gap-2">
           <button
             onClick={() => shift(-1)}
@@ -243,16 +195,12 @@ function HostCalendar({ bookings }: { bookings: MentorBooking[] }) {
             <button
               key={d}
               onClick={() => setDay(key(d))}
-              className={`relative min-h-16 rounded-md border p-1 text-left transition hover:bg-muted ${day === key(d) ? "border-primary" : "border-transparent"} ${key(d) === today ? "bg-accent/30" : ""}`}
+              className={`relative min-h-8 rounded-md border p-1 text-left transition hover:bg-muted ${day === key(d) ? "border-primary" : "border-transparent"} ${key(d) === today ? "bg-accent/30" : ""}`}
             >
               <span className="text-sm">{d}</span>
               {(counts.get(key(d)) ?? 0) > 0 && (
                 <span className="absolute bottom-1 right-1 rounded-full bg-cta px-2 py-0.5 text-[10px] font-bold text-cta-foreground">
                   {counts.get(key(d))}
-                  <span className="hidden sm:inline">
-                    {" "}
-                    scholar{counts.get(key(d)) === 1 ? "" : "s"}
-                  </span>
                 </span>
               )}
             </button>
@@ -288,28 +236,35 @@ function JobShadows({
     <section className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Job Shadows</h1>
-        <div className="flex rounded-full border bg-card p-1 text-xs font-semibold">
+        <div aria-label="Job Shadows filters" className="flex flex-wrap gap-1.5">
           {(["upcoming", "pending", "all"] as const).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
               aria-pressed={filter === f}
-              className={`rounded-full px-4 py-1.5 capitalize ${filter === f ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+              className={`rounded-full border px-3 py-1.5 text-xs font-medium capitalize ${filter === f ? "border-primary bg-primary text-primary-foreground" : "border-border hover:bg-muted"}`}
             >
               {f}
             </button>
           ))}
         </div>
       </div>
+      <HostCalendar bookings={bookings} />
       <div className="space-y-3">
         {rows.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No job shadows here.</p>
+          <p className="text-sm text-muted-foreground">
+            {filter === "upcoming"
+              ? "No upcoming student bookings."
+              : filter === "pending"
+                ? "No student bookings awaiting approval."
+                : "No student bookings yet."}
+          </p>
         ) : (
           rows.map((b) => <BookingCard key={b.id} booking={b} />)
         )}
       </div>
       <div>
-        <h2 className="text-lg font-semibold">My Placements</h2>
+        <h2 className="text-lg font-semibold">Experiences I Offer</h2>
         {loadingPlacements && <p className="mt-2 text-sm text-muted-foreground">Loading…</p>}
         {!loadingPlacements && placements.length === 0 && (
           <p className="mt-2 text-sm text-muted-foreground">
@@ -435,7 +390,19 @@ function DatesPicker({
   );
 }
 
-function HostProfile({ initialTab = "personal" }: { initialTab?: string }) {
+function HostProfile({
+  initialTab = "personal",
+  bookings,
+  placements,
+  loadingPlacements,
+  loadingBookings,
+}: {
+  initialTab?: string;
+  bookings: MentorBooking[];
+  placements: Placement[];
+  loadingPlacements: boolean;
+  loadingBookings: boolean;
+}) {
   const qc = useQueryClient();
   const [profileTab, setProfileTab] = useState(initialTab);
   const profile = useQuery({
@@ -555,6 +522,7 @@ function HostProfile({ initialTab = "personal" }: { initialTab?: string }) {
           <TabsTrigger value="professional">Professional Details</TabsTrigger>
           <TabsTrigger value="secondary">Secondary Information</TabsTrigger>
           <TabsTrigger value="availability">Availability &amp; Bookings</TabsTrigger>
+          <TabsTrigger value="shadows">Job Shadows</TabsTrigger>
         </TabsList>
         <TabsContent forceMount value="personal" className="mt-4 data-[state=inactive]:hidden">
           <AccountPersonalDetails />
@@ -744,6 +712,17 @@ function HostProfile({ initialTab = "personal" }: { initialTab?: string }) {
         </TabsContent>
         <TabsContent forceMount value="availability" className="mt-4 data-[state=inactive]:hidden">
           <HostSettings />
+        </TabsContent>
+        <TabsContent value="shadows" className="mt-4">
+          {loadingBookings ? (
+            <p role="status">Loading job shadows…</p>
+          ) : (
+            <JobShadows
+              bookings={bookings}
+              placements={placements}
+              loadingPlacements={loadingPlacements}
+            />
+          )}
         </TabsContent>
       </Tabs>
       {profileTab !== "availability" && (err || profile.error) && (
@@ -942,32 +921,6 @@ function HostSettings() {
           )}
         </section>
       </div>
-    </section>
-  );
-}
-
-function HostMessages() {
-  const q = useQuery({
-    queryKey: ["emails"],
-    queryFn: async () =>
-      (await supabase.from("email_outbox").select("*").order("created_at", { ascending: false }))
-        .data ?? [],
-  });
-  return (
-    <section className="space-y-3">
-      <h1 className="text-2xl font-bold">Messages</h1>
-      {q.data?.length === 0 && <p className="text-sm text-muted-foreground">No messages yet.</p>}
-      {q.data?.map((m) => (
-        <details key={m.id} className="rounded-lg border bg-card p-4">
-          <summary className="cursor-pointer text-sm">
-            <strong>{m.subject}</strong>{" "}
-            <span className="text-muted-foreground">
-              · {new Date(m.created_at).toLocaleString("en-ZA")}
-            </span>
-          </summary>
-          <p className="mt-2 whitespace-pre-line text-sm">{m.body}</p>
-        </details>
-      ))}
     </section>
   );
 }

@@ -64,12 +64,9 @@ describe("Host availability settings", () => {
         <Page />
       </QueryClientProvider>,
     );
-    expect(
-      screen.getByRole("navigation", { name: "Mentor navigation" }).querySelector("button"),
-    ).toHaveTextContent("Profile");
-    expect(screen.queryByRole("button", { name: "Settings" })).toBeNull();
+    expect(screen.queryByRole("navigation", { name: "Mentor navigation" })).toBeNull();
+    expect(await screen.findByRole("heading", { name: "Profile" })).toBeVisible();
     expect(screen.getByText("Mentor Portal")).toHaveClass("text-black");
-    fireEvent.click(screen.getByRole("button", { name: "Profile" }));
     fireEvent.mouseDown(await screen.findByRole("tab", { name: "Availability & Bookings" }), {
       button: 0,
       ctrlKey: false,
@@ -96,14 +93,23 @@ describe("Host availability settings", () => {
         }),
       ),
     );
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Job Shadows" }), {
+      button: 0,
+      ctrlKey: false,
+    });
+    expect(screen.getByRole("region", { name: "Job Shadows Calendar" })).toHaveClass("lg:w-1/2");
+    expect(screen.getByRole("heading", { name: "Calendar" })).toBeVisible();
     client.clear();
   });
 });
-it("keeps the sidebar hidden until initial portal data is ready", async () => {
+it("lands directly on profile after its data is ready without showing a sidebar", async () => {
   const client = new QueryClient({
     defaultOptions: { queries: { staleTime: Infinity, retry: false } },
   });
   client.setQueryData(["mentor-bookings"], []);
+  client.setQueryData(["mentor-placements"], []);
+  client.setQueryData(["me"], { id: "mentor" });
+  client.setQueryData(["profile", "mentor"], { first_name: "Alex" });
   let finish!: (data: unknown) => void;
   rpc.mockImplementationOnce(
     () =>
@@ -120,7 +126,8 @@ it("keeps the sidebar hidden until initial portal data is ready", async () => {
   expect(screen.getByRole("status")).toHaveTextContent("Loading your portal");
   expect(screen.queryByRole("navigation", { name: "Mentor navigation" })).toBeNull();
   finish({ data: [], error: null });
-  expect(await screen.findByRole("navigation", { name: "Mentor navigation" })).toBeVisible();
+  expect(await screen.findByRole("heading", { name: "Profile" })).toBeVisible();
+  expect(screen.queryByRole("navigation", { name: "Mentor navigation" })).toBeNull();
   expect(screen.queryByRole("status")).toBeNull();
   client.clear();
 });
