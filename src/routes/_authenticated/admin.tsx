@@ -17,7 +17,7 @@ import { BoolIcon } from "@/components/BoolIcon";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { Users as UsersIcon, FileText, ShoppingCart, Briefcase, GraduationCap, Pencil, Trash2, IdCard, Image as ImageIcon, Download, BadgeCheck, ChevronDown, LayoutGrid, List, X, Sparkles } from "lucide-react";
+import { Users as UsersIcon, FileText, ShoppingCart, Briefcase, GraduationCap, Pencil, Trash2, IdCard, Image as ImageIcon, Download, BadgeCheck, ChevronDown, LayoutGrid, List, X, Sparkles, Clock, Calendar as CalendarIcon, CalendarX, RotateCcw, Bell, type LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { RichText } from "@/components/RichText";
 import { CareerSkills } from "@/components/CareerSkills";
@@ -1624,8 +1624,8 @@ function DatesPicker({ value, onChange, allowWeekends = true, allowOffSeason = t
   );
 }
 
-function SettingsFrame({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
-  return <section className="overflow-hidden rounded-lg border border-warm-divider bg-ivory"><header className="border-b border-warm-divider px-5 py-4"><h2 className="text-base font-medium">{title}</h2><p className="mt-1 text-xs text-muted-foreground">{description}</p></header><div className="divide-y divide-warm-divider">{children}</div></section>;
+function SettingsFrame({ title, description, icon: Icon, tint = "bg-rose-100 text-rose-600", children }: { title: string; description: string; icon?: LucideIcon; tint?: string; children: React.ReactNode }) {
+  return <section className="overflow-hidden rounded-lg border border-warm-divider bg-ivory"><header className="flex items-start gap-3 border-b border-warm-divider px-5 py-4">{Icon && <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${tint}`}><Icon className="h-4 w-4" /></span>}<span><h2 className="text-base font-medium">{title}</h2><p className="mt-1 text-xs text-muted-foreground">{description}</p></span></header><div className="divide-y divide-warm-divider">{children}</div></section>;
 }
 
 function NumberField({ label, hint, value, onChange, suffix }: { label: string; hint?: string; value: string; onChange: (v: string) => void; suffix?: string }) {
@@ -1754,11 +1754,11 @@ export function BookingSettings() {
           </TabsList>
 
           <TabsContent value="rules" className={sectionClass + " mt-6"}>
-              <SettingsFrame title="Scheduling Windows &amp; Lead Times" description="Control how early or far in advance students can request shadow dates.">
+              <SettingsFrame title="Scheduling Windows &amp; Lead Times" description="Control how early or far in advance students can request shadow dates." icon={Clock} tint="bg-rose-100 text-rose-600">
               <NumberField label="Minimum request lead time" suffix="days before the shadow date" value={f("min_lead_days")} onChange={set("min_lead_days")} hint="The earliest a student may submit a booking request relative to the shadow date." />
               <NumberField label="Maximum advance booking window" suffix="days ahead" value={f("max_advance_days")} onChange={set("max_advance_days")} hint="How far into the future a student can request a shadow." />
               </SettingsFrame>
-              <SettingsFrame title="Operating Season &amp; Request Caps" description="Define active placement months and concurrent student booking limits.">
+              <SettingsFrame title="Operating Season &amp; Request Caps" description="Define active placement months and concurrent student booking limits." icon={CalendarIcon} tint="bg-orange-100 text-orange-600">
               <div className="grid items-start gap-4 px-5 py-5 md:grid-cols-2">
                 <div><p className="text-sm">Operating season range</p><p className="mt-1 text-xs text-muted-foreground">Placements run only within this month range unless a listing explicitly allows off-season dates.</p></div>
                 <div className="space-y-4"><div className="grid grid-cols-2 gap-4">{([['season_start_month', 'Season starts'], ['season_end_month', 'Season ends']] as const).map(([key, label]) => <label key={key} className="text-xs">{label}<select value={f(key)} onChange={(e) => set(key)(e.target.value)} className="mt-1 block w-full border-b border-input bg-transparent px-1 py-1 text-sm outline-none">{Array.from({ length: 12 }, (_, i) => <option key={i} value={i + 1}>{new Date(2020, i, 1).toLocaleString('en-ZA', { month: 'long' })}</option>)}</select></label>)}</div>
@@ -1766,7 +1766,7 @@ export function BookingSettings() {
               </div>
               <NumberField label="Maximum pending requests per student" suffix="active requests" value={f("max_pending_requests")} onChange={set("max_pending_requests")} hint={NOT_ENFORCED_HINT} />
               </SettingsFrame>
-              <SettingsFrame title="Blackout Dates &amp; Public Holidays" description="Block institutional dates and manage public holidays across all placements.">
+              <SettingsFrame title="Blackout Dates &amp; Public Holidays" description="Block institutional dates and manage public holidays across all placements." icon={CalendarX} tint="bg-slate-100 text-slate-600">
               <div className="px-5 py-5">
                 <p className="text-sm">Blackout dates <span className="text-xs text-muted-foreground">(no bookings allowed)</span></p>
                 <div className="mt-2 flex items-center justify-between text-xs"><span>Blocked dates ({blackoutDates.length})</span><button type="button" disabled={!blackoutDates.length} onClick={() => setBlackoutDates([])} className="text-primary hover:underline disabled:opacity-50">Clear all</button></div>
@@ -1806,14 +1806,14 @@ export function BookingSettings() {
           </TabsContent>
 
           <TabsContent value="docs" className={sectionClass + " mt-6"}>
-            <SettingsFrame title="Documentation & Approval" description="Manage paperwork deadlines and booking request expiry.">
+            <SettingsFrame title="Documentation & Approval" description="Manage paperwork deadlines and booking request expiry." icon={FileText} tint="bg-blue-100 text-blue-600">
               <NumberField label="Documentation deadline" suffix="days before the shadow date" value={f("documentation_deadline_days")} onChange={set("documentation_deadline_days")} hint="The latest all required paperwork (indemnities, consent) must be approved. Enforced as a floor under the minimum lead time above, so a request can't be made with too little time left to complete it." />
               <NumberField label="Booking request expiry" suffix="hours for a host to respond" value={f("request_expiry_hours")} onChange={set("request_expiry_hours")} hint={NOT_ENFORCED_HINT} />
             </SettingsFrame>
           </TabsContent>
 
           <TabsContent value="cancel" className={sectionClass + " mt-6"}>
-            <SettingsFrame title="Cancellations & Waitlists" description="Configure cancellation, rescheduling and waitlist preferences.">
+            <SettingsFrame title="Cancellations & Waitlists" description="Configure cancellation, rescheduling and waitlist preferences." icon={RotateCcw} tint="bg-amber-100 text-amber-600">
               <NumberField label="Cancellation cut-off" suffix="days before the shadow date" value={f("cancellation_cutoff_days")} onChange={set("cancellation_cutoff_days")} hint={NOT_ENFORCED_HINT} />
               <NumberField label="Reschedule minimum notice" suffix="days ahead" value={f("reschedule_min_notice_days")} onChange={set("reschedule_min_notice_days")} hint={NOT_ENFORCED_HINT} />
               <NumberField label="Waitlist expiry" suffix="hours to respond to an offered place" value={f("waitlist_expiry_hours")} onChange={set("waitlist_expiry_hours")} hint={NOT_ENFORCED_HINT} />
@@ -1821,7 +1821,7 @@ export function BookingSettings() {
           </TabsContent>
 
           <TabsContent value="notify" className={sectionClass + " mt-6"}>
-            <SettingsFrame title="Notifications & Messages" description="Manage availability messages and reminder timing.">
+            <SettingsFrame title="Notifications & Messages" description="Manage availability messages and reminder timing." icon={Bell} tint="bg-violet-100 text-violet-600">
               <label className="block px-5 py-5 text-sm">
                 "No mentors available" message <span className="text-xs text-muted-foreground">(shown on /roles and the booking wizard whenever nothing is bookable)</span>
                 <textarea value={f("no_availability_message")} onChange={(e) => set("no_availability_message")(e.target.value)} className="mt-1 w-full border-b border-input bg-transparent px-1 py-1 outline-none" />
