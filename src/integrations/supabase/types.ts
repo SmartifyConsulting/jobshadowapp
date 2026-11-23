@@ -804,8 +804,6 @@ export type Database = {
       }
       profiles: {
         Row: {
-          archive_warned_at: string | null
-          archived: boolean
           avatar_path: string | null
           display_name: string | null
           first_name: string | null
@@ -815,8 +813,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          archive_warned_at?: string | null
-          archived?: boolean
           avatar_path?: string | null
           display_name?: string | null
           first_name?: string | null
@@ -826,8 +822,6 @@ export type Database = {
           user_id: string
         }
         Update: {
-          archive_warned_at?: string | null
-          archived?: boolean
           avatar_path?: string | null
           display_name?: string | null
           first_name?: string | null
