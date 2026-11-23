@@ -23,7 +23,7 @@ export const PARTNER_HERO = { title: "Open your doors. Change a trajectory.", su
 export const PARTNER_BLOCKS = [
   { type: "host", title: "Hosts", points: ["One day or one hour of your time", "We vet, brief and prepare every scholar", "Build employer brand with future talent", "Counts toward B-BBEE skills development"], cta: "Become a host" },
   { type: "school", title: "Schools", points: ["Structured exposure for Grades 9–12", "Supports subject choice & Life Orientation", "Group bookings and term calendars", "Progress reports for counsellors"], cta: "Partner your school" },
-  { type: "mentor", title: "Mentors", points: ["One day or one hour of your time", "We vet, brief and prepare every scholar", "Share your career experience directly", "Build your professional profile"], cta: "Become a mentor" },
 ] as const;
+// Mentors hidden from the Contact page blocks for now - previous block: { type: "mentor", title: "Mentors", points: ["One day or one hour of your time", "We vet, brief and prepare every scholar", "Share your career experience directly", "Build your professional profile"], cta: "Become a mentor" }
 // Sponsors hidden for now - previous block: { type: "sponsor", title: "Sponsors", points: ["Fund placements for under-resourced learners", "Choose a province, school or field", "Impact report with every sponsorship", "Section 18A tax certificates"], cta: "Sponsor a learner" }
 

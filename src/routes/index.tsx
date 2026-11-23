@@ -93,10 +93,10 @@ function Home() {
       <section
         className="relative overflow-hidden text-primary-foreground"
       >
-        <img src={arrow.url} alt="" aria-hidden width={326} height={1080} className="pointer-events-none absolute top-8 right-[4%] hidden h-[calc(100%-4rem)] w-auto md:block" />
-        <div className="relative mx-auto flex max-w-5xl flex-col items-center px-5 pb-32 pt-16 text-center sm:pt-20 md:pt-24">
+        <img src={arrow.url} alt="" aria-hidden width={326} height={1080} className="pointer-events-none absolute top-8 right-[1%] hidden h-[calc(100%-1rem)] w-auto md:block" />
+        <div className="relative mx-auto flex max-w-5xl flex-col items-center px-5 pb-36 pt-16 text-center sm:pt-20 md:pt-24">
           <h1 className="sr-only">Be sure about the career and life you choose with Job Shadow.</h1>
-          <img src={headline.url} alt="" width={1263} height={338} className="w-full max-w-4xl" />
+          <img src={headline.url} alt="" width={1263} height={338} className="mt-[2cm] w-full max-w-4xl" />
           <button
             type="button"
             onClick={focusSignIn}

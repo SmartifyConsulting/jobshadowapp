@@ -128,7 +128,7 @@ function Contact() {
                 {copy && (
                   <label><span className="text-xs uppercase tracking-wide opacity-80">Contact person</span><input className={input} value={f.contact} onChange={(e) => setF({ ...f, contact: e.target.value })} />{err("contact")}</label>
                 )}
-                {!signedInEmail && <label><span className="text-xs uppercase tracking-wide opacity-80">Email</span><input className={input} type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />{err("email")}</label>}
+                <label><span className="text-xs uppercase tracking-wide opacity-80">Email</span><input className={input} type="email" value={signedInEmail ?? f.email} readOnly={!!signedInEmail} onChange={(e) => setF({ ...f, email: e.target.value })} />{err("email")}</label>
                 {copy && (
                   <label><span className="text-xs uppercase tracking-wide opacity-80">Phone</span><input className={input} value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} />{err("phone")}</label>
                 )}

@@ -34,7 +34,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
 import { sendQueuedEmails } from "@/lib/email.functions";
-import { updateAccount, removeAccount } from "@/lib/users.functions";
+import { updateAccount, removeAccount, syncCompanyContacts } from "@/lib/users.functions";
 import type { AccountApplication } from "@/lib/user-applications";
 import { extractCompanyIndemnity } from "@/lib/indemnity-ai.functions";
 import { lookupPublicHolidays } from "@/lib/public-holidays.functions";
@@ -167,7 +167,7 @@ function AdminPage() {
 /** Shared page header for every admin screen, so the tab bar (or whatever follows) always sits at
  * the same height - use this instead of hand-rolling a header block per screen. */
 function AdminScreenHeader({ title, actions }: { title: React.ReactNode; actions?: React.ReactNode }) {
-  return <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-ivory px-6 py-6 text-foreground">
+  return <div className="flex flex-wrap items-center justify-between gap-3 bg-ivory px-6 py-6 text-foreground">
     <h1 className="text-2xl font-medium">{title}</h1>
     {actions}
   </div>;
@@ -781,6 +781,7 @@ function UserTableRow({ a, selectedId, busyId, expandedApplicationUser, onSelect
         {avatarUrl ? <img src={avatarUrl} alt="" className="h-7 w-7 shrink-0 rounded-full object-cover" /> : <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-teal/15 text-[11px] uppercase">{label.slice(0, 1)}</span>}
         <button onClick={() => onSelect(a.id)} className="max-w-32 truncate text-left font-medium hover:text-primary" title={label} aria-label={'View details for ' + label}>{firstName || "—"}</button>
         {a.is_spam && <span className="text-[10px] text-destructive">Spam</span>}
+        {!a.self_registered && <span className="rounded bg-muted px-1 py-0.5 text-[10px] text-muted-foreground" title="This account was provisioned by an admin from a company contact and has not signed in itself.">Not registered</span>}
       </div></td>
       <td className="px-3 py-1.5">{lastName || "—"}</td>
       <td className="px-3 py-1.5"><span className="block max-w-48 truncate" title={a.email ?? ""}>{a.email || "—"}</span></td>
@@ -846,6 +847,20 @@ export function AdminUsers() {
   const qc = useQueryClient();
   const updateRoleFn = useServerFn(updateAccount);
   const removeAccountFn = useServerFn(removeAccount);
+  const syncCompanyContactsFn = useServerFn(syncCompanyContacts);
+  const [syncing, setSyncing] = useState(false);
+  async function runSyncCompanyContacts() {
+    setSyncing(true);
+    try {
+      const result = await syncCompanyContactsFn();
+      await qc.invalidateQueries({ queryKey: ["admin", "accounts"] });
+      notify(`Created ${result.created} new account${result.created === 1 ? "" : "s"} from company contacts.${result.failed ? ` ${result.failed} failed.` : ""}`, result.failed ? "error" : "success");
+    } catch (e) {
+      notify((e as Error).message, "error");
+    } finally {
+      setSyncing(false);
+    }
+  }
   const accounts = useQuery({
     queryKey: ["admin", "accounts"],
     queryFn: async () => {
@@ -971,7 +986,7 @@ export function AdminUsers() {
         </div>
       } />
       <Tabs value={roleTab} onValueChange={(value) => { setRoleTab(value as AccountRow["roles"][number] | "unclassified" | "individual_mentor"); setLetter(null); setOpenGroups([]); setSelectedId(null); }}>
-        <div className="overflow-x-auto border-b border-border bg-ivory px-6 py-4"><TabsList aria-label="User types">{([["user", "Students"], ["mentor", "Hosts"], ["individual_mentor", "Mentors"], ["school", "Schools"], ["admin", "Admin"], ["unclassified", "Unclassified"]] as const).map(([role, name]) => <TabsTrigger key={role} value={role}>{name} ({(accounts.data ?? []).filter((user) => matchesRole(user, role) && (showSpam || !user.is_spam)).length})</TabsTrigger>)}</TabsList></div>
+        <div className="overflow-x-auto bg-ivory px-6 py-4"><TabsList aria-label="User types">{([["user", "Students"], ["mentor", "Hosts"], ["individual_mentor", "Mentors"], ["school", "Schools"], ["admin", "Admin"], ["unclassified", "Unclassified"]] as const).map(([role, name]) => <TabsTrigger key={role} value={role}>{name} ({(accounts.data ?? []).filter((user) => matchesRole(user, role) && (showSpam || !user.is_spam)).length})</TabsTrigger>)}</TabsList></div>
       <TabsContent value={roleTab} className="mt-0">
       <div className="flex flex-col items-start xl:flex-row">
       <div className={'min-w-0 w-full flex-1 px-4 py-2 text-foreground ' + 'bg-ivory'}>
@@ -995,7 +1010,8 @@ export function AdminUsers() {
               </button>
             );
           })}
-          {!isUnclassified && <Button className="ml-auto" onClick={() => setCreateOpen(true)}>Add {roleTab === "individual_mentor" ? "Mentor" : ROLE_LABELS[accountRole]}</Button>}
+          <Button variant="outline" className="ml-auto" disabled={syncing} onClick={runSyncCompanyContacts}>{syncing ? "Syncing…" : "Sync company contacts"}</Button>
+          {!isUnclassified && <Button onClick={() => setCreateOpen(true)}>Add {roleTab === "individual_mentor" ? "Mentor" : ROLE_LABELS[accountRole]}</Button>}
         </div>
         <div className="mt-2 flex flex-wrap items-end gap-4">
           <label className="block max-w-sm text-sm">
@@ -1321,7 +1337,7 @@ function CompaniesList({ kind }: { kind?: "mentor" | "host" } = {}) {
 
 function CompanyPlacements() {
   return <Tabs defaultValue="host" className="bg-ivory">
-    <div className="overflow-x-auto border-b border-border bg-ivory px-6 py-4"><TabsList aria-label="Company placements"><TabsTrigger value="host">Hosts</TabsTrigger><TabsTrigger value="mentor">Mentors</TabsTrigger></TabsList></div>
+    <div className="overflow-x-auto bg-ivory px-6 py-4"><TabsList aria-label="Company placements"><TabsTrigger value="host">Hosts</TabsTrigger><TabsTrigger value="mentor">Mentors</TabsTrigger></TabsList></div>
     <TabsContent value="host" className="mt-0"><ProviderDirectory kind="host" /></TabsContent>
     <TabsContent value="mentor" className="mt-0"><ProviderDirectory kind="mentor" /></TabsContent>
   </Tabs>;
@@ -1330,7 +1346,7 @@ function CompanyPlacements() {
 function CareersAndSectors() {
   return <Tabs defaultValue="sectors" className="bg-ivory">
     <AdminScreenHeader title="Career Management" />
-    <div className="overflow-x-auto border-b border-border bg-ivory px-6 py-4"><TabsList aria-label="Career management"><TabsTrigger value="sectors">Sectors</TabsTrigger><TabsTrigger value="careers">Careers</TabsTrigger></TabsList></div>
+    <div className="overflow-x-auto bg-ivory px-6 py-4"><TabsList aria-label="Career management"><TabsTrigger value="sectors">Sectors</TabsTrigger><TabsTrigger value="careers">Careers</TabsTrigger></TabsList></div>
     {(["sectors", "careers"] as const).map((id) => { const config = TABLES.find((entry) => entry.id === id)!; return <TabsContent key={id} value={id} className="mt-0"><DataTable title={config.singular} table={config.table} cols={config.cols} csvUpload /></TabsContent>; })}
   </Tabs>;
 }
@@ -1352,7 +1368,7 @@ function AdminReports() {
   return <div className="bg-background">
     <AdminScreenHeader title="Reports" />
     <Tabs defaultValue="bookings">
-      <div className="overflow-x-auto border-b border-border bg-ivory px-6 py-4"><TabsList aria-label="Admin reports" className="justify-start">{["Bookings", "Evaluations", "Vouchers", "BEE / CPD", "Mentor Coverage", "Activity Log", "Token Ledger"].map((label) => <TabsTrigger key={label} value={label.toLowerCase().replaceAll(' / ', '-').replaceAll(' ', '-')}>{label}</TabsTrigger>)}</TabsList></div>
+      <div className="overflow-x-auto bg-ivory px-6 py-4"><TabsList aria-label="Admin reports" className="justify-start">{["Bookings", "Evaluations", "Vouchers", "BEE / CPD", "Mentor Coverage", "Activity Log", "Token Ledger"].map((label) => <TabsTrigger key={label} value={label.toLowerCase().replaceAll(' / ', '-').replaceAll(' ', '-')}>{label}</TabsTrigger>)}</TabsList></div>
       <TabsContent value="bookings" className="mt-0"><LiveBookings /></TabsContent>
       <TabsContent value="evaluations" className="mt-0"><Evaluations /></TabsContent>
       <TabsContent value="vouchers" className="mt-0"><VoucherReport /></TabsContent>

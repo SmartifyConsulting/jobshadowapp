@@ -24,6 +24,7 @@ export type AccountRow = {
   has_profile: boolean;
   is_spam: boolean;
   booking_count: number;
+  self_registered: boolean;
 };
 
 const ROLE_PRIORITY = ["admin", "hr_admin", "mentor", "school", "user"] as const;
@@ -53,7 +54,7 @@ export async function listAccounts(): Promise<AccountRow[]> {
 
   const [{ data: roles }, { data: profiles }, { data: scholars }, { data: legacy }, bookingRows, applicationRows] = await Promise.all([
     (async () => ({ data: await readAllRows(async (from, to) => await supabaseAdmin.from("user_roles").select("user_id, role").order("user_id").order("role").range(from, to)) }))(),
-    (async () => ({ data: await readAllRows(async (from, to) => await supabaseAdmin.from("profiles").select("user_id, display_name, avatar_path, first_name, last_name").order("user_id").range(from, to)) }))(),
+    (async () => ({ data: await readAllRows(async (from, to) => await supabaseAdmin.from("profiles").select("user_id, display_name, avatar_path, first_name, last_name, self_registered").order("user_id").range(from, to)) }))(),
     (async () => ({ data: await readAllRows(async (from, to) => await supabaseAdmin.from("scholar_profiles").select("user_id, full_name, first_name, last_name, contact_no, school, id_number, id_file_path, photo_path, id_verified").order("user_id").range(from, to)) }))(),
     (async () => ({ data: await readAllRows(async (from, to) => await supabaseAdmin.from("legacy_users").select("email, name, first_name, last_name, has_profile, is_spam").order("id").range(from, to)) }))(),
     readAllRows(async (from, to) => await supabaseAdmin.from("bookings").select("id, user_id, company, career, shadow_date, paid_at, indemnity_received, status").order("created_at", { ascending: false }).order("id").range(from, to)),
@@ -100,6 +101,7 @@ export async function listAccounts(): Promise<AccountRow[]> {
         has_profile: legacyRow?.has_profile ?? false,
         is_spam: legacyRow?.is_spam ?? false,
         booking_count: bookingCountByUser.get(u.id) ?? 0,
+        self_registered: profile?.self_registered ?? true,
       };
     })
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
@@ -137,13 +139,13 @@ export async function deleteAccount(userId: string) {
 }
 
 /** Admin account creation deliberately sends no invitation, confirmation or password email. */
-export async function createAccountSilently(email: string, name: string, role: AccountRow["roles"][number], parts?: { first_name: string; last_name: string }) {
+export async function createAccountSilently(email: string, name: string, role: AccountRow["roles"][number], parts?: { first_name: string; last_name: string }, selfRegistered = true) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const created = await supabaseAdmin.auth.admin.createUser({ email, email_confirm: false, user_metadata: { name, display_name: name, ...parts } });
   if (created.error || !created.data.user) throw new Error(created.error?.message ?? "Unable to create account.");
   const id = created.data.user.id;
   try {
-    const profile = await supabaseAdmin.from("profiles").upsert({ user_id: id, display_name: name, ...parts });
+    const profile = await supabaseAdmin.from("profiles").upsert({ user_id: id, display_name: name, self_registered: selfRegistered, ...parts });
     if (profile.error) throw profile.error;
     const removed = await supabaseAdmin.from("user_roles").delete().eq("user_id", id);
     if (removed.error) throw removed.error;
@@ -156,4 +158,57 @@ export async function createAccountSilently(email: string, name: string, role: A
     const reason = error && typeof error === "object" && "message" in error ? String(error.message) : "Setup failed";
     throw new Error(`The account was created without email, but setup is incomplete: ${reason}. Refresh Users and edit this account to finish setup.`);
   }
+}
+
+type CompanyContactFields = {
+  mentor_name: string | null; mentor_email: string | null;
+  backup_mentor_name: string | null; backup_mentor_email: string | null;
+  hr_name: string | null; hr_email: string | null;
+};
+
+/** Silently provisions a login for every company mentor/HR contact that doesn't already have one. No email is ever sent. */
+export async function syncCompanyContactsAsUsers() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+  const companies = await readAllRows<CompanyContactFields>(async (from, to) =>
+    await supabaseAdmin.from("companies").select("mentor_name, mentor_email, backup_mentor_name, backup_mentor_email, hr_name, hr_email").range(from, to)
+  );
+
+  const contacts = new Map<string, { name: string | null; role: "mentor" | "hr_admin" }>();
+  const isEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  for (const c of companies) {
+    for (const [name, email, role] of [
+      [c.mentor_name, c.mentor_email, "mentor"] as const,
+      [c.backup_mentor_name, c.backup_mentor_email, "mentor"] as const,
+      [c.hr_name, c.hr_email, "hr_admin"] as const,
+    ]) {
+      const normalized = (email ?? "").trim().toLowerCase();
+      if (!normalized || !isEmail(normalized) || contacts.has(normalized)) continue;
+      contacts.set(normalized, { name: name?.trim() || null, role });
+    }
+  }
+
+  const existing = new Set<string>();
+  for (let page = 1; ; page++) {
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error) throw new Error(error.message);
+    data.users.forEach((u) => { if (u.email) existing.add(u.email.trim().toLowerCase()); });
+    if (data.users.length < 1000) break;
+  }
+
+  let created = 0;
+  const failures: string[] = [];
+  for (const [email, contact] of contacts) {
+    if (existing.has(email)) continue;
+    const name = contact.name || email;
+    const nameParts = contact.name?.split(/\s+/).filter(Boolean) ?? [];
+    const parts = nameParts.length >= 2 ? { first_name: nameParts[0]!, last_name: nameParts.slice(1).join(" ") } : undefined;
+    try {
+      await createAccountSilently(email, name, contact.role, parts, false);
+      created++;
+    } catch (error) {
+      failures.push(email);
+    }
+  }
+  return { created, skipped: contacts.size - created - failures.length, failed: failures.length, total: contacts.size };
 }

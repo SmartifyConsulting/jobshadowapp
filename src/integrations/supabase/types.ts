@@ -757,6 +757,7 @@ export type Database = {
           display_name: string | null
           first_name: string | null
           last_name: string | null
+          self_registered: boolean
           updated_at: string
           user_id: string
         }
@@ -765,6 +766,7 @@ export type Database = {
           display_name?: string | null
           first_name?: string | null
           last_name?: string | null
+          self_registered?: boolean
           updated_at?: string
           user_id: string
         }
@@ -773,6 +775,7 @@ export type Database = {
           display_name?: string | null
           first_name?: string | null
           last_name?: string | null
+          self_registered?: boolean
           updated_at?: string
           user_id?: string
         }
@@ -1061,6 +1064,7 @@ export type Database = {
           scholar_first_name: string
           scholar_last_name: string
           school: string
+          self_registered: boolean
         }[]
       }
       admin_user_applications: {

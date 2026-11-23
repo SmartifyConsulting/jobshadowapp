@@ -5,7 +5,7 @@ import type { AccountRow } from "@/lib/users.server";
 
 vi.mock("@tanstack/react-router", () => ({ createFileRoute: () => (options: unknown) => ({ options }) }));
 vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
-vi.mock("@/lib/users.functions", () => ({ getAccounts: vi.fn(), updateAccount: vi.fn(), removeAccount: vi.fn(), createAccount: vi.fn() }));
+vi.mock("@/lib/users.functions", () => ({ getAccounts: vi.fn(), updateAccount: vi.fn(), removeAccount: vi.fn(), createAccount: vi.fn(), syncCompanyContacts: vi.fn() }));
 vi.mock("@/lib/public-holidays.functions", () => ({ lookupPublicHolidays: vi.fn() }));
 vi.mock("@/lib/email.functions", () => ({ sendQueuedEmails: vi.fn() }));
 vi.mock("@/lib/career-ai.functions", () => ({ draftCareerDescription: vi.fn() }));
@@ -21,7 +21,7 @@ const account = (id: string, name: string): AccountRow => ({
   id, email: id + "@example.com", created_at: "2026-11-01T00:00:00Z", role: "mentor", roles: ["user", "mentor"],
   display_name: name, full_name: null, avatar_path: null, contact_no: null, school: null, id_number: null,
   applications: [], id_file_path: null, photo_path: null, id_verified: null, has_profile: false,
-  has_scholar_profile: false, is_spam: false, booking_count: 0,
+  has_scholar_profile: false, is_spam: false, booking_count: 0, self_registered: true,
 });
 function mount(extra: AccountRow[] = []) {
   const client = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity, retry: false } } });

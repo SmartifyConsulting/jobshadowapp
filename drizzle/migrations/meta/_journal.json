@@ -484,6 +484,13 @@
       "when": 1794963600000,
       "tag": "0068_lean_admin_accounts_rpc",
       "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "7",
+      "when": 1794963700000,
+      "tag": "0069_track_self_registered_and_sync_contacts",
+      "breakpoints": true
     }
   ]
 }

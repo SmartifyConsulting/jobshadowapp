@@ -19,16 +19,22 @@ export const Route = createFileRoute("/register")({
 function RegisterPage() {
   return (
     <SiteLayout>
-      <div className="bg-primary px-5 py-6 text-primary-foreground">
-        <h1 className="mx-auto max-w-7xl text-xl font-bold md:text-2xl">Sign-Up / Register</h1>
-        <p className="mx-auto mt-2 max-w-7xl text-sm">Complete all the steps starting with signing in. You are moments away from getting a job shadow!</p>
-        <p className="mx-auto mt-3 max-w-7xl text-sm font-bold">NOTE: no more than one scholar per registration.</p>
-      </div>
-      <section className="bg-teal px-5 py-8 text-teal-foreground">
-        <div className="mx-auto max-w-7xl">
-          <RegisterForm />
-          <Link to="/auth" className="mt-4 block text-sm underline">Already have an account? Log in</Link>
-          <Link to="/parent-signup" className="mt-2 block text-sm underline">Parent or guardian? Set your password here</Link>
+      <section className="flex justify-center bg-teal px-4 py-8">
+        <div className="w-full max-w-md overflow-hidden rounded-2xl bg-background shadow-lg">
+          <div className="bg-primary px-6 py-5 text-primary-foreground">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-foreground/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary-foreground" /> Step 1 of 3 • Create account
+            </span>
+            <h1 className="mt-2 font-display text-2xl uppercase">Sign-Up / Register</h1>
+            <p className="mt-1 text-sm text-primary-foreground/90">Complete all the steps starting with signing in. You are moments away from getting a job shadow!</p>
+          </div>
+          <div className="px-6 py-5 text-foreground">
+            <RegisterForm />
+            <div className="mt-4 border-t border-border pt-4 text-center text-sm">
+              <p>Already have an account? <Link to="/auth" className="font-semibold text-accent underline">Log in</Link></p>
+              <p className="mt-1">Parent or guardian? <Link to="/parent-signup" className="font-semibold underline">Set your password here</Link></p>
+            </div>
+          </div>
         </div>
       </section>
     </SiteLayout>
