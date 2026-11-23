@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Pencil, Trash2 } from "lucide-react";
+import { Fragment, useMemo, useState } from "react";
+import { ChevronRight, Info, Pencil, Trash2 } from "lucide-react";
 import { schoolDirectory } from "@/lib/school-directory";
 import type { AccountRow } from "@/lib/users.server";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ export function SchoolsDirectory({
   const schools = useMemo(() => schoolDirectory(accounts), [accounts]);
   const [query, setQuery] = useState("");
   const [letter, setLetter] = useState("");
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<string | null>(null);
   const shown = schools.filter(
     (school) =>
@@ -79,28 +80,98 @@ export function SchoolsDirectory({
           </tr>
         </thead>
         <tbody>
-          {shown.map((school) => (
-            <tr key={school.key} className="border-b border-border">
-              <td className="px-3 py-2">
-                <button
-                  className="text-left hover:text-primary"
-                  onClick={() => setSelected(school.key)}
-                >
-                  {school.name}
-                </button>
-                {schools.some(
-                  (other) =>
-                    other.key !== school.key &&
-                    other.name.toLowerCase() === school.name.toLowerCase(),
-                ) && (
-                  <span className="ml-2 text-xs text-muted-foreground">
-                    {school.country ?? "Country not recorded"}
-                  </span>
+          {shown.map((school) => {
+            const open = expanded.has(school.key);
+            const childrenId = "school-children-" + encodeURIComponent(school.key);
+            return (
+              <Fragment key={school.key}>
+                <tr className="border-b border-border">
+                  <td className="px-3 py-2">
+                    <button
+                      type="button"
+                      className="flex items-center gap-2 text-left hover:text-primary"
+                      aria-expanded={open}
+                      aria-controls={childrenId}
+                      onClick={() =>
+                        setExpanded((current) => {
+                          const next = new Set(current);
+                          next.has(school.key) ? next.delete(school.key) : next.add(school.key);
+                          return next;
+                        })
+                      }
+                    >
+                      <ChevronRight
+                        aria-hidden
+                        className={
+                          "h-4 w-4 shrink-0 transition-transform " + (open ? "rotate-90" : "")
+                        }
+                      />
+                      {school.name}
+                    </button>
+                    {schools.some(
+                      (other) =>
+                        other.key !== school.key &&
+                        other.name.toLowerCase() === school.name.toLowerCase(),
+                    ) && (
+                      <span className="ml-6 text-xs text-muted-foreground">
+                        {school.country ?? "Country not recorded"}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2 text-right">
+                    <span className="inline-flex items-center gap-3">
+                      {school.scholars.length}
+                      <button
+                        type="button"
+                        title="School details"
+                        aria-label={"View school details for " + school.name}
+                        className="rounded p-1 text-muted-foreground hover:text-primary"
+                        onClick={() => setSelected(school.key)}
+                      >
+                        <Info className="h-4 w-4" />
+                      </button>
+                    </span>
+                  </td>
+                </tr>
+                {open && (
+                  <tr>
+                    <td colSpan={2} className="border-b border-border bg-ivory px-3 py-1">
+                      <ul
+                        id={childrenId}
+                        aria-label={"Scholars at " + school.name}
+                        className="ml-2 divide-y divide-border border-l border-border pl-5"
+                      >
+                        {[...school.scholars]
+                          .sort((a, b) =>
+                            (a.full_name || a.display_name || a.email || "").localeCompare(
+                              b.full_name || b.display_name || b.email || "",
+                            ),
+                          )
+                          .map((account) => (
+                            <li
+                              key={account.id}
+                              className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-2 text-sm"
+                            >
+                              <span>
+                                {account.full_name ||
+                                  account.display_name ||
+                                  [account.first_name, account.last_name]
+                                    .filter(Boolean)
+                                    .join(" ") ||
+                                  "Name not recorded"}
+                              </span>
+                              <span className="break-all text-xs text-muted-foreground">
+                                {account.email || "Email not recorded"}
+                              </span>
+                            </li>
+                          ))}
+                      </ul>
+                    </td>
+                  </tr>
                 )}
-              </td>
-              <td className="px-3 py-2 text-right">{school.scholars.length}</td>
-            </tr>
-          ))}
+              </Fragment>
+            );
+          })}
         </tbody>
       </table>
       {!shown.length && (

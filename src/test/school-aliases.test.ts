@@ -55,4 +55,32 @@ describe("reviewed school grouping", () => {
       ]),
     ).toHaveLength(3);
   });
+  it("combines the user-confirmed Kitso, Parktown Girls and Roedean SA variants", () => {
+    const names = [
+      "Kitso Ya Boleng",
+      "KYB",
+      "KYB Academy",
+      "Kitso Ya Boleng TEPP",
+      "Kitso Ya Boleng Academy.",
+      "Kitso Ya Boleng NPC",
+      "Kitso ya boleng bridging school",
+      "Parktown Girls",
+      "Parktown Girls High Schools",
+      "Parktown High School for Girls",
+      "Roedean",
+      "Roedean (SA)",
+      "Roedean school",
+      "Roedean School (SA)",
+    ];
+    const groups = schoolDirectory(names.map((name, index) => account(String(index), name)));
+    expect(groups.map((group) => [group.name, group.scholars.length])).toEqual([
+      ["Kitso Ya Boleng", 7],
+      ["Parktown High School for Girls", 3],
+      ["Roedean School (SA)", 4],
+    ]);
+    expect(
+      schoolDirectory([account("sa", "Roedean", "ZA"), account("uk", "Roedean", "GB")]),
+    ).toHaveLength(2);
+    expect(canonicalSchool("Parktown Boys High School").name).toBe("Parktown Boys High School");
+  });
 });
