@@ -15,13 +15,36 @@ export async function fetchAllAccounts(): Promise<AccountRow[]> {
     if (!data || data.length < PAGE) break;
   }
   const reviews = await fetchAllRows(async (from, to) => {
-    const result = await supabase.from("account_classification_reviews").select("user_id").order("user_id").range(from, to);
+    const result = await supabase
+      .from("account_classification_reviews")
+      .select("user_id")
+      .order("user_id")
+      .range(from, to);
     if (result.error) throw result.error;
     return result.data ?? [];
   });
+  const schoolCountries = await fetchAllRows(async (from, to) => {
+    const result = await supabase
+      .from("scholar_profiles")
+      .select("user_id,school_country_code")
+      .order("user_id")
+      .range(from, to);
+    if (result.error) throw result.error;
+    return result.data ?? [];
+  });
+  const countryByUser = new Map(
+    schoolCountries.map((row) => [String(row["user_id"]), row["school_country_code"]]),
+  );
   const unconfirmed = new Set(reviews.map((row) => String(row["user_id"])));
   return rows.map((row): AccountRow => {
     const roles = row.roles as AccountRow["roles"];
-    return { ...row, roles, role: ROLE_PRIORITY.find((r) => roles.includes(r)) ?? null, applications: [], classification_unconfirmed: unconfirmed.has(row.id) };
+    return {
+      ...row,
+      roles,
+      role: ROLE_PRIORITY.find((r) => roles.includes(r)) ?? null,
+      applications: [],
+      school_country_code: countryByUser.get(row.id) as string | null | undefined,
+      classification_unconfirmed: unconfirmed.has(row.id),
+    };
   });
 }

@@ -387,9 +387,10 @@ describe("Visible provider directories and career wizard", () => {
       screen.getByRole("button", { name: "Export" }),
     );
     fireEvent.click(screen.getByRole("button", { name: /^A.*1/ }));
-    expect(screen.getByRole("button", { name: "AI wizard" })).toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: "AI wizard" }));
-    fireEvent.click(screen.getByRole("button", { name: "AI: Fill missing fields" }));
+    expect(
+      screen.getByRole("button", { name: "AI: Fill missing fields for Accountant" }),
+    ).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "AI: Fill missing fields for Accountant" }));
     await waitFor(() => expect(screen.getByDisplayValue("Teamwork")).toBeVisible());
     expect(screen.getByDisplayValue("Original description")).toBeVisible();
     expect(screen.queryByDisplayValue("Draft overview")).not.toBeInTheDocument();
@@ -408,6 +409,8 @@ describe("Visible provider directories and career wizard", () => {
         ],
       },
     });
+    expect(screen.getByRole("button", { name: "AI: Fill missing fields" })).toHaveTextContent("");
+    expect(screen.getByRole("button", { name: "Regenerate this career" })).toHaveTextContent("");
     expect(screen.getByRole("button", { name: "Update" })).toBeVisible();
     client.clear();
   });

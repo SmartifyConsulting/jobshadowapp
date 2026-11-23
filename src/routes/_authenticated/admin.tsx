@@ -1,3 +1,5 @@
+import { BulkCareerDrafts, type CareerBatchDrafts } from "@/components/BulkCareerDrafts";
+import { careerContentForAI } from "@/lib/career-batch";
 import { schoolDirectory } from "@/lib/school-directory";
 import { SchoolsDirectory } from "@/components/SchoolsDirectory";
 import { mentorAvailability } from "@/lib/mentor-availability";
@@ -36,7 +38,7 @@ import { AdminLedgerReport } from "@/components/AdminLedgerReport";
 import { BoolIcon } from "@/components/BoolIcon";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState, useRef } from "react";
 import {
   Users as UsersIcon,
   FileText,
@@ -483,6 +485,10 @@ function DataTable({
   const [editing, setEditing] = useState<Record<string, unknown> | null>(null);
   const [creating, setCreating] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [careerDrafts, setCareerDrafts] = useState<CareerBatchDrafts>({});
+  const [initialAiAction, setInitialAiAction] = useState<"fill" | "regenerate" | undefined>(
+    undefined,
+  );
   const [exportError, setExportError] = useState<string | null>(null);
   const [showSpam, setShowSpam] = useState(false);
   const [newName, setNewName] = useState("");
@@ -709,12 +715,21 @@ function DataTable({
 
   if (editing) {
     const onDone = () => {
+      setCareerDrafts((current) => {
+        const next = { ...current };
+        delete next[String(editing["id"])];
+        return next;
+      });
+      setInitialAiAction(undefined);
       setEditing(null);
       qc.invalidateQueries({ queryKey: ["admin", table] });
       if (table === "companies")
         void qc.invalidateQueries({ queryKey: ["admin", "company-contact-classification"] });
     };
-    const onCancel = () => setEditing(null);
+    const onCancel = () => {
+      setInitialAiAction(undefined);
+      setEditing(null);
+    };
     return indemnityEdit ? (
       <ApplicationEditPanel table={table} row={editing} onDone={onDone} onCancel={onCancel} />
     ) : (
@@ -723,6 +738,7 @@ function DataTable({
         table={table}
         cols={cols}
         row={editing}
+        initialAiAction={initialAiAction}
         onDone={onDone}
         onCancel={onCancel}
       />
@@ -834,6 +850,41 @@ function DataTable({
             </label>
           )}
           <div className="ml-auto flex flex-wrap items-center gap-3">
+            {table === "careers" && (
+              <BulkCareerDrafts
+                records={data ?? []}
+                drafts={careerDrafts}
+                disabled={isLoading}
+                onDraft={(id, draft) => setCareerDrafts((current) => ({ ...current, [id]: draft }))}
+                onReview={async (id) => {
+                  try {
+                    const result = await supabase
+                      .from("careers")
+                      .select("*")
+                      .eq("id", Number(id))
+                      .maybeSingle();
+                    if (result.error) throw result.error;
+                    if (!result.data) {
+                      notify("This career no longer exists.", "error");
+                      return;
+                    }
+                    const fresh = result.data;
+                    setInitialAiAction(undefined);
+                    setEditing({
+                      ...fresh,
+                      ...careerDraftPatch(careerContentForAI(fresh), careerDrafts[id] ?? {}),
+                    });
+                  } catch (error) {
+                    notify(
+                      error instanceof Error
+                        ? error.message
+                        : "Could not load this career for review.",
+                      "error",
+                    );
+                  }
+                }}
+              />
+            )}
             {csvUpload && (table === "careers" || table === "sectors") && (
               <NamedCsvUpload table={table} />
             )}
@@ -939,11 +990,30 @@ function DataTable({
                                       mentors available
                                     </span>
                                     <button
-                                      onClick={() => setEditing(r)}
-                                      className="inline-flex items-center gap-1 rounded border border-warm-divider px-2 py-1 text-xs hover:text-primary"
+                                      type="button"
+                                      onClick={() => {
+                                        setInitialAiAction("fill");
+                                        setEditing(r);
+                                      }}
+                                      aria-label={
+                                        "AI: Fill missing fields for " + String(r["name"])
+                                      }
+                                      title="AI: Fill missing fields"
+                                      className="rounded border border-warm-divider p-1.5 text-muted-foreground hover:text-primary"
                                     >
                                       <Sparkles className="h-3 w-3" />
-                                      AI wizard
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setInitialAiAction("regenerate");
+                                        setEditing(r);
+                                      }}
+                                      aria-label={"Regenerate " + String(r["name"])}
+                                      title="Regenerate this career"
+                                      className="rounded border border-warm-divider p-1.5 text-muted-foreground hover:text-primary"
+                                    >
+                                      <RotateCcw className="h-3 w-3" />
                                     </button>
                                     <button
                                       onClick={() => void toggleArchived(r)}
@@ -5259,6 +5329,7 @@ function CompanyIndemnityUpload({
 }
 
 function EditRecord({
+  initialAiAction,
   title,
   table,
   cols,
@@ -5266,6 +5337,7 @@ function EditRecord({
   onDone,
   onCancel,
 }: {
+  initialAiAction?: "fill" | "regenerate" | undefined;
   title: string;
   table: string;
   cols: Col[];
@@ -5467,6 +5539,7 @@ function EditRecord({
         )}
         {table === "careers" && (
           <CareerDescriptionField
+            autoAction={initialAiAction}
             career={String(vals["name"] ?? "")}
             value={(vals["description"] as string) ?? ""}
             onChange={(v) => setVals({ ...vals, description: v })}
@@ -5510,6 +5583,7 @@ function EditRecord({
 }
 
 export function CareerDescriptionField({
+  autoAction,
   career,
   value,
   onChange,
@@ -5519,6 +5593,7 @@ export function CareerDescriptionField({
   onGuidanceChange,
   onDraft,
 }: {
+  autoAction?: "fill" | "regenerate" | undefined;
   career: string;
   value: string;
   onChange: (v: string) => void;
@@ -5539,6 +5614,7 @@ export function CareerDescriptionField({
   onDraft: (draft: Partial<CareerDraft>, regenerate?: boolean) => void;
 }) {
   const draft = useServerFn(draftCareerDescription);
+  const autoStarted = useRef(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   async function suggest(regenerate = false) {
@@ -5588,6 +5664,12 @@ export function CareerDescriptionField({
       setBusy(false);
     }
   }
+  useEffect(() => {
+    if (autoAction && !autoStarted.current) {
+      autoStarted.current = true;
+      void suggest(autoAction === "regenerate");
+    }
+  }, [autoAction]);
   return (
     <div className="mt-6 max-w-3xl">
       <div className="flex items-center justify-between gap-3">
@@ -5597,17 +5679,21 @@ export function CareerDescriptionField({
             type="button"
             onClick={() => void suggest()}
             disabled={busy}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs font-medium hover:border-primary hover:text-primary disabled:opacity-50"
+            aria-label="AI: Fill missing fields"
+            title="AI: Fill missing fields"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border text-xs hover:border-primary hover:text-primary disabled:opacity-50"
           >
-            <Sparkles className="h-3.5 w-3.5" /> {busy ? "Writing…" : "AI: Fill missing fields"}
+            <Sparkles className={"h-3.5 w-3.5 " + (busy ? "animate-pulse" : "")} aria-hidden />
           </button>
           <button
             type="button"
             onClick={() => void suggest(true)}
             disabled={busy}
-            className="rounded-full border border-border px-3 py-1 text-xs font-medium hover:border-primary hover:text-primary disabled:opacity-50"
+            aria-label="Regenerate this career"
+            title="Regenerate this career"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border text-xs hover:border-primary hover:text-primary disabled:opacity-50"
           >
-            Regenerate this career
+            <RotateCcw className="h-3.5 w-3.5" aria-hidden />
           </button>
         </div>
       </div>

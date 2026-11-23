@@ -1,0 +1,173 @@
+[
+  {
+    "name": "Abbotts College Centurion",
+    "country": "ZA",
+    "aliases": ["Abbotts High School Centurion"]
+  },
+  {
+    "name": "Ashton International College Ballito",
+    "country": "ZA",
+    "aliases": ["Ashtom International College Ballito", "Ashton College Ballito"]
+  },
+  { "name": "Bechet High School", "country": "ZA", "aliases": ["Bechet hight school"] },
+  { "name": "Camps Bay High School", "country": "ZA", "aliases": ["Camps Bay High"] },
+  {
+    "name": "Crawford International Sandton College",
+    "country": "ZA",
+    "aliases": [
+      "Crawford College Sandton",
+      "Crawford International college Sandton",
+      "Crawford international Sandton college"
+    ]
+  },
+  { "name": "Curro Hillcrest", "country": "ZA", "aliases": ["Curro Hillcresr"] },
+  { "name": "Curro Krugersdorp High School", "country": "ZA", "aliases": ["Curro Krugersdorp"] },
+  { "name": "Epworth High School", "country": "ZA", "aliases": ["Epworth Highschool"] },
+  {
+    "name": "Future Nation Schools Lyndhurst",
+    "country": "ZA",
+    "aliases": ["Future nation schools (Lyndhurst)"]
+  },
+  { "name": "Hoërskool Dinamika", "country": "ZA", "aliases": ["Dinamika"] },
+  { "name": "HyperionDev", "country": "ZA", "aliases": ["hyperion dev"] },
+  {
+    "name": "Khanyisa Education Centre",
+    "country": "ZA",
+    "aliases": ["Khanyisa Education Center"]
+  },
+  { "name": "Kingsmead College", "country": "ZA", "aliases": ["kingsmead collage"] },
+  { "name": "Kitso Ya Boleng", "country": "ZA", "aliases": ["KITSO YA BOLWNG", "Kitso YaBOLENG"] },
+  {
+    "name": "Kitso Ya Boleng TEPP",
+    "country": "ZA",
+    "aliases": [
+      "Kitso Ya Boleng (TEPP)",
+      "KITSO YA BOLENG (TERTIARY PREPARATION PROGRAM)",
+      "Kitso ya boleng Tep program"
+    ]
+  },
+  { "name": "Krugersdorp High School", "country": "ZA", "aliases": ["krugersdorp high"] },
+  { "name": "Litshovhu Secondary School", "country": "ZA", "aliases": ["Litshovhu Secondary"] },
+  {
+    "name": "Marist Brothers Linmeyer",
+    "country": "ZA",
+    "aliases": [
+      "Marist Brother Linmeyer",
+      "Marist Brother's Linmeyer",
+      "Marist Brothers limmyer",
+      "Marist Brothers Lineyer",
+      "Marist Brothers Linmeyar",
+      "Marist Brothers LYNMEYER",
+      "Marist Brotherss Linmeyer",
+      "Marits brothers linmeyer"
+    ]
+  },
+  { "name": "Mbilwi Secondary School", "country": "ZA", "aliases": ["Mbilwi secondary"] },
+  { "name": "Mondale High School", "country": "ZA", "aliases": ["Mondale High"] },
+  {
+    "name": "PEPPS College Polokwane",
+    "country": "ZA",
+    "aliases": ["PEPP COLLEGE Polokwane", "Pepps college Polokwane", "Pepps Polokwane"]
+  },
+  {
+    "name": "Rand Park High School",
+    "country": "ZA",
+    "aliases": ["Randpark High School", "Randpark High"]
+  },
+  {
+    "name": "Reddam House Waterfall",
+    "country": "ZA",
+    "aliases": ["REDDAM Waterfall", "Reddamhouse waterfall"]
+  },
+  { "name": "Reddford House Blue Hills", "country": "ZA", "aliases": ["Reddford house bluehills"] },
+  {
+    "name": "Sacred Heart College",
+    "country": "ZA",
+    "aliases": ["Sacred Heart Colleg", "Sacred heart college in high school"]
+  },
+  {
+    "name": "Sinthumule Senior Secondary School",
+    "country": "ZA",
+    "aliases": ["Sinthumule senior secondary", "Sinthumule senior secondary schoil"]
+  },
+  {
+    "name": "St Andrew's School for Girls",
+    "country": "ZA",
+    "aliases": ["ST Andrews School for Girls", "St. Andrews School for Girls"]
+  },
+  {
+    "name": "St Anne's Diocesan College",
+    "country": "ZA",
+    "aliases": ["St Anne's Diocesans College", "St Annes Diocesan College"]
+  },
+  {
+    "name": "St Mary's School Waverley",
+    "country": "ZA",
+    "aliases": ["St Mary' Waverly", "St Mary’s School Waverely", "St Mary's School Waverly"]
+  },
+  {
+    "name": "St Mary's DSG Kloof",
+    "country": "ZA",
+    "aliases": ["St Mary’s DSG, Kloof", "St Mary’s Kloof"]
+  },
+  {
+    "name": "St Stithians College",
+    "country": "ZA",
+    "aliases": ["st stithian", "St Stithian college", "Saints Stithians", "St Stithians highschool"]
+  },
+  {
+    "name": "St Stithians Girls' College",
+    "country": "ZA",
+    "aliases": [
+      "Saint Stithians Girls College",
+      "Sg Stithians Girls’ College",
+      "St Stithian Girls College",
+      "St Stithians Girl’s College",
+      "St Stithians Girls Coll ge",
+      "St Stithians Girls collage",
+      "St Stithians Girls College",
+      "Stithians girls college",
+      "St Stithians, Girls College"
+    ]
+  },
+  {
+    "name": "The King's College and Preparatory School",
+    "country": "ZA",
+    "aliases": [
+      "The Kings Collage and Preparatory school",
+      "The Kings College and Prep School",
+      "The Kings College and Preparatory"
+    ]
+  },
+  {
+    "name": "Thohoyandou Secondary School",
+    "country": "ZA",
+    "aliases": ["Thohohyandou Secondary", "THOHOYANDOU SECONDARY SCHOOL"]
+  },
+  { "name": "Trinityhouse Glenvista", "country": "ZA", "aliases": ["Trinity house glenvista"] },
+  {
+    "name": "Trinityhouse Little Falls",
+    "country": "ZA",
+    "aliases": ["Trinity house little falls", "Trintiyhouse Little Falls"]
+  },
+  {
+    "name": "Trinityhouse Little Falls High School",
+    "country": "ZA",
+    "aliases": [
+      "Trinity House Little Falls High",
+      "Trinityhouse High Little Falls",
+      "Trinityhouse High School Little Falls"
+    ]
+  },
+  {
+    "name": "Trinityhouse Randpark Ridge",
+    "country": "ZA",
+    "aliases": ["TRINITYHOUSE RANDPARIDGE"]
+  },
+  {
+    "name": "University of the Witwatersrand",
+    "country": "ZA",
+    "aliases": ["University Of Witwatersrand", "Wits University"]
+  },
+  { "name": "Wendywood High School", "country": "ZA", "aliases": ["Wendywood Highschool"] }
+]
