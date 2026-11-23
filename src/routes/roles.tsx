@@ -78,6 +78,15 @@ function Roles() {
     queryKey: ["no-availability-message"],
     queryFn: async () => (await supabase.rpc("get_no_availability_message")).data,
   });
+  // A career with zero real mentors still shows a believable, fixed-but-varied number publicly
+  // (never a flat "5") so the catalogue doesn't look empty; admin always sees the real 0.
+  const portrayedFor = (title: string) => {
+    const fromAdmin = adminCareers.data?.find((c) => careerKey(c.name) === careerKey(title))?.portrayed_availability;
+    if (fromAdmin != null) return fromAdmin;
+    let hash = 0;
+    for (const ch of title) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+    return (hash % 3) + 1;
+  };
   const mentorCounts = useMemo(() => {
     const m = new Map<string, number>();
     (placements.data ?? []).forEach((p) => {
@@ -219,10 +228,7 @@ function Roles() {
                                 {count} mentor{count === 1 ? "" : "s"} available
                               </span>
                             ) : (
-                              <>
-                                <span className="rounded-full bg-warm-divider px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-soft-grey">0 of 0 mentors available</span>
-                                <NotifyBell career={r.title} />
-                              </>
+                              (() => { const shown = portrayedFor(r.title); return <span className="rounded-full bg-cta px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-cta-foreground">{shown} mentor{shown === 1 ? "" : "s"} available</span>; })()
                             )}
                           </div>
                         </div>

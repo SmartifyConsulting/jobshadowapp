@@ -311,6 +311,7 @@ export type Database = {
           ideal_for: string | null
           interpersonal_skills: string[]
           name: string
+          portrayed_availability: number
           recommended_courses: string[]
           school_skills: string[] | null
           specialisations: string[] | null
@@ -325,6 +326,7 @@ export type Database = {
           ideal_for?: string | null
           interpersonal_skills?: string[]
           name: string
+          portrayed_availability?: number
           recommended_courses?: string[]
           school_skills?: string[] | null
           specialisations?: string[] | null
@@ -339,6 +341,7 @@ export type Database = {
           ideal_for?: string | null
           interpersonal_skills?: string[]
           name?: string
+          portrayed_availability?: number
           recommended_courses?: string[]
           school_skills?: string[] | null
           specialisations?: string[] | null
@@ -1395,6 +1398,7 @@ export type Database = {
           id: number
           interpersonal_skills: string[]
           name: string
+          portrayed_availability: number
           recommended_courses: string[]
         }[]
       }

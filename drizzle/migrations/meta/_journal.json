@@ -519,6 +519,13 @@
       "when": 1794964200000,
       "tag": "0073_mentor_company_classification",
       "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1794964300000,
+      "tag": "0074_portrayed_mentor_availability",
+      "breakpoints": true
     }
   ]
 }

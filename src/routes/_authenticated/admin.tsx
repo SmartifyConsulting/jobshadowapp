@@ -276,6 +276,15 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
         }
         rows.forEach((r) => { r["_student_count"] = counts.get(String(r["name"]).trim().toLowerCase()) ?? 0; });
       }
+      if (table === "careers") {
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const hasOpenDates = (dates: string | null) => (dates ?? "").split(",").some((d) => { const [m, day, y] = d.trim().split("/").map(Number); return m && day && y && new Date(y, m - 1, day) >= today; });
+        const { data: companyRows, error } = await supabase.from("companies").select("career, active, dates");
+        if (error) throw error;
+        const availableNow = new Map<string, number>();
+        (companyRows ?? []).forEach((c) => { const key = (c.career ?? "").trim().toLowerCase(); if (key && c.active && hasOpenDates(c.dates)) availableNow.set(key, (availableNow.get(key) ?? 0) + 1); });
+        rows.forEach((r) => { r["_real_availability"] = availableNow.get(String(r["name"]).trim().toLowerCase()) ?? 0; });
+      }
       return table === "careers" ? withCareerDescriptions(rows) : rows;
     },
   });
@@ -317,6 +326,13 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
     const { error } = await (supabase.from("careers") as any).update({ archived: !row["archived"] }).eq("id", row["id"]);
     if (error) return notify(error.message, "error");
     qc.invalidateQueries({ queryKey: ["admin", table] });
+  }
+
+  async function setPortrayedAvailability(row: Record<string, unknown>, value: number) {
+    const { error } = await (supabase.from("careers") as any).update({ portrayed_availability: value }).eq("id", row["id"]);
+    if (error) return notify(error.message, "error");
+    qc.invalidateQueries({ queryKey: ["admin", table] });
+    void qc.invalidateQueries({ queryKey: ["public-careers-catalog"] });
   }
 
   if (editing) {
@@ -412,6 +428,8 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
                                   )}
                                   <div className="min-w-0"><span className="block truncate text-sm font-medium leading-tight">{fmt(r["name"])}{!!r["archived"] && <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">Archived</span>}</span>{!descOpen && r["description"] ? <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{String(r["description"]).replace(/\*\*/g, "").split("\n")[0]}</p> : null}</div>
                                   <span className="shrink-0 text-xs text-muted-foreground">{fmt(r["_student_count"])} scholars</span>
+                                  {table === "careers" && <span className="shrink-0 text-xs text-muted-foreground" title="Companies currently active with open dates for this career">Real availability: {fmt(r["_real_availability"])}</span>}
+                                  {table === "careers" && <label className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground" title="The availability number shown publicly when real availability is 0, so the Careers page never looks empty">Portrayed:<input type="number" min={0} max={9} value={fmt(r["portrayed_availability"])} onChange={(e) => void setPortrayedAvailability(r, Math.max(0, Math.min(9, Number(e.target.value) || 0)))} className="w-10 rounded border border-warm-divider bg-background px-1 py-0.5 text-center" /></label>}
                                 </div>
                                 <div className="flex shrink-0 gap-1.5">
                                   <button onClick={() => setEditing(r)} className="inline-flex items-center gap-1 rounded border border-warm-divider px-2 py-1 text-xs hover:text-primary"><Sparkles className="h-3 w-3" />AI wizard</button>
@@ -1434,7 +1452,7 @@ function MentorCoverageReport() {
   const shown = rows.filter((r) => filter === "all" ? true : filter === "zero" ? r.total === 0 : r.availableNow === 0);
   return (
     <div className="bg-background p-6">
-      <p className="mb-4 max-w-2xl text-sm text-muted-foreground">Careers the public Careers page shows as "0 of 5 mentors available" so the site never looks empty — this view shows the real picture so you know exactly where mentor recruitment is needed. "No mentors at all" means zero companies have ever been registered for that career; "Registered, not currently available" means a company exists but is inactive or has no open dates right now.</p>
+      <p className="mb-4 max-w-2xl text-sm text-muted-foreground">Careers with zero real mentors still show a portrayed availability number on the public Careers page (set per career on the Careers screen) so the site never looks empty — this view shows the real picture so you know exactly where mentor recruitment is needed. "No mentors at all" means zero companies have ever been registered for that career; "Registered, not currently available" means a company exists but is inactive or has no open dates right now.</p>
       <div role="group" aria-label="Filter by coverage" className="mb-4 flex flex-wrap gap-1.5">
         {([["zero", "No mentors at all"], ["inactive", "Not currently available"], ["all", "All careers"]] as const).map(([key, label]) => <button key={key} type="button" aria-pressed={filter === key} onClick={() => setFilter(key)} className={`rounded-full border px-3 py-1.5 text-xs font-medium ${filter === key ? "border-primary bg-primary text-primary-foreground" : "border-border hover:bg-muted"}`}>{label}</button>)}
       </div>
