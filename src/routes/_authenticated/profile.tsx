@@ -1,8 +1,10 @@
+import { AccountProfile, useOwnIdentity } from "@/components/account/AccountProfile";
+import { PortalLoading } from "@/components/PortalLoading";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { SiteLayout } from "@/components/SiteLayout";
+import { SiteLayout, useSiteSession } from "@/components/SiteLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserCircle, CalendarCheck } from "lucide-react";
 import { AccountPanel } from "@/components/account/AccountSections";
@@ -60,12 +62,23 @@ function ProfileSettings() {
   const inWorkflow = entry === "workflow";
   const navigate = Route.useNavigate();
   const qc = useQueryClient();
-  const { data: user } = useUser();
-  const profile = useQuery({
-    queryKey: ["profile", user?.id],
+  const ownIdentity = useOwnIdentity();
+  const user = ownIdentity.user.data;
+  const profile = ownIdentity.profile;
+  const session = useSiteSession();
+  const scholar = useQuery({
+    queryKey: ["scholar-profile", user?.id],
     enabled: !!user,
-    queryFn: async () =>
-      (await supabase.from("profiles").select("*").eq("user_id", user!.id).maybeSingle()).data,
+    staleTime: 15_000,
+    queryFn: async () => {
+      const result = await supabase
+        .from("scholar_profiles")
+        .select("*")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      if (result.error) throw result.error;
+      return result.data;
+    },
   });
 
   const [first, setFirst] = useState<string | null>(null);
@@ -119,15 +132,13 @@ function ProfileSettings() {
       setBusy(false);
       return setErr("Please enter your first name and last name.");
     }
-    const { error } = await supabase
-      .from("profiles")
-      .upsert({
-        user_id: user.id,
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
-        display_name: displayName,
-        updated_at: new Date().toISOString(),
-      });
+    const { error } = await supabase.from("profiles").upsert({
+      user_id: user.id,
+      first_name: firstName.trim(),
+      last_name: lastName.trim(),
+      display_name: displayName,
+      updated_at: new Date().toISOString(),
+    });
     setBusy(false);
     if (error) return setErr(error.message);
     setSaved(true);
@@ -135,6 +146,16 @@ function ProfileSettings() {
     qc.invalidateQueries({ queryKey: ["site-session"] });
   }
 
+  if (ownIdentity.pending || session.isPending || (!!user && scholar.isPending))
+    return <PortalLoading label="Loading your profile…" portal={false} />;
+  const scholarView =
+    !!scholar.data || session.data?.roles.includes("user") || inWorkflow || tab === "bookings";
+  if (!scholarView)
+    return (
+      <SiteLayout>
+        <AccountProfile />
+      </SiteLayout>
+    );
   return (
     <SiteLayout>
       <section className="flex-1 bg-ivory">

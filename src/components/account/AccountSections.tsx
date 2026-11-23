@@ -1,3 +1,4 @@
+import { displayTime } from "@/lib/time-entry";
 import { ProfilePhotoPicker } from "./ProfilePhotoPicker";
 import { bookingDateKey, datesInRange, placementsInDateRange } from "@/lib/placement-search";
 import { fetchAllRows } from "@/lib/admin-export";
@@ -74,6 +75,7 @@ export function AccountPanel({
   const qc = useQueryClient();
   const profile = useQuery({
     queryKey: ["scholar-profile", user?.id],
+    staleTime: 15_000,
     enabled: !!user,
     queryFn: async () => {
       const result = await supabase
@@ -944,6 +946,9 @@ export function Bookings({ selectedId }: { selectedId?: string | undefined } = {
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {b.sector} · {b.location} · {b.shadow_date}
+                  {b.arrival_time &&
+                    b.collection_time &&
+                    ` · ${displayTime(b.arrival_time)} – ${displayTime(b.collection_time)}`}
                 </p>
               </div>
               <span className="rounded-full bg-accent px-3 py-1 text-xs font-semibold text-accent-foreground">
@@ -1418,6 +1423,16 @@ export function NewBooking({
       : p.sector === sector,
   );
   const chosen = options.find((p) => p.id === pid);
+  const dayTimes = useQuery({
+    queryKey: ["placement-day-times", chosen?.id],
+    enabled: !!chosen,
+    queryFn: async () => {
+      const r = await supabase.rpc("get_placement_day_times", { _id: chosen!.id });
+      if (r.error) throw r.error;
+      return r.data ?? [];
+    },
+  });
+  const selectedHours = dayTimes.data?.find((row) => row.available_on === bookingDateKey(date));
   const hostHolidays = useQuery({
     queryKey: ["placement-holidays", chosen?.id],
     enabled: !!chosen,
@@ -1476,6 +1491,11 @@ export function NewBooking({
       return;
     }
     const effectiveDate = requestingDate ? requestedDate : date;
+    if (
+      !requestingDate &&
+      (!dayTimes.isSuccess || !selectedHours?.from_time || !selectedHours?.to_time)
+    )
+      return setMsg("Please choose a day with confirmed From and To times.");
     if (!chosen || !effectiveDate) return setMsg("Choose a career and a date.");
     if (duplicate && !confirmDupe) return;
     const { data: created, error } = await supabase
@@ -1723,8 +1743,7 @@ export function NewBooking({
                           {hostLabel(host, index)}
                         </span>
                         <span className="mt-1 block text-xs">
-                          {host.arrival_time} – {host.collection_time} · {host.days_per_shadow ?? 1}{" "}
-                          day(s)
+                          Times vary by available day · {host.days_per_shadow ?? 1} day(s)
                         </span>
                         <span className="mt-1 block text-xs">
                           Available:{" "}
@@ -1766,11 +1785,19 @@ export function NewBooking({
                 </div>
                 <div>
                   <dt className="font-semibold">Arrival time</dt>
-                  <dd>{chosen.arrival_time || "TBC"}</dd>
+                  <dd>
+                    {selectedHours?.from_time
+                      ? displayTime(selectedHours.from_time)
+                      : "Choose a date to see its hours"}
+                  </dd>
                 </div>
                 <div>
                   <dt className="font-semibold">Collection time</dt>
-                  <dd>{chosen.collection_time || "TBC"}</dd>
+                  <dd>
+                    {selectedHours?.to_time
+                      ? displayTime(selectedHours.to_time)
+                      : "Choose a date to see its hours"}
+                  </dd>
                 </div>
                 <div>
                   <dt className="font-semibold">Fee</dt>
@@ -1800,6 +1827,19 @@ export function NewBooking({
                     className={`border px-3 py-1 text-sm ${!requestingDate && date === d ? "bg-primary text-primary-foreground" : "border-current/60"}`}
                   >
                     {d}
+                    {dayTimes.data?.find((row) => row.available_on === bookingDateKey(d)) && (
+                      <span className="ml-2 text-xs">
+                        {displayTime(
+                          dayTimes.data.find((row) => row.available_on === bookingDateKey(d))!
+                            .from_time ?? "",
+                        )}{" "}
+                        –{" "}
+                        {displayTime(
+                          dayTimes.data.find((row) => row.available_on === bookingDateKey(d))!
+                            .to_time ?? "",
+                        )}
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>

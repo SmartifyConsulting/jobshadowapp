@@ -1,3 +1,4 @@
+import { AccountProfile, useOwnIdentity } from "@/components/account/AccountProfile";
 import type { Database } from "@/integrations/supabase/types";
 import { useCareerAutosave } from "@/lib/use-career-autosave";
 import { ADMIN_NAV } from "@/components/RoleNavigation";
@@ -6,7 +7,8 @@ import { careerContentForAI } from "@/lib/career-batch";
 import { schoolDirectory } from "@/lib/school-directory";
 import { SchoolsDirectory } from "@/components/SchoolsDirectory";
 import { mentorAvailability } from "@/lib/mentor-availability";
-import { fetchAllAccounts } from "@/lib/admin-accounts";
+import { adminAccountsQueryOptions } from "@/lib/admin-accounts";
+import { PortalLoading } from "@/components/PortalLoading";
 import {
   Sheet,
   SheetContent,
@@ -105,7 +107,7 @@ import {
 
 export const Route = createFileRoute("/_authenticated/admin")({
   validateSearch: (s: Record<string, unknown>): { section?: string | undefined } => ({
-    section: ["users", "careers", "reports", "settings", "emails", "legal"].includes(
+    section: ["users", "careers", "reports", "settings", "emails", "legal", "profile"].includes(
       String(s["section"]),
     )
       ? String(s["section"])
@@ -143,6 +145,15 @@ const TABLES: {
   indemnityEdit?: boolean;
   custom?: boolean;
 }[] = [
+  {
+    id: "profile",
+    label: "Profile",
+    icon: UsersIcon,
+    table: "profiles",
+    singular: "Profile",
+    custom: true,
+    cols: [],
+  },
   {
     id: "users",
     label: "Users",
@@ -337,12 +348,21 @@ function AdminPage() {
   useEffect(() => {
     if (requestedSection) setActive(requestedSection);
   }, [requestedSection]);
+  const ownIdentity = useOwnIdentity(active === "profile");
   const section = TABLES.find((t) => t.id === active);
+  const initialAccounts = useQuery({
+    ...adminAccountsQueryOptions,
+    enabled: admin.data === true && active === "users",
+  });
   if (!section) return null;
+  if (admin.data === true && active === "profile" && ownIdentity.pending)
+    return <PortalLoading fullWidth />;
+  if (admin.isPending || (admin.data === true && active === "users" && initialAccounts.isPending))
+    return <PortalLoading fullWidth />;
 
   return (
     <div className="admin-portal flex min-h-screen flex-col bg-muted/40">
-      <SiteHeader fullWidth />
+      <SiteHeader fullWidth portal />
       <div className="flex min-w-0 flex-1">
         <aside className="w-60 shrink-0 border-r border-primary/20 bg-accent text-accent-foreground shadow-warm">
           <p className="px-5 pb-3 pt-6 text-xs font-bold uppercase tracking-widest text-foreground/70">
@@ -350,7 +370,7 @@ function AdminPage() {
           </p>
           <nav
             aria-label="Admin navigation"
-            className="sticky top-0 max-h-screen space-y-1 overflow-y-auto px-3 pb-6"
+            className="sticky top-32 max-h-[calc(100dvh-8rem)] space-y-1 overflow-y-auto px-3 pb-6"
           >
             {ADMIN_NAV.map((item) => TABLES.find((table) => table.id === item.key)!).map((t) => (
               <button
@@ -377,6 +397,8 @@ function AdminPage() {
               <p className="p-8">
                 Your account doesn't have admin access. Ask JobShadow to grant it.
               </p>
+            ) : section.id === "profile" ? (
+              <AccountProfile />
             ) : section.id === "users" ? (
               <AdminUsers key={section.id} />
             ) : section.id === "careers" ? (
@@ -2316,10 +2338,7 @@ export function AdminUsers() {
   const qc = useQueryClient();
   const updateRoleFn = useServerFn(updateAccount);
   const removeAccountFn = useServerFn(removeAccount);
-  const accounts = useQuery({
-    queryKey: ["admin", "accounts"],
-    queryFn: fetchAllAccounts,
-  });
+  const accounts = useQuery(adminAccountsQueryOptions);
   const [q, setQ] = useState("");
   const [view, setView] = useState<"table" | "cards">("table");
   const [selectedId, setSelectedId] = useState<string | null>(null);

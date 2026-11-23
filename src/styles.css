@@ -232,7 +232,7 @@
 
 /* One column-heading style for all list implementations. Keep table
    geometry and explicit per-column alignment shared with their data cells. */
-thead th {
+table:not([role="grid"]) > thead th {
   font-family: var(--font-sans);
   font-size: 12px;
   font-weight: 500;
@@ -249,12 +249,22 @@ thead th {
 }
 
 /* A single continuous frame around the header row, without cell dividers. */
-thead th:first-child {
+table:not([role="grid"]) > thead th:first-child {
   border-left: 1px solid color-mix(in srgb, var(--charcoal) 35%, var(--ivory));
 }
 
-thead th:last-child {
+table:not([role="grid"]) > thead th:last-child {
   border-right: 1px solid color-mix(in srgb, var(--charcoal) 35%, var(--ivory));
+}
+
+/* Available dates are positive selections; blocked-date calendars keep their own colour. */
+.availability-calendar {
+  --ring: #96c93d;
+}
+
+.availability-calendar [data-selected-single="true"] {
+  background-color: #96c93d;
+  color: var(--charcoal);
 }
 
 /* Home reference artwork: geometry and colours only, with shared type and controls. */

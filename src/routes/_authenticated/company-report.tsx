@@ -1,14 +1,25 @@
+import { AccountProfile, useOwnIdentity } from "@/components/account/AccountProfile";
 import { CompanyMentors } from "@/components/CompanyMentors";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteLayout } from "@/components/SiteLayout";
+import { PortalLoading } from "@/components/PortalLoading";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/company-report")({
-  validateSearch: (s: Record<string, unknown>): { section?: "mentors" | "csi" | undefined } => ({
-    section: s["section"] === "mentors" ? "mentors" : s["section"] === "csi" ? "csi" : undefined,
+  validateSearch: (
+    s: Record<string, unknown>,
+  ): { section?: "mentors" | "csi" | "profile" | undefined } => ({
+    section:
+      s["section"] === "mentors"
+        ? "mentors"
+        : s["section"] === "csi"
+          ? "csi"
+          : s["section"] === "profile"
+            ? "profile"
+            : undefined,
   }),
   head: () => ({
     meta: [{ title: "CSI | Company Portal | JobShadow" }, { name: "robots", content: "noindex" }],
@@ -36,6 +47,7 @@ function CompanyReportPage() {
   useEffect(() => {
     if (section) setActive(section);
   }, [section]);
+  const ownIdentity = useOwnIdentity(active === "profile");
   const companies = useQuery({
     queryKey: ["my-hr-companies"],
     queryFn: async () => {
@@ -100,19 +112,26 @@ function CompanyReportPage() {
     URL.revokeObjectURL(url);
   }
 
+  if (
+    active === "profile"
+      ? ownIdentity.pending
+      : companies.isPending || (active === "csi" && hrEmail !== null && report.isPending)
+  )
+    return <PortalLoading />;
   return (
-    <SiteLayout>
+    <SiteLayout portal>
       <div className="flex min-w-0 flex-1 flex-col md:flex-row">
         <aside className="shrink-0 bg-cta text-cta-foreground shadow-warm md:w-60">
           <p className="px-6 pt-6 text-xs font-bold uppercase tracking-widest">Company Portal</p>
           <nav
-            className="sticky top-0 max-h-screen space-y-1 overflow-y-auto p-3"
+            className="sticky top-32 max-h-[calc(100dvh-8rem)] space-y-1 overflow-y-auto p-3"
             aria-label="Company navigation"
           >
             {(
               [
                 ["mentors", "Mentors"],
                 ["csi", "CSI"],
+                ["profile", "Profile"],
               ] as const
             ).map(([key, label]) => (
               <button
@@ -129,17 +148,12 @@ function CompanyReportPage() {
                 {label}
               </button>
             ))}
-            <Link
-              to="/profile"
-              search={{ tab: "profile" }}
-              className="block rounded px-3 py-2.5 text-sm font-medium hover:bg-primary/5"
-            >
-              Profile
-            </Link>
           </nav>
         </aside>
         <div className="min-w-0 flex-1 bg-ivory">
-          {active === "mentors" ? (
+          {active === "profile" ? (
+            <AccountProfile />
+          ) : active === "mentors" ? (
             <CompanyMentors />
           ) : (
             <>

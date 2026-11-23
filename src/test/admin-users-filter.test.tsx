@@ -231,11 +231,12 @@ describe("User alphabet chips", () => {
 });
 
 describe("Booking status chips", () => {
-  it("filters actual rows and resets to All", () => {
+  it("filters actual rows and resets to All", async () => {
     const client = new QueryClient({
       defaultOptions: { queries: { staleTime: Infinity, retry: false } },
     });
     client.setQueryData(["is-admin"], true);
+    client.setQueryData(["admin", "accounts"], []);
     client.setQueryData(["admin", "combined-applications"], []);
     client.setQueryData(
       ["admin", "live-bookings"],
@@ -262,7 +263,7 @@ describe("Booking status chips", () => {
     );
     expect(screen.queryByRole("button", { name: "Bookings" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Evaluations" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Reports" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Reports" }));
     expect(
       within(screen.getByRole("tablist", { name: "Admin reports" }))
         .getAllByRole("tab")
@@ -353,6 +354,7 @@ describe("Visible provider directories and career wizard", () => {
       defaultOptions: { queries: { staleTime: Infinity, retry: false } },
     });
     client.setQueryData(["is-admin"], true);
+    client.setQueryData(["admin", "accounts"], []);
     client.setQueryData(["admin", "accounts"], []);
     client.setQueryData(["admin", "company-contact-classification"], []);
     client.setQueryData(["admin", "sectors", false], []);

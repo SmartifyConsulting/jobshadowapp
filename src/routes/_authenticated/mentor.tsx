@@ -1,3 +1,8 @@
+import { TimePicker } from "@/components/TimePicker";
+import { displayTime } from "@/lib/time-entry";
+import { selectedDaySlots, validDaySlot, type DaySlot } from "@/lib/placement-day-times";
+import { AccountPersonalDetails, useOwnIdentity } from "@/components/account/AccountProfile";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useServerFn } from "@tanstack/react-start";
 import { syncAutomaticHolidays } from "@/lib/public-holidays.functions";
 import { CountrySelect } from "@/components/CountrySelect";
@@ -17,6 +22,7 @@ import {
   Upload,
 } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
+import { PortalLoading } from "@/components/PortalLoading";
 import { bookingDayKey, countByDay, filterHostBookings } from "@/lib/host-bookings";
 import { supabase } from "@/integrations/supabase/client";
 import { Calendar } from "@/components/ui/calendar";
@@ -113,26 +119,43 @@ function MentorPortal() {
     queryFn: async () =>
       ((await supabase.rpc("list_mentor_bookings")).data ?? []) as MentorBooking[],
   });
+  const ownIdentity = useOwnIdentity(active === "profile");
+  const initialHostProfile = useQuery({
+    queryKey: ["host-profile"],
+    enabled: active === "profile",
+    staleTime: 15_000,
+    queryFn: async () => {
+      const result = await supabase.rpc("get_my_host_profile");
+      if (result.error) throw result.error;
+      return result.data;
+    },
+  });
   const all = bookings.data ?? [];
+  if (
+    active === "profile"
+      ? ownIdentity.pending || initialHostProfile.isPending
+      : placements.isPending || bookings.isPending
+  )
+    return <PortalLoading />;
 
   return (
     <div className="flex min-h-screen flex-col bg-muted/40">
-      <SiteHeader />
+      <SiteHeader portal />
       <div className="flex min-w-0 flex-1 flex-col md:flex-row">
-        <aside className="shrink-0 bg-cta text-cta-foreground shadow-warm md:w-60">
+        <aside className="shrink-0 bg-cta text-black shadow-warm md:w-60">
           <p className="px-6 pt-4 text-xs font-bold uppercase tracking-widest text-foreground/70 md:pt-6">
             Mentor Portal
           </p>
           <nav
             aria-label="Mentor navigation"
-            className="sticky top-0 flex max-h-screen gap-1 overflow-auto px-3 py-3 md:block md:space-y-1"
+            className="sticky top-32 flex max-h-[calc(100dvh-8rem)] gap-1 overflow-auto px-3 py-3 font-sans text-black md:block md:space-y-1"
           >
             {MENU.map((m) => (
               <button
                 key={m.id}
                 onClick={() => setActive(m.id)}
                 aria-pressed={active === m.id}
-                className={`flex shrink-0 items-center gap-3 rounded-md border-l-2 px-3 py-2.5 text-left text-sm font-medium transition md:w-full ${active === m.id ? "border-primary bg-primary/10" : "border-transparent text-foreground/85 hover:bg-primary/5"}`}
+                className={`flex shrink-0 items-center gap-3 rounded-md border-l-2 px-3 py-2.5 text-left text-sm font-medium transition md:w-full ${active === m.id ? "border-primary bg-primary/10" : "border-transparent text-black hover:bg-primary/5"}`}
               >
                 <m.icon className="h-4 w-4" /> {m.label}
               </button>
@@ -317,12 +340,14 @@ function DatesPicker({
   allowWeekends = true,
   allowOffSeason = true,
   countryCode = "ZA",
+  children,
 }: {
   value: string;
   onChange: (v: string) => void;
   allowWeekends?: boolean;
   allowOffSeason?: boolean;
   countryCode?: string;
+  children?: React.ReactNode;
 }) {
   const dates = value
     .split(",")
@@ -379,35 +404,41 @@ function DatesPicker({
         selected={dates}
         onSelect={(d) => set(d ?? [])}
         disabled={disabledMatchers}
-        className="rounded-md border bg-background"
+        className="availability-calendar rounded-md border bg-background"
       />
-      <div className="flex flex-wrap gap-1.5">
-        {dates.length === 0 && <span className="text-xs text-muted-foreground">No dates set.</span>}
-        {dates.map((d, i) => (
-          <span
-            key={i}
-            className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs"
-          >
-            {toUsDate(d)}
-            <button
-              type="button"
-              onClick={() => set(dates.filter((_, idx) => idx !== i))}
-              aria-label={`Remove ${toUsDate(d)}`}
-              className="text-muted-foreground hover:text-destructive"
+      {children ?? (
+        <div className="flex flex-wrap gap-1.5">
+          {dates.length === 0 && (
+            <span className="text-xs text-muted-foreground">No dates set.</span>
+          )}
+          {dates.map((d, i) => (
+            <span
+              key={i}
+              className="flex items-center gap-1 rounded-full bg-cta/20 px-2.5 py-1 text-xs text-charcoal"
             >
-              <X className="h-3 w-3" />
-            </button>
-          </span>
-        ))}
-      </div>
+              {toUsDate(d)}
+              <button
+                type="button"
+                onClick={() => set(dates.filter((_, idx) => idx !== i))}
+                aria-label={`Remove ${toUsDate(d)}`}
+                className="text-muted-foreground hover:text-destructive"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 function HostProfile() {
   const qc = useQueryClient();
+  const [profileTab, setProfileTab] = useState("personal");
   const profile = useQuery({
     queryKey: ["host-profile"],
+    staleTime: 15_000,
     queryFn: async () => {
       const result = await supabase.rpc("get_my_host_profile");
       if (result.error) throw result.error;
@@ -478,6 +509,7 @@ function HostProfile() {
       hasHrAdmin &&
       (!hrFirstName.trim() || !hrLastName.trim() || !hrEmail.trim())
     ) {
+      setProfileTab("secondary");
       setErr("Please provide your HR admin's first name, last name and email.");
       return;
     }
@@ -510,201 +542,218 @@ function HostProfile() {
   }
 
   return (
-    <section className="max-w-2xl space-y-5">
+    <section className="w-full space-y-4 bg-ivory p-4">
       <h1 className="text-2xl font-bold">Profile</h1>
-      <p className="text-sm text-muted-foreground">
-        Shown to scholars and HR before your identity is revealed — it's what gives them confidence
-        to book, without naming you. Your name, email and phone are never shown here.
-      </p>
-
-      <div className="rounded-lg border bg-card p-4">
-        <label className="block text-sm font-semibold">
-          <span className="flex items-center gap-1.5">
-            <UserCircle className="h-4 w-4" /> Experience / bio
-          </span>
-          <textarea
-            rows={4}
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-            placeholder="A few sentences about your role and experience."
-            className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-          />
-        </label>
-      </div>
-
-      <div className="rounded-lg border bg-card p-4">
-        <label className="block text-sm font-semibold">
-          <span className="flex items-center gap-1.5">
-            <Award className="h-4 w-4" /> Specialties (comma separated)
-          </span>
-          <input
-            value={specialties}
-            onChange={(e) => setSpecialties(e.target.value)}
-            placeholder="e.g. Corporate law, Contract negotiation"
-            className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-          />
-        </label>
-        <label className="mt-3 block text-sm font-semibold">
-          Certifications / qualifications
-          <textarea
-            rows={2}
-            value={certifications}
-            onChange={(e) => setCertifications(e.target.value)}
-            className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-          />
-        </label>
-      </div>
-
-      <div className="rounded-lg border bg-card p-4 space-y-3">
-        <p className="text-sm font-semibold">How are you mentoring?</p>
-        <p className="text-xs text-muted-foreground">
-          This decides whether you show up as an Independent Mentor or a Company Mentor, and who we
-          can loop in with updates.
-        </p>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={viaCompany}
-            onChange={(e) => {
-              setViaCompany(e.target.checked);
-              if (!e.target.checked) setHasHrAdmin(false);
-            }}
-          />
-          Is this mentorship being done through a company?
-        </label>
-        {viaCompany && (
-          <label className="ml-6 flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={hasHrAdmin}
-              onChange={(e) => setHasHrAdmin(e.target.checked)}
-            />
-            Do you have an HR admin you report results to?
-          </label>
-        )}
-        {viaCompany && hasHrAdmin && (
-          <div className="ml-6 grid gap-3 sm:grid-cols-2">
-            <label className="block text-sm">
-              HR first name
-              <input
-                value={hrFirstName}
-                onChange={(e) => setHrFirstName(e.target.value)}
-                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-              />
-            </label>
-            <label className="block text-sm">
-              HR last name
-              <input
-                value={hrLastName}
-                onChange={(e) => setHrLastName(e.target.value)}
-                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-              />
-            </label>
-            <label className="block text-sm sm:col-span-2">
-              HR email
-              <input
-                type="email"
-                value={hrEmail}
-                onChange={(e) => setHrEmail(e.target.value)}
+      <Tabs value={profileTab} onValueChange={setProfileTab}>
+        <TabsList
+          className="flex h-auto w-full flex-wrap justify-start"
+          aria-label="Mentor profile details"
+        >
+          <TabsTrigger value="personal">Personal Details</TabsTrigger>
+          <TabsTrigger value="professional">Professional Details</TabsTrigger>
+          <TabsTrigger value="secondary">Secondary Information</TabsTrigger>
+        </TabsList>
+        <TabsContent forceMount value="personal" className="mt-4 data-[state=inactive]:hidden">
+          <AccountPersonalDetails />
+        </TabsContent>
+        <TabsContent value="professional" className="mt-4 grid gap-3 lg:grid-cols-2">
+          {" "}
+          <p className="text-sm text-muted-foreground">
+            Shown to scholars and HR before your identity is revealed — it's what gives them
+            confidence to book, without naming you. Your name, email and phone are never shown here.
+          </p>
+          <div className="rounded-lg border bg-card p-4">
+            <label className="block text-sm font-semibold">
+              <span className="flex items-center gap-1.5">
+                <UserCircle className="h-4 w-4" /> Experience / bio
+              </span>
+              <textarea
+                rows={4}
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder="A few sentences about your role and experience."
                 className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
               />
             </label>
           </div>
-        )}
-      </div>
-
-      <div className="rounded-lg border bg-card p-4 space-y-3">
-        <p className="text-sm font-semibold">Rules of engagement</p>
-        <p className="text-xs text-muted-foreground">Help admin know how best to reach you.</p>
-        <label className="block text-sm">
-          Preferred contact method
-          <select
-            value={preferredContact}
-            onChange={(e) => setPreferredContact(e.target.value)}
-            className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-          >
-            <option value="email">Email</option>
-            <option value="whatsapp">WhatsApp</option>
-            <option value="phone">Phone call</option>
-            <option value="sms">SMS</option>
-          </select>
-        </label>
-        <label className="block text-sm">
-          Best times to contact you (optional)
-          <input
-            value={contactHoursNote}
-            onChange={(e) => setContactHoursNote(e.target.value)}
-            placeholder="e.g. Weekdays 9am-5pm only"
-            className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-          />
-        </label>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={avoidWeekends}
-            onChange={(e) => setAvoidWeekends(e.target.checked)}
-          />
-          Please don't contact me on weekends
-        </label>
-        <label className="block text-sm">
-          Anything else admin should know (optional)
-          <textarea
-            rows={2}
-            value={engagementNotes}
-            onChange={(e) => setEngagementNotes(e.target.value)}
-            placeholder="e.g. prefers written briefs before a call, out of office in December"
-            className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-          />
-        </label>
-      </div>
-
-      <div className="rounded-lg border bg-card p-4">
-        <label className="block text-sm font-semibold">
-          LinkedIn / professional profile URL
-          <input
-            type="url"
-            value={linkedinUrl}
-            onChange={(e) => setLinkedinUrl(e.target.value)}
-            placeholder="https://linkedin.com/in/..."
-            className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-          />
-        </label>
-        <div className="mt-3">
-          <p className="text-sm font-semibold">
-            CV (private — admin only, never shown to scholars)
-          </p>
-          <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded bg-muted px-3 py-2 text-xs font-semibold">
-            <Upload className="h-3.5 w-3.5" />{" "}
-            {cvBusy ? "Uploading…" : cvPath ? "Replace CV" : "Upload CV"}
-            <input
-              type="file"
-              accept=".pdf,.doc,.docx"
-              hidden
-              disabled={cvBusy}
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) void uploadCv(f);
-              }}
-            />
-          </label>
-          {cvPath && (
-            <span className="ml-2 text-xs text-muted-foreground">{cvPath.split("/").pop()}</span>
-          )}
-        </div>
-      </div>
-
+          <div className="rounded-lg border bg-card p-4">
+            <label className="block text-sm font-semibold">
+              <span className="flex items-center gap-1.5">
+                <Award className="h-4 w-4" /> Specialties (comma separated)
+              </span>
+              <input
+                value={specialties}
+                onChange={(e) => setSpecialties(e.target.value)}
+                placeholder="e.g. Corporate law, Contract negotiation"
+                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+              />
+            </label>
+            <label className="mt-3 block text-sm font-semibold">
+              Certifications / qualifications
+              <textarea
+                rows={2}
+                value={certifications}
+                onChange={(e) => setCertifications(e.target.value)}
+                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+              />
+            </label>
+          </div>
+          <div className="rounded-lg border bg-card p-4">
+            <label className="block text-sm font-semibold">
+              LinkedIn / professional profile URL
+              <input
+                type="url"
+                value={linkedinUrl}
+                onChange={(e) => setLinkedinUrl(e.target.value)}
+                placeholder="https://linkedin.com/in/..."
+                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+              />
+            </label>
+            <div className="mt-3">
+              <p className="text-sm font-semibold">
+                CV (private — admin only, never shown to scholars)
+              </p>
+              <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded bg-muted px-3 py-2 text-xs font-semibold">
+                <Upload className="h-3.5 w-3.5" />{" "}
+                {cvBusy ? "Uploading…" : cvPath ? "Replace CV" : "Upload CV"}
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  hidden
+                  disabled={cvBusy}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) void uploadCv(f);
+                  }}
+                />
+              </label>
+              {cvPath && (
+                <span className="ml-2 text-xs text-muted-foreground">
+                  {cvPath.split("/").pop()}
+                </span>
+              )}
+            </div>
+          </div>
+        </TabsContent>
+        <TabsContent value="secondary" className="mt-4 grid gap-3 lg:grid-cols-2">
+          {" "}
+          <div className="rounded-lg border bg-card p-4 space-y-3">
+            <p className="text-sm font-semibold">How are you mentoring?</p>
+            <p className="text-xs text-muted-foreground">
+              This decides whether you show up as an Independent Mentor or a Company Mentor, and who
+              we can loop in with updates.
+            </p>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={viaCompany}
+                onChange={(e) => {
+                  setViaCompany(e.target.checked);
+                  if (!e.target.checked) setHasHrAdmin(false);
+                }}
+              />
+              Is this mentorship being done through a company?
+            </label>
+            {viaCompany && (
+              <label className="ml-6 flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={hasHrAdmin}
+                  onChange={(e) => setHasHrAdmin(e.target.checked)}
+                />
+                Do you have an HR admin you report results to?
+              </label>
+            )}
+            {viaCompany && hasHrAdmin && (
+              <div className="ml-6 grid gap-3 sm:grid-cols-2">
+                <label className="block text-sm">
+                  HR first name
+                  <input
+                    value={hrFirstName}
+                    onChange={(e) => setHrFirstName(e.target.value)}
+                    className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                  />
+                </label>
+                <label className="block text-sm">
+                  HR last name
+                  <input
+                    value={hrLastName}
+                    onChange={(e) => setHrLastName(e.target.value)}
+                    className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                  />
+                </label>
+                <label className="block text-sm sm:col-span-2">
+                  HR email
+                  <input
+                    type="email"
+                    value={hrEmail}
+                    onChange={(e) => setHrEmail(e.target.value)}
+                    className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                  />
+                </label>
+              </div>
+            )}
+          </div>
+          <div className="rounded-lg border bg-card p-4 space-y-3">
+            <p className="text-sm font-semibold">Rules of engagement</p>
+            <p className="text-xs text-muted-foreground">Help admin know how best to reach you.</p>
+            <label className="block text-sm">
+              Preferred contact method
+              <select
+                value={preferredContact}
+                onChange={(e) => setPreferredContact(e.target.value)}
+                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+              >
+                <option value="email">Email</option>
+                <option value="whatsapp">WhatsApp</option>
+                <option value="phone">Phone call</option>
+                <option value="sms">SMS</option>
+              </select>
+            </label>
+            <label className="block text-sm">
+              Best times to contact you (optional)
+              <input
+                value={contactHoursNote}
+                onChange={(e) => setContactHoursNote(e.target.value)}
+                placeholder="e.g. Weekdays 9am-5pm only"
+                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+              />
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={avoidWeekends}
+                onChange={(e) => setAvoidWeekends(e.target.checked)}
+              />
+              Please don't contact me on weekends
+            </label>
+            <label className="block text-sm">
+              Anything else admin should know (optional)
+              <textarea
+                rows={2}
+                value={engagementNotes}
+                onChange={(e) => setEngagementNotes(e.target.value)}
+                placeholder="e.g. prefers written briefs before a call, out of office in December"
+                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+              />
+            </label>
+          </div>
+        </TabsContent>
+      </Tabs>
       {(err || profile.error) && (
         <p role="alert" className="text-sm text-destructive">
           {err || "Unable to load your profile. Please refresh before saving."}
         </p>
       )}
-      <button
-        onClick={save}
-        disabled={busy || profile.isPending}
-        className="rounded bg-primary px-5 py-2.5 text-sm font-bold uppercase text-primary-foreground disabled:opacity-50"
-      >
-        {saved ? "Saved" : "Save profile"}
-      </button>
+      {profileTab !== "personal" && (
+        <button
+          onClick={save}
+          disabled={busy || profile.isPending}
+          className="rounded bg-primary px-5 py-2.5 text-sm font-bold uppercase text-primary-foreground disabled:opacity-50"
+        >
+          {saved ? "Saved" : "Save profile"}
+        </button>
+      )}
     </section>
   );
 }
@@ -1172,7 +1221,29 @@ function PlacementCard({
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  const dayTimes = useQuery({
+    queryKey: ["placement-day-times", placement.id],
+    queryFn: async () => {
+      const r = await supabase.rpc("get_placement_day_times", { _id: placement.id });
+      if (r.error) throw r.error;
+      return r.data ?? [];
+    },
+  });
+  const [timeEdits, setTimeEdits] = useState<Record<string, Partial<DaySlot>>>({});
+  const [attempted, setAttempted] = useState(false);
+  const slots = selectedDaySlots(
+    vals.dates,
+    dayTimes.data ?? [],
+    timeEdits,
+    vals.arrival_time,
+    vals.collection_time,
+  );
   async function save() {
+    setAttempted(true);
+    if (!dayTimes.isSuccess)
+      return setErr("Could not load the saved times. Please retry before saving.");
+    if (slots.some((slot) => !validDaySlot(slot)))
+      return setErr("Choose From and To times for every date. To must be after From.");
     setBusy(true);
     setErr(null);
     if (countryCode !== (country.data ?? "ZA")) {
@@ -1184,20 +1255,17 @@ function PlacementCard({
         return;
       }
     }
-    const { error } = await supabase.rpc("update_mentor_placement", {
+    const { error } = await supabase.rpc("save_placement_day_times", {
       _id: placement.id,
-      _dates: vals.dates,
+      _slots: slots,
       _active: vals.active,
-      _max_applicants: vals.max_applicants
-        ? Number(vals.max_applicants)
-        : (null as unknown as number),
-      _arrival_time: vals.arrival_time,
-      _collection_time: vals.collection_time,
-      _description: vals.description,
+      _max_applicants: vals.max_applicants ? Number(vals.max_applicants) : null,
     });
     setBusy(false);
     if (error) return setErr(error.message);
     setEditing(false);
+    setTimeEdits({});
+    qc.invalidateQueries({ queryKey: ["placement-day-times", placement.id] });
     qc.invalidateQueries({ queryKey: ["mentor-placements"] });
   }
 
@@ -1222,11 +1290,24 @@ function PlacementCard({
 
       {!editing ? (
         <div className="mt-3 space-y-1 text-sm">
-          <p>Dates: {placement.dates || "—"}</p>
-          <p>
-            Places: {placement.max_applicants ?? "—"} · Arrival: {placement.arrival_time || "TBC"} ·
-            Collection: {placement.collection_time || "TBC"}
-          </p>
+          <p>Available Dates</p>
+          {dayTimes.isSuccess ? (
+            selectedDaySlots(
+              placement.dates ?? "",
+              dayTimes.data,
+              {},
+              placement.arrival_time ?? "",
+              placement.collection_time ?? "",
+            ).map((slot) => (
+              <p key={slot.day}>
+                {slot.day} · {displayTime(slot.from_time) || "TBC"} –{" "}
+                {displayTime(slot.to_time) || "TBC"}
+              </p>
+            ))
+          ) : (
+            <p>{dayTimes.error ? "Could not load day times." : "Loading dates…"}</p>
+          )}
+          <p>Open Spots Per Session: {placement.max_applicants ?? "—"}</p>
           {placement.description && (
             <p className="text-muted-foreground">{placement.description}</p>
           )}
@@ -1256,39 +1337,53 @@ function PlacementCard({
                 allowWeekends={placement.allow_weekends}
                 allowOffSeason={placement.allow_off_season}
                 countryCode={countryCode}
-              />
+              >
+                <div className="min-w-0 flex-1 space-y-2" aria-label="Times Per Available Day">
+                  {dayTimes.isPending && <p className="text-sm">Loading saved times…</p>}
+                  {dayTimes.error && (
+                    <button
+                      type="button"
+                      className="text-sm text-destructive underline"
+                      onClick={() => dayTimes.refetch()}
+                    >
+                      Could not load times. Retry
+                    </button>
+                  )}
+                  {dayTimes.isSuccess &&
+                    slots.map((slot) => (
+                      <div
+                        key={slot.day}
+                        className="grid grid-cols-[minmax(6rem,1fr)_minmax(7rem,1fr)_minmax(7rem,1fr)] items-end gap-2 rounded border p-2"
+                      >
+                        <span className="pb-2 text-sm">{slot.day}</span>
+                        {(["from_time", "to_time"] as const).map((field, i) => (
+                          <div key={field} className="min-w-0">
+                            <span className="text-xs">{i ? "To" : "From"}</span>
+                            <TimePicker
+                              label={slot.day + (i ? " To" : " From")}
+                              value={slot[field]}
+                              invalid={attempted && !validDaySlot(slot)}
+                              onChange={(value) =>
+                                setTimeEdits((prev) => ({
+                                  ...prev,
+                                  [slot.day]: { ...prev[slot.day], [field]: value },
+                                }))
+                              }
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                </div>
+              </DatesPicker>
             </div>
           </div>
           <label className="text-sm">
-            Places
+            Open Spots Per Session
             <input
               type="number"
               value={vals.max_applicants}
               onChange={(e) => setVals({ ...vals, max_applicants: e.target.value })}
-              className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-            />
-          </label>
-          <label className="text-sm">
-            Available from (arrival time)
-            <input
-              value={vals.arrival_time}
-              onChange={(e) => setVals({ ...vals, arrival_time: e.target.value })}
-              className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-            />
-          </label>
-          <label className="text-sm">
-            Available until (collection time)
-            <input
-              value={vals.collection_time}
-              onChange={(e) => setVals({ ...vals, collection_time: e.target.value })}
-              className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-            />
-          </label>
-          <label className="text-sm sm:col-span-2">
-            Description
-            <textarea
-              value={vals.description}
-              onChange={(e) => setVals({ ...vals, description: e.target.value })}
               className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
             />
           </label>
@@ -1304,13 +1399,26 @@ function PlacementCard({
           <div className="flex gap-2 sm:col-span-2">
             <button
               onClick={save}
-              disabled={busy}
+              disabled={busy || !dayTimes.isSuccess}
               className="rounded bg-primary px-4 py-2 text-xs font-bold uppercase text-primary-foreground disabled:opacity-50"
             >
               Save
             </button>
             <button
-              onClick={() => setEditing(false)}
+              onClick={() => {
+                setEditing(false);
+                setTimeEdits({});
+                setAttempted(false);
+                setVals({
+                  dates: placement.dates ?? "",
+                  active: placement.active,
+                  max_applicants:
+                    placement.max_applicants != null ? String(placement.max_applicants) : "",
+                  arrival_time: placement.arrival_time ?? "",
+                  collection_time: placement.collection_time ?? "",
+                  description: placement.description ?? "",
+                });
+              }}
               className="rounded bg-muted px-4 py-2 text-xs font-bold uppercase text-muted-foreground"
             >
               Cancel

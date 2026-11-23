@@ -1,7 +1,9 @@
+import { AccountProfile, useOwnIdentity } from "@/components/account/AccountProfile";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
+import { PortalLoading } from "@/components/PortalLoading";
 import { NotificationInbox } from "@/components/NotificationInbox";
 import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/_authenticated/school")({
@@ -27,32 +29,17 @@ function SchoolAdmin() {
   useEffect(() => {
     if (section) setActive(section);
   }, [section]);
-  const user = useQuery({
-    queryKey: ["me"],
-    queryFn: async () => (await supabase.auth.getUser()).data.user,
-  });
-  const profile = useQuery({
-    queryKey: ["school-account", user.data?.id],
-    enabled: !!user.data,
-    queryFn: async () => {
-      const r = await supabase
-        .from("profiles")
-        .select("first_name,last_name,display_name")
-        .eq("user_id", user.data!.id)
-        .maybeSingle();
-      if (r.error) throw r.error;
-      return r.data;
-    },
-  });
+  const { user, profile } = useOwnIdentity();
+  if (user.isPending || (user.data && profile.isPending)) return <PortalLoading />;
   return (
     <div className="flex min-h-screen flex-col">
-      <SiteHeader />
+      <SiteHeader portal />
       <div className="flex min-w-0 flex-1 flex-col md:flex-row">
         <aside className="shrink-0 bg-cta p-3 text-cta-foreground md:w-60">
           <p className="px-3 py-3 text-xs font-bold uppercase tracking-widest">School Admin</p>
           <nav
             aria-label="School navigation"
-            className="sticky top-0 max-h-screen space-y-1 overflow-y-auto"
+            className="sticky top-32 max-h-[calc(100dvh-8rem)] space-y-1 overflow-y-auto"
           >
             {[
               ["overview", "Overview"],
@@ -71,14 +58,18 @@ function SchoolAdmin() {
           </nav>
         </aside>
         <main className="min-w-0 flex-1 bg-ivory p-6">
-          <h1 className="font-display text-2xl">
-            {active === "messages"
-              ? "Messages"
-              : active === "profile"
-                ? "School Contact"
-                : "School Overview"}
-          </h1>
-          {active === "messages" ? (
+          {active !== "profile" && (
+            <h1 className="font-display text-2xl">
+              {active === "messages"
+                ? "Messages"
+                : active === "profile"
+                  ? "School Contact"
+                  : "School Overview"}
+            </h1>
+          )}
+          {active === "profile" ? (
+            <AccountProfile />
+          ) : active === "messages" ? (
             <div className="mt-4">{user.data && <NotificationInbox userId={user.data.id} />}</div>
           ) : (
             <div className="mt-4 space-y-3">

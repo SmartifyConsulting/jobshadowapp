@@ -1,6 +1,5 @@
-import { RoleNavigation, portalNavigationKind } from "@/components/RoleNavigation";
 import { NotificationInbox } from "@/components/NotificationInbox";
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -46,15 +45,14 @@ function useSession() {
           avatarUrl: null as string | null,
           displayName: null as string | null,
         };
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", u.user.id);
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("avatar_path, display_name")
-        .eq("user_id", u.user.id)
-        .maybeSingle();
+      const [{ data: roles }, { data: profile }] = await Promise.all([
+        supabase.from("user_roles").select("role").eq("user_id", u.user.id),
+        supabase
+          .from("profiles")
+          .select("avatar_path, display_name")
+          .eq("user_id", u.user.id)
+          .maybeSingle(),
+      ]);
       const avatarUrl = profile?.avatar_path
         ? supabase.storage.from("avatars").getPublicUrl(profile.avatar_path).data.publicUrl
         : null;
@@ -177,7 +175,9 @@ function AccountMenu({
         <DropdownMenuLabel className="max-w-xs break-words">{displayName}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link to="/my-account">Profile</Link>
+          <Link to="/my-account" search={{ view: "profile" }}>
+            Profile
+          </Link>
         </DropdownMenuItem>
         {(isAdmin || roles.some((role) => ["mentor", "hr_admin", "school"].includes(role))) && (
           <DropdownMenuItem asChild>
@@ -221,9 +221,11 @@ export function SiteAccountMenu() {
 export function SiteHeader({
   headerLogo,
   fullWidth,
+  portal = false,
 }: {
   headerLogo?: ReactNode;
   fullWidth?: boolean;
+  portal?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
@@ -246,12 +248,12 @@ export function SiteHeader({
   return (
     <header className="sticky top-0 z-40 bg-brand-deep text-primary-foreground shadow-warm">
       <div
-        className={`relative flex items-center justify-center gap-6 px-5 lg:justify-between ${fullWidth ? "" : "mx-auto max-w-7xl"}`}
+        className={`relative flex items-center justify-center gap-6 lg:justify-between ${portal ? "pl-0 pr-5" : "px-5"} ${fullWidth || portal ? "" : "mx-auto max-w-7xl"}`}
       >
         <Link
           to="/"
           aria-label="JobShadow home"
-          className={`flex shrink-0 items-end ${headerLogo ? "h-24 lg:h-28" : "h-28 lg:h-32"}`}
+          className={`flex shrink-0 ${portal ? "w-60 items-center justify-center" : "items-end"} ${headerLogo ? "h-24 lg:h-28" : "h-28 lg:h-32"}`}
         >
           {headerLogo ?? <HeaderLogo className="h-24 w-auto lg:h-28" />}
         </Link>
@@ -336,23 +338,20 @@ export function SiteLayout({
   children,
   headerLogo,
   className = "",
+  portal = false,
 }: {
   children: ReactNode;
   headerLogo?: ReactNode;
   className?: string;
+  portal?: boolean;
 }) {
   const { data: session } = useSession();
   const isAdmin = session?.isAdmin ?? false;
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const hasRoleNavigation = !!portalNavigationKind(session?.roles ?? [], pathname);
 
   return (
-    <div
-      className={`flex min-h-screen flex-col ${className} ${hasRoleNavigation ? "has-role-navigation" : ""}`}
-    >
-      <SiteHeader headerLogo={headerLogo} />
+    <div className={`flex min-h-screen flex-col ${className}`}>
+      <SiteHeader headerLogo={headerLogo} portal={portal} />
       <div className="flex min-w-0 flex-1">
-        <RoleNavigation roles={session?.roles ?? []} pathname={pathname} />
         <main className="flex min-w-0 flex-1 flex-col">{children}</main>
       </div>
       <SiteFooter />

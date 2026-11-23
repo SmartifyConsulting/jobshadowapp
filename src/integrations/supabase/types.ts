@@ -8,6 +8,17 @@ export type Database = {
   };
   public: {
     Tables: {
+      placement_day_times: {
+        Row: { placement_id: number; available_on: string; from_time: string; to_time: string };
+        Insert: { placement_id: number; available_on: string; from_time: string; to_time: string };
+        Update: {
+          placement_id?: number;
+          available_on?: string;
+          from_time?: string;
+          to_time?: string;
+        };
+        Relationships: [];
+      };
       country_holiday_calendars: {
         Row: { country_code: string; year: number; dates: string[]; synced_at: string };
         Insert: { country_code: string; year: number; dates: string[]; synced_at?: string };
@@ -178,6 +189,8 @@ export type Database = {
       };
       bookings: {
         Row: {
+          arrival_time: string | null;
+          collection_time: string | null;
           ad_hoc_note: string | null;
           ad_hoc_requested: boolean;
           amount_due: number;
@@ -215,6 +228,8 @@ export type Database = {
           voucher_code: string | null;
         };
         Insert: {
+          arrival_time?: string | null;
+          collection_time?: string | null;
           ad_hoc_note?: string | null;
           ad_hoc_requested?: boolean;
           amount_due?: number;
@@ -252,6 +267,8 @@ export type Database = {
           voucher_code?: string | null;
         };
         Update: {
+          arrival_time?: string | null;
+          collection_time?: string | null;
           ad_hoc_note?: string | null;
           ad_hoc_requested?: boolean;
           amount_due?: number;
@@ -1218,6 +1235,14 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      get_placement_day_times: {
+        Args: { _id: number };
+        Returns: { available_on: string; from_time: string | null; to_time: string | null }[];
+      };
+      save_placement_day_times: {
+        Args: { _id: number; _slots: Json; _active: boolean; _max_applicants: number | null };
+        Returns: undefined;
+      };
       get_placement_country: { Args: { _id: number }; Returns: string };
       get_country_public_holidays: { Args: { _country_code: string }; Returns: string[] };
       store_country_public_holidays: {
