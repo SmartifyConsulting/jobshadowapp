@@ -82,6 +82,7 @@ function StepRow({
   label = "How-to steps",
   startNumber = 1,
   showCurrent = true,
+  fitColumns,
 }: {
   steps: Step[];
   links: string[];
@@ -89,11 +90,19 @@ function StepRow({
   label?: string;
   startNumber?: number;
   showCurrent?: boolean;
+  fitColumns?: 3 | 4;
 }) {
   const next = showCurrent ? steps.findIndex((_, index) => !complete[index]) : -1;
   return (
-    <nav aria-label={label} className="overflow-x-auto py-5">
-      <ol className="flex min-w-[590px] items-start">
+    <nav aria-label={label} className={fitColumns ? "py-3" : "overflow-x-auto py-5"}>
+      <ol
+        className={
+          fitColumns
+            ? "grid grid-cols-2 items-start gap-y-4 " +
+              (fitColumns === 3 ? "sm:grid-cols-3" : "sm:grid-cols-4")
+            : "flex min-w-[590px] items-start"
+        }
+      >
         {steps.map((step, index) => (
           <li key={index} className="relative min-w-0 flex-1 text-center">
             {index < steps.length - 1 && (
@@ -101,6 +110,10 @@ function StepRow({
                 aria-hidden
                 className={
                   "absolute left-1/2 top-3.5 h-1 w-full " +
+                  (fitColumns
+                    ? (index % 2 === 1 ? "hidden sm:block " : "") +
+                      (index % fitColumns === fitColumns - 1 ? "sm:hidden " : "")
+                    : "") +
                   (complete[index] && complete[index + 1] ? "bg-green-700" : "bg-border")
                 }
               />
@@ -380,6 +393,7 @@ function HowTo() {
                   Phase 1: Vetting &amp; Onboarding
                 </legend>
                 <StepRow
+                  fitColumns={4}
                   label="Vetting and onboarding steps"
                   steps={MENTOR_ONBOARDING_STEPS}
                   complete={onboarding}
@@ -389,6 +403,7 @@ function HowTo() {
               <fieldset className="min-w-0 rounded border border-charcoal/25 p-3">
                 <legend className="px-1 text-sm font-bold">Phase 2: Hosting &amp; Feedback</legend>
                 <StepRow
+                  fitColumns={3}
                   label="Hosting and feedback steps"
                   steps={MENTOR_STEPS.slice(2)}
                   complete={(progress.data?.mentor ?? []).slice(2)}
