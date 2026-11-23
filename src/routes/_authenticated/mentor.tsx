@@ -31,10 +31,10 @@ type Placement = {
 type MentorBooking = {
   id: string; company: string; career: string; location: string; shadow_date: string; status: string;
   scholar_name: string | null; scholar_contact: string | null; scholar_school: string | null; indemnity_received: boolean;
-  internship_preapproved: boolean; internship_notes: string | null;
+  internship_preapproved: boolean; internship_notes: string | null; decline_reason: string | null;
 };
 
-const STATUS: Record<string, string> = { awaiting_payment: "Awaiting payment", indemnity_required: "Paid – indemnity needed", confirmed: "Confirmed", completed: "Completed" };
+const STATUS: Record<string, string> = { pending_approval: "Awaiting your approval", awaiting_payment: "Awaiting payment", indemnity_required: "Paid – indemnity needed", confirmed: "Confirmed", completed: "Completed", cancelled: "Cancelled" };
 
 type Section = "calendar" | "shadows" | "messages" | "profile" | "settings";
 const MENU: { id: Section; label: string; icon: typeof CalendarDays }[] = [
@@ -354,6 +354,7 @@ function HostSettings() {
   const [maxMonth, setMaxMonth] = useState("");
   const [bufferDays, setBufferDays] = useState("");
   const [maxHours, setMaxHours] = useState("");
+  const [autoAccept, setAutoAccept] = useState(true);
   const placements = useQuery({ queryKey: ["mentor-placements"], queryFn: async () => { const result = await supabase.rpc("list_mentor_placements"); if (result.error) throw result.error; return result.data as unknown as Placement[]; } });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -367,6 +368,7 @@ function HostSettings() {
     setMaxMonth(s.max_shadows_per_month != null ? String(s.max_shadows_per_month) : "");
     setBufferDays(s.buffer_days != null ? String(s.buffer_days) : "");
     setMaxHours(s.max_consecutive_hours != null ? String(s.max_consecutive_hours) : "");
+    setAutoAccept(s.auto_accept ?? true);
   }, [settings.data]);
 
   async function save() {
@@ -380,6 +382,7 @@ function HostSettings() {
       _buffer_days: bufferDays ? Number(bufferDays) : null,
       _blackout_dates: [],
       _max_consecutive_hours: maxHours ? Number(maxHours) : null,
+      _auto_accept: autoAccept,
     } as never);
     setBusy(false);
     if (error) return setErr(error.message);
@@ -401,6 +404,14 @@ function HostSettings() {
           Temporarily pause new booking requests
         </label>
         <p className="mt-1 text-xs text-muted-foreground">Your placements stay listed, but scholars can't book a new job shadow with you while this is on.</p>
+      </div>
+
+      <div className="rounded-lg border bg-card p-4">
+        <label className="flex items-center gap-2 text-sm font-semibold">
+          <input type="checkbox" checked={autoAccept} onChange={(e) => setAutoAccept(e.target.checked)} />
+          Automatically accept new booking requests
+        </label>
+        <p className="mt-1 text-xs text-muted-foreground">On: scholars can book and pay straight away. Off: you'll need to approve or decline each request first, before the scholar can pay.</p>
       </div>
 
       <div className="grid gap-4 rounded-lg border bg-card p-4 sm:grid-cols-2">
@@ -452,6 +463,20 @@ function BookingCard({ booking }: { booking: MentorBooking }) {
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [declining, setDeclining] = useState(false);
+  const [declineReason, setDeclineReason] = useState("");
+  const [respondBusy, setRespondBusy] = useState(false);
+  const [respondErr, setRespondErr] = useState<string | null>(null);
+
+  async function respond(approve: boolean) {
+    if (!approve && !declineReason.trim()) { setDeclining(true); return; }
+    setRespondBusy(true); setRespondErr(null);
+    const { error } = await supabase.rpc("respond_to_booking_request", { _booking: booking.id, _approve: approve, ...(approve ? {} : { _decline_reason: declineReason.trim() }) });
+    setRespondBusy(false);
+    if (error) return setRespondErr(error.message);
+    setDeclining(false);
+    qc.invalidateQueries({ queryKey: ["mentor-bookings"] });
+  }
 
   async function saveInternship() {
     setBusy(true);
@@ -478,6 +503,25 @@ function BookingCard({ booking }: { booking: MentorBooking }) {
       </p>
       {booking.status === "completed" && (
         <Link to="/evaluation/$bookingId" params={{ bookingId: booking.id }} className="mt-2 inline-block rounded bg-primary px-3 py-1.5 text-xs font-bold uppercase text-primary-foreground">Evaluate this placement</Link>
+      )}
+      {booking.status === "pending_approval" && (
+        <div className="mt-3 border-t border-foreground/10 pt-3">
+          <p className="text-sm">This scholar is waiting on your approval before they can pay.</p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <button onClick={() => void respond(true)} disabled={respondBusy} className="rounded bg-primary px-3 py-1.5 text-xs font-bold uppercase text-primary-foreground disabled:opacity-50">Approve</button>
+            <button onClick={() => void respond(false)} disabled={respondBusy} className="rounded border border-destructive px-3 py-1.5 text-xs font-bold uppercase text-destructive disabled:opacity-50">Decline</button>
+          </div>
+          {declining && (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <input value={declineReason} onChange={(e) => setDeclineReason(e.target.value)} placeholder="Reason for declining (shown to the scholar)" className="min-w-64 flex-1 rounded border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none" />
+              <button onClick={() => void respond(false)} disabled={respondBusy || !declineReason.trim()} className="rounded bg-destructive px-3 py-1.5 text-xs font-bold uppercase text-destructive-foreground disabled:opacity-50">{respondBusy ? "Declining…" : "Confirm decline"}</button>
+            </div>
+          )}
+          {respondErr && <p role="alert" className="mt-1 text-xs text-destructive">{respondErr}</p>}
+        </div>
+      )}
+      {booking.status === "cancelled" && booking.decline_reason && (
+        <p className="mt-2 text-xs text-muted-foreground">You declined this request: {booking.decline_reason}</p>
       )}
       <div className="mt-3 border-t border-foreground/10 pt-3">
         <label className="flex items-center gap-2 text-sm">

@@ -176,6 +176,7 @@ export type Database = {
           company_indemnity_path: string | null
           company_indemnity_signed_at: string | null
           created_at: string
+          decline_reason: string | null
           day_before_reminder_sent_at: string | null
           discount: number
           guardian_signature_status: string
@@ -208,6 +209,7 @@ export type Database = {
           company_indemnity_path?: string | null
           company_indemnity_signed_at?: string | null
           created_at?: string
+          decline_reason?: string | null
           day_before_reminder_sent_at?: string | null
           discount?: number
           guardian_signature_status?: string
@@ -241,6 +243,7 @@ export type Database = {
           company_indemnity_signed_at?: string | null
           created_at?: string
           day_before_reminder_sent_at?: string | null
+          decline_reason?: string | null
           discount?: number
           guardian_signature_status?: string
           guardian_signed_at?: string | null
@@ -624,6 +627,7 @@ export type Database = {
       }
       host_settings: {
         Row: {
+          auto_accept: boolean
           available_slots: Json
           blackout_dates: string[]
           buffer_days: number | null
@@ -635,6 +639,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          auto_accept?: boolean
           available_slots?: Json
           blackout_dates?: string[]
           buffer_days?: number | null
@@ -646,6 +651,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          auto_accept?: boolean
           available_slots?: Json
           blackout_dates?: string[]
           buffer_days?: number | null
@@ -1254,6 +1260,7 @@ export type Database = {
       get_my_host_settings: {
         Args: never
         Returns: {
+          auto_accept: boolean
           available_slots: Json
           blackout_dates: string[]
           buffer_days: number | null
@@ -1344,6 +1351,7 @@ export type Database = {
         Returns: {
           career: string
           company: string
+          decline_reason: string | null
           id: string
           indemnity_received: boolean
           internship_notes: string
@@ -1355,6 +1363,10 @@ export type Database = {
           shadow_date: string
           status: string
         }[]
+      }
+      respond_to_booking_request: {
+        Args: { _approve: boolean; _booking: string; _decline_reason?: string }
+        Returns: undefined
       }
       list_mentor_placements: {
         Args: never
@@ -1530,6 +1542,18 @@ export type Database = {
           }
         | {
             Args: {
+              _blackout_dates: string[]
+              _buffer_days: number
+              _max_consecutive_hours: number
+              _max_shadows_per_month: number
+              _max_shadows_per_week: number
+              _paused: boolean
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              _auto_accept?: boolean
               _blackout_dates: string[]
               _buffer_days: number
               _max_consecutive_hours: number

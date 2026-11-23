@@ -526,6 +526,13 @@
       "when": 1794964300000,
       "tag": "0074_portrayed_mentor_availability",
       "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1794964400000,
+      "tag": "0075_mentor_auto_accept_bookings",
+      "breakpoints": true
     }
   ]
 }

@@ -16,10 +16,12 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 const STATUS: Record<string, string> = {
+  pending_approval: "Awaiting mentor approval",
   awaiting_payment: "Awaiting payment",
   indemnity_required: "Paid – indemnity needed",
   confirmed: "Confirmed",
   completed: "Completed",
+  cancelled: "Cancelled",
 };
 
 function toIsoDate(mdy: string) {
@@ -480,12 +482,16 @@ export function NewBooking({ initialCareer = "", onBooked }: { initialCareer?: s
       company_id: chosen.id, company: chosen.company, sector: chosen.sector, career: chosen.career, location: chosen.location, mode: chosen.mode,
       shadow_date: effectiveDate, base_amount: base, voucher_code: voucher?.code ?? null, discount: voucher?.discount ?? 0, amount_due: due,
       ad_hoc_requested: requestingDate, ad_hoc_note: requestingDate ? (requestNote || null) : null,
-    }).select("id").single();
+    }).select("id, status").single();
     if (error) return setMsg(error.message);
     setRequestingDate(false); setRequestedDate(""); setRequestNote("");
     setPid(null); setDate(""); setVoucher(null); setCode(""); setConfirmDupe(false);
-    setMsg("Booking created – continue to payment and forms.");
-    if (created?.id) onBooked?.(created.id);
+    if (created?.status === "pending_approval") {
+      setMsg("Your request has been sent to the mentor for approval. You'll be able to pay once they accept it.");
+    } else {
+      setMsg("Booking created – continue to payment and forms.");
+      if (created?.id) onBooked?.(created.id);
+    }
     qc.invalidateQueries({ queryKey: ["bookings"] });
   }
 

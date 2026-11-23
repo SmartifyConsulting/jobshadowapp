@@ -7,7 +7,7 @@ export function bookingDayKey(mdy: string): string | null {
   return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
 
-export const PENDING_STATUSES = ["awaiting_payment", "indemnity_required"];
+export const PENDING_STATUSES = ["pending_approval", "awaiting_payment", "indemnity_required"];
 
 export function filterHostBookings<T extends HostBookingLike>(rows: T[], filter: "upcoming" | "pending" | "all", todayKey: string): T[] {
   if (filter === "pending") return rows.filter((b) => PENDING_STATUSES.includes(b.status));
