@@ -4,14 +4,14 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 /** Named test personas for the profile switcher (see SiteLayout.tsx DevAccountSwitcher).
  * Deliberately allowed in production, but only usable by someone already signed in as one of
- * these four accounts — the switcher is hidden from everyone else client-side, and the server
+ * these named test accounts (including the previous Elena test login) — the switcher is hidden from everyone else client-side, and the server
  * function below independently re-checks the caller's own email against this list, so the UI
  * gate can't be bypassed by calling the function directly. */
 export const DEV_PERSONAS = [
   { email: "info@georgiaadams.co.za", label: "Georgia Adams — Admin", role: "admin" as const },
   { email: "georgia.adams@smartify.co.za", label: "Internet Solutions — Company", role: "hr_admin" as const },
   { email: "nonastasia@gmail.com", label: "Anastasia — Mentor", role: "mentor" as const },
-  { email: "elena@jobshadow.co.za", label: "Elena Nicolettis — Scholar", role: null },
+  { email: "elenanicolettis@icloud.com", label: "Raphy Nicolettis — Scholar", role: "user" as const },
 ] as const;
 
 /** Shared password for dev-persona accounts; only ever used from the dev-only switcher, never shown to the person signing in. */
@@ -24,7 +24,7 @@ export const bootstrapDevPersona = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ email: z.string().trim().toLowerCase().email() }).parse(d))
   .handler(async ({ context, data }) => {
     const callerEmail = typeof context.claims["email"] === "string" ? (context.claims["email"] as string).toLowerCase() : "";
-    if (!DEV_PERSONAS.some((p) => p.email.toLowerCase() === callerEmail)) throw new Error("Only the four named test accounts can use the profile switcher.");
+    if (callerEmail !== "elena@jobshadow.co.za" && !DEV_PERSONAS.some((p) => p.email.toLowerCase() === callerEmail)) throw new Error("Only the named test accounts can use the profile switcher.");
     const persona = DEV_PERSONAS.find((p) => p.email.toLowerCase() === data.email);
     if (!persona) throw new Error("Unknown dev persona.");
 
@@ -61,25 +61,6 @@ export const bootstrapDevPersona = createServerFn({ method: "POST" })
       display_name: personaName,
       updated_at: new Date().toISOString(),
     });
-
-    if (persona.email === "elena@jobshadow.co.za") {
-      const { data: existing } = await supabaseAdmin.from("scholar_profiles").select("user_id").eq("user_id", userId).maybeSingle();
-      if (!existing) {
-        const now = new Date().toISOString();
-        await supabaseAdmin.from("scholar_profiles").insert({
-          user_id: userId,
-          first_name: "Elena", last_name: "Nicolettis", full_name: "Elena Nicolettis",
-          contact_no: "+27821234567", id_number: "0501015800089",
-          school: "Reddford House", school_type: "Private School",
-          career_interests: "Fashion Design, Marketing",
-          dietary: "None",
-          guardian_first_name: "Maria", guardian_last_name: "Nicolettis", guardian_name: "Maria Nicolettis",
-          guardian_contact: "+27821234568", guardian_email: "maria.nicolettis@example.com",
-          population_group: "White", gender: "Female", disability: "None", citizenship: "South African",
-          tc_accepted: true, tc_accepted_at: now, popi_accepted: true, popi_accepted_at: now,
-        });
-      }
-    }
 
     if (persona.email === "georgia.adams@smartify.co.za" || persona.email === "nonastasia@gmail.com") {
       const { data: existingCompany } = await supabaseAdmin.from("companies").select("id").or(`hr_email.eq.${persona.email},mentor_email.eq.${persona.email}`).maybeSingle();

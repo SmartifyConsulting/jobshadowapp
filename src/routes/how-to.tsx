@@ -77,16 +77,19 @@ function HowTo() {
   const roles = session?.roles ?? [];
   const scholar = roles.includes("learner") || roles.includes("scholar") || progress.data?.student[1] === true;
   const provider = roles.includes("mentor") || roles.includes("hr_admin");
-  const [selectedView, setSelectedView] = useState<{ userId?: string | undefined; view: "mentor" | "school" | "scholar" } | null>(null);
+  const [selectedView, setSelectedView] = useState<{ userId?: string | undefined; view: "mentor" | "host" | "school" | "scholar" } | null>(null);
+  const isAdmin = session?.isAdmin || roles.includes("admin");
+  const guides = isAdmin ? [["scholar", "Scholars"], ["mentor", "Mentors"], ["host", "Hosts"], ["school", "Schools"]] as const : [["scholar", "Scholars"], ["mentor", "Mentors / Hosts"]] as const;
   const defaultView = scholar ? "scholar" : provider ? "mentor" : roles.includes("school") ? "school" : "scholar";
   const view = selectedView?.userId === session?.user?.id && selectedView ? selectedView.view : defaultView;
   const content = {
     scholar: { steps: STUDENT_STEPS, complete: progress.data?.student ?? [], links: [session?.user ? destination("studentProfile") : "/register", ...(["studentProfile", "studentCareers", "studentRequest", "studentForms", "studentExperience", "studentFeedback"] as const).map(destination)] },
     mentor: { steps: MENTOR_STEPS, complete: progress.data?.mentor ?? [], links: providerLinks("mentor") },
+    host: { steps: MENTOR_STEPS.map((step, index) => index === 0 ? { ...step, label: "Register\nas a host" } : step), complete: progress.data?.host ?? [], links: providerLinks("host") },
     school: { steps: SCHOOL_STEPS, complete: [] as boolean[], links: ["/contact?type=school", ...Array(SCHOOL_STEPS.length - 1).fill("/contact")] },
   }[view];
   const nextStep = content.steps.findIndex((_, index) => !content.complete[index]);
-  const descriptions = view === "scholar" ? ["Create an account to start your job shadow journey.", "Add your details so we can arrange your visit.", "Explore careers and find a host near you.", "Choose a host and request a date that suits you.", "Complete the required forms with your parent or guardian.", "Check your arrangements and enjoy your job shadow.", "Tell us what you learned from your visit."] : ["Apply to become a mentor or host.", "Introduce yourself and your experience.", "Choose the dates and times you can host.", "Complete the forms needed for hosting.", "Review the scholars who have requested a visit.", "Confirm the booking details.", "Welcome your scholar and host the experience.", "Read feedback and keep your profile up to date."];
+  const descriptions = view === "school" ? ["Register your school with JobShadow.", "Add your school contact details.", "Discuss your school’s needs with JobShadow.", "Arrange visits for your scholars with JobShadow.", "Check the progress of your school’s requests.", "Help your scholars prepare for their visits.", "Review feedback with JobShadow."] : view === "scholar" ? ["Create an account to start your job shadow journey.", "Add your details so we can arrange your visit.", "Explore careers and find a host near you.", "Choose a host and request a date that suits you.", "Complete the required forms with your parent or guardian.", "Check your arrangements and enjoy your job shadow.", "Tell us what you learned from your visit."] : ["Apply to become a mentor or host.", "Introduce yourself and your experience.", "Choose the dates and times you can host.", "Complete the forms needed for hosting.", "Review the scholars who have requested a visit.", "Confirm the booking details.", "Welcome your scholar and host the experience.", "Read feedback and keep your profile up to date."];
   return (
     <SiteLayout className="lg:[&>footer>div:first-child]:py-3">
       <div className="bg-cta text-cta-foreground">
@@ -97,12 +100,12 @@ function HowTo() {
       </div>
       <section className="flex flex-1 items-center bg-[#7CCCC8] px-5 py-4">
         <div className="mx-auto w-full max-w-7xl rounded-xl border border-border bg-background p-5 shadow-warm">
-          <div className="flex flex-wrap items-center justify-between gap-3"><div role="group" aria-label="Choose your How To guide" className="flex gap-1 rounded-full border border-border p-0.5">{([['scholar', 'Scholars'], ['mentor', 'Mentors / Hosts']] as const).map(([key, label]) => <button type="button" key={key} aria-pressed={view === key} onClick={() => setSelectedView({ userId: session?.user?.id, view: key })} className={`rounded-full px-3 py-1 text-xs ${view === key ? "bg-primary text-primary-foreground" : "text-foreground"}`}>{label}</button>)}</div><span className="rounded-full border border-border bg-muted/40 px-2.5 py-1 text-xs text-muted-foreground">{progress.data ? "✓ Progress saved" : session?.user ? "Loading progress…" : "Sign in to save progress"}</span></div>
+          <div className="flex flex-wrap items-center justify-between gap-3"><div role="group" aria-label="Choose your How To guide" className="flex flex-wrap gap-1 rounded-full border border-border p-0.5">{guides.map(([key, label]) => <button type="button" key={key} aria-pressed={view === key} onClick={() => setSelectedView({ userId: session?.user?.id, view: key })} className={`rounded-full px-3 py-1 text-xs ${view === key ? "bg-primary text-primary-foreground" : "text-foreground"}`}>{label}</button>)}</div><span className="rounded-full border border-border bg-muted/40 px-2.5 py-1 text-xs text-muted-foreground">{view === "school" ? "School guide" : progress.data ? "✓ Progress saved" : session?.user ? "Loading progress…" : "Sign in to save progress"}</span></div>
           <p className="sr-only">Click on each step to complete it.</p>
           <StepRow steps={content.steps} complete={content.complete} links={content.links} />
           {nextStep>=0 ? <div className="mt-2 flex flex-wrap items-center justify-between gap-4 rounded-lg bg-muted/50 px-5 py-4"><div><h2 className="text-lg font-semibold">NEXT STEP: {content.steps[nextStep]!.label.replace(/\n/g," ")}</h2><p className="mt-1 text-sm">{descriptions[nextStep]}</p></div><a href={content.links[nextStep]} className="inline-flex items-center gap-2 rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">{view==="scholar" && nextStep===2 ? "Explore Now" : "Continue"}<ArrowRight className="h-4 w-4" /></a></div> : <p className="mt-2 rounded-lg bg-muted/50 px-5 py-4 text-sm">All saved steps are complete. Select a step above to review it.</p>}
           {progress.error && <p role="status" className="text-sm">Saved progress could not be loaded. You can still open each step.</p>}
-          <p className="mt-3 text-xs text-muted-foreground">Green ticks show saved progress.{view === "mentor" && " Contact us for host indemnity and NDA forms; their completion is not tracked in the app yet."}</p>
+          <p className="mt-3 text-xs text-muted-foreground">{view === "school" ? "School arrangements are managed with JobShadow; completion is not tracked here yet." : "Green ticks show your own saved progress."}{(view === "mentor" || view === "host") && " Contact us for host indemnity and NDA forms; their completion is not tracked in the app yet."}</p>
         </div>
       </section>
       <section className="bg-primary">

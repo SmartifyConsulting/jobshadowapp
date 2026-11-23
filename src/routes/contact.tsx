@@ -97,6 +97,12 @@ function Contact() {
             <Link to="/share-experience" className="mt-3 inline-block text-sm font-semibold text-accent hover:underline">Share your experience with us</Link>
           </div>
           <div className="space-y-3">
+              <div className="rounded-xl border border-foreground/10 bg-cta p-3 text-cta-foreground sm:p-4">
+                <h2 className="font-display text-xl">Scholars</h2>
+                <p className="mt-2 text-sm leading-snug">Explore careers and experience a working day with a mentor.</p>
+                <ul className="mt-2 space-y-1">{["Discover careers that interest you", "Complete your profile and request a visit", "Share what you learned"].map((point) => <li key={point} className="flex gap-2 text-xs"><Check className="h-3.5 w-3.5 shrink-0" />{point}</li>)}</ul>
+                <a href={session?.user ? "/profile?tab=bookings&step=profile" : "/auth?go=studentProfile"} className="mt-2 inline-block rounded-full bg-primary px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-primary-foreground">Book a Job Shadow</a>
+              </div>
               {PARTNER_BLOCKS.map((b) => (
                 <div key={b.type} className={"rounded-xl border border-foreground/10 p-3 sm:p-4 " + BLOCKS[b.type].color}>
                   <h2 className="font-display text-xl">{b.title}</h2>

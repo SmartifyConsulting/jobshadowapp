@@ -21,7 +21,7 @@ export const STORIES_VIDEO = { id: "APy164TJ0tI", title: "JOB SHADOW Real Storie
 
 export const PARTNER_HERO = { title: "Open your doors. Change a trajectory.", sub: "Too many South African students drop out of their first degree because it wasn't what they imagined. A single day of shadowing can fix that." };
 export const PARTNER_BLOCKS = [
-  { type: "host", title: "Hosts", points: ["One day or one hour of your time", "We vet, brief and prepare every scholar", "Build employer brand with future talent", "Counts toward B-BBEE skills development"], cta: "Become a host" },
+  { type: "mentor", title: "Mentors", points: ["One day or one hour of your time", "We vet, brief and prepare every scholar", "Build employer brand with future talent", "Counts toward B-BBEE skills development"], cta: "Become a mentor" },
   { type: "school", title: "Schools", points: ["Structured exposure for Grades 9–12", "Supports subject choice & Life Orientation", "Group bookings and term calendars", "Progress reports for counsellors"], cta: "Partner your school" },
 ] as const;
 // Mentors hidden from the Contact page blocks for now - previous block: { type: "mentor", title: "Mentors", points: ["One day or one hour of your time", "We vet, brief and prepare every scholar", "Share your career experience directly", "Build your professional profile"], cta: "Become a mentor" }

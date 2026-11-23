@@ -31,6 +31,7 @@ import { Route as AuthenticatedMentorRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedMyAccountRouteImport } from './routes/_authenticated/my-account'
 import { Route as AuthenticatedParentRouteImport } from './routes/_authenticated/parent'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
+import { Route as AuthenticatedSchoolRouteImport } from './routes/_authenticated/school'
 import { Route as AuthenticatedEvaluationBookingIdRouteImport } from './routes/_authenticated/evaluation.$bookingId'
 import { Route as AuthenticatedIndemnityBookingIdRouteImport } from './routes/_authenticated/indemnity.$bookingId'
 import { Route as ApiPublicEmailDispatchRouteImport } from './routes/api/public/email-dispatch'
@@ -145,6 +146,11 @@ const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSchoolRoute = AuthenticatedSchoolRouteImport.update({
+  id: '/school',
+  path: '/school',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedEvaluationBookingIdRoute =
   AuthenticatedEvaluationBookingIdRouteImport.update({
     id: '/evaluation/$bookingId',
@@ -185,6 +191,7 @@ export interface FileRoutesByFullPath {
   '/my-account': typeof AuthenticatedMyAccountRoute
   '/parent': typeof AuthenticatedParentRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/school': typeof AuthenticatedSchoolRoute
   '/evaluation/$bookingId': typeof AuthenticatedEvaluationBookingIdRoute
   '/indemnity/$bookingId': typeof AuthenticatedIndemnityBookingIdRoute
   '/api/public/email-dispatch': typeof ApiPublicEmailDispatchRoute
@@ -211,6 +218,7 @@ export interface FileRoutesByTo {
   '/my-account': typeof AuthenticatedMyAccountRoute
   '/parent': typeof AuthenticatedParentRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/school': typeof AuthenticatedSchoolRoute
   '/evaluation/$bookingId': typeof AuthenticatedEvaluationBookingIdRoute
   '/indemnity/$bookingId': typeof AuthenticatedIndemnityBookingIdRoute
   '/api/public/email-dispatch': typeof ApiPublicEmailDispatchRoute
@@ -239,6 +247,7 @@ export interface FileRoutesById {
   '/_authenticated/my-account': typeof AuthenticatedMyAccountRoute
   '/_authenticated/parent': typeof AuthenticatedParentRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/school': typeof AuthenticatedSchoolRoute
   '/_authenticated/evaluation/$bookingId': typeof AuthenticatedEvaluationBookingIdRoute
   '/_authenticated/indemnity/$bookingId': typeof AuthenticatedIndemnityBookingIdRoute
   '/api/public/email-dispatch': typeof ApiPublicEmailDispatchRoute
@@ -267,6 +276,7 @@ export interface FileRouteTypes {
     | '/my-account'
     | '/parent'
     | '/profile'
+    | '/school'
     | '/evaluation/$bookingId'
     | '/indemnity/$bookingId'
     | '/api/public/email-dispatch'
@@ -293,6 +303,7 @@ export interface FileRouteTypes {
     | '/my-account'
     | '/parent'
     | '/profile'
+    | '/school'
     | '/evaluation/$bookingId'
     | '/indemnity/$bookingId'
     | '/api/public/email-dispatch'
@@ -320,6 +331,7 @@ export interface FileRouteTypes {
     | '/_authenticated/my-account'
     | '/_authenticated/parent'
     | '/_authenticated/profile'
+    | '/_authenticated/school'
     | '/_authenticated/evaluation/$bookingId'
     | '/_authenticated/indemnity/$bookingId'
     | '/api/public/email-dispatch'
@@ -501,6 +513,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProfileRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/school': {
+      id: '/_authenticated/school'
+      path: '/school'
+      fullPath: '/school'
+      preLoaderRoute: typeof AuthenticatedSchoolRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/evaluation/$bookingId': {
       id: '/_authenticated/evaluation/$bookingId'
       path: '/evaluation/$bookingId'
@@ -532,6 +551,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMyAccountRoute: typeof AuthenticatedMyAccountRoute
   AuthenticatedParentRoute: typeof AuthenticatedParentRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedSchoolRoute: typeof AuthenticatedSchoolRoute
   AuthenticatedEvaluationBookingIdRoute: typeof AuthenticatedEvaluationBookingIdRoute
   AuthenticatedIndemnityBookingIdRoute: typeof AuthenticatedIndemnityBookingIdRoute
 }
@@ -543,6 +563,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMyAccountRoute: AuthenticatedMyAccountRoute,
   AuthenticatedParentRoute: AuthenticatedParentRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedSchoolRoute: AuthenticatedSchoolRoute,
   AuthenticatedEvaluationBookingIdRoute: AuthenticatedEvaluationBookingIdRoute,
   AuthenticatedIndemnityBookingIdRoute: AuthenticatedIndemnityBookingIdRoute,
 }

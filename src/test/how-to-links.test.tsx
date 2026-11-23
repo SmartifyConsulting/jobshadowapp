@@ -16,8 +16,14 @@ describe("How To links", () => {
     render(<Page />);
     expect(within(screen.getByRole("navigation", { name: "How-to steps" })).getAllByRole("link")).toHaveLength(7);
     expect(screen.getByRole("button", { name: "Scholars" })).toHaveAttribute("aria-pressed", "true");
-    fireEvent.click(screen.getByRole("button", { name: "Mentors / Hosts" }));
+    fireEvent.click(screen.getByRole("button", { name: "Mentors" }));
     expect(within(screen.getByRole("navigation", { name: "How-to steps" })).getAllByRole("link")).toHaveLength(8);
+    fireEvent.click(screen.getByRole("button", { name: "Hosts" }));
+    expect(screen.getByRole("link", { name: "Register as a host" })).toHaveAttribute("href", "/contact?type=host");
+    fireEvent.click(screen.getByRole("button", { name: "Schools" }));
+    expect(within(screen.getByRole("navigation", { name: "How-to steps" })).getAllByRole("link")).toHaveLength(7);
+    expect(screen.getByRole("link", { name: "Register as a school" })).toHaveAttribute("href", "/contact?type=school");
+    expect(screen.getByText("School guide")).toBeVisible();
   });
   it("shows a single scholar step frame with a sign-in return link when signed out", () => {
     const Page = Route.options.component as () => React.JSX.Element;

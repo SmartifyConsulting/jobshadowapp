@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { renderEmailHtml } from "./email-template";
+import { EMAIL_DELIVERY_PAUSED } from "./development-email";
 
 const ORIGINS = ["https://jobshadow.co.za", "https://www.jobshadow.co.za", "https://apply.jobshadow.co.za", "https://jobshadowapp.lovable.app"];
 
@@ -8,6 +9,7 @@ const ORIGINS = ["https://jobshadow.co.za", "https://www.jobshadow.co.za", "http
 export const requestPasswordReset = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ email: z.string().trim().email().max(255), origin: z.string().url() }).parse(d))
   .handler(async ({ data }) => {
+    if (EMAIL_DELIVERY_PAUSED) return { ok: true, paused: true };
     const key = process.env["RESEND_API_KEY"];
     if (!key) throw new Error("RESEND_API_KEY is not configured");
     const origin = ORIGINS.includes(data.origin) || /^https:\/\/[a-z0-9-]+\.(lovable\.app|lovableproject\.com)$/.test(data.origin) || data.origin.startsWith("http://localhost") ? data.origin : ORIGINS[0];

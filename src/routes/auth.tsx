@@ -1,4 +1,5 @@
 import { HOW_TO_DESTINATIONS, isJourneyDestination, type JourneyDestination } from "@/lib/journey-progress";
+import { EMAIL_DELIVERY_PAUSED, EMAIL_PAUSED_MESSAGE } from "@/lib/development-email";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,6 +53,7 @@ function AuthPage() {
   }
 
   async function resendConfirmation() {
+    if (EMAIL_DELIVERY_PAUSED) { setMsg(EMAIL_PAUSED_MESSAGE); return; }
     setBusy(true);
     const { error } = await supabase.auth.resend({ type: "signup", email });
     setBusy(false);

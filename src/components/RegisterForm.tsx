@@ -1,4 +1,5 @@
 import { SIGNUP_AUDIENCES } from "@/lib/audiences";
+import { EMAIL_DELIVERY_PAUSED, EMAIL_PAUSED_MESSAGE } from "@/lib/development-email";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Turnstile } from "@/components/Turnstile";
@@ -20,6 +21,7 @@ export function RegisterForm({ compact }: { compact?: boolean }) {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (EMAIL_DELIVERY_PAUSED) return setMsg(EMAIL_PAUSED_MESSAGE);
     setMsg(null);
     if (!firstName.trim() || !lastName.trim()) return setMsg("Please enter your first name and last name.");
     if (!accountType) return setMsg("Please choose what you are signing up as.");

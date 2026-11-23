@@ -84,7 +84,7 @@ function WalletBadge({ userId }: { userId: string }) {
 }
 
 function AccountMenu({ displayName, avatarUrl, isAdmin, roles, email, logout }: { displayName: string; avatarUrl: string | null; isAdmin: boolean; roles: string[]; email: string | null; logout: () => void }) {
-  const canSwitchProfiles = !!email && DEV_PERSONAS.some((p) => p.email.toLowerCase() === email.toLowerCase());
+  const canSwitchProfiles = !!email && (email.toLowerCase() === "elena@jobshadow.co.za" || DEV_PERSONAS.some((p) => p.email.toLowerCase() === email.toLowerCase()));
   return <DropdownMenu>
     <DropdownMenuTrigger aria-label="Open account menu" className="rounded-full transition hover:ring-2 hover:ring-primary-foreground/40">
       {avatarUrl ? <img src={avatarUrl} alt="" className="h-8 w-8 rounded-full object-cover" /> : <span className="grid h-8 w-8 place-items-center rounded-full bg-primary-foreground/20 text-xs uppercase">{displayName.slice(0, 1)}</span>}
@@ -93,6 +93,7 @@ function AccountMenu({ displayName, avatarUrl, isAdmin, roles, email, logout }: 
       <DropdownMenuLabel className="max-w-xs break-words">{displayName}</DropdownMenuLabel>
       <DropdownMenuSeparator />
       <DropdownMenuItem asChild><Link to="/my-account">Profile</Link></DropdownMenuItem>
+      {(isAdmin || roles.some((role) => ["mentor", "hr_admin", "school"].includes(role))) && <DropdownMenuItem asChild><Link to="/my-account">Admin</Link></DropdownMenuItem>}
       <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
       {canSwitchProfiles && <DevAccountSwitcher />}
     </DropdownMenuContent>
