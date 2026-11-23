@@ -1215,8 +1215,36 @@ function PlacementCard({
       _active: vals.active,
       _max_applicants: vals.max_applicants ? Number(vals.max_applicants) : null,
     });
+    if (error) {
+      setBusy(false);
+      return setErr(error.message);
+    }
+    if (vals.description !== (placement.description ?? "")) {
+      const descriptionSave = await supabase.rpc("update_mentor_placement", {
+        _id: placement.id,
+        _dates: slots
+          .map((slot) => {
+            const [y, m, d] = slot.day.split("-");
+            return m + "/" + d + "/" + y;
+          })
+          .join(", "),
+        _active: vals.active,
+        _max_applicants: vals.max_applicants
+          ? Number(vals.max_applicants)
+          : (null as unknown as number),
+        _arrival_time: slots[0]?.from_time ?? vals.arrival_time,
+        _collection_time: slots[0]?.to_time ?? vals.collection_time,
+        _description: vals.description,
+      });
+      if (descriptionSave.error) {
+        setBusy(false);
+        return setErr(
+          "Dates and times were saved, but the description could not be saved. " +
+            descriptionSave.error.message,
+        );
+      }
+    }
     setBusy(false);
-    if (error) return setErr(error.message);
     setEditing(false);
     setTimeEdits({});
     qc.invalidateQueries({ queryKey: ["placement-day-times", placement.id] });
@@ -1348,6 +1376,15 @@ function PlacementCard({
               onChange={(e) => setVals({ ...vals, active: e.target.checked })}
             />
             Active (visible for booking)
+          </label>
+          <label className="text-sm sm:col-span-2">
+            Description
+            <textarea
+              value={vals.description}
+              onChange={(event) => setVals({ ...vals, description: event.target.value })}
+              rows={3}
+              className="mt-1 block w-full rounded border border-input bg-transparent px-2 py-1 text-sm outline-none"
+            />
           </label>
           {err && <p className="text-sm text-destructive sm:col-span-2">{err}</p>}
           <div className="flex gap-2 sm:col-span-2">

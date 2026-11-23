@@ -75,7 +75,9 @@ describe("Host availability settings", () => {
     expect(screen.queryByText("Personal blackout dates")).not.toBeInTheDocument();
     await screen.findByRole("combobox", { name: "2030-06-11 From" });
     expect(screen.getByText("Open Spots Per Session")).toBeVisible();
-    expect(screen.queryByLabelText("Description")).toBeNull();
+    fireEvent.change(screen.getByLabelText("Description"), {
+      target: { value: "Explore software engineering with our team." },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Choose available date" }));
     fireEvent.change(screen.getByRole("combobox", { name: "2030-06-10 From" }), {
       target: { value: "10:00" },
@@ -92,6 +94,15 @@ describe("Host availability settings", () => {
           _slots: [{ day: "2030-06-10", from_time: "10:00", to_time: "14:00" }],
         }),
       ),
+    );
+    expect(rpc).toHaveBeenCalledWith(
+      "update_mentor_placement",
+      expect.objectContaining({
+        _description: "Explore software engineering with our team.",
+        _dates: "06/10/2030",
+        _arrival_time: "10:00",
+        _collection_time: "14:00",
+      }),
     );
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Job Shadows" }), {
       button: 0,
