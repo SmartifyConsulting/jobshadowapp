@@ -3,12 +3,21 @@ import type { PartnerApplication } from "@/lib/partner-applications";
 import { applicationTableRow, applicationColumns, applicationStage, APPLICATION_STATUS_CHIPS, DEFAULT_APPLICATION_COLUMNS } from "@/lib/application-columns";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { Download, Pencil, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { getAccounts } from "@/lib/users.functions";
 import { fetchAllRows, toCsv } from "@/lib/admin-export";
 import { combineApplicationRecords, type ApplicationData, type ApplicationRecord } from "@/lib/application-records";
+import type { AccountRow } from "@/lib/users.server";
+
+const ROLE_PRIORITY = ["admin", "hr_admin", "mentor", "school", "user"] as const;
+async function fetchAccountsLean(): Promise<AccountRow[]> {
+  const { data, error } = await supabase.rpc("admin_list_accounts");
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row): AccountRow => {
+    const roles = row.roles as AccountRow["roles"];
+    return { ...row, roles, role: ROLE_PRIORITY.find((r) => roles.includes(r)) ?? null, applications: [] };
+  });
+}
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -55,7 +64,6 @@ function ApplicationDocuments({ record }: { record: ApplicationRecord }) {
 }
 
 export function ApplicationsList({ onEditImported, onDeleteImported }: { onEditImported: (row: ApplicationData) => void; onDeleteImported: (row: ApplicationData) => void }) {
-  const getAccountsFn = useServerFn(getAccounts);
   const [search, setSearch] = useState("");
   const [source, setSource] = useState("");
   const [status, setStatus] = useState("all");
@@ -64,7 +72,7 @@ export function ApplicationsList({ onEditImported, onDeleteImported }: { onEditI
   const [typeTab, setTypeTab] = useState<"scholars" | "mentors" | "hosts">("scholars");
   const records = useQuery({ queryKey: ["admin", "combined-applications"], queryFn: async () => {
     const [accounts, bookings, imported, scholars, companies, importedUsers] = await Promise.all([
-      getAccountsFn(),
+      fetchAccountsLean(),
       fetchAllRows(async (from, to) => { const r = await supabase.from("bookings").select("*").order("created_at", { ascending: false }).order("id").range(from, to); if (r.error) throw r.error; return r.data ?? []; }),
       fetchAllRows(async (from, to) => { const r = await supabase.from("legacy_applications").select("*").order("id", { ascending: false }).range(from, to); if (r.error) throw r.error; return r.data ?? []; }),
       fetchAllRows(async (from, to) => { const r = await supabase.from("scholar_profiles").select("*").order("user_id").range(from, to); if (r.error) throw r.error; return r.data ?? []; }),
@@ -101,10 +109,10 @@ export function ApplicationsList({ onEditImported, onDeleteImported }: { onEditI
     const anchor = document.createElement("a"); anchor.href = url; anchor.download = typeTab === "scholars" ? "scholar-applications-full.csv" : "mentor-host-applications-full.csv"; anchor.click(); URL.revokeObjectURL(url);
   }
   return <section className="bg-ivory" data-slot="admin-list">
-    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-6"><h1 className="text-2xl font-medium">Applications ({typeTab === "scholars" ? rows.length : allPartners.filter((row) => row.applicant_type === (typeTab === "mentors" ? "mentor" : "host")).length})</h1><Button variant="outline" disabled={typeTab === "scholars" ? records.isPending || !!records.error : partners.isPending || !!partners.error} onClick={download}>Export all</Button></div>
+    <div className="flex flex-wrap items-center justify-between gap-3 bg-ivory px-6 py-6"><h1 className="font-display text-2xl uppercase">Applications</h1></div>
     <Tabs value={typeTab} onValueChange={(value) => setTypeTab(value as typeof typeTab)} className="px-6 pb-3"><TabsList aria-label="Application types">{([['scholars', 'Scholars'], ['mentors', 'Mentors'], ['hosts', 'Hosts']] as const).map(([key, title]) => <TabsTrigger key={key} value={key}>{title} ({key === 'scholars' ? all.length : allPartners.filter((record) => record.applicant_type === (key === 'mentors' ? 'mentor' : 'host')).length})</TabsTrigger>)}</TabsList></Tabs>
-    {typeTab !== "scholars" ? <PartnerApplicationsList key={typeTab} kind={typeTab === "mentors" ? "mentor" : "host"} records={allPartners} loading={partners.isPending} error={partners.error?.message} onRefresh={() => void partners.refetch()} /> : <>
-    <div className="flex flex-wrap items-end gap-4 px-6 py-4"><label className="text-sm">Search<input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name, email, career, company or reference" className="mt-1 block w-72 max-w-full rounded border border-input bg-background px-3 py-2" /></label><label className="text-sm">Source<select value={source} onChange={(e) => setSource(e.target.value)} className="mt-1 block rounded border border-input bg-background px-3 py-2"><option value="">All</option><option>Booking</option><option>Imported</option><option>Imported student</option></select></label><Button variant="outline" size="icon" aria-label="Refresh" onClick={() => void records.refetch()} disabled={records.isFetching}><RefreshCw className={`h-4 w-4 ${records.isFetching ? "animate-spin" : ""}`} /></Button><Popover><PopoverTrigger asChild><Button variant="outline" className="ml-auto text-sm font-normal">Customise View ({shownColumns.length})</Button></PopoverTrigger><PopoverContent align="end" className="max-h-96 w-80 overflow-y-auto p-3 text-sm"><div className="mb-3 flex gap-3"><button type="button" onClick={() => setVisibleColumns(columns.map((column) => column.key))} className="text-primary underline">Show all</button><button type="button" onClick={() => setVisibleColumns(DEFAULT_APPLICATION_COLUMNS)} className="text-primary underline">Compact view</button></div>
+    {typeTab !== "scholars" ? <PartnerApplicationsList key={typeTab} kind={typeTab === "mentors" ? "mentor" : "host"} records={allPartners} loading={partners.isPending} error={partners.error?.message} onRefresh={() => void partners.refetch()} onExport={download} exportDisabled={partners.isPending || !!partners.error} /> : <>
+    <div className="flex flex-wrap items-end gap-4 px-6 py-4"><label className="text-sm">Search<input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name, email, career, company or reference" className="mt-1 block w-72 max-w-full rounded border border-input bg-background px-3 py-2" /></label><label className="text-sm">Source<select value={source} onChange={(e) => setSource(e.target.value)} className="mt-1 block rounded border border-input bg-background px-3 py-2"><option value="">All</option><option>Booking</option><option>Imported</option><option>Imported student</option></select></label><Button variant="outline" size="icon" aria-label="Refresh" onClick={() => void records.refetch()} disabled={records.isFetching}><RefreshCw className={`h-4 w-4 ${records.isFetching ? "animate-spin" : ""}`} /></Button><Button variant="outline" disabled={records.isPending || !!records.error} onClick={download}>Export all</Button><Popover><PopoverTrigger asChild><Button variant="outline" className="ml-auto text-sm font-normal">Customise View ({shownColumns.length})</Button></PopoverTrigger><PopoverContent align="end" className="max-h-96 w-80 overflow-y-auto p-3 text-sm"><div className="mb-3 flex gap-3"><button type="button" onClick={() => setVisibleColumns(columns.map((column) => column.key))} className="text-primary underline">Show all</button><button type="button" onClick={() => setVisibleColumns(DEFAULT_APPLICATION_COLUMNS)} className="text-primary underline">Compact view</button></div>
       <p className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Visible columns (drag to reorder)</p>
       {shownColumns.map((column, index) => (
         <div
