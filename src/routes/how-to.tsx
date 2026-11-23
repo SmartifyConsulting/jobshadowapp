@@ -1,7 +1,7 @@
 import { useHowToProgress } from "@/components/HowToProgress";
 import { HOW_TO_DESTINATIONS } from "@/lib/journey-progress";
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronDown, GraduationCap, Users, Building2, UserPlus, User, Search, CalendarDays, ClipboardCheck, Handshake, Star, Calendar, FileEdit, CheckCircle2, Briefcase, Bell, ArrowRight } from "lucide-react";
+import { ChevronDown, GraduationCap, Users, Building2, School, UserPlus, User, Search, CalendarDays, ClipboardCheck, Handshake, Star, Calendar, FileEdit, CheckCircle2, Briefcase, Bell, ArrowRight } from "lucide-react";
 import { SiteLayout, useSiteSession } from "@/components/SiteLayout";
 import { YouTube } from "@/components/YouTube";
 import { VIDEOS } from "@/lib/content";
@@ -38,6 +38,16 @@ const HOST_STEPS: Step[] = [
   { icon: CheckCircle2, label: "Confirm\na booking" },
   { icon: Briefcase, label: "Host the\nexperience" },
   { icon: Bell, label: "Get feedback &\nbuild your profile" },
+];
+
+const SCHOOL_STEPS: Step[] = [
+  { icon: UserPlus, label: "Register\nas a school" },
+  { icon: User, label: "Create\nyour profile" },
+  { icon: Search, label: "Confirm\npartnership details" },
+  { icon: CalendarDays, label: "Submit bookings\nfor your scholars" },
+  { icon: ClipboardCheck, label: "Track booking\nrequests" },
+  { icon: Handshake, label: "Support the\njob shadow day" },
+  { icon: Bell, label: "Get feedback\n& reports" },
 ];
 
 function StepRow({ title, icon: TitleIcon, steps, links, complete = [] }: { title: string; icon: typeof User; steps: Step[]; links: string[]; complete?: boolean[] }) {
@@ -95,6 +105,7 @@ function HowTo() {
           <StepRow title="For Students" icon={GraduationCap} steps={STUDENT_STEPS} complete={progress.data?.student ?? []} links={[session?.user ? destination("studentProfile") : "/register", ...(["studentProfile", "studentCareers", "studentRequest", "studentForms", "studentExperience", "studentFeedback"] as const).map(destination)]} />
           <StepRow title="For Mentors" icon={Users} steps={MENTOR_STEPS} complete={progress.data?.mentor ?? []} links={providerLinks("mentor")} />
           <StepRow title="For Hosts" icon={Building2} steps={HOST_STEPS} complete={progress.data?.host ?? []} links={providerLinks("host")} />
+          <StepRow title="For Schools" icon={School} steps={SCHOOL_STEPS} links={["/contact?type=school", ...Array(SCHOOL_STEPS.length - 1).fill("/contact")]} />
           {progress.error && <p role="status" className="text-sm">Saved progress could not be loaded. You can still open each step.</p>}
           <p className="text-xs">Green ticks show saved progress. Contact us for host indemnity and NDA forms; their completion is not tracked in the app yet.</p>
         </div>
