@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/company-report")({
   head: () => ({
-    meta: [{ title: "B-BBEE / CPD Report | JobShadow" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "CSI | Company Portal | JobShadow" }, { name: "robots", content: "noindex" }],
   }),
   component: CompanyReportPage,
 });
@@ -50,8 +50,14 @@ function CompanyReportPage() {
 
   return (
     <SiteLayout>
+      <div className="flex min-w-0 flex-1 flex-col md:flex-row">
+      <aside className="shrink-0 bg-cta text-cta-foreground shadow-warm md:w-60">
+        <p className="px-6 pt-6 text-xs font-bold uppercase tracking-widest">Company Portal</p>
+        <nav className="space-y-1 p-3" aria-label="Company navigation"><Link to="/company-report" aria-current="page" className="block rounded border-l-2 border-primary bg-primary/10 px-3 py-2.5 text-sm font-medium">CSI</Link><Link to="/profile" search={{ tab: "profile" }} className="block rounded px-3 py-2.5 text-sm font-medium hover:bg-primary/5">Profile</Link></nav>
+      </aside>
+      <div className="min-w-0 flex-1">
       <div className="bg-primary px-5 py-6 text-primary-foreground">
-        <h1 className="mx-auto max-w-7xl text-xl font-bold md:text-2xl">B-BBEE / CPD Report</h1>
+        <h1 className="mx-auto max-w-7xl text-xl font-bold md:text-2xl">CSI</h1>
         <p className="mx-auto mt-2 max-w-7xl text-sm">Job shadows hosted at your company, with the demographic breakdown needed to claim CPD points and CSI spend credit. Demographic fields are self-declared by each scholar/parent.</p>
       </div>
       <section className="bg-muted/40 px-5 py-8">
@@ -96,6 +102,8 @@ function CompanyReportPage() {
           )}
         </div>
       </section>
+      </div>
+      </div>
     </SiteLayout>
   );
 }

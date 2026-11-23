@@ -92,9 +92,7 @@ function AccountMenu({ displayName, avatarUrl, isAdmin, roles, email, logout }: 
     <DropdownMenuContent align="end" className="max-w-[calc(100vw-2rem)]">
       <DropdownMenuLabel className="max-w-xs break-words">{displayName}</DropdownMenuLabel>
       <DropdownMenuSeparator />
-      <DropdownMenuItem asChild><Link to="/profile">Profile</Link></DropdownMenuItem>
-      {isAdmin && <DropdownMenuItem asChild><Link to="/admin">Admin Portal</Link></DropdownMenuItem>}
-      {(isAdmin || roles.includes("mentor") || roles.includes("hr_admin")) && <DropdownMenuItem asChild><Link to="/mentor">Mentor Portal</Link></DropdownMenuItem>}
+      <DropdownMenuItem asChild><Link to="/my-account">Profile</Link></DropdownMenuItem>
       <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
       {canSwitchProfiles && <DevAccountSwitcher />}
     </DropdownMenuContent>

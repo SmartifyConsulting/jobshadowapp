@@ -48,10 +48,7 @@ function AuthPage() {
     }
     if (go) { window.location.assign(HOW_TO_DESTINATIONS[go]); return; }
     if (contact) { navigate({ to: "/contact", search: { type: contact } }); return; }
-    const { data: u } = await supabase.auth.getUser();
-    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: u.user!.id, _role: "admin" });
-    const { data: isParent } = await supabase.rpc("has_role", { _user_id: u.user!.id, _role: "parent" });
-    navigate({ to: isAdmin ? "/admin" : isParent ? "/parent" : "/my-account" });
+    navigate({ to: "/my-account" });
   }
 
   async function resendConfirmation() {

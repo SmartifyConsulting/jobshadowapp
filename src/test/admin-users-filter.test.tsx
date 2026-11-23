@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { AccountRow } from "@/lib/users.server";
@@ -6,7 +6,7 @@ import type { AccountRow } from "@/lib/users.server";
 vi.mock("@tanstack/react-router", () => ({ createFileRoute: () => (options: unknown) => ({ options }) }));
 vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
 vi.mock("@/lib/users.functions", () => ({ getAccounts: vi.fn(), updateAccount: vi.fn(), removeAccount: vi.fn(), createAccount: vi.fn(), syncCompanyContacts: vi.fn() }));
-vi.mock("@/lib/public-holidays.functions", () => ({ lookupPublicHolidays: vi.fn() }));
+vi.mock("@/lib/public-holidays.functions", () => ({ lookupPublicHolidays: vi.fn(), syncAutomaticHolidays: vi.fn().mockResolvedValue({updated:0,failures:[]}) }));
 vi.mock("@/lib/email.functions", () => ({ sendQueuedEmails: vi.fn() }));
 vi.mock("@/lib/career-ai.functions", () => ({ draftCareerDescription: vi.fn() }));
 vi.mock("@/lib/csv-import.functions", () => ({ mapCsvColumns: vi.fn() }));
@@ -15,6 +15,9 @@ vi.mock("@/lib/indemnity-ai.functions", () => ({ extractCompanyIndemnity: vi.fn(
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
 import { AdminUsers, Route, BookingSettings, CareerDescriptionField } from "@/routes/_authenticated/admin";
 import { draftCareerDescription } from "@/lib/career-ai.functions";
+import { getCareerGuidance } from "@/lib/career-guidance";
+import { CAREER_DRAFT_FIELDS } from "@/lib/career-draft";
+import { resolveConfirm } from "@/lib/dialogs";
 import { accountInitial, alphabetInitial } from "@/lib/alphabet";
 
 const account = (id: string, name: string): AccountRow => ({
@@ -35,6 +38,36 @@ function mount(extra: AccountRow[] = []) {
 afterEach(cleanup);
 
 describe("User alphabet chips", () => {
+  it("regenerates only the selected career after an explicit confirmation", async () => {
+    const existing = { description: "Saved overview", ideal_for: "Saved ideal", specialisations: ["Saved role"], subjects: ["Saved subject"], school_skills: ["Saved foundation"], workplace_skills: ["Saved skill"], interpersonal_skills: ["Saved people skill"], recommended_courses: ["Saved course"], self_directed_learning: ["Saved resource"], future_outlook: "Saved outlook", ai_exposure_level: "low" as const, ai_exposure_note: "Saved note" };
+    const onDraft = vi.fn();
+    const ai = vi.mocked(draftCareerDescription).mockClear().mockResolvedValue(existing);
+    const guidance = getCareerGuidance("Accountant", existing.description, existing);
+    render(<CareerDescriptionField career="Accountant" value={existing.description} onChange={vi.fn()} skills={guidance.skills} onSkillsChange={vi.fn()} guidance={guidance} onGuidanceChange={vi.fn()} onDraft={onDraft} />);
+    fireEvent.click(screen.getByRole("button", { name: "AI: Fill missing fields" }));
+    expect(ai).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Regenerate this career" }));
+    expect(ai).not.toHaveBeenCalled();
+    resolveConfirm(true);
+    await waitFor(() => expect(onDraft).toHaveBeenCalledWith(existing, true));
+    expect(ai).toHaveBeenCalledWith({ data: { career: "Accountant", fields: [...CAREER_DRAFT_FIELDS] } });
+  });
+  it("keeps review-flagged Scholars visible in both tabs and uses aligned icon-only actions", () => {
+    const flagged = { ...account("flagged", "Flagged Scholar"), roles: ["user" as const], role: "user" as const, classification_unconfirmed: true };
+    const client = mount([flagged]);
+    fireEvent.click(screen.getByRole("button", { name: "F" }));
+    const edit = screen.getByRole("button", { name: "Edit Flagged Scholar" });
+    expect(edit.textContent).toBe("");
+    const row = edit.closest("tr")!;
+    expect(within(row).getByText("Unknown")).toBeVisible();
+    expect(row.lastElementChild).toContainElement(edit);
+    const head = screen.getByRole("columnheader", { name: "First Name" }).closest("table")!;
+    expect([...head.querySelectorAll("col")].map((col) => col.style.width)).toEqual([...row.closest("table")!.querySelectorAll("col")].map((col) => col.style.width));
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Unclassified (1)" }), { button: 0 });
+    fireEvent.click(screen.getByRole("button", { name: "F" }));
+    expect(screen.getByRole("button", { name: "View details for Flagged Scholar" })).toBeVisible();
+    client.clear();
+  });
   it("keeps unassigned accounts out of Students and lists them under Unclassified", () => {
     const unknown = { ...account("unknown", "Unknown Person"), role: null, roles: [] };
     const client = mount([unknown]);
@@ -77,10 +110,10 @@ describe("User alphabet chips", () => {
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Mentors (2)" }), { button: 0 });
     fireEvent.click(screen.getAllByRole("button", { name: "A" }).at(-1)!);
     expect(screen.getByRole("button", { name: "View details for Alice Brown" })).toBeVisible();
-    fireEvent.mouseDown(screen.getByRole("tab", { name: "Schools (1)" }), { button: 0 });
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Schools (0)" }), { button: 0 });
     expect(screen.getByRole("heading", { name: "Users" })).toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: "S" }));
-    expect(screen.getByRole("button", { name: "View details for School Contact" })).toBeVisible();
+    fireEvent.click(screen.getByText("School contacts (1)"));
+    expect(screen.getByRole("button", { name: "Edit School Contact" })).toBeVisible();
     client.clear();
   });
   it("uses consistent initials for accents, whitespace and email-only accounts", () => {
@@ -105,7 +138,10 @@ describe("Booking status chips", () => {
     expect(screen.queryByRole("button", { name: "Bookings" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Evaluations" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Reports" }));
-    expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Bookings", "Refund Requests", "Evaluations", "Vouchers", "BEE / CPD", "Mentor Coverage", "Activity Log", "Token Ledger"]);
+    expect(within(screen.getByRole("tablist", { name: "Admin reports" })).getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Applications", "Bookings", "Refund Requests", "Evaluations", "Vouchers", "CSI", "Mentor Coverage", "Activity Log", "Token Ledger"]);
+    expect(screen.queryByRole("button", { name: "Applications" })).not.toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Applications" })).toHaveAttribute("aria-selected", "true");
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Bookings" }), { button: 0 });
     expect(screen.getByText("Alice Confirmed")).toBeVisible();
     expect(screen.getByText("Bob Awaiting")).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Confirmed 1" }));
@@ -167,11 +203,13 @@ describe("Visible provider directories and career wizard", () => {
     fireEvent.click(screen.getByRole('button', { name: /^A.*1/ }));
     expect(screen.getByRole('button', { name: 'AI wizard' })).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'AI wizard' }));
-    fireEvent.click(screen.getByRole('button', { name: 'AI wizard' }));
-    await waitFor(() => expect(screen.getByDisplayValue('Draft overview')).toBeVisible());
-    expect(screen.getByDisplayValue('Draft ideal person')).toBeVisible();
-    expect(screen.getByDisplayValue('Draft role')).toBeVisible();
-    expect(screen.getByDisplayValue('Accounting')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'AI: Fill missing fields' }));
+    await waitFor(() => expect(screen.getByDisplayValue('Teamwork')).toBeVisible());
+    expect(screen.getByDisplayValue('Original description')).toBeVisible();
+    expect(screen.queryByDisplayValue('Draft overview')).not.toBeInTheDocument();
+    expect(screen.queryByDisplayValue('Draft ideal person')).not.toBeInTheDocument();
+    expect(screen.queryByDisplayValue('Draft role')).not.toBeInTheDocument();
+    expect(vi.mocked(draftCareerDescription).mock.calls.at(-1)?.[0]).toEqual({data: {career: 'Accountant', fields: ['interpersonal_skills', 'recommended_courses', 'self_directed_learning', 'future_outlook', 'ai_exposure_level', 'ai_exposure_note']}});
     expect(screen.getByRole('button', { name: 'Update' })).toBeVisible();
     client.clear();
   });

@@ -1,10 +1,12 @@
+import { schoolDirectory } from "@/lib/school-directory";
+import { SchoolsDirectory } from "@/components/SchoolsDirectory";
 import { mentorAvailability } from "@/lib/mentor-availability";
 import { fetchAllAccounts } from "@/lib/admin-accounts";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { providerGroups, mentorGroups } from "@/lib/provider-directory";
 import { CareerGuidance } from "@/components/CareerGuidance";
 import { getCareerGuidance } from "@/lib/career-guidance";
-import type { CareerDraft } from "@/lib/career-draft";
+import { CAREER_DRAFT_FIELDS, missingCareerFields, careerDraftPatch, type CareerDraft } from "@/lib/career-draft";
 import { individualMentorEmails, classifyCompanies, companyKey, type CompanyContacts } from "@/lib/company-classification";
 import { PersonNameFields } from "@/components/PersonNameFields";
 import { PhoneInput } from "@/components/PhoneInput";
@@ -39,7 +41,8 @@ import { sendQueuedEmails } from "@/lib/email.functions";
 import { updateAccount, removeAccount } from "@/lib/users.functions";
 import type { AccountApplication } from "@/lib/user-applications";
 import { extractCompanyIndemnity } from "@/lib/indemnity-ai.functions";
-import { lookupPublicHolidays } from "@/lib/public-holidays.functions";
+import { syncAutomaticHolidays } from "@/lib/public-holidays.functions";
+import { CountrySelect } from "@/components/CountrySelect";
 import { confirmAction, notify } from "@/lib/dialogs";
 import type { AccountRow } from "@/lib/users.server";
 import { renderEmailHtml } from "@/lib/email-template";
@@ -63,7 +66,6 @@ export const Route = createFileRoute("/_authenticated/admin")({
 type Field = "text" | "number" | "date" | "checkbox";
 type Col = { key: string; label: string; field?: Field };
 
-const BAND_COLORS = ["bg-cta text-cta-foreground", "bg-accent text-accent-foreground", "bg-teal text-teal-foreground", "bg-primary text-primary-foreground"];
 const TABLES: { id: string; label: string; icon: typeof UsersIcon; table: string; singular: string; cols: Col[]; csvUpload?: boolean; dateCompanyFilter?: boolean; indemnityEdit?: boolean; custom?: boolean }[] = [
   { id: "users", label: "Users", icon: GraduationCap, table: "legacy_users", singular: "Users", custom: true, cols: [] },
   { id: "bookings", label: "Bookings", icon: UsersIcon, table: "bookings", singular: "Bookings", custom: true, cols: [] },
@@ -111,6 +113,8 @@ function useIsAdmin() {
 
 function AdminPage() {
   const admin = useIsAdmin();
+  const syncHolidays = useServerFn(syncAutomaticHolidays);
+  const holidaySync = useQuery({ queryKey: ["admin-holiday-sync", new Date().getFullYear()], enabled: admin.data === true, queryFn: () => syncHolidays({ data: {} }), staleTime: 24 * 60 * 60_000, retry: 1, refetchInterval: (query) => query.state.error || query.state.data?.failures.length ? 60_000 : false });
   const [active, setActive] = useState("users");
   const section = TABLES.find((t) => t.id === active);
   if (!section) return null;
@@ -122,7 +126,7 @@ function AdminPage() {
       <aside className="w-60 shrink-0 border-r border-primary/20 bg-accent text-accent-foreground shadow-warm">
         <p className="px-5 pb-3 pt-6 text-xs font-bold uppercase tracking-widest text-foreground/70">Admin Portal</p>
         <nav className="space-y-1 px-3 pb-6">
-          {TABLES.filter((t) => !["sectors", "vouchers", "bookings", "evaluations"].includes(t.id)).map((t) => (
+          {TABLES.filter((t) => !["sectors", "vouchers", "bookings", "evaluations", "apps"].includes(t.id)).map((t) => (
             <button key={t.id} onClick={() => setActive(t.id)} className={`flex w-full items-center gap-3 rounded-md border-l-2 px-3 py-2.5 text-left text-sm font-medium transition ${active === t.id ? "border-primary bg-primary/10 text-foreground" : "border-transparent text-foreground/85 hover:bg-primary/5 hover:text-foreground"}`}>
               <t.icon className="h-4 w-4" /> {t.label}
             </button>
@@ -131,6 +135,7 @@ function AdminPage() {
       </aside>
       <div className="min-w-0 flex-1">
         <main className="p-0">
+          {admin.data && (holidaySync.error || !!holidaySync.data?.failures.length) && <p role="status" className="border-b border-border bg-ivory px-4 py-2 text-sm">Some holiday calendars could not be updated. We’ll retry automatically; bookings remain protected.</p>}
           {admin.isLoading ? (
             <p className="p-8">Loading…</p>
           ) : !admin.data ? (
@@ -625,8 +630,9 @@ function CanonicalSelect({ table, label, value, onChange }: { table: "careers" |
 }
 
 function CreateRole({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
+  const syncHolidays = useServerFn(syncAutomaticHolidays);
   const [type, setType] = useState(0);
-  const [vals, setVals] = useState<Record<string, string>>({ company: "", career: "", sector: "", location: "", amount: String(ROLE_TYPES[0]!.amount) });
+  const [vals, setVals] = useState<Record<string, string>>({ company: "", career: "", sector: "", location: "", country_code: "ZA", amount: String(ROLE_TYPES[0]!.amount) });
   const [active, setActive] = useState(true);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -651,6 +657,7 @@ function CreateRole({ onDone, onCancel }: { onDone: () => void; onCancel: () => 
     setErr(null);
     const patch: Record<string, unknown> = { ...vals, amount: Number(vals["amount"]) || ROLE_TYPES[type]!.amount, active, mode: ROLE_TYPES[type]!.label, allow_weekends: vals["allow_weekends"] === "true", allow_off_season: vals["allow_off_season"] === "true" };
     if (patch["max_applicants"]) patch["max_applicants"] = Number(patch["max_applicants"]);
+    try { const result = await syncHolidays({ data: { countryCode: vals["country_code"] ?? "ZA" } }); if (result.failures.length) throw new Error(result.failures.join(" ")); } catch (error) { setBusy(false); setErr(error instanceof Error ? error.message : "Could not load public holidays."); return; }
     const { error } = await supabase.from("companies").insert(patch as never);
     setBusy(false);
     if (error) return setErr(error.message);
@@ -673,6 +680,7 @@ function CreateRole({ onDone, onCancel }: { onDone: () => void; onCancel: () => 
         <div className="mt-5 grid gap-5 sm:grid-cols-3">
           <CanonicalSelect table="sectors" label="Sector" value={vals["sector"] ?? ""} onChange={(v) => setVals({ ...vals, sector: v })} />
           <CanonicalSelect table="careers" label="Career / Role title" value={vals["career"] ?? ""} onChange={(v) => setVals({ ...vals, career: v })} />
+          <CountrySelect value={vals["country_code"] ?? "ZA"} onChange={(country_code) => setVals({ ...vals, country_code })} />
           {fields.map((f) => (
             <label key={f.key} className="block text-sm">
               {f.label}
@@ -781,6 +789,8 @@ function UserFilePreview({ path, label }: { path: string | null; label: string }
   </section>;
 }
 
+function UserTableColumns() { return <colgroup>{[13,10,19,12,12,11,6,9,8].map((width, index) => <col key={index} style={{ width: width + "%" }} />)}</colgroup>; }
+
 function UserTableRow({ a, selectedId, busyId, expandedApplicationUser, mentorBadge, onSelect, onEdit, onDelete, onVerify, onToggleExpand }: {
   a: AccountRow; selectedId: string | null; busyId: string | null; expandedApplicationUser: string | null; mentorBadge?: "IM" | "CM" | null;
   onSelect: (id: string) => void; onEdit: () => void; onDelete: (id: string, label: string) => void;
@@ -797,22 +807,23 @@ function UserTableRow({ a, selectedId, busyId, expandedApplicationUser, mentorBa
         {avatarUrl ? <img src={avatarUrl} alt="" className="h-7 w-7 shrink-0 rounded-full object-cover" /> : <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-teal/15 text-[11px] uppercase">{label.slice(0, 1)}</span>}
         <button onClick={() => onSelect(a.id)} className="max-w-32 truncate text-left font-medium hover:text-primary" title={label} aria-label={'View details for ' + label}>{firstName || "—"}</button>
         {mentorBadge && <span className={'rounded px-1 py-0.5 text-[10px] font-bold ' + (mentorBadge === 'IM' ? 'bg-teal/20 text-teal-foreground' : 'bg-accent/20 text-accent-foreground')} title={mentorBadge === 'IM' ? 'Independent Mentor' : 'Company Mentor'}>{mentorBadge}</span>}
+        {a.classification_unconfirmed && <span className="rounded bg-muted px-1 py-0.5 text-[10px] text-muted-foreground" title="Moved to Scholars; classification still needs review">Unclassified</span>}
         {a.is_spam && <span className="text-[10px] text-destructive">Spam</span>}
         {!a.self_registered && <span className="rounded bg-muted px-1 py-0.5 text-[10px] text-muted-foreground" title="This account was provisioned by an admin from a company contact and has not signed in itself.">Not registered</span>}
       </div></td>
-      <td className="px-3 py-1.5">{lastName || "—"}</td>
-      <td className="px-3 py-1.5"><span className="block max-w-48 truncate" title={a.email ?? ""}>{a.email || "—"}</span></td>
-      <td className="px-3 py-1.5">{a.id_number || "—"}</td>
-      <td className="px-3 py-1.5"><span className="block max-w-40 truncate" title={a.school ?? ""}>{a.school || "—"}</span></td>
+      <td className="truncate px-3 py-1.5" title={lastName}>{lastName || "—"}</td>
+      <td className="px-3 py-1.5"><span className="block max-w-full truncate" title={a.email ?? ""}>{a.email || "—"}</span></td>
+      <td className="truncate px-3 py-1.5" title={a.id_number ?? ""}>{a.id_number || "—"}</td>
+      <td className="px-3 py-1.5"><span className="block max-w-full truncate" title={a.school ?? ""}>{a.school || "—"}</span></td>
       <td className="px-3 py-1.5"><div className="flex items-center gap-2">
         <label className="flex items-center" title={a.id_verified === null ? 'No scholar profile to verify' : 'ID verified'}><input type="checkbox" className="accent-primary" checked={a.id_verified === true} disabled={a.id_verified === null || busyId === a.id} onChange={(e) => onVerify(a.id, e.target.checked)} aria-label={'ID verified for ' + label} /></label>
         <UserDocument path={a.id_file_path} kind="id" verified={a.id_verified === true} />
         <UserDocument path={a.photo_path} kind="photo" />
       </div></td>
       <td className="px-3 py-1.5"><button aria-expanded={expanded} aria-controls={'applications-' + a.id} onClick={onToggleExpand} className="flex items-center gap-2 whitespace-nowrap rounded px-1.5 py-1 text-xs hover:bg-muted" title={a.booking_count + ' bookings'}>{a.booking_count}<ChevronDown className={'h-3 w-3 transition ' + (expanded ? 'rotate-180' : '')} /><span className="sr-only">Applications for {label}</span></button></td>
-      <td className="px-3 py-1.5 whitespace-nowrap text-muted-foreground" title={a.last_accessed_at ? new Date(a.last_accessed_at).toLocaleString() : 'Never signed in'}>{a.last_accessed_at ? new Date(a.last_accessed_at).toLocaleDateString() : '—'}</td>
-      <td className="px-3 py-1.5"><div className="flex items-center gap-1.5">
-        <button onClick={onEdit} disabled={busyId === a.id} className="flex items-center gap-1.5 rounded border border-border px-2 py-1 text-xs transition hover:border-primary/30 hover:text-primary disabled:opacity-50" aria-label={'Edit ' + label}><Pencil className="h-3.5 w-3.5" />Edit</button>
+      <td className="px-3 py-1.5 whitespace-nowrap text-muted-foreground" title={a.last_accessed_at ? new Date(a.last_accessed_at).toLocaleString() : 'Unknown'}>{a.last_accessed_at ? new Date(a.last_accessed_at).toLocaleDateString() : 'Unknown'}</td>
+      <td className="px-3 py-1.5 text-right"><div className="flex items-center justify-end gap-1.5">
+        <button onClick={onEdit} disabled={busyId === a.id} className="rounded p-1.5 text-muted-foreground transition hover:text-primary disabled:opacity-50" title="Edit user" aria-label={'Edit ' + label}><Pencil className="h-3.5 w-3.5" /></button>
         <button onClick={() => onDelete(a.id, label)} disabled={busyId === a.id} className="rounded p-1.5 text-muted-foreground transition hover:bg-destructive/5 hover:text-destructive disabled:opacity-50" aria-label={'Delete account for ' + label}><Trash2 className="h-3.5 w-3.5" /></button>
       </div></td>
     </tr>
@@ -830,9 +841,9 @@ function UserDetailPanel({ account: a, mentorInfo, onClose, onEdit }: { account:
   const applications = useUserApplications(a.id);
   const CONTACT_LABEL: Record<string, string> = { email: "Email", whatsapp: "WhatsApp", phone: "Phone call", sms: "SMS" };
   return <aside aria-label="Selected user details" className="w-full shrink-0 border-t border-border bg-background p-5 xl:sticky xl:top-0 xl:max-h-screen xl:w-72 xl:overflow-y-auto xl:border-l xl:border-t-0">
-    <div className="mb-4 flex items-start justify-between gap-3"><div><h2 className="font-sans text-sm font-medium">{label}</h2><div className="mt-1 flex flex-wrap gap-1">{a.roles.length === 0 && <span className="text-xs text-muted-foreground">Unclassified</span>}{a.roles.map((role) => <span key={role} className="rounded bg-teal/15 px-1.5 py-0.5 text-[10px]">{ROLE_LABELS[role]}</span>)}</div></div><button onClick={onClose} aria-label="Close user details" className="rounded p-1 text-muted-foreground hover:bg-muted"><X className="h-4 w-4" /></button></div>
+    <div className="mb-4 flex items-start justify-between gap-3"><div><h2 className="font-sans text-sm font-medium">{label}</h2><div className="mt-1 flex flex-wrap gap-1">{(a.roles.length === 0 || a.classification_unconfirmed) && <span className="text-xs text-muted-foreground">Unclassified</span>}{a.roles.map((role) => <span key={role} className="rounded bg-teal/15 px-1.5 py-0.5 text-[10px]">{ROLE_LABELS[role]}</span>)}</div></div><button onClick={onClose} aria-label="Close user details" className="rounded p-1 text-muted-foreground hover:bg-muted"><X className="h-4 w-4" /></button></div>
     <dl className="space-y-2 text-xs">
-      {([['Email', a.email], ['Phone', a.contact_no], ['School', a.school], ['ID / passport', a.id_number], ['Joined', new Date(a.created_at).toLocaleDateString()], ['Last accessed', a.last_accessed_at ? new Date(a.last_accessed_at).toLocaleString() : 'Never signed in']] as const).map(([title, value]) => <div key={title}><dt className="text-muted-foreground">{title}</dt><dd className="break-words">{value || '—'}</dd></div>)}
+      {([['Email', a.email], ['Phone', a.contact_no], ['School', a.school], ['ID / passport', a.id_number], ['Joined', new Date(a.created_at).toLocaleDateString()], ['Last accessed', a.last_accessed_at ? new Date(a.last_accessed_at).toLocaleString() : 'Unknown']] as const).map(([title, value]) => <div key={title}><dt className="text-muted-foreground">{title}</dt><dd className="break-words">{value || '—'}</dd></div>)}
     </dl>
     {mentorInfo && <section className="mt-4 space-y-2 border-t border-border pt-4 text-xs"><h3 className="text-xs font-medium">Rules of engagement</h3>
       <div><dt className="text-muted-foreground">Preferred contact</dt><dd>{CONTACT_LABEL[mentorInfo.preferred_contact] ?? mentorInfo.preferred_contact}</dd></div>
@@ -855,8 +866,8 @@ function UserCards({ rows, selectedId, busyId, onSelect, onEdit, onDelete, onVer
     const label = a.display_name || a.full_name || a.email || a.id;
     return <article key={a.id} className={'min-w-0 rounded-md border bg-ivory p-4 ' + (selectedId === a.id ? 'border-primary/40' : 'border-border')}>
       <button className="max-w-full truncate text-left text-sm font-medium hover:text-primary" onClick={() => onSelect(a.id)}>{label}</button>
-      <div className="my-2 flex flex-wrap gap-1">{a.roles.length === 0 && <span className="text-xs text-muted-foreground">Unclassified</span>}{a.roles.map((role) => <span key={role} className="rounded bg-teal/15 px-1.5 py-0.5 text-[10px]">{ROLE_LABELS[role]}</span>)}{a.is_spam && <span className="text-[10px] text-destructive">Spam</span>}</div>
-      <div className="space-y-1 text-xs text-muted-foreground"><p className="truncate" title={a.email ?? undefined}>{a.email || 'No email'}</p><p>{a.contact_no || 'No phone'}</p><p className="truncate" title={a.school ?? undefined}>{a.school || 'No school'}</p><p>ID / passport: {a.id_number || '—'}</p><p>Joined {new Date(a.created_at).toLocaleDateString()}</p><p>Last accessed {a.last_accessed_at ? new Date(a.last_accessed_at).toLocaleDateString() : 'never'}</p></div>
+      <div className="my-2 flex flex-wrap gap-1">{(a.roles.length === 0 || a.classification_unconfirmed) && <span className="text-xs text-muted-foreground">Unclassified</span>}{a.roles.map((role) => <span key={role} className="rounded bg-teal/15 px-1.5 py-0.5 text-[10px]">{ROLE_LABELS[role]}</span>)}{a.is_spam && <span className="text-[10px] text-destructive">Spam</span>}</div>
+      <div className="space-y-1 text-xs text-muted-foreground"><p className="truncate" title={a.email ?? undefined}>{a.email || 'No email'}</p><p>{a.contact_no || 'No phone'}</p><p className="truncate" title={a.school ?? undefined}>{a.school || 'No school'}</p><p>ID / passport: {a.id_number || '—'}</p><p>Joined {new Date(a.created_at).toLocaleDateString()}</p><p>Last accessed {a.last_accessed_at ? new Date(a.last_accessed_at).toLocaleDateString() : 'Unknown'}</p></div>
       <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
         <label title="ID verified"><input type="checkbox" className="accent-teal" checked={a.id_verified === true} disabled={a.id_verified === null || busyId === a.id} onChange={(e) => onVerify(a.id, e.target.checked)} aria-label={'ID verified for ' + label} /></label>
         <UserDocument path={a.id_file_path} kind="id" verified={a.id_verified === true} /><UserDocument path={a.photo_path} kind="photo" />
@@ -904,7 +915,7 @@ export function AdminUsers() {
   };
   const matchesRole = (a: AccountRow, tab = roleTab) => {
     const isMentorPerson = a.roles.includes("mentor") || a.roles.includes("hr_admin") || isIndependentMentor(a);
-    if (tab === "unclassified") return a.roles.length === 0 && !isMentorPerson;
+    if (tab === "unclassified") return a.classification_unconfirmed === true || (a.roles.length === 0 && !isMentorPerson);
     if (tab === "mentor") return isMentorPerson;
     if (tab === "admin") return a.roles.includes("admin");
     return a.roles.includes(tab);
@@ -1004,8 +1015,9 @@ export function AdminUsers() {
         </div>
       } />
       <Tabs value={roleTab} onValueChange={(value) => { setRoleTab(value as AccountRow["roles"][number] | "unclassified"); setLetter(null); setOpenGroups([]); setSelectedId(null); }}>
-        <div className="overflow-x-auto bg-ivory px-6 py-4"><TabsList aria-label="User Type">{([["user", "Scholars"], ["mentor", "Mentors"], ["school", "Schools"], ["admin", "Admin"], ["unclassified", "Unclassified"]] as const).map(([role, name]) => <TabsTrigger key={role} value={role}>{name} ({(accounts.data ?? []).filter((user) => matchesRole(user, role) && (showSpam || !user.is_spam)).length})</TabsTrigger>)}</TabsList></div>
+        <div className="overflow-x-auto bg-ivory px-6 py-4"><TabsList aria-label="User Type">{([["user", "Scholars"], ["mentor", "Mentors"], ["school", "Schools"], ["admin", "Admin"], ["unclassified", "Unclassified"]] as const).map(([role, name]) => <TabsTrigger key={role} value={role}>{name} ({role === "school" ? schoolDirectory(accounts.data ?? []).length : (accounts.data ?? []).filter((user) => matchesRole(user, role) && (showSpam || !user.is_spam)).length})</TabsTrigger>)}</TabsList></div>
       <TabsContent value={roleTab} className="mt-0">
+      {roleTab === "school" ? <SchoolsDirectory accounts={accounts.data ?? []} onAdd={() => setCreateOpen(true)} onEdit={(account) => setEditing({ ...account, roles: [...account.roles] })} onDelete={deleteAccountRow} busyId={busyId} /> : <>
       <div className="flex flex-col items-start xl:flex-row">
       <div className={'min-w-0 w-full flex-1 px-4 py-2 text-foreground ' + 'bg-ivory'}>
         <div className="flex flex-wrap gap-1.5">
@@ -1041,11 +1053,11 @@ export function AdminUsers() {
         ) : accounts.error ? (
           <p className="mt-6 text-destructive">{(accounts.error as Error).message}</p>
         ) : (
-          <div className={view === "table" ? "mt-3 overflow-x-auto pb-1 [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-track]:bg-muted" : ""}><div className={view === "table" ? "min-w-[820px]" : ""}>
+          <div className={view === "table" ? "mt-3 overflow-x-auto pb-1 [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-track]:bg-muted" : ""}><div className={view === "table" ? "min-w-[1100px]" : ""}>
             {view === "table" && rows.length > 0 && (
               <div className="border border-b-0 border-border">
-                <table className="w-full min-w-[820px] text-left text-xs">
-                  <thead className="bg-background/40 text-foreground"><tr>{["First Name", "Last Name", "Email", "ID / passport", "School", "Documents", "Applications", "Last Accessed", "Actions"].map((heading) => <th key={heading} className="whitespace-nowrap px-3 py-2 font-normal">{heading}</th>)}</tr></thead>
+                <table className="w-full min-w-[1100px] table-fixed text-left text-xs"><UserTableColumns />
+                  <thead className="bg-background/40 text-foreground"><tr>{["First Name", "Last Name", "Email", "ID / passport", "School", "Documents", "Applications", "Last Accessed", "Actions"].map((heading) => <th key={heading} className={`whitespace-nowrap px-3 py-2 font-normal ${heading === "Actions" ? "text-right" : ""}`}>{heading}</th>)}</tr></thead>
                 </table>
               </div>
             )}
@@ -1054,7 +1066,7 @@ export function AdminUsers() {
               <AccordionItem key={group} value={group}>
                 <AccordionTrigger className="px-3 py-3 text-sm hover:no-underline hover:bg-muted/30"><span className="font-bold text-primary">{group}</span>&nbsp;<span className="text-muted-foreground">({rows.filter((a) => (accountInitial(a)) === group).length})</span></AccordionTrigger>
                 <AccordionContent className="pb-0">{view === "cards" ? <UserCards rows={rows.filter((a) => (accountInitial(a)) === group)} selectedId={selectedId} busyId={busyId} onSelect={setSelectedId} onEdit={(a) => setEditing({ ...a, roles: [...a.roles] })} onDelete={deleteAccountRow} onVerify={setIdVerified} /> : <div className="border-t border-border">
-                  <table className="w-full min-w-[820px] text-left text-xs">
+                  <table className="w-full min-w-[1100px] table-fixed text-left text-xs"><UserTableColumns />
                     <tbody>
                     {rows.filter((a) => (accountInitial(a)) === group).map((a) => (
                       <UserTableRow
@@ -1075,6 +1087,7 @@ export function AdminUsers() {
       </div>
       {selectedAccount && <UserDetailPanel account={selectedAccount} mentorInfo={mentorClassifications.data?.find((row) => row.mentor_email.trim().toLowerCase() === (selectedAccount.email ?? "").trim().toLowerCase())} onClose={() => setSelectedId(null)} onEdit={() => setEditing({ ...selectedAccount, roles: [...selectedAccount.roles] })} />}
       </div>
+      </>}
       </TabsContent>
       </Tabs>
     </div>
@@ -1126,8 +1139,9 @@ function EmailArchive() {
     <div>
       <div className="border-b border-border bg-background px-6 py-6 text-foreground"><h1 className="font-display text-2xl uppercase">Email Archive</h1></div>
       <div className="flex flex-wrap items-center gap-2 border-b border-border bg-background px-6 py-3">
-        <button onClick={() => flush(false)} disabled={sending} className="rounded-md bg-teal/20 hover:bg-teal/30 px-4 py-2 text-xs font-medium uppercase tracking-wide text-foreground disabled:opacity-50">Send queued emails now</button>
-        <button onClick={() => flush(true)} disabled={sending} className="bg-primary px-4 py-2 text-xs font-medium uppercase tracking-wide text-primary-foreground disabled:opacity-50">Retry failed emails</button>
+        <button onClick={() => flush(false)} disabled className="rounded-md bg-teal/20 hover:bg-teal/30 px-4 py-2 text-xs font-medium uppercase tracking-wide text-foreground disabled:opacity-50">Send queued emails now</button>
+        <button onClick={() => flush(true)} disabled className="bg-primary px-4 py-2 text-xs font-medium uppercase tracking-wide text-primary-foreground disabled:opacity-50">Retry failed emails</button>
+        <p className="text-sm">Email delivery is paused during development.</p>
         {sendMsg && <p className="text-sm break-words">{sendMsg}</p>}
       </div>
       <div className="flex min-h-[70vh] flex-col bg-background text-foreground md:flex-row">
@@ -1494,13 +1508,14 @@ function RefundRequests() {
 function AdminReports() {
   return <div className="bg-background">
     <AdminScreenHeader title="Reports" />
-    <Tabs defaultValue="bookings">
-      <div className="overflow-x-auto bg-ivory px-6 py-4"><TabsList aria-label="Admin reports" className="justify-start">{["Bookings", "Refund Requests", "Evaluations", "Vouchers", "BEE / CPD", "Mentor Coverage", "Activity Log", "Token Ledger"].map((label) => <TabsTrigger key={label} value={label.toLowerCase().replaceAll(' / ', '-').replaceAll(' ', '-')}>{label}</TabsTrigger>)}</TabsList></div>
+    <Tabs defaultValue="applications">
+      <div className="overflow-x-auto bg-ivory px-6 py-4"><TabsList aria-label="Admin reports" className="justify-start">{["Applications", "Bookings", "Refund Requests", "Evaluations", "Vouchers", "CSI", "Mentor Coverage", "Activity Log", "Token Ledger"].map((label) => <TabsTrigger key={label} value={label.toLowerCase().replaceAll(' / ', '-').replaceAll(' ', '-')}>{label}</TabsTrigger>)}</TabsList></div>
+      <TabsContent value="applications" className="mt-0"><ApplicationsScreen /></TabsContent>
       <TabsContent value="bookings" className="mt-0"><LiveBookings /></TabsContent>
       <TabsContent value="refund-requests" className="mt-0"><RefundRequests /></TabsContent>
       <TabsContent value="evaluations" className="mt-0"><Evaluations /></TabsContent>
       <TabsContent value="vouchers" className="mt-0"><VoucherReport /></TabsContent>
-      <TabsContent value="bee-cpd" className="mt-0"><BeeCpdReports /></TabsContent>
+      <TabsContent value="csi" className="mt-0"><BeeCpdReports /></TabsContent>
       <TabsContent value="mentor-coverage" className="mt-0"><MentorCoverageReport /></TabsContent>
       <TabsContent value="activity-log" className="mt-0"><AdminLedgerReport table="activity_log" /></TabsContent>
       <TabsContent value="token-ledger" className="mt-0"><AdminLedgerReport table="ai_token_ledger" /></TabsContent>
@@ -1724,7 +1739,7 @@ function LiveBookings() {
           <Button onClick={exportCsvNow} disabled={bookings.isLoading || exporting} className="ml-auto rounded-md bg-teal/20 hover:bg-teal/30 px-4 py-2 text-sm font-medium uppercase text-foreground">{exporting ? "Exporting…" : "Export CSV"}</Button>
         </div>
         <div className="mt-6 overflow-x-auto [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-track]:bg-muted">
-          <table className="w-full min-w-[1100px] text-left text-xs">
+          <table className="w-full min-w-[1100px] table-fixed text-left text-xs"><UserTableColumns />
             <thead>
               <tr className="border-b border-border font-medium">
                 {["Date", "Status", "Career", "Company", "Scholar", "School", "Mentor", "HR contact"].map((h) => <th key={h} className="whitespace-nowrap px-3 py-2">{h}</th>)}
@@ -1777,9 +1792,9 @@ function toUsDate(d: Date): string {
 /** Replaces the old comma-separated "MM/DD/YYYY, MM/DD/YYYY" dates field with a calendar
  * multi-select, so admins/hosts can pick available dates instead of typing them. Stores and
  * reads the same comma-separated string format other code (booking flow, triggers) expects. */
-function DatesPicker({ value, onChange, allowWeekends = true, allowOffSeason = true }: { value: string; onChange: (v: string) => void; allowWeekends?: boolean; allowOffSeason?: boolean }) {
+function DatesPicker({ value, onChange, allowWeekends = true, allowOffSeason = true, countryCode = "ZA" }: { value: string; onChange: (v: string) => void; allowWeekends?: boolean; allowOffSeason?: boolean; countryCode?: string }) {
   const dates = value.split(",").map((s) => s.trim()).filter(Boolean).map(parseUsDate).filter((d): d is Date => d !== null);
-  const holidays = useQuery({ queryKey: ["public-holidays"], queryFn: async () => ((await supabase.rpc("get_public_holidays")).data ?? []) as string[], staleTime: 60 * 60_000 });
+  const holidays = useQuery({ queryKey: ["public-holidays", countryCode], queryFn: async () => { const result = await supabase.rpc("get_country_public_holidays", { _country_code: countryCode }); if (result.error) throw result.error; return result.data ?? []; }, staleTime: 60 * 60_000 });
   const holidaySet = new Set((holidays.data ?? []).map((h) => parseUsDate(h)?.toDateString()).filter(Boolean));
   const season = useQuery({ queryKey: ["season-window"], queryFn: async () => ((await supabase.rpc("get_season_window")).data ?? [])[0] ?? { season_start_month: 1, season_end_month: 12 }, staleTime: 60 * 60_000 });
   function set(next: Date[]) {
@@ -1808,11 +1823,11 @@ function DatesPicker({ value, onChange, allowWeekends = true, allowOffSeason = t
 }
 
 function SettingsFrame({ title, description, icon: Icon, tint = "bg-rose-100 text-rose-600", children }: { title: string; description: string; icon?: LucideIcon; tint?: string; children: React.ReactNode }) {
-  return <section className="overflow-hidden rounded-lg border border-warm-divider bg-ivory"><header className="flex items-start gap-3 border-b border-warm-divider px-5 py-4">{Icon && <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${tint}`}><Icon className="h-4 w-4" /></span>}<span><h2 className="text-base font-medium">{title}</h2><p className="mt-1 text-xs text-muted-foreground">{description}</p></span></header><div className="divide-y divide-warm-divider">{children}</div></section>;
+  return <section className="overflow-hidden rounded-lg border border-warm-divider bg-ivory"><header className="flex items-start gap-3 border-b border-warm-divider px-4 py-3">{Icon && <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${tint}`}><Icon className="h-4 w-4" /></span>}<span><h2 className="text-base font-medium">{title}</h2><p className="mt-1 text-xs text-muted-foreground">{description}</p></span></header><div className="divide-y divide-warm-divider">{children}</div></section>;
 }
 
 function NumberField({ label, hint, value, onChange, suffix }: { label: string; hint?: string; value: string; onChange: (v: string) => void; suffix?: string }) {
-  return <label className="grid items-start gap-4 px-5 py-5 text-sm md:grid-cols-[minmax(0,1fr)_minmax(14rem,0.6fr)]">
+  return <label className="grid items-start gap-4 px-4 py-3 text-sm md:grid-cols-[minmax(0,1fr)_minmax(14rem,0.6fr)]">
     <span><span>{label}</span>{hint && <span className="mt-1 block max-w-xl text-xs text-muted-foreground">{hint}</span>}</span>
     <span className="flex items-center gap-2"><input type="number" min={0} value={value} onChange={(e) => onChange(e.target.value)} className="min-w-0 w-20 border-b border-input bg-transparent px-1 py-1 outline-none" />{suffix && <span className="text-xs text-muted-foreground">{suffix}</span>}</span>
   </label>;
@@ -1822,43 +1837,7 @@ function parseIntList(s: string): number[] {
   return [...new Set(s.split(",").map((v) => Number(v.trim())).filter((n) => Number.isFinite(n) && n >= 0))].sort((a, b) => b - a);
 }
 
-function PublicHolidayFetcher({ onFetched }: { onFetched: (dates: Date[]) => void }) {
-  const lookup = useServerFn(lookupPublicHolidays);
-  const [year, setYear] = useState(String(new Date().getFullYear()));
-  const [country, setCountry] = useState("ZA");
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-
-  async function fetchNow() {
-    setBusy(true);
-    setErr(null);
-    try {
-      const results = await lookup({ data: { year: Number(year), countryCode: country.trim() } });
-      onFetched(results.map((h) => parseUsDate(h.date)).filter((d): d is Date => d !== null));
-      notify(`Added ${results.length} public holiday${results.length === 1 ? "" : "s"} for ${country.toUpperCase()} ${year}.`, "success");
-    } catch (e) {
-      setErr((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <div className="mt-2 flex flex-wrap items-end gap-3 rounded border border-warm-divider bg-background/50 p-3">
-      <label className="text-xs">Year
-        <input value={year} onChange={(e) => setYear(e.target.value)} className="mt-1 block w-20 border-b border-input bg-transparent px-1 py-1 text-sm outline-none" />
-      </label>
-      <label className="text-xs">Country code
-        <input value={country} onChange={(e) => setCountry(e.target.value)} placeholder="ZA" className="mt-1 block w-20 border-b border-input bg-transparent px-1 py-1 text-sm uppercase outline-none" />
-      </label>
-      <button type="button" onClick={fetchNow} disabled={busy} className="rounded-md bg-teal/20 hover:bg-teal/30 px-3 py-1.5 text-xs font-medium uppercase text-foreground disabled:opacity-50">{busy ? "Fetching…" : "Fetch holidays"}</button>
-      {err && <p className="w-full text-xs text-destructive">{err}</p>}
-      <p className="w-full text-xs text-muted-foreground">Looks up the official public holiday list live (date.nager.at) — nothing is hardcoded. Remember to click Save below.</p>
-    </div>
-  );
-}
-
-const NOT_ENFORCED_HINT = "Stored, but not yet enforced anywhere in the app — that needs a workflow (host response tracking, waitlist, or self-service cancel/reschedule) this project doesn't have yet.";
+const NOT_ENFORCED_HINT = "Not active yet.";
 
 export function BookingSettings() {
   const qc = useQueryClient();
@@ -1868,7 +1847,6 @@ export function BookingSettings() {
   });
   const [v, setV] = useState<Record<string, string>>({});
   const [blackoutDates, setBlackoutDates] = useState<Date[]>([]);
-  const [publicHolidays, setPublicHolidays] = useState<Date[]>([]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -1887,7 +1865,6 @@ export function BookingSettings() {
       season_start_month: String(s.season_start_month), season_end_month: String(s.season_end_month),
     });
     setBlackoutDates((s.blackout_dates ?? []).map(parseUsDate).filter((d): d is Date => d !== null));
-    setPublicHolidays((s.public_holidays ?? []).map(parseUsDate).filter((d): d is Date => d !== null));
   }, [settings.data]);
 
   const f = (key: string) => v[key] ?? "";
@@ -1911,7 +1888,6 @@ export function BookingSettings() {
       season_start_month: Number(f("season_start_month")) || 1,
       season_end_month: Number(f("season_end_month")) || 12,
       blackout_dates: blackoutDates.map(toUsDate),
-      public_holidays: publicHolidays.map(toUsDate),
       no_availability_message: f("no_availability_message"),
     }).eq("id", 1);
     setBusy(false);
@@ -1921,36 +1897,35 @@ export function BookingSettings() {
     qc.invalidateQueries({ queryKey: ["booking-settings"] });
   }
 
-  const sectionClass = "space-y-5 text-foreground";
-  const tabTriggerClass = (color: string) => `rounded-md px-5 py-2.5 font-display text-sm uppercase data-[state=inactive]:opacity-60 ${color}`;
+  const sectionClass = "space-y-3 text-foreground";
 
   return (
     <div>
       <AdminScreenHeader title="Booking Settings" />
-      <div className="w-full space-y-3 bg-background px-6 py-6 text-foreground">
+      <div className="w-full space-y-3 bg-background px-4 py-3 text-foreground">
         <Tabs defaultValue="rules" className="w-full">
-          <TabsList className="flex h-auto flex-wrap justify-start gap-2 bg-transparent p-0">
-            <TabsTrigger value="rules" className={tabTriggerClass(BAND_COLORS[0]!)}>Booking Rules</TabsTrigger>
-            <TabsTrigger value="docs" className={tabTriggerClass(BAND_COLORS[1]!)}>Documentation &amp; Approval</TabsTrigger>
-            <TabsTrigger value="cancel" className={tabTriggerClass(BAND_COLORS[2]!)}>Cancellations &amp; Waitlists</TabsTrigger>
-            <TabsTrigger value="notify" className={tabTriggerClass(BAND_COLORS[3]!)}>Notifications &amp; Messages</TabsTrigger>
+          <TabsList className="flex h-auto flex-wrap justify-start">
+            <TabsTrigger value="rules">Booking Rules</TabsTrigger>
+            <TabsTrigger value="docs">Documentation &amp; Approval</TabsTrigger>
+            <TabsTrigger value="cancel">Cancellations &amp; Waitlists</TabsTrigger>
+            <TabsTrigger value="notify">Notifications &amp; Messages</TabsTrigger>
           </TabsList>
 
           <TabsContent value="rules" className={sectionClass + " mt-6"}>
-              <SettingsFrame title="Scheduling Windows &amp; Lead Times" description="Control how early or far in advance scholars can request shadow dates." icon={Clock} tint="bg-rose-100 text-rose-600">
-              <NumberField label="Minimum request lead time" suffix="days before the shadow date" value={f("min_lead_days")} onChange={set("min_lead_days")} hint="The earliest a scholar may submit a booking request relative to the shadow date." />
-              <NumberField label="Maximum advance booking window" suffix="days ahead" value={f("max_advance_days")} onChange={set("max_advance_days")} hint="How far into the future a scholar can request a shadow." />
+              <SettingsFrame title="Scheduling Windows &amp; Lead Times" description="Choose when scholars can request a booking." icon={Clock} tint="bg-rose-100 text-rose-600">
+              <NumberField label="Minimum request lead time" suffix="days before the shadow date" value={f("min_lead_days")} onChange={set("min_lead_days")} hint="How many days’ notice is needed before a visit." />
+              <NumberField label="Maximum advance booking window" suffix="days ahead" value={f("max_advance_days")} onChange={set("max_advance_days")} hint="How far ahead scholars can book." />
               </SettingsFrame>
-              <SettingsFrame title="Operating Season &amp; Request Caps" description="Define active placement months and concurrent scholar booking limits." icon={CalendarIcon} tint="bg-orange-100 text-orange-600">
-              <div className="grid items-start gap-4 px-5 py-5 md:grid-cols-2">
-                <div><p className="text-sm">Operating season range</p><p className="mt-1 text-xs text-muted-foreground">Placements run only within this month range unless a listing explicitly allows off-season dates.</p></div>
+              <SettingsFrame title="Operating Season &amp; Request Caps" description="Choose booking months and request limits." icon={CalendarIcon} tint="bg-orange-100 text-orange-600">
+              <div className="grid items-start gap-4 px-4 py-3 md:grid-cols-2">
+                <div><p className="text-sm">Operating season range</p><p className="mt-1 text-xs text-muted-foreground">Choose the months when visits can take place. Individual hosts can offer extra dates.</p></div>
                 <div className="space-y-4"><div className="grid grid-cols-2 gap-4">{([['season_start_month', 'Season starts'], ['season_end_month', 'Season ends']] as const).map(([key, label]) => <label key={key} className="text-xs">{label}<select value={f(key)} onChange={(e) => set(key)(e.target.value)} className="mt-1 block w-full border-b border-input bg-transparent px-1 py-1 text-sm outline-none">{Array.from({ length: 12 }, (_, i) => <option key={i} value={i + 1}>{new Date(2020, i, 1).toLocaleString('en-ZA', { month: 'long' })}</option>)}</select></label>)}</div>
                 <div><p className="mb-1 text-xs text-muted-foreground">Annual Season Preview</p><ol className="grid grid-cols-12 gap-1" aria-label="Annual season preview">{Array.from({ length: 12 }, (_, i) => { const m = i + 1, start = Number(f('season_start_month')), end = Number(f('season_end_month')); const active = m >= start && m <= end; const name = new Date(2020, i, 1).toLocaleString('en-ZA', { month: 'long' }); return <li key={m} title={name + (active ? ': Active' : ': Inactive')} aria-label={name + (active ? ': Active' : ': Inactive')} className={'rounded px-1 py-1 text-center text-xs ' + (active ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground')}>{name[0]}</li>; })}</ol></div></div>
               </div>
               <NumberField label="Maximum pending requests per scholar" suffix="active requests" value={f("max_pending_requests")} onChange={set("max_pending_requests")} hint={NOT_ENFORCED_HINT} />
               </SettingsFrame>
-              <SettingsFrame title="Blackout Dates &amp; Public Holidays" description="Block institutional dates and manage public holidays across all placements." icon={CalendarX} tint="bg-slate-100 text-slate-600">
-              <div className="px-5 py-5">
+              <SettingsFrame title="Blackout Dates &amp; Public Holidays" description="Choose extra dates when bookings are closed. Public holidays are blocked automatically." icon={CalendarX} tint="bg-slate-100 text-slate-600">
+              <div className="px-4 py-3">
                 <p className="text-sm">Blackout dates <span className="text-xs text-muted-foreground">(no bookings allowed)</span></p>
                 <div className="mt-2 flex items-center justify-between text-xs"><span>Blocked dates ({blackoutDates.length})</span><button type="button" disabled={!blackoutDates.length} onClick={() => setBlackoutDates([])} className="text-primary hover:underline disabled:opacity-50">Clear all</button></div>
                 <div className="mt-2 flex flex-wrap items-start gap-4">
@@ -1966,37 +1941,19 @@ export function BookingSettings() {
                   </div>
                 </div>
               </div>
-              <div className="px-5 py-5">
-                <p className="text-sm">Public holidays <span className="text-xs text-muted-foreground">(always blocked, every placement, no override)</span></p>
-                <PublicHolidayFetcher onFetched={(dates) => setPublicHolidays((cur) => {
-                  const seen = new Set(cur.map((d) => d.toDateString()));
-                  return [...cur, ...dates.filter((d) => !seen.has(d.toDateString()))];
-                })} />
-                <div className="mt-2 flex flex-wrap items-start gap-4">
-                  <Calendar mode="multiple" selected={publicHolidays} onSelect={(d) => setPublicHolidays(d ?? [])} className="rounded-md border border-warm-divider bg-background" />
-                  <div className="flex flex-wrap gap-1.5">
-                    {publicHolidays.length === 0 && <span className="text-xs text-muted-foreground">No public holidays set.</span>}
-                    {publicHolidays.map((d, i) => (
-                      <span key={i} className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs">
-                        {toUsDate(d)}
-                        <button type="button" onClick={() => setPublicHolidays((cur) => cur.filter((_, idx) => idx !== i))} aria-label={`Remove ${toUsDate(d)}`} className="text-muted-foreground hover:text-destructive"><X className="h-3 w-3" /></button>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <p className="px-4 py-3 text-xs text-muted-foreground">Public holidays in the host’s country are blocked automatically.</p>
               </SettingsFrame>
           </TabsContent>
 
           <TabsContent value="docs" className={sectionClass + " mt-6"}>
-            <SettingsFrame title="Documentation & Approval" description="Manage paperwork deadlines and booking request expiry." icon={FileText} tint="bg-blue-100 text-blue-600">
-              <NumberField label="Documentation deadline" suffix="days before the shadow date" value={f("documentation_deadline_days")} onChange={set("documentation_deadline_days")} hint="The latest all required paperwork (indemnities, consent) must be approved. Enforced as a floor under the minimum lead time above, so a request can't be made with too little time left to complete it." />
+            <SettingsFrame title="Documentation & Approval" description="Set time limits for forms and host replies." icon={FileText} tint="bg-blue-100 text-blue-600">
+              <NumberField label="Documentation deadline" suffix="days before the shadow date" value={f("documentation_deadline_days")} onChange={set("documentation_deadline_days")} hint="Allow this many days before a visit for the required forms to be completed." />
               <NumberField label="Booking request expiry" suffix="hours for a host to respond" value={f("request_expiry_hours")} onChange={set("request_expiry_hours")} hint={NOT_ENFORCED_HINT} />
             </SettingsFrame>
           </TabsContent>
 
           <TabsContent value="cancel" className={sectionClass + " mt-6"}>
-            <SettingsFrame title="Cancellations & Waitlists" description="Configure cancellation, rescheduling and waitlist preferences." icon={RotateCcw} tint="bg-amber-100 text-amber-600">
+            <SettingsFrame title="Cancellations & Waitlists" description="Set time limits for cancellations, date changes and waitlists." icon={RotateCcw} tint="bg-amber-100 text-amber-600">
               <NumberField label="Cancellation cut-off" suffix="days before the shadow date" value={f("cancellation_cutoff_days")} onChange={set("cancellation_cutoff_days")} hint={NOT_ENFORCED_HINT} />
               <NumberField label="Reschedule minimum notice" suffix="days ahead" value={f("reschedule_min_notice_days")} onChange={set("reschedule_min_notice_days")} hint={NOT_ENFORCED_HINT} />
               <NumberField label="Waitlist expiry" suffix="hours to respond to an offered place" value={f("waitlist_expiry_hours")} onChange={set("waitlist_expiry_hours")} hint={NOT_ENFORCED_HINT} />
@@ -2004,20 +1961,20 @@ export function BookingSettings() {
           </TabsContent>
 
           <TabsContent value="notify" className={sectionClass + " mt-6"}>
-            <SettingsFrame title="Notifications & Messages" description="Manage availability messages and reminder timing." icon={Bell} tint="bg-violet-100 text-violet-600">
-              <label className="block px-5 py-5 text-sm">
-                "No mentors available" message <span className="text-xs text-muted-foreground">(shown on /roles and the booking wizard whenever nothing is bookable)</span>
+            <SettingsFrame title="Notifications & Messages" description="Choose what users see and when reminders are sent." icon={Bell} tint="bg-violet-100 text-violet-600">
+              <label className="block px-4 py-3 text-sm">
+                "No mentors available" message <span className="text-xs text-muted-foreground">(shown when no mentors are available)</span>
                 <textarea value={f("no_availability_message")} onChange={(e) => set("no_availability_message")(e.target.value)} className="mt-1 w-full border-b border-input bg-transparent px-1 py-1 outline-none" />
               </label>
-              <label className="block px-5 py-5 text-sm">
-                Scholar reminders <span className="text-xs text-muted-foreground">(days before the shadow date, comma separated — e.g. "2, 1")</span>
+              <label className="block px-4 py-3 text-sm">
+                Scholar reminders <span className="text-xs text-muted-foreground">(days before the visit; for example, 2, 1)</span>
                 <input value={f("scholar_reminder_days")} onChange={(e) => set("scholar_reminder_days")(e.target.value)} placeholder="2, 1" className="mt-1 w-full max-w-xs border-b border-input bg-transparent px-1 py-1 outline-none" />
-                <p className="mt-1 max-w-md text-xs text-muted-foreground">The lowest day (e.g. 1 = the day before) gets the packing-list wording (ID, signed indemnity form(s), questionnaire); any other day gets a general reminder.</p>
+                <p className="mt-1 max-w-md text-xs text-muted-foreground">The final reminder tells scholars what to bring.</p>
               </label>
-              <label className="block px-5 py-5 text-sm">
-                Host reminders <span className="text-xs text-muted-foreground">(days before the shadow date, comma separated)</span>
+              <label className="block px-4 py-3 text-sm">
+                Host reminders <span className="text-xs text-muted-foreground">(days before the visit; for example, 1)</span>
                 <input value={f("mentor_reminder_days")} onChange={(e) => set("mentor_reminder_days")(e.target.value)} placeholder="1" className="mt-1 w-full max-w-xs border-b border-input bg-transparent px-1 py-1 outline-none" />
-                <p className="mt-1 max-w-md text-xs text-muted-foreground">Every host reminder includes the stand-in / contact-manager notice.</p>
+                <p className="mt-1 max-w-md text-xs text-muted-foreground">Reminders include who to contact if the host is unavailable.</p>
               </label>
             </SettingsFrame>
           </TabsContent>
@@ -2095,6 +2052,7 @@ function CompanyIndemnityUpload({ companyId, value, onChange }: { companyId: unk
 }
 
 function EditRecord({ title, table, cols, row, onDone, onCancel }: { title: string; table: string; cols: Col[]; row: Record<string, unknown>; onDone: () => void; onCancel: () => void }) {
+  const syncHolidays = useServerFn(syncAutomaticHolidays);
   const qc = useQueryClient();
   const [vals, setVals] = useState<Record<string, unknown>>(row);
   const [busy, setBusy] = useState(false);
@@ -2104,6 +2062,9 @@ function EditRecord({ title, table, cols, row, onDone, onCancel }: { title: stri
   async function save() {
     setBusy(true);
     setErr(null);
+    if (table === "companies" && vals["country_code"] && vals["country_code"] !== row["country_code"]) {
+      try { await syncHolidays({ data: { companyId: Number(row["id"]), countryCode: String(vals["country_code"]) } }); } catch (error) { setBusy(false); setErr(error instanceof Error ? error.message : "Could not update the host country."); return; }
+    }
     const patch = Object.fromEntries(Object.entries(vals).filter(([k]) => k !== "id" && !k.startsWith("_")));
     const { error } = await (supabase.from(table as "careers") as any).update(patch).eq("id", row["id"]);
     setBusy(false);
@@ -2120,6 +2081,7 @@ function EditRecord({ title, table, cols, row, onDone, onCancel }: { title: stri
       </div>
       <div className="bg-background px-6 py-6 text-foreground">
         <div className="grid gap-5 sm:grid-cols-3">
+          {table === "companies" && <CountrySelect value={String(vals["country_code"] ?? "ZA")} onChange={(country_code) => setVals({ ...vals, country_code })} />}
           {editable.map((c) =>
             table === "companies" && (c.key === "career" || c.key === "sector") ? (
               <CanonicalSelect
@@ -2145,7 +2107,7 @@ function EditRecord({ title, table, cols, row, onDone, onCancel }: { title: stri
                     value={(vals[c.key] as string) ?? ""}
                     onChange={(v) => setVals({ ...vals, dates: v })}
                     allowWeekends={!!vals["allow_weekends"]}
-                    allowOffSeason={!!vals["allow_off_season"]}
+                    allowOffSeason={!!vals["allow_off_season"]} countryCode={String(vals["country_code"] ?? "ZA")}
                   />
                 </div>
               </div>
@@ -2178,7 +2140,7 @@ function EditRecord({ title, table, cols, row, onDone, onCancel }: { title: stri
             )
           )}
         </div>
-        {table === "careers" && <CareerDescriptionField career={String(vals["name"] ?? "")} value={(vals["description"] as string) ?? ""} onChange={(v) => setVals({ ...vals, description: v })} skills={getCareerSkills(String(vals["name"] ?? ""), vals["school_skills"], vals["workplace_skills"])} onSkillsChange={(skills) => setVals((current) => ({ ...current, school_skills: skills.school, workplace_skills: skills.workplace }))} guidance={getCareerGuidance(String(vals["name"] ?? ""), String(vals["description"] ?? ""), vals)} onGuidanceChange={(patch) => setVals((current) => ({ ...current, ...patch }))} onDraft={(draft) => setVals((current) => ({ ...current, ...draft }))} />}
+        {table === "careers" && <CareerDescriptionField career={String(vals["name"] ?? "")} value={(vals["description"] as string) ?? ""} onChange={(v) => setVals({ ...vals, description: v })} skills={getCareerSkills(String(vals["name"] ?? ""), vals["school_skills"], vals["workplace_skills"])} onSkillsChange={(skills) => setVals((current) => ({ ...current, school_skills: skills.school, workplace_skills: skills.workplace }))} guidance={getCareerGuidance(String(vals["name"] ?? ""), String(vals["description"] ?? ""), vals)} onGuidanceChange={(patch) => setVals((current) => ({ ...current, ...patch }))} onDraft={(draft, regenerate) => setVals((current) => ({ ...current, ...careerDraftPatch(current, draft, regenerate) }))} />}
         {err && <p className="mt-4 text-sm font-medium">{err}</p>}
         <button onClick={save} disabled={busy} className="mt-6 rounded-md bg-teal/20 hover:bg-teal/30 px-5 py-2.5 text-sm font-medium uppercase text-foreground">Update</button>
       </div>
@@ -2186,14 +2148,18 @@ function EditRecord({ title, table, cols, row, onDone, onCancel }: { title: stri
   );
 }
 
-export function CareerDescriptionField({ career, value, onChange, skills, onSkillsChange, guidance, onGuidanceChange, onDraft }: { career: string; value: string; onChange: (v: string) => void; skills: { school: string[]; workplace: string[] }; onSkillsChange: (skills: { school: string[]; workplace: string[] }) => void; guidance: ReturnType<typeof getCareerGuidance>; onGuidanceChange: (patch: { ideal_for?: string; specialisations?: string[]; subjects?: string[]; interpersonal_skills?: string[]; recommended_courses?: string[]; self_directed_learning?: string[]; future_outlook?: string; ai_exposure_level?: "low" | "medium" | "high" | null; ai_exposure_note?: string }) => void; onDraft: (draft: CareerDraft) => void }) {
+export function CareerDescriptionField({ career, value, onChange, skills, onSkillsChange, guidance, onGuidanceChange, onDraft }: { career: string; value: string; onChange: (v: string) => void; skills: { school: string[]; workplace: string[] }; onSkillsChange: (skills: { school: string[]; workplace: string[] }) => void; guidance: ReturnType<typeof getCareerGuidance>; onGuidanceChange: (patch: { ideal_for?: string; specialisations?: string[]; subjects?: string[]; interpersonal_skills?: string[]; recommended_courses?: string[]; self_directed_learning?: string[]; future_outlook?: string; ai_exposure_level?: "low" | "medium" | "high" | null; ai_exposure_note?: string }) => void; onDraft: (draft: Partial<CareerDraft>, regenerate?: boolean) => void }) {
   const draft = useServerFn(draftCareerDescription);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  async function suggest() {
+  async function suggest(regenerate = false) {
     if (!career.trim()) return setErr("Enter the career name first.");
+    const content = { description: value, school_skills: skills.school, workplace_skills: skills.workplace, ideal_for: guidance.idealFor, specialisations: guidance.specialisations, subjects: guidance.subjects, interpersonal_skills: guidance.interpersonalSkills, recommended_courses: guidance.recommendedCourses, self_directed_learning: guidance.selfDirectedLearning, future_outlook: guidance.futureOutlook, ai_exposure_level: guidance.aiExposureLevel, ai_exposure_note: guidance.aiExposureNote };
+    const fields = regenerate ? [...CAREER_DRAFT_FIELDS] : missingCareerFields(content);
+    if (!fields.length) return setErr("All fields already have content. Use Regenerate this career to replace it.");
+    if (regenerate && !await confirmAction('Replace the career content for "' + career + '"? Review the new draft before clicking Update.', { title: "Regenerate this career", confirmLabel: "Regenerate" })) return;
     setBusy(true); setErr(null);
-    try { onDraft(await draft({ data: { career } })); }
+    try { const generated = await draft({ data: { career, fields } }); onDraft(Object.fromEntries(Object.entries(generated).filter(([key]) => fields.includes(key as typeof fields[number]))) as Partial<CareerDraft>, regenerate); }
     catch (e) { setErr((e as Error).message); }
     finally { setBusy(false); }
   }
@@ -2201,10 +2167,11 @@ export function CareerDescriptionField({ career, value, onChange, skills, onSkil
     <div className="mt-6 max-w-3xl">
       <div className="flex items-center justify-between gap-3">
         <span className="text-sm font-semibold">Career Content</span>
-        <button type="button" onClick={suggest} disabled={busy} className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs font-medium hover:border-primary hover:text-primary disabled:opacity-50">
-          <Sparkles className="h-3.5 w-3.5" /> {busy ? "Writing…" : "AI wizard"}
-        </button>
+        <div className="flex flex-wrap justify-end gap-2"><button type="button" onClick={() => void suggest()} disabled={busy} className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs font-medium hover:border-primary hover:text-primary disabled:opacity-50">
+          <Sparkles className="h-3.5 w-3.5" /> {busy ? "Writing…" : "AI: Fill missing fields"}
+        </button><button type="button" onClick={() => void suggest(true)} disabled={busy} className="rounded-full border border-border px-3 py-1 text-xs font-medium hover:border-primary hover:text-primary disabled:opacity-50">Regenerate this career</button></div>
       </div>
+      <fieldset disabled={busy}>
       <textarea rows={4} value={value} onChange={(e) => onChange(e.target.value)} placeholder="A brief description of this career" className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary" />
       {value && <div className="mt-2 rounded bg-muted/40 p-2 text-sm"><RichText text={value} /></div>}
       <fieldset className="mt-4 space-y-3"><legend className="text-sm font-semibold">Skills Required</legend>
@@ -2226,7 +2193,8 @@ export function CareerDescriptionField({ career, value, onChange, skills, onSkil
         </label>
         <label className="block text-sm">AI Exposure Note<textarea rows={2} value={guidance.aiExposureNote} onChange={(e) => onGuidanceChange({ ai_exposure_note: e.target.value })} className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary" /></label>
       </div>
-      {err && <p className="mt-1 text-xs text-destructive">{err}</p>}
+      </fieldset>
+      {err && <p role="alert" className="mt-1 text-xs text-destructive">{err}</p>}
     </div>
   );
 }

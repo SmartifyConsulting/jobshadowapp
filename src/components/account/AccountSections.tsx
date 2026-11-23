@@ -528,8 +528,10 @@ export function NewBooking({ initialCareer = "", onBooked }: { initialCareer?: s
   const sectors = useMemo(() => [...new Set((placements.data ?? []).map((p) => p.sector))].sort(), [placements.data]);
   const options = (placements.data ?? []).filter((p) => p.sector === sector);
   const chosen = options.find((p) => p.id === pid);
+  const hostHolidays = useQuery({ queryKey: ["placement-holidays", chosen?.id], enabled: !!chosen, queryFn: async () => { const country = await supabase.rpc("get_placement_country", { _id: chosen!.id }); if (country.error) throw country.error; const holidays = await supabase.rpc("get_country_public_holidays", { _country_code: country.data || "ZA" }); if (holidays.error) throw holidays.error; return holidays.data ?? []; } });
   const dates = (chosen?.availability ?? "")
     .split(",").map((d) => d.trim()).filter(Boolean)
+    .filter((d) => hostHolidays.isSuccess && !(hostHolidays.data ?? []).includes(fromIsoDate(toIsoDate(d))))
     .filter((d) => { const [m, dd, y] = d.split("/").map(Number); return new Date(y!, m! - 1, dd!) >= today; });
   const base = Number(chosen?.amount ?? 0);
   const due = voucher ? Math.max(0, base - (base * Number(voucher.discount)) / 100) : base;
@@ -544,6 +546,7 @@ export function NewBooking({ initialCareer = "", onBooked }: { initialCareer?: s
     setMsg(`Promo code applied: ${v.discount}% off.`);
   }
   async function book() {
+    if (hostHolidays.isPending || hostHolidays.error) { setMsg("We’re checking the host’s public holidays. Please try again shortly."); return; }
     const effectiveDate = requestingDate ? requestedDate : date;
     if (!chosen || !effectiveDate) return setMsg("Choose a career and a date.");
     if (duplicate && !confirmDupe) return;

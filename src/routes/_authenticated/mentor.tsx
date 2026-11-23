@@ -1,3 +1,6 @@
+import { useServerFn } from "@tanstack/react-start";
+import { syncAutomaticHolidays } from "@/lib/public-holidays.functions";
+import { CountrySelect } from "@/components/CountrySelect";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
@@ -176,9 +179,9 @@ function toUsDate(d: Date): string {
   return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
 }
 
-function DatesPicker({ value, onChange, allowWeekends = true, allowOffSeason = true }: { value: string; onChange: (v: string) => void; allowWeekends?: boolean; allowOffSeason?: boolean }) {
+function DatesPicker({ value, onChange, allowWeekends = true, allowOffSeason = true, countryCode = "ZA" }: { value: string; onChange: (v: string) => void; allowWeekends?: boolean; allowOffSeason?: boolean; countryCode?: string }) {
   const dates = value.split(",").map((s) => s.trim()).filter(Boolean).map(parseUsDate).filter((d): d is Date => d !== null);
-  const holidays = useQuery({ queryKey: ["public-holidays"], queryFn: async () => ((await supabase.rpc("get_public_holidays")).data ?? []) as string[], staleTime: 60 * 60_000 });
+  const holidays = useQuery({ queryKey: ["public-holidays", countryCode], queryFn: async () => { const result = await supabase.rpc("get_country_public_holidays", { _country_code: countryCode }); if (result.error) throw result.error; return result.data ?? []; }, staleTime: 60 * 60_000 });
   const holidaySet = new Set((holidays.data ?? []).map((h) => parseUsDate(h)?.toDateString()).filter(Boolean));
   const season = useQuery({ queryKey: ["season-window"], queryFn: async () => ((await supabase.rpc("get_season_window")).data ?? [])[0] ?? { season_start_month: 1, season_end_month: 12 }, staleTime: 60 * 60_000 });
   function set(next: Date[]) {
@@ -610,6 +613,10 @@ function BookingCard({ booking }: { booking: MentorBooking }) {
 }
 
 function PlacementCard({ placement, initialEditing = false }: { placement: Placement; initialEditing?: boolean }) {
+  const syncHolidays = useServerFn(syncAutomaticHolidays);
+  const country = useQuery({ queryKey: ["placement-country", placement.id], queryFn: async () => { const r = await supabase.rpc("get_placement_country", { _id: placement.id }); if (r.error) throw r.error; return typeof r.data === "string" ? r.data : "ZA"; } });
+  const [countryCode, setCountryCode] = useState("ZA");
+  useEffect(() => { if (country.data) setCountryCode(country.data); }, [country.data]);
   const qc = useQueryClient();
   const [editing, setEditing] = useState(initialEditing);
   const [vals, setVals] = useState({
@@ -626,6 +633,7 @@ function PlacementCard({ placement, initialEditing = false }: { placement: Place
   async function save() {
     setBusy(true);
     setErr(null);
+    if (countryCode !== (country.data ?? "ZA")) { try { await syncHolidays({ data: { companyId: placement.id, countryCode } }); } catch (error) { setBusy(false); setErr(error instanceof Error ? error.message : "Could not update the host country."); return; } }
     const { error } = await supabase.rpc("update_mentor_placement", {
       _id: placement.id,
       _dates: vals.dates,
@@ -662,6 +670,7 @@ function PlacementCard({ placement, initialEditing = false }: { placement: Place
         </div>
       ) : (
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <CountrySelect value={countryCode} onChange={setCountryCode} />
           <div className="sm:col-span-2">
             <p className="text-sm">Available dates</p>
             {!(placement.allow_weekends && placement.allow_off_season) && (
@@ -671,7 +680,7 @@ function PlacementCard({ placement, initialEditing = false }: { placement: Place
                 Ask JobShadow admin to change this.
               </p>
             )}
-            <div className="mt-2"><DatesPicker value={vals.dates} onChange={(v) => setVals({ ...vals, dates: v })} allowWeekends={placement.allow_weekends} allowOffSeason={placement.allow_off_season} /></div>
+            <div className="mt-2"><DatesPicker value={vals.dates} onChange={(v) => setVals({ ...vals, dates: v })} allowWeekends={placement.allow_weekends} allowOffSeason={placement.allow_off_season} countryCode={countryCode} /></div>
           </div>
           <label className="text-sm">Places
             <input type="number" value={vals.max_applicants} onChange={(e) => setVals({ ...vals, max_applicants: e.target.value })} className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none" />

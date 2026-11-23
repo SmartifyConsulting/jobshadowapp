@@ -7,6 +7,7 @@ export type AccountRow = {
   role: "user" | "mentor" | "hr_admin" | "school" | "admin" | "parent" | null;
   roles: ("user" | "mentor" | "hr_admin" | "school" | "admin" | "parent")[];
   has_scholar_profile: boolean;
+  classification_unconfirmed?: boolean;
   first_name?: string | null | undefined;
   last_name?: string | null | undefined;
   scholar_first_name?: string | null | undefined;

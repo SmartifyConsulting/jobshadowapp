@@ -42,22 +42,17 @@ const SCHOOL_STEPS: Step[] = [
 ];
 
 function StepRow({ steps, links, complete = [] }: { steps: Step[]; links: string[]; complete?: boolean[] }) {
-  return (
-    <nav aria-label="How-to steps" className="relative rounded-xl border border-border bg-background py-4">
-      <div className="flex flex-wrap items-start justify-center gap-y-2 px-3">
-        {steps.map((step, i) => (
-          <div key={i} className="flex items-start">
-            <a href={links[i]} aria-label={step.label.replace(/\n/g, " ") + (complete[i] ? " — completed" : "")} className="flex w-[4.5rem] shrink-0 flex-col items-center rounded-md p-1 text-center outline-none transition hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary sm:w-20">
-              {complete[i] ? <CheckCircle2 className="h-5 w-5 rounded-full bg-cta text-cta-foreground" aria-hidden="true" /> : <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">{i + 1}</span>}
-              <step.icon className="h-8 w-8 shrink-0 text-foreground" />
-              <p className="mt-1 whitespace-pre-line text-[11px] font-semibold leading-tight">{step.label}</p>
-            </a>
-            {i < steps.length - 1 && <ArrowRight className="mx-1 mt-1.5 h-4 w-4 shrink-0 text-primary" strokeWidth={2.75} />}
-          </div>
-        ))}
-      </div>
-    </nav>
-  );
+  const next = steps.findIndex((_, index) => !complete[index]);
+  return <nav aria-label="How-to steps" className="overflow-x-auto py-5"><ol className="flex min-w-[590px] items-start">
+    {steps.map((step, index) => <li key={index} className="relative min-w-0 flex-1 text-center">
+      {index < steps.length - 1 && <span aria-hidden className={"absolute left-1/2 top-3.5 h-1 w-full " + (complete[index] && complete[index+1] ? "bg-green-700" : "bg-border")} />}
+      <a href={links[index]} aria-current={index===next ? "step" : undefined} aria-label={step.label.replace(/\n/g," ") + (complete[index] ? " — completed" : "")} className={"relative flex flex-col items-center gap-1 rounded p-1 text-center outline-none focus-visible:ring-2 focus-visible:ring-primary " + (complete[index] ? "text-green-700" : index===next ? "text-foreground" : "text-muted-foreground")}>
+        {complete[index] ? <CheckCircle2 className="h-6 w-6 rounded-full bg-green-700 text-white" aria-hidden /> : <span className={"grid h-6 w-6 place-items-center rounded-full text-xs font-bold " + (index===next ? "bg-primary text-primary-foreground ring-4 ring-primary/15" : "bg-muted text-muted-foreground")}>{index+1}</span>}
+        <step.icon className="h-7 w-7" aria-hidden /><span className="whitespace-pre-line text-[11px] font-semibold leading-tight">{step.label}</span>
+        {index===next && <span className="mt-1 rounded-full bg-green-700 px-3 py-1 text-xs font-semibold text-white">Start Here</span>}
+      </a>
+    </li>)}
+  </ol></nav>;
 }
 
 export const Route = createFileRoute("/how-to")({
@@ -90,6 +85,8 @@ function HowTo() {
     mentor: { steps: MENTOR_STEPS, complete: progress.data?.mentor ?? [], links: providerLinks("mentor") },
     school: { steps: SCHOOL_STEPS, complete: [] as boolean[], links: ["/contact?type=school", ...Array(SCHOOL_STEPS.length - 1).fill("/contact")] },
   }[view];
+  const nextStep = content.steps.findIndex((_, index) => !content.complete[index]);
+  const descriptions = view === "scholar" ? ["Create an account to start your job shadow journey.", "Add your details so we can arrange your visit.", "Explore careers and find a host near you.", "Choose a host and request a date that suits you.", "Complete the required forms with your parent or guardian.", "Check your arrangements and enjoy your job shadow.", "Tell us what you learned from your visit."] : ["Apply to become a mentor or host.", "Introduce yourself and your experience.", "Choose the dates and times you can host.", "Complete the forms needed for hosting.", "Review the scholars who have requested a visit.", "Confirm the booking details.", "Welcome your scholar and host the experience.", "Read feedback and keep your profile up to date."];
   return (
     <SiteLayout className="lg:[&>footer>div:first-child]:py-3">
       <div className="bg-cta text-cta-foreground">
@@ -99,16 +96,17 @@ function HowTo() {
         </div>
       </div>
       <section className="flex flex-1 items-center bg-[#7CCCC8] px-5 py-4">
-        <div className="mx-auto w-full max-w-7xl space-y-3">
-          <p className="text-sm font-semibold">Click on each step to complete it.</p>
-          {scholar && provider && <div role="group" aria-label="Choose your How To guide" className="flex gap-2">{([['scholar', 'Scholars'], ['mentor', 'Mentors / Hosts']] as const).map(([key, label]) => <button type="button" key={key} aria-pressed={view === key} onClick={() => setSelectedView({ userId: session?.user?.id, view: key })} className={`rounded-full border px-3 py-1 text-sm ${view === key ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background text-foreground"}`}>{label}</button>)}</div>}
+        <div className="mx-auto w-full max-w-7xl rounded-xl border border-border bg-background p-5 shadow-warm">
+          <div className="flex flex-wrap items-center justify-between gap-3"><div role="group" aria-label="Choose your How To guide" className="flex gap-1 rounded-full border border-border p-0.5">{([['scholar', 'Scholars'], ['mentor', 'Mentors / Hosts']] as const).map(([key, label]) => <button type="button" key={key} aria-pressed={view === key} onClick={() => setSelectedView({ userId: session?.user?.id, view: key })} className={`rounded-full px-3 py-1 text-xs ${view === key ? "bg-primary text-primary-foreground" : "text-foreground"}`}>{label}</button>)}</div><span className="rounded-full border border-border bg-muted/40 px-2.5 py-1 text-xs text-muted-foreground">{progress.data ? "✓ Progress saved" : session?.user ? "Loading progress…" : "Sign in to save progress"}</span></div>
+          <p className="sr-only">Click on each step to complete it.</p>
           <StepRow steps={content.steps} complete={content.complete} links={content.links} />
+          {nextStep>=0 ? <div className="mt-2 flex flex-wrap items-center justify-between gap-4 rounded-lg bg-muted/50 px-5 py-4"><div><h2 className="text-lg font-semibold">NEXT STEP: {content.steps[nextStep]!.label.replace(/\n/g," ")}</h2><p className="mt-1 text-sm">{descriptions[nextStep]}</p></div><a href={content.links[nextStep]} className="inline-flex items-center gap-2 rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">{view==="scholar" && nextStep===2 ? "Explore Now" : "Continue"}<ArrowRight className="h-4 w-4" /></a></div> : <p className="mt-2 rounded-lg bg-muted/50 px-5 py-4 text-sm">All saved steps are complete. Select a step above to review it.</p>}
           {progress.error && <p role="status" className="text-sm">Saved progress could not be loaded. You can still open each step.</p>}
-          <p className="text-xs">Green ticks show saved progress.{view === "mentor" && " Contact us for host indemnity and NDA forms; their completion is not tracked in the app yet."}</p>
+          <p className="mt-3 text-xs text-muted-foreground">Green ticks show saved progress.{view === "mentor" && " Contact us for host indemnity and NDA forms; their completion is not tracked in the app yet."}</p>
         </div>
       </section>
       <section className="bg-primary">
-        <div className="mx-auto grid max-w-5xl gap-3 px-5 py-3 md:grid-cols-3">
+        <div className="mx-auto grid max-w-5xl gap-3 px-5 py-6 md:grid-cols-3 md:py-[calc(min(4.6875vw,3rem)+15px)]">
           {VIDEOS.map((v) => (
             <YouTube key={v.id} {...v} />
           ))}

@@ -14,6 +14,18 @@ export type Database = {
   }
   public: {
     Tables: {
+      country_holiday_calendars: {
+        Row: { country_code: string; year: number; dates: string[]; synced_at: string }
+        Insert: { country_code: string; year: number; dates: string[]; synced_at?: string }
+        Update: { country_code?: string; year?: number; dates?: string[]; synced_at?: string }
+        Relationships: []
+      }
+      account_classification_reviews: {
+        Row: { user_id: string; reason: string; created_at: string }
+        Insert: { user_id: string; reason?: string; created_at?: string }
+        Update: { user_id?: string; reason?: string; created_at?: string }
+        Relationships: []
+      }
       scholar_profile_drafts: {
         Row: { user_id: string; data: Json; step: string; updated_at: string }
         Insert: { user_id: string; data?: Json; step?: string; updated_at?: string }
@@ -382,6 +394,7 @@ export type Database = {
       }
       companies: {
         Row: {
+          country_code: string
           active: boolean
           address: string | null
           allow_off_season: boolean
@@ -1202,6 +1215,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_placement_country: { Args: { _id: number }; Returns: string }
+      get_country_public_holidays: { Args: { _country_code: string }; Returns: string[] }
+      store_country_public_holidays: { Args: { _country_code: string; _year: number; _dates: string[] }; Returns: undefined }
+      set_placement_country: { Args: { _id: number; _country_code: string }; Returns: undefined }
       admin_list_accounts: {
         Args: never
         Returns: {

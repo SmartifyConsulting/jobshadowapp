@@ -13,9 +13,9 @@ export const Route = createFileRoute("/_authenticated/my-account")({
         supabase.rpc("has_role", { _user_id: userId, _role: "hr_admin" }),
       ]);
       if (isAdmin) throw redirect({ to: "/admin" });
-      if (isParent) throw redirect({ to: "/parent" });
-      if (isMentor) throw redirect({ to: "/mentor" });
       if (isHrAdmin) throw redirect({ to: "/company-report" });
+      if (isMentor) throw redirect({ to: "/mentor" });
+      if (isParent) throw redirect({ to: "/parent" });
     }
     throw redirect({ to: "/profile", search: { tab: "bookings", entry: "workflow" } });
   },

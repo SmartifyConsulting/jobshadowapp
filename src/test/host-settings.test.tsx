@@ -1,3 +1,5 @@
+vi.mock("@tanstack/react-start", () => ({useServerFn:(fn:unknown)=>fn}));
+vi.mock("@/lib/public-holidays.functions", () => ({syncAutomaticHolidays:vi.fn().mockResolvedValue({updated:0,failures:[]})}));
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
