@@ -971,7 +971,7 @@ export function AdminUsers() {
         </div>
       } />
       <Tabs value={roleTab} onValueChange={(value) => { setRoleTab(value as AccountRow["roles"][number] | "unclassified" | "individual_mentor"); setLetter(null); setOpenGroups([]); setSelectedId(null); }}>
-        <div className="overflow-x-auto border-b border-border bg-ivory px-6 py-3"><TabsList aria-label="User types">{([["user", "Students"], ["mentor", "Hosts"], ["individual_mentor", "Mentors"], ["school", "Schools"], ["admin", "Admin"], ["unclassified", "Unclassified"]] as const).map(([role, name]) => <TabsTrigger key={role} value={role}>{name} ({(accounts.data ?? []).filter((user) => matchesRole(user, role) && (showSpam || !user.is_spam)).length})</TabsTrigger>)}</TabsList></div>
+        <div className="overflow-x-auto border-b border-border bg-ivory px-6 py-4"><TabsList aria-label="User types">{([["user", "Students"], ["mentor", "Hosts"], ["individual_mentor", "Mentors"], ["school", "Schools"], ["admin", "Admin"], ["unclassified", "Unclassified"]] as const).map(([role, name]) => <TabsTrigger key={role} value={role}>{name} ({(accounts.data ?? []).filter((user) => matchesRole(user, role) && (showSpam || !user.is_spam)).length})</TabsTrigger>)}</TabsList></div>
       <TabsContent value={roleTab} className="mt-0">
       <div className="flex flex-col items-start xl:flex-row">
       <div className={'min-w-0 w-full flex-1 px-4 py-2 text-foreground ' + 'bg-ivory'}>
@@ -1310,7 +1310,7 @@ function CompaniesList({ kind }: { kind?: "mentor" | "host" } = {}) {
 
 function CompanyPlacements() {
   return <Tabs defaultValue="host" className="bg-ivory">
-    <div className="overflow-x-auto border-b border-border px-6 py-3"><TabsList aria-label="Company placements"><TabsTrigger value="host">Hosts</TabsTrigger><TabsTrigger value="mentor">Mentors</TabsTrigger></TabsList></div>
+    <div className="overflow-x-auto border-b border-border bg-ivory px-6 py-4"><TabsList aria-label="Company placements"><TabsTrigger value="host">Hosts</TabsTrigger><TabsTrigger value="mentor">Mentors</TabsTrigger></TabsList></div>
     <TabsContent value="host" className="mt-0"><ProviderDirectory kind="host" /></TabsContent>
     <TabsContent value="mentor" className="mt-0"><ProviderDirectory kind="mentor" /></TabsContent>
   </Tabs>;
@@ -1319,7 +1319,7 @@ function CompanyPlacements() {
 function CareersAndSectors() {
   return <Tabs defaultValue="sectors" className="bg-ivory">
     <AdminScreenHeader title="Career Management" />
-    <div className="overflow-x-auto border-b border-border px-6 py-3"><TabsList aria-label="Career management"><TabsTrigger value="sectors">Sectors</TabsTrigger><TabsTrigger value="careers">Careers</TabsTrigger></TabsList></div>
+    <div className="overflow-x-auto border-b border-border bg-ivory px-6 py-4"><TabsList aria-label="Career management"><TabsTrigger value="sectors">Sectors</TabsTrigger><TabsTrigger value="careers">Careers</TabsTrigger></TabsList></div>
     {(["sectors", "careers"] as const).map((id) => { const config = TABLES.find((entry) => entry.id === id)!; return <TabsContent key={id} value={id} className="mt-0"><DataTable title={config.singular} table={config.table} cols={config.cols} csvUpload /></TabsContent>; })}
   </Tabs>;
 }
@@ -1341,7 +1341,7 @@ function AdminReports() {
   return <div className="bg-background">
     <AdminScreenHeader title="Reports" />
     <Tabs defaultValue="bookings">
-      <div className="overflow-x-auto border-b border-border px-6 py-3"><TabsList aria-label="Admin reports" className="justify-start">{["Bookings", "Evaluations", "Vouchers", "BEE / CPD", "Mentor Coverage", "Activity Log", "Token Ledger"].map((label) => <TabsTrigger key={label} value={label.toLowerCase().replaceAll(' / ', '-').replaceAll(' ', '-')}>{label}</TabsTrigger>)}</TabsList></div>
+      <div className="overflow-x-auto border-b border-border bg-ivory px-6 py-4"><TabsList aria-label="Admin reports" className="justify-start">{["Bookings", "Evaluations", "Vouchers", "BEE / CPD", "Mentor Coverage", "Activity Log", "Token Ledger"].map((label) => <TabsTrigger key={label} value={label.toLowerCase().replaceAll(' / ', '-').replaceAll(' ', '-')}>{label}</TabsTrigger>)}</TabsList></div>
       <TabsContent value="bookings" className="mt-0"><LiveBookings /></TabsContent>
       <TabsContent value="evaluations" className="mt-0"><Evaluations /></TabsContent>
       <TabsContent value="vouchers" className="mt-0"><VoucherReport /></TabsContent>
