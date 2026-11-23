@@ -2774,13 +2774,13 @@ export function AdminUsers() {
                             <div className="border border-b-0 border-border">
                               <table className="w-full min-w-[1100px] table-fixed text-left text-xs">
                                 <UserTableColumns />
-                                <thead className="bg-background/40 text-foreground">
+                                <thead className="user-list-headings text-foreground">
                                   <tr>
                                     {[
                                       "First Name",
                                       "Last Name",
                                       "Email",
-                                      "ID / passport",
+                                      "ID / Passport",
                                       "School",
                                       "Documents",
                                       "Applications",
@@ -2789,7 +2789,7 @@ export function AdminUsers() {
                                     ].map((heading) => (
                                       <th
                                         key={heading}
-                                        className={`whitespace-nowrap px-3 py-2 font-normal ${heading === "Actions" ? "text-right" : ""}`}
+                                        className={`whitespace-nowrap px-3 py-2 font-medium ${heading === "Actions" ? "text-right" : ""}`}
                                       >
                                         {heading}
                                       </th>
