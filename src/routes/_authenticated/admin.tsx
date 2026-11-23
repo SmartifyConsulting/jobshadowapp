@@ -267,7 +267,7 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
         const field = table === "sectors" ? "sector" : "career";
         const counts = new Map<string, number>();
         for (let from = 0; ; from += 1000) {
-          const { data: bookingRows, error } = await supabase.from("bookings").select(field).range(from, from + 999);
+          const { data: bookingRows, error } = await supabase.from("bookings").select(field).order("id").range(from, from + 999);
           if (error) throw error;
           (bookingRows ?? []).forEach((b: Record<string, unknown>) => {
             const v = (b[field] as string | null)?.trim().toLowerCase();
@@ -280,8 +280,7 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
       if (table === "careers") {
         const today = new Date(); today.setHours(0, 0, 0, 0);
         const hasOpenDates = (dates: string | null) => (dates ?? "").split(",").some((d) => { const [m, day, y] = d.trim().split("/").map(Number); return m && day && y && new Date(y, m - 1, day) >= today; });
-        const { data: companyRows, error } = await supabase.from("companies").select("career, active, dates");
-        if (error) throw error;
+        const companyRows = await fetchAllRows(async (from, to) => { const result = await supabase.from("companies").select("career, active, dates").order("id").range(from, to); if (result.error) throw result.error; return result.data ?? []; });
         const availableNow = new Map<string, number>();
         (companyRows ?? []).forEach((c) => { const key = (c.career ?? "").trim().toLowerCase(); if (key && c.active && hasOpenDates(c.dates)) availableNow.set(key, (availableNow.get(key) ?? 0) + 1); });
         rows.forEach((r) => { r["_real_availability"] = availableNow.get(String(r["name"]).trim().toLowerCase()) ?? 0; });
@@ -1387,7 +1386,7 @@ function CompaniesList({ kind }: { kind?: "mentor" | "host" } = {}) {
 function CompanyPlacements() {
   const qc = useQueryClient();
   const thisYear = new Date().getFullYear();
-  const years = useQuery({ queryKey: ["admin", "company-years"], queryFn: async () => { const result = await supabase.from("companies").select("year"); if (result.error) throw result.error; return [...new Set((result.data ?? []).map((r) => r.year))].sort((a, b) => b - a); } });
+  const years = useQuery({ queryKey: ["admin", "company-years"], queryFn: async () => { const rows = await fetchAllRows(async (from, to) => { const result = await supabase.from("companies").select("year").order("id").range(from, to); if (result.error) throw result.error; return result.data ?? []; }); return [...new Set(rows.map((r) => r.year))].sort((a, b) => b - a); } });
   const [year, setYear] = useState<number | null>(null);
   const [copying, setCopying] = useState(false);
   useEffect(() => { if (year === null && years.data?.length) setYear(years.data.includes(thisYear) ? thisYear : years.data[0]!); }, [years.data]);
