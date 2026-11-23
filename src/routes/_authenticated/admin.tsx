@@ -120,7 +120,7 @@ function AdminPage() {
       <aside className="w-60 shrink-0 border-r border-primary/20 bg-accent text-accent-foreground shadow-warm">
         <p className="px-5 pb-3 pt-6 text-xs font-bold uppercase tracking-widest text-foreground/70">Admin Portal</p>
         <nav className="space-y-1 px-3 pb-6">
-          {TABLES.filter((t) => !["sectors", "vouchers", "bookings", "companies", "evaluations"].includes(t.id)).map((t) => (
+          {TABLES.filter((t) => !["sectors", "vouchers", "bookings", "evaluations"].includes(t.id)).map((t) => (
             <button key={t.id} onClick={() => setActive(t.id)} className={`flex w-full items-center gap-3 rounded-md border-l-2 px-3 py-2.5 text-left text-sm font-medium transition ${active === t.id ? "border-primary bg-primary/10 text-foreground" : "border-transparent text-foreground/85 hover:bg-primary/5 hover:text-foreground"}`}>
               <t.icon className="h-4 w-4" /> {t.label}
             </button>
@@ -151,6 +151,8 @@ function AdminPage() {
             <LiveBookings key={section.id} />
           ) : section.id === "settings" ? (
             <BookingSettings key={section.id} />
+          ) : section.id === "companies" ? (
+            <CompanyPlacements key={section.id} />
           ) : (
             <DataTable key={section.id} title={section.singular} table={section.table} cols={section.cols} csvUpload={section.csvUpload} dateCompanyFilter={section.dateCompanyFilter} indemnityEdit={section.indemnityEdit} />
           )}
@@ -1295,6 +1297,14 @@ function ProviderDirectory({ kind }: { kind: "mentor" | "host" }) {
 function CompaniesList({ kind }: { kind?: "mentor" | "host" } = {}) {
   const config = TABLES.find((entry) => entry.id === "companies")!;
   return <DataTable title={kind === "mentor" ? "Mentor records" : kind === "host" ? "Host company records" : config.singular} table={config.table} cols={config.cols} companyKind={kind} />;
+}
+
+function CompanyPlacements() {
+  return <Tabs defaultValue="host" className="bg-ivory">
+    <div className="overflow-x-auto border-b border-border px-6 py-3"><TabsList aria-label="Company placements"><TabsTrigger value="host">Hosts</TabsTrigger><TabsTrigger value="mentor">Mentors</TabsTrigger></TabsList></div>
+    <TabsContent value="host" className="mt-0"><ProviderDirectory kind="host" /></TabsContent>
+    <TabsContent value="mentor" className="mt-0"><ProviderDirectory kind="mentor" /></TabsContent>
+  </Tabs>;
 }
 
 function CareersAndSectors() {

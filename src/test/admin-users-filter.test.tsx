@@ -103,7 +103,6 @@ describe("Booking status chips", () => {
     const Page = Route.options.component as () => React.JSX.Element;
     render(<QueryClientProvider client={client}><Page /></QueryClientProvider>);
     expect(screen.queryByRole("button", { name: "Bookings" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Companies" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Evaluations" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Reports" }));
     expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Bookings", "Evaluations", "Vouchers", "BEE / CPD", "Mentor Coverage", "Activity Log", "Token Ledger"]);
