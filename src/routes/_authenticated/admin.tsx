@@ -1386,7 +1386,7 @@ function CompaniesList({ kind }: { kind?: "mentor" | "host" } = {}) {
 function CompanyPlacements() {
   const qc = useQueryClient();
   const thisYear = new Date().getFullYear();
-  const years = useQuery({ queryKey: ["admin", "company-years"], queryFn: async () => { const rows = await fetchAllRows(async (from, to) => { const result = await supabase.from("companies").select("year").order("id").range(from, to); if (result.error) throw result.error; return result.data ?? []; }); return [...new Set(rows.map((r) => r.year))].sort((a, b) => b - a); } });
+  const years = useQuery({ queryKey: ["admin", "company-years"], queryFn: async () => { const rows = await fetchAllRows(async (from, to) => { const result = await supabase.from("companies").select("year").order("id").range(from, to); if (result.error) throw result.error; return result.data ?? []; }); return [...new Set(rows.map((r) => r.year as number))].sort((a, b) => b - a); } });
   const [year, setYear] = useState<number | null>(null);
   const [copying, setCopying] = useState(false);
   useEffect(() => { if (year === null && years.data?.length) setYear(years.data.includes(thisYear) ? thisYear : years.data[0]!); }, [years.data]);
