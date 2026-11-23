@@ -109,7 +109,7 @@ function useIsAdmin() {
 
 function AdminPage() {
   const admin = useIsAdmin();
-  const [active, setActive] = useState("apps");
+  const [active, setActive] = useState("users");
   const section = TABLES.find((t) => t.id === active);
   if (!section) return null;
 
