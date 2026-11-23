@@ -44,14 +44,19 @@ export function ProfilePhotoPicker({
         type="button"
         aria-label="Change profile photo"
         onClick={() => input.current?.click()}
-        className="relative grid h-20 w-20 shrink-0 place-items-center rounded-full border border-input bg-muted"
+        className="relative grid aspect-square h-20 w-20 shrink-0 place-items-center rounded-full border border-input bg-muted"
+        style={{ width: 80, height: 80 }}
       >
         {preview ? (
-          <img
-            src={preview}
-            alt="Profile photo"
-            className="h-full w-full rounded-full object-cover"
-          />
+          <span className="absolute inset-0 overflow-hidden rounded-full">
+            <img
+              src={preview}
+              alt="Profile photo"
+              width={80}
+              height={80}
+              className="block h-full w-full object-cover"
+            />
+          </span>
         ) : (
           <UserRound className="h-9 w-9" />
         )}
