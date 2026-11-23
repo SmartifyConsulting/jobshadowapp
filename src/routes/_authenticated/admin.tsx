@@ -120,7 +120,7 @@ function AdminPage() {
       <aside className="w-60 shrink-0 border-r border-primary/20 bg-accent text-accent-foreground shadow-warm">
         <p className="px-5 pb-3 pt-6 text-xs font-bold uppercase tracking-widest text-foreground/70">Admin Portal</p>
         <nav className="space-y-1 px-3 pb-6">
-          {TABLES.filter((t) => !["sectors", "vouchers", "bookings", "evaluations"].includes(t.id)).map((t) => (
+          {TABLES.filter((t) => !["sectors", "vouchers", "bookings", "evaluations", "companies"].includes(t.id)).map((t) => (
             <button key={t.id} onClick={() => setActive(t.id)} className={`flex w-full items-center gap-3 rounded-md border-l-2 px-3 py-2.5 text-left text-sm font-medium transition ${active === t.id ? "border-primary bg-primary/10 text-foreground" : "border-transparent text-foreground/85 hover:bg-primary/5 hover:text-foreground"}`}>
               <t.icon className="h-4 w-4" /> {t.label}
             </button>
@@ -988,6 +988,8 @@ export function AdminUsers() {
       <Tabs value={roleTab} onValueChange={(value) => { setRoleTab(value as AccountRow["roles"][number] | "unclassified" | "individual_mentor"); setLetter(null); setOpenGroups([]); setSelectedId(null); }}>
         <div className="overflow-x-auto bg-ivory px-6 py-4"><TabsList aria-label="User Type">{([["user", "Scholars"], ["mentor", "Hosts"], ["individual_mentor", "Mentors"], ["school", "Schools"], ["admin", "Admin"], ["unclassified", "Unclassified"]] as const).map(([role, name]) => <TabsTrigger key={role} value={role}>{name} ({(accounts.data ?? []).filter((user) => matchesRole(user, role) && (showSpam || !user.is_spam)).length})</TabsTrigger>)}</TabsList></div>
       <TabsContent value={roleTab} className="mt-0">
+      {(roleTab === "mentor" || roleTab === "individual_mentor") && <ProviderDirectory key={roleTab} kind={roleTab === "mentor" ? "host" : "mentor"} />}
+      {(roleTab === "mentor" || roleTab === "individual_mentor") && <h2 className="bg-ivory px-6 pt-6 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Login accounts</h2>}
       <div className="flex flex-col items-start xl:flex-row">
       <div className={'min-w-0 w-full flex-1 px-4 py-2 text-foreground ' + 'bg-ivory'}>
         <div className="flex flex-wrap gap-1.5">
@@ -1308,7 +1310,8 @@ function ProviderDirectory({ kind }: { kind: "mentor" | "host" }) {
   const [expandedHosts, setExpandedHosts] = useState<string[]>([]);
   const all = data.data ?? [];
   const mentors = mentorGroups(all);
-  const groups = (kind === 'mentor' ? mentors : providerGroups(all).filter((group) => group.kind === 'host')).sort((a, b) => (kind === 'mentor' ? a.names[0] || a.company : a.company).localeCompare(kind === 'mentor' ? b.names[0] || b.company : b.company));
+  const hostKeys = new Set(providerGroups(all).filter((group) => group.kind === 'host').map((group) => group.key));
+  const groups = (kind === 'mentor' ? mentors.filter((m) => !hostKeys.has(companyKey(m.company))) : providerGroups(all).filter((group) => group.kind === 'host')).sort((a, b) => (kind === 'mentor' ? a.names[0] || a.company : a.company).localeCompare(kind === 'mentor' ? b.names[0] || b.company : b.company));
   const initial = (group: typeof groups[number]) => alphabetInitial(kind === 'mentor' ? group.names[0] || group.company : group.company);
   const matches = groups.filter((group) => (!letter || initial(group) === letter) && (!search.trim() || [group.company, ...group.names, ...group.emails, ...group.careers].join(' ').toLowerCase().includes(search.trim().toLowerCase())));
   const detail = groups.find((group) => group.key === selected);
