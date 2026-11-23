@@ -264,7 +264,7 @@ function JobShadows({
         )}
       </div>
       <div>
-        <h2 className="text-lg font-semibold">Experiences I Offer</h2>
+        <h2 className="text-lg font-semibold">My Mentor Sessions</h2>
         {loadingPlacements && <p className="mt-2 text-sm text-muted-foreground">Loading…</p>}
         {!loadingPlacements && placements.length === 0 && (
           <p className="mt-2 text-sm text-muted-foreground">
