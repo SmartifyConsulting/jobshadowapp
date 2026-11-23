@@ -25,6 +25,7 @@ export type AccountRow = {
   is_spam: boolean;
   booking_count: number;
   self_registered: boolean;
+  last_accessed_at: string | null;
 };
 
 const ROLE_PRIORITY = ["admin", "hr_admin", "mentor", "school", "user"] as const;
@@ -42,12 +43,12 @@ async function readAllRows<T>(load: (from: number, to: number) => Promise<{ data
 export async function listAccounts(): Promise<AccountRow[]> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-  const users: { id: string; email: string | null; created_at: string }[] = [];
+  const users: { id: string; email: string | null; created_at: string; last_accessed_at: string | null }[] = [];
   let page = 1;
   for (;;) {
     const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 });
     if (error) throw new Error(error.message);
-    users.push(...data.users.map((u) => ({ id: u.id, email: u.email ?? null, created_at: u.created_at })));
+    users.push(...data.users.map((u) => ({ id: u.id, email: u.email ?? null, created_at: u.created_at, last_accessed_at: u.last_sign_in_at ?? null })));
     if (data.users.length < 1000) break;
     page += 1;
   }
@@ -102,6 +103,7 @@ export async function listAccounts(): Promise<AccountRow[]> {
         is_spam: legacyRow?.is_spam ?? false,
         booking_count: bookingCountByUser.get(u.id) ?? 0,
         self_registered: profile?.self_registered ?? true,
+        last_accessed_at: u.last_accessed_at,
       };
     })
     .sort((a, b) => b.created_at.localeCompare(a.created_at));

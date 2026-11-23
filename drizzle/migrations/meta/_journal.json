@@ -505,6 +505,13 @@
       "when": 1794963900000,
       "tag": "0071_career_archive_and_extra_guidance",
       "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1794964100000,
+      "tag": "0072_last_accessed_on_accounts",
+      "breakpoints": true
     }
   ]
 }

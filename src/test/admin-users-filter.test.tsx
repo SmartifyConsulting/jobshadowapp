@@ -21,7 +21,7 @@ const account = (id: string, name: string): AccountRow => ({
   id, email: id + "@example.com", created_at: "2026-11-01T00:00:00Z", role: "mentor", roles: ["user", "mentor"],
   display_name: name, full_name: null, avatar_path: null, contact_no: null, school: null, id_number: null,
   applications: [], id_file_path: null, photo_path: null, id_verified: null, has_profile: false,
-  has_scholar_profile: false, is_spam: false, booking_count: 0, self_registered: true,
+  has_scholar_profile: false, is_spam: false, booking_count: 0, self_registered: true, last_accessed_at: null,
 });
 function mount(extra: AccountRow[] = []) {
   const client = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity, retry: false } } });
@@ -63,7 +63,7 @@ describe("User alphabet chips", () => {
     fireEvent.click(screen.getByRole("button", { name: "Cards" }));
     expect(screen.getByRole("button", { name: "Alice Brown" })).toBeVisible();
     expect(screen.queryByRole("button", { name: "Bob Adams" })).not.toBeInTheDocument();
-    expect(screen.getByText("Host", { exact: true })).toBeVisible();
+    expect(screen.getByText("Mentor", { exact: true })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "All" }));
     expect(screen.getByRole("heading", { name: "Users" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "B" }));
@@ -74,7 +74,7 @@ describe("User alphabet chips", () => {
     const school = { ...account("school", "School Contact"), role: "school" as const, roles: ["school" as const] };
     const client = mount([school]);
     expect(screen.getByRole("heading", { name: "Users" })).toBeVisible();
-    fireEvent.mouseDown(screen.getByRole("tab", { name: "Hosts (2)" }), { button: 0 });
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Mentors (2)" }), { button: 0 });
     fireEvent.click(screen.getAllByRole("button", { name: "A" }).at(-1)!);
     expect(screen.getByRole("button", { name: "View details for Alice Brown" })).toBeVisible();
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Schools (1)" }), { button: 0 });
@@ -141,7 +141,7 @@ describe("Visible provider directories and career wizard", () => {
   it("reclassifies a zero-role account as a sole mentor instead of Unclassified", () => {
     const solo = { ...account("solo", "Solo Person"), email: "solo@example.com", role: null, roles: [] as AccountRow["roles"] };
     const client = mount([solo]);
-    fireEvent.mouseDown(screen.getByRole('tab', { name: 'Mentors (1)' }), { button: 0 });
+    fireEvent.mouseDown(screen.getByRole('tab', { name: 'Mentors (3)' }), { button: 0 });
     fireEvent.click(screen.getAllByRole('button', { name: 'S' }).at(-1)!);
     expect(screen.getByRole('button', { name: 'View details for Solo Person' })).toBeVisible();
     fireEvent.mouseDown(screen.getByRole('tab', { name: 'Unclassified (0)' }), { button: 0 });

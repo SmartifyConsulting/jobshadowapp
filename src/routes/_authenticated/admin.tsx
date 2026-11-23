@@ -729,7 +729,7 @@ function UserDocument({ path, kind, verified = false }: { path: string | null; k
   </div>;
 }
 
-const ROLE_LABELS: Record<AccountRow["roles"][number], string> = { user: "Scholar", mentor: "Host", hr_admin: "HR Admin", school: "School", admin: "Admin", parent: "Parent" };
+const ROLE_LABELS: Record<AccountRow["roles"][number], string> = { user: "Scholar", mentor: "Mentor", hr_admin: "HR Admin", school: "School", admin: "Admin", parent: "Parent" };
 
 /** Per-user application/booking history, fetched lazily only when a row is expanded or selected -
  * not eagerly embedded for every account, which used to mean loading it for hundreds of users on
@@ -772,8 +772,8 @@ function UserFilePreview({ path, label }: { path: string | null; label: string }
   </section>;
 }
 
-function UserTableRow({ a, selectedId, busyId, expandedApplicationUser, onSelect, onEdit, onDelete, onVerify, onToggleExpand }: {
-  a: AccountRow; selectedId: string | null; busyId: string | null; expandedApplicationUser: string | null;
+function UserTableRow({ a, selectedId, busyId, expandedApplicationUser, mentorBadge, onSelect, onEdit, onDelete, onVerify, onToggleExpand }: {
+  a: AccountRow; selectedId: string | null; busyId: string | null; expandedApplicationUser: string | null; mentorBadge?: "IM" | "CM" | null;
   onSelect: (id: string) => void; onEdit: () => void; onDelete: (id: string, label: string) => void;
   onVerify: (id: string, verified: boolean) => void; onToggleExpand: () => void;
 }) {
@@ -787,6 +787,7 @@ function UserTableRow({ a, selectedId, busyId, expandedApplicationUser, onSelect
       <td className="px-3 py-1.5"><div className="flex items-center gap-2" title={'Joined ' + new Date(a.created_at).toLocaleDateString()}>
         {avatarUrl ? <img src={avatarUrl} alt="" className="h-7 w-7 shrink-0 rounded-full object-cover" /> : <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-teal/15 text-[11px] uppercase">{label.slice(0, 1)}</span>}
         <button onClick={() => onSelect(a.id)} className="max-w-32 truncate text-left font-medium hover:text-primary" title={label} aria-label={'View details for ' + label}>{firstName || "—"}</button>
+        {mentorBadge && <span className={'rounded px-1 py-0.5 text-[10px] font-bold ' + (mentorBadge === 'IM' ? 'bg-teal/20 text-teal-foreground' : 'bg-accent/20 text-accent-foreground')} title={mentorBadge === 'IM' ? 'Independent Mentor' : 'Company Mentor'}>{mentorBadge}</span>}
         {a.is_spam && <span className="text-[10px] text-destructive">Spam</span>}
         {!a.self_registered && <span className="rounded bg-muted px-1 py-0.5 text-[10px] text-muted-foreground" title="This account was provisioned by an admin from a company contact and has not signed in itself.">Not registered</span>}
       </div></td>
@@ -800,12 +801,13 @@ function UserTableRow({ a, selectedId, busyId, expandedApplicationUser, onSelect
         <UserDocument path={a.photo_path} kind="photo" />
       </div></td>
       <td className="px-3 py-1.5"><button aria-expanded={expanded} aria-controls={'applications-' + a.id} onClick={onToggleExpand} className="flex items-center gap-2 whitespace-nowrap rounded px-1.5 py-1 text-xs hover:bg-muted" title={a.booking_count + ' bookings'}>{a.booking_count}<ChevronDown className={'h-3 w-3 transition ' + (expanded ? 'rotate-180' : '')} /><span className="sr-only">Applications for {label}</span></button></td>
+      <td className="px-3 py-1.5 whitespace-nowrap text-muted-foreground" title={a.last_accessed_at ? new Date(a.last_accessed_at).toLocaleString() : 'Never signed in'}>{a.last_accessed_at ? new Date(a.last_accessed_at).toLocaleDateString() : '—'}</td>
       <td className="px-3 py-1.5"><div className="flex items-center gap-1.5">
         <button onClick={onEdit} disabled={busyId === a.id} className="flex items-center gap-1.5 rounded border border-border px-2 py-1 text-xs transition hover:border-primary/30 hover:text-primary disabled:opacity-50" aria-label={'Edit ' + label}><Pencil className="h-3.5 w-3.5" />Edit</button>
         <button onClick={() => onDelete(a.id, label)} disabled={busyId === a.id} className="rounded p-1.5 text-muted-foreground transition hover:bg-destructive/5 hover:text-destructive disabled:opacity-50" aria-label={'Delete account for ' + label}><Trash2 className="h-3.5 w-3.5" /></button>
       </div></td>
     </tr>
-    {expanded && <tr id={'applications-' + a.id}><td colSpan={8} className="border-t border-border bg-muted/30 px-5 py-3">
+    {expanded && <tr id={'applications-' + a.id}><td colSpan={9} className="border-t border-border bg-muted/30 px-5 py-3">
       <div className="mb-2 flex justify-between text-xs text-muted-foreground"><span>Applications for {label}</span><span>{a.booking_count} bookings · Joined {new Date(a.created_at).toLocaleDateString()}</span></div>
       {applications.isLoading ? <p className="text-xs text-muted-foreground">Loading…</p> : !applications.data?.length ? <p className="text-xs text-muted-foreground">No applications recorded.</p> : (
         <table className="w-full text-left text-xs"><thead><tr>{["ID", "Company", "Career", "Dates", "Paid", "Indemnity", "Cancelled"].map((heading) => <th key={heading} className="px-2 py-2 font-medium">{heading}</th>)}</tr></thead><tbody>{applications.data.map((application) => <tr key={application.source + '-' + application.id} className="border-t border-border/70"><td className="px-2 py-2">{application.source} #{application.id}</td><td className="px-2 py-2">{application.company || '—'}</td><td className="px-2 py-2">{application.career || '—'}</td><td className="px-2 py-2">{application.dates || '—'}</td>{[application.paid, application.indemnity, application.cancelled].map((value, index) => <td key={index} className="px-2 py-2">{value === null ? 'Not recorded' : <BoolIcon value={index === 2 ? !value : value} />}</td>)}</tr>)}</tbody></table>
@@ -820,7 +822,7 @@ function UserDetailPanel({ account: a, onClose, onEdit }: { account: AccountRow;
   return <aside aria-label="Selected user details" className="w-full shrink-0 border-t border-border bg-background p-5 xl:sticky xl:top-0 xl:max-h-screen xl:w-72 xl:overflow-y-auto xl:border-l xl:border-t-0">
     <div className="mb-4 flex items-start justify-between gap-3"><div><h2 className="font-sans text-sm font-medium">{label}</h2><div className="mt-1 flex flex-wrap gap-1">{a.roles.length === 0 && <span className="text-xs text-muted-foreground">Unclassified</span>}{a.roles.map((role) => <span key={role} className="rounded bg-teal/15 px-1.5 py-0.5 text-[10px]">{ROLE_LABELS[role]}</span>)}</div></div><button onClick={onClose} aria-label="Close user details" className="rounded p-1 text-muted-foreground hover:bg-muted"><X className="h-4 w-4" /></button></div>
     <dl className="space-y-2 text-xs">
-      {([['Email', a.email], ['Phone', a.contact_no], ['School', a.school], ['ID / passport', a.id_number], ['Joined', new Date(a.created_at).toLocaleDateString()]] as const).map(([title, value]) => <div key={title}><dt className="text-muted-foreground">{title}</dt><dd className="break-words">{value || '—'}</dd></div>)}
+      {([['Email', a.email], ['Phone', a.contact_no], ['School', a.school], ['ID / passport', a.id_number], ['Joined', new Date(a.created_at).toLocaleDateString()], ['Last accessed', a.last_accessed_at ? new Date(a.last_accessed_at).toLocaleString() : 'Never signed in']] as const).map(([title, value]) => <div key={title}><dt className="text-muted-foreground">{title}</dt><dd className="break-words">{value || '—'}</dd></div>)}
     </dl>
     <div className="my-4 flex items-center justify-between"><span className="flex items-center gap-1 text-xs text-muted-foreground"><BoolIcon value={!!a.id_verified} /> {a.id_verified ? 'ID verified' : 'ID not verified'}</span><button onClick={onEdit} className="flex items-center gap-1 text-xs text-primary"><Pencil className="h-3 w-3" />Edit user</button></div>
     <div className="space-y-4 border-t border-border py-4"><UserFilePreview path={a.id_file_path} label="Uploaded ID" /><UserFilePreview path={a.photo_path} label="Uploaded photo" /></div>
@@ -838,7 +840,7 @@ function UserCards({ rows, selectedId, busyId, onSelect, onEdit, onDelete, onVer
     return <article key={a.id} className={'min-w-0 rounded-md border bg-ivory p-4 ' + (selectedId === a.id ? 'border-primary/40' : 'border-border')}>
       <button className="max-w-full truncate text-left text-sm font-medium hover:text-primary" onClick={() => onSelect(a.id)}>{label}</button>
       <div className="my-2 flex flex-wrap gap-1">{a.roles.length === 0 && <span className="text-xs text-muted-foreground">Unclassified</span>}{a.roles.map((role) => <span key={role} className="rounded bg-teal/15 px-1.5 py-0.5 text-[10px]">{ROLE_LABELS[role]}</span>)}{a.is_spam && <span className="text-[10px] text-destructive">Spam</span>}</div>
-      <div className="space-y-1 text-xs text-muted-foreground"><p className="truncate" title={a.email ?? undefined}>{a.email || 'No email'}</p><p>{a.contact_no || 'No phone'}</p><p className="truncate" title={a.school ?? undefined}>{a.school || 'No school'}</p><p>ID / passport: {a.id_number || '—'}</p><p>Joined {new Date(a.created_at).toLocaleDateString()}</p></div>
+      <div className="space-y-1 text-xs text-muted-foreground"><p className="truncate" title={a.email ?? undefined}>{a.email || 'No email'}</p><p>{a.contact_no || 'No phone'}</p><p className="truncate" title={a.school ?? undefined}>{a.school || 'No school'}</p><p>ID / passport: {a.id_number || '—'}</p><p>Joined {new Date(a.created_at).toLocaleDateString()}</p><p>Last accessed {a.last_accessed_at ? new Date(a.last_accessed_at).toLocaleDateString() : 'never'}</p></div>
       <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
         <label title="ID verified"><input type="checkbox" className="accent-teal" checked={a.id_verified === true} disabled={a.id_verified === null || busyId === a.id} onChange={(e) => onVerify(a.id, e.target.checked)} aria-label={'ID verified for ' + label} /></label>
         <UserDocument path={a.id_file_path} kind="id" verified={a.id_verified === true} /><UserDocument path={a.photo_path} kind="photo" />
@@ -875,22 +877,30 @@ export function AdminUsers() {
   const [expandedApplicationUser, setExpandedApplicationUser] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const FREE_MAIL = new Set(["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "icloud.com", "live.com", "webmail.co.za", "mweb.co.za", "telkomsa.net", "vodamail.co.za"]);
-  const [roleTab, setRoleTab] = useState<AccountRow["roles"][number] | "unclassified" | "individual_mentor">("user");
+  const [roleTab, setRoleTab] = useState<AccountRow["roles"][number] | "unclassified">("user");
   const isUnclassified = roleTab === "unclassified";
-  const accountRole = isUnclassified ? "user" : roleTab === "individual_mentor" ? "mentor" : roleTab;
+  const accountRole = isUnclassified ? "user" : roleTab;
   const mentorCompanies = useQuery({ queryKey: ["admin", "company-contact-classification"], queryFn: () => fetchAllRows(async (from, to) => { const result = await supabase.from("companies").select("company,mentor_name,mentor_email,backup_mentor_name,backup_mentor_email").order("id").range(from, to); if (result.error) throw result.error; return result.data ?? []; }) });
   const soleMentors = useMemo(() => individualMentorEmails((mentorCompanies.data ?? []) as { company: string | null; mentor_email: string | null; backup_mentor_email: string | null }[]), [mentorCompanies.data]);
   const companyEmails = useMemo(() => new Set(((mentorCompanies.data ?? []) as { mentor_email: string | null; backup_mentor_email: string | null }[]).flatMap((c) => [c.mentor_email, c.backup_mentor_email]).map((e) => (e ?? "").trim().toLowerCase()).filter(Boolean)), [mentorCompanies.data]);
   const mentorDomainCounts = useMemo(() => { const m = new Map<string, number>(); for (const a of accounts.data ?? []) if (a.roles.includes("mentor")) { const d = (a.email ?? "").toLowerCase().split("@")[1] ?? ""; if (FREE_MAIL.has(d)) continue; m.set(d, (m.get(d) ?? 0) + 1); } return m; }, [accounts.data]);
-  const matchesRole = (a: AccountRow, tab = roleTab) => {
+  // Hosts and mentors are the same role now; an "Independent Mentor" is one not tied to a
+  // company record (a sole-named mentor, or a mentor whose email domain isn't shared with
+  // another mentor's), everyone else with the mentor/hr_admin role is a "Company Mentor".
+  const isIndependentMentor = (a: AccountRow) => {
     const email = (a.email ?? "").trim().toLowerCase();
-    // Accounts not tied to a company record: a mentor whose email domain is shared with another mentor is a Host; a unique domain is an independent Mentor.
-    const isSoleMentorEmail = soleMentors.has(email) || (a.roles.includes("mentor") && !companyEmails.has(email) && (mentorDomainCounts.get(email.split("@")[1] ?? "") ?? 0) < 2);
-    if (tab === "unclassified") return a.roles.length === 0 && !isSoleMentorEmail;
-    if (tab === "individual_mentor") return isSoleMentorEmail && (a.roles.length === 0 || a.roles.includes("mentor"));
-    if (tab === "mentor") return (a.roles.includes("mentor") && !isSoleMentorEmail) || a.roles.includes("hr_admin");
+    return soleMentors.has(email) || (a.roles.includes("mentor") && !companyEmails.has(email) && (mentorDomainCounts.get(email.split("@")[1] ?? "") ?? 0) < 2);
+  };
+  const matchesRole = (a: AccountRow, tab = roleTab) => {
+    const isMentorPerson = a.roles.includes("mentor") || a.roles.includes("hr_admin") || isIndependentMentor(a);
+    if (tab === "unclassified") return a.roles.length === 0 && !isMentorPerson;
+    if (tab === "mentor") return isMentorPerson;
     if (tab === "admin") return a.roles.includes("admin");
     return a.roles.includes(tab);
+  };
+  const mentorBadge = (a: AccountRow): "IM" | "CM" | null => {
+    if (!(a.roles.includes("mentor") || a.roles.includes("hr_admin") || isIndependentMentor(a))) return null;
+    return isIndependentMentor(a) ? "IM" : "CM";
   };
   const [showSpam, setShowSpam] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -962,7 +972,7 @@ export function AdminUsers() {
 
   return (
     <div>
-      {createOpen && <CreateAccountDialog role={accountRole} label={roleTab === "individual_mentor" ? "Mentor" : ROLE_LABELS[accountRole]} onClose={() => setCreateOpen(false)} />}
+      {createOpen && <CreateAccountDialog role={accountRole} label={ROLE_LABELS[accountRole]} onClose={() => setCreateOpen(false)} />}
       <Dialog open={!!editing} onOpenChange={(open) => { if (!open && busyId !== editing?.id) setEditing(null); }}>
         <DialogContent className="max-h-[90vh] overflow-auto">
           <DialogHeader><DialogTitle>Edit user</DialogTitle></DialogHeader>
@@ -982,11 +992,9 @@ export function AdminUsers() {
           {([['table', List, 'Table'], ['cards', LayoutGrid, 'Cards']] as const).map(([value, Icon, label]) => <button key={value} onClick={() => setView(value)} aria-pressed={view === value} className={'flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs transition ' + (view === value ? 'bg-background text-primary' : 'hover:bg-primary/5')}><Icon className="h-3.5 w-3.5" />{label}</button>)}
         </div>
       } />
-      <Tabs value={roleTab} onValueChange={(value) => { setRoleTab(value as AccountRow["roles"][number] | "unclassified" | "individual_mentor"); setLetter(null); setOpenGroups([]); setSelectedId(null); }}>
-        <div className="overflow-x-auto bg-ivory px-6 py-4"><TabsList aria-label="User Type">{([["user", "Scholars"], ["mentor", "Hosts"], ["individual_mentor", "Mentors"], ["school", "Schools"], ["admin", "Admin"], ["unclassified", "Unclassified"]] as const).map(([role, name]) => <TabsTrigger key={role} value={role}>{name} ({(accounts.data ?? []).filter((user) => matchesRole(user, role) && (showSpam || !user.is_spam)).length})</TabsTrigger>)}</TabsList></div>
+      <Tabs value={roleTab} onValueChange={(value) => { setRoleTab(value as AccountRow["roles"][number] | "unclassified"); setLetter(null); setOpenGroups([]); setSelectedId(null); }}>
+        <div className="overflow-x-auto bg-ivory px-6 py-4"><TabsList aria-label="User Type">{([["user", "Scholars"], ["mentor", "Mentors"], ["school", "Schools"], ["admin", "Admin"], ["unclassified", "Unclassified"]] as const).map(([role, name]) => <TabsTrigger key={role} value={role}>{name} ({(accounts.data ?? []).filter((user) => matchesRole(user, role) && (showSpam || !user.is_spam)).length})</TabsTrigger>)}</TabsList></div>
       <TabsContent value={roleTab} className="mt-0">
-      {(roleTab === "mentor" || roleTab === "individual_mentor") && <ProviderDirectory key={roleTab} kind={roleTab === "mentor" ? "host" : "mentor"} />}
-      {(roleTab === "mentor" || roleTab === "individual_mentor") && <h2 className="bg-ivory px-6 pt-6 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Login accounts</h2>}
       <div className="flex flex-col items-start xl:flex-row">
       <div className={'min-w-0 w-full flex-1 px-4 py-2 text-foreground ' + 'bg-ivory'}>
         <div className="flex flex-wrap gap-1.5">
@@ -1015,7 +1023,7 @@ export function AdminUsers() {
             Search
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name, email, school, company or career" className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none" />
           </label>
-          {!isUnclassified && <Button className="ml-auto" onClick={() => setCreateOpen(true)}>Add {roleTab === "individual_mentor" ? "Mentor" : ROLE_LABELS[accountRole]}</Button>}
+          {!isUnclassified && <Button className="ml-auto" onClick={() => setCreateOpen(true)}>Add {ROLE_LABELS[accountRole]}</Button>}
         </div>
         {accounts.isLoading ? (
           <p className="mt-6">Loading…</p>
@@ -1026,7 +1034,7 @@ export function AdminUsers() {
             {view === "table" && rows.length > 0 && (
               <div className="border border-b-0 border-border">
                 <table className="w-full min-w-[820px] text-left text-xs">
-                  <thead className="bg-background/40 text-foreground"><tr>{["First Name", "Last Name", "Email", "ID / passport", "School", "Documents", "Applications", "Actions"].map((heading) => <th key={heading} className="whitespace-nowrap px-3 py-2 font-normal">{heading}</th>)}</tr></thead>
+                  <thead className="bg-background/40 text-foreground"><tr>{["First Name", "Last Name", "Email", "ID / passport", "School", "Documents", "Applications", "Last Accessed", "Actions"].map((heading) => <th key={heading} className="whitespace-nowrap px-3 py-2 font-normal">{heading}</th>)}</tr></thead>
                 </table>
               </div>
             )}
@@ -1039,7 +1047,7 @@ export function AdminUsers() {
                     <tbody>
                     {rows.filter((a) => (accountInitial(a)) === group).map((a) => (
                       <UserTableRow
-                        key={a.id} a={a} selectedId={selectedId} busyId={busyId} expandedApplicationUser={expandedApplicationUser}
+                        key={a.id} a={a} selectedId={selectedId} busyId={busyId} expandedApplicationUser={expandedApplicationUser} mentorBadge={mentorBadge(a)}
                         onSelect={setSelectedId} onEdit={() => setEditing({ ...a, roles: [...a.roles] })} onDelete={deleteAccountRow}
                         onVerify={setIdVerified} onToggleExpand={() => setExpandedApplicationUser(expandedApplicationUser === a.id ? null : a.id)}
                       />

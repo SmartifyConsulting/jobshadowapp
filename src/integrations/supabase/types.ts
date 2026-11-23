@@ -1116,6 +1116,7 @@ export type Database = {
           scholar_last_name: string
           school: string
           self_registered: boolean
+          last_accessed_at: string | null
         }[]
       }
       admin_user_applications: {
