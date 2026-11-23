@@ -68,7 +68,6 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { RichText } from "@/components/RichText";
-import { CareerSkills } from "@/components/CareerSkills";
 import { getCareerSkills } from "@/lib/career-skills";
 import { draftCareerDescription } from "@/lib/career-ai.functions";
 import { accountInitial, alphabetInitial } from "@/lib/alphabet";
@@ -3836,7 +3835,7 @@ function CompanyPlacements() {
 
 function CareersAndSectors() {
   return (
-    <Tabs defaultValue="sectors" className="bg-ivory">
+    <Tabs defaultValue="sectors" className="min-h-screen bg-ivory">
       <AdminScreenHeader title="Career Management" />
       <div className="overflow-x-auto bg-ivory px-6 py-4">
         <TabsList aria-label="Career management">
@@ -5399,26 +5398,31 @@ function EditRecord({
   }
 
   return (
-    <div>
+    <div className={table === "careers" ? "min-h-full bg-ivory" : ""}>
+      {table !== "careers" && (
+        <div className="flex items-center justify-between border-b border-border bg-background px-6 py-5 text-foreground">
+          <h1 className="text-xl font-medium">
+            Edit {title.replace(/s$/, "")} #{String(row["id"])}
+          </h1>
+          <button onClick={onCancel} className="text-sm font-medium hover:underline">
+            Back to list
+          </button>
+        </div>
+      )}
       <div
         className={
-          "flex items-center justify-between border-b border-border bg-background text-foreground " +
-          (table === "careers" ? "px-4 py-3" : "px-6 py-5")
+          table === "careers"
+            ? "bg-ivory px-4 py-2 text-foreground"
+            : "bg-background px-6 py-6 text-foreground"
         }
       >
-        <h1 className="text-xl font-medium">
-          Edit {title.replace(/s$/, "")} #{String(row["id"])}
-        </h1>
-        <button onClick={onCancel} className="text-sm font-medium hover:underline">
-          Back to list
-        </button>
-      </div>
-      <div
-        className={
-          "bg-background text-foreground " + (table === "careers" ? "px-4 py-4" : "px-6 py-6")
-        }
-      >
-        <div className={"grid sm:grid-cols-3 " + (table === "careers" ? "gap-3" : "gap-5")}>
+        <div
+          className={
+            table === "careers"
+              ? "grid items-center gap-3 sm:grid-cols-[minmax(12rem,1fr)_auto_auto]"
+              : "grid gap-5 sm:grid-cols-3"
+          }
+        >
           {table === "companies" && (
             <CountrySelect
               value={String(vals["country_code"] ?? "ZA")}
@@ -5510,7 +5514,11 @@ function EditRecord({
                     type={c.field === "number" ? "number" : c.field === "date" ? "date" : "text"}
                     value={(vals[c.key] as string) ?? ""}
                     onChange={(e) => setVals({ ...vals, [c.key]: e.target.value })}
-                    className="mt-1 w-full border-b border-input bg-transparent px-1 py-1 outline-none focus:border-primary"
+                    className={
+                      table === "careers"
+                        ? "min-w-0 flex-1 border-b border-input bg-transparent px-1 py-1 outline-none focus:border-primary"
+                        : "mt-1 w-full border-b border-input bg-transparent px-1 py-1 outline-none focus:border-primary"
+                    }
                   />
                 )}
               </label>
@@ -5518,7 +5526,7 @@ function EditRecord({
           )}
           {table === "careers" && (
             <>
-              <label className="block text-sm">
+              <label className="flex items-center gap-2 whitespace-nowrap text-sm">
                 Mentor target
                 <input
                   type="number"
@@ -5528,13 +5536,10 @@ function EditRecord({
                   onChange={(e) =>
                     setVals({ ...vals, mentor_target_count: Number(e.target.value) })
                   }
-                  className="mt-1 w-full rounded border border-input bg-transparent p-2"
+                  className="w-24 rounded border border-input bg-transparent px-2 py-1"
                 />
-                <span className="mt-1 block text-xs text-muted-foreground">
-                  Number of mentors you aim to offer.
-                </span>
               </label>
-              <label className="block text-sm">
+              <label className="flex items-center gap-2 whitespace-nowrap text-sm">
                 Actual mentors available
                 <input
                   type="number"
@@ -5552,11 +5557,8 @@ function EditRecord({
                       mentor_available_count: e.target.value === "" ? null : Number(e.target.value),
                     })
                   }
-                  className="mt-1 w-full rounded border border-input bg-transparent p-2"
+                  className="w-24 rounded border border-input bg-transparent px-2 py-1"
                 />
-                <span className="mt-1 block text-xs text-muted-foreground">
-                  Leave blank for live availability, or enter a verified count.
-                </span>
               </label>
             </>
           )}
@@ -5604,6 +5606,11 @@ function EditRecord({
         >
           Update
         </button>
+        {table === "careers" && (
+          <button type="button" onClick={onCancel} className="ml-3 text-sm hover:underline">
+            Back to list
+          </button>
+        )}
       </div>
     </div>
   );
@@ -5708,7 +5715,7 @@ export function CareerDescriptionField({
             disabled={busy}
             aria-label="AI: Fill missing fields"
             title="AI: Fill missing fields"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border text-xs hover:border-primary hover:text-primary disabled:opacity-50"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary bg-primary/10 text-primary text-xs hover:bg-primary/20 disabled:cursor-wait disabled:opacity-50"
           >
             <Sparkles className={"h-3.5 w-3.5 " + (busy ? "animate-pulse" : "")} aria-hidden />
           </button>
@@ -5724,7 +5731,31 @@ export function CareerDescriptionField({
           </button>
         </div>
       </div>
+      {busy && (
+        <p role="status" className="mt-1 text-xs text-primary">
+          Generating career content…
+        </p>
+      )}
       <fieldset disabled={busy}>
+        <label className="mt-1 block text-sm">
+          Specialisations &amp; Roles
+          <input
+            value={guidance.specialisations.join(", ")}
+            onChange={(e) =>
+              onGuidanceChange({
+                specialisations: e.target.value.split(",").map((value) => value.trimStart()),
+              })
+            }
+            onBlur={() =>
+              onGuidanceChange({
+                specialisations: guidance.specialisations
+                  .map((value) => value.trim())
+                  .filter(Boolean),
+              })
+            }
+            className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary"
+          />
+        </label>
         <textarea
           rows={3}
           value={value}
@@ -5738,10 +5769,10 @@ export function CareerDescriptionField({
             <RichText text={value} />
           </details>
         )}
-        <fieldset className="mt-3 grid gap-3 sm:grid-cols-2">
-          <legend className="text-sm font-semibold">Skills Required</legend>
-          <p className="text-xs text-muted-foreground sm:col-span-2">
-            Separate skills with commas. AI drafts are saved with Update.
+        <fieldset className="mt-3 grid gap-3 rounded border border-border p-3 sm:grid-cols-3">
+          <legend className="px-1 text-sm font-semibold">Skills Required</legend>
+          <p className="text-xs text-muted-foreground sm:col-span-3">
+            Separate skills with commas.
           </p>
           {(
             [
@@ -5769,14 +5800,28 @@ export function CareerDescriptionField({
               />
             </label>
           ))}
-          <details className="sm:col-span-2">
-            <summary className="cursor-pointer text-xs text-muted-foreground">
-              Preview skills
-            </summary>
-            <CareerSkills {...skills} />
-          </details>
+          <label className="block text-sm">
+            Interpersonal Skills
+            <input
+              value={guidance.interpersonalSkills.join(", ")}
+              onChange={(e) =>
+                onGuidanceChange({
+                  interpersonal_skills: e.target.value.split(",").map((value) => value.trimStart()),
+                })
+              }
+              onBlur={() =>
+                onGuidanceChange({
+                  interpersonal_skills: guidance.interpersonalSkills
+                    .map((value) => value.trim())
+                    .filter(Boolean),
+                })
+              }
+              className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary"
+            />
+          </label>
         </fieldset>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <fieldset className="mt-3 grid gap-3 rounded border border-border p-3 sm:grid-cols-2">
+          <legend className="px-1 text-sm font-semibold">Career Preparation</legend>
           <label className="block text-sm sm:col-span-2">
             Ideal for
             <textarea
@@ -5786,12 +5831,7 @@ export function CareerDescriptionField({
               className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary"
             />
           </label>
-          {(
-            [
-              ["specialisations", "Specialisations & Roles"],
-              ["subjects", "Suggested Subjects"],
-            ] as const
-          ).map(([key, label]) => (
+          {([["subjects", "Suggested Subjects"]] as const).map(([key, label]) => (
             <label key={key} className="block text-sm">
               {label}
               <input
@@ -5810,35 +5850,29 @@ export function CareerDescriptionField({
               />
             </label>
           ))}
-          {(
-            [
-              ["interpersonalSkills", "interpersonal_skills", "Interpersonal Skills"],
-              ["recommendedCourses", "recommended_courses", "Recommended Training"],
-              [
-                "selfDirectedLearning",
-                "self_directed_learning",
-                "Explore On Your Own (self-directed)",
-              ],
-            ] as const
-          ).map(([guidanceKey, patchKey, label]) => (
-            <label key={guidanceKey} className="block text-sm">
-              {label}
-              <input
-                value={guidance[guidanceKey].join(", ")}
-                onChange={(e) =>
-                  onGuidanceChange({
-                    [patchKey]: e.target.value.split(",").map((value) => value.trimStart()),
-                  })
-                }
-                onBlur={() =>
-                  onGuidanceChange({
-                    [patchKey]: guidance[guidanceKey].map((value) => value.trim()).filter(Boolean),
-                  })
-                }
-                className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary"
-              />
-            </label>
-          ))}
+          {([["recommendedCourses", "recommended_courses", "Recommended Training"]] as const).map(
+            ([guidanceKey, patchKey, label]) => (
+              <label key={guidanceKey} className="block text-sm">
+                {label}
+                <input
+                  value={guidance[guidanceKey].join(", ")}
+                  onChange={(e) =>
+                    onGuidanceChange({
+                      [patchKey]: e.target.value.split(",").map((value) => value.trimStart()),
+                    })
+                  }
+                  onBlur={() =>
+                    onGuidanceChange({
+                      [patchKey]: guidance[guidanceKey]
+                        .map((value) => value.trim())
+                        .filter(Boolean),
+                    })
+                  }
+                  className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary"
+                />
+              </label>
+            ),
+          )}
           <label className="block text-sm">
             Future of this Career
             <textarea
@@ -5874,7 +5908,7 @@ export function CareerDescriptionField({
               className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary"
             />
           </label>
-        </div>
+        </fieldset>
       </fieldset>
       {err && (
         <p role="alert" className="mt-1 text-xs text-destructive">

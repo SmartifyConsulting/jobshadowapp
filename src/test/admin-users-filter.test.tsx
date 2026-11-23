@@ -132,7 +132,8 @@ describe("User alphabet chips", () => {
     fireEvent.click(screen.getByRole("button", { name: "Regenerate this career" }));
     expect(ai).not.toHaveBeenCalled();
     resolveConfirm(true);
-    await waitFor(() => expect(onDraft).toHaveBeenCalledWith(existing, true));
+    const { self_directed_learning: _removed, ...remaining } = existing;
+    await waitFor(() => expect(onDraft).toHaveBeenCalledWith(remaining, true));
     expect(ai).toHaveBeenCalledWith({
       data: { career: "Accountant", fields: [...CAREER_DRAFT_FIELDS] },
     });
@@ -402,7 +403,6 @@ describe("Visible provider directories and career wizard", () => {
         fields: [
           "interpersonal_skills",
           "recommended_courses",
-          "self_directed_learning",
           "future_outlook",
           "ai_exposure_level",
           "ai_exposure_note",
@@ -412,6 +412,15 @@ describe("Visible provider directories and career wizard", () => {
     expect(screen.getByRole("button", { name: "AI: Fill missing fields" })).toHaveTextContent("");
     expect(screen.getByRole("button", { name: "Regenerate this career" })).toHaveTextContent("");
     expect(screen.getByRole("button", { name: "Update" })).toBeVisible();
+    expect(screen.queryByRole("heading", { name: /Edit Career/ })).toBeNull();
+    expect(screen.getByRole("group", { name: "Skills Required" })).toContainElement(
+      screen.getByRole("textbox", { name: "Interpersonal Skills" }),
+    );
+    expect(screen.getByRole("group", { name: "Career Preparation" })).toContainElement(
+      screen.getByRole("textbox", { name: "Recommended Training" }),
+    );
+    expect(screen.queryByText("Preview skills")).toBeNull();
+    expect(screen.queryByText(/Explore On Your Own/)).toBeNull();
     client.clear();
   });
 });
