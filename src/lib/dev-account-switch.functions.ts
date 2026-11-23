@@ -1,87 +1,70 @@
 import { createServerFn } from "@tanstack/react-start";
+import { setResponseHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { switchTarget, isSwitchPersona } from "./dev-personas";
 
-/** Named test personas for the profile switcher (see SiteLayout.tsx DevAccountSwitcher).
- * Deliberately allowed in production, but only usable by someone already signed in as one of
- * these named test accounts (including the previous Elena test login) — the switcher is hidden from everyone else client-side, and the server
- * function below independently re-checks the caller's own email against this list, so the UI
- * gate can't be bypassed by calling the function directly. */
-export const DEV_PERSONAS = [
-  { email: "info@georgiaadams.co.za", label: "Georgia Adams — Admin", role: "admin" as const },
-  { email: "georgia.adams@smartify.co.za", label: "Internet Solutions — Company", role: "hr_admin" as const },
-  { email: "nonastasia@gmail.com", label: "Anastasia — Mentor", role: "mentor" as const },
-  { email: "elenanicolettis@icloud.com", label: "Raphy Nicolettis — Scholar", role: "user" as const },
-] as const;
-
-/** Shared password for dev-persona accounts; only ever used from the dev-only switcher, never shown to the person signing in. */
-export const DEV_PERSONA_PASSWORD = "JobShadowDevSwitch!2026";
-
-/** Ensures a dev persona's auth account, role and demo profile data exist, so its profile is
- * immediately viewable when you switch to it. Idempotent — safe to call every time you switch. */
-export const bootstrapDevPersona = createServerFn({ method: "POST" })
+/** Switching authenticates only between the four fixed test accounts. It never
+ * creates users, changes roles/profiles, emails links, or uses a shared password. */
+export const switchDevPersona = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ email: z.string().trim().toLowerCase().email() }).parse(d))
+  .inputValidator((d: unknown) =>
+    z.object({ email: z.string().trim().toLowerCase().email() }).strict().parse(d),
+  )
   .handler(async ({ context, data }) => {
-    const callerEmail = typeof context.claims["email"] === "string" ? (context.claims["email"] as string).toLowerCase() : "";
-    if (callerEmail !== "elena@jobshadow.co.za" && !DEV_PERSONAS.some((p) => p.email.toLowerCase() === callerEmail)) throw new Error("Only the named test accounts can use the profile switcher.");
-    const persona = DEV_PERSONAS.find((p) => p.email.toLowerCase() === data.email);
-    if (!persona) throw new Error("Unknown dev persona.");
-
+    setResponseHeader("Cache-Control", "no-store");
+    const callerEmail = typeof context.claims["email"] === "string" ? context.claims["email"] : "";
+    const target = switchTarget(context.userId, callerEmail, data.email);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    let userId: string | null = null;
-    for (let page = 1; ; page++) {
-      const { data: users, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 });
-      if (error) throw new Error(error.message);
-      const found = users.users.find((u) => u.email?.toLowerCase() === persona.email);
-      if (found) { userId = found.id; break; }
-      if (users.users.length < 1000) break;
-    }
-
-    if (!userId) {
-      const created = await supabaseAdmin.auth.admin.createUser({ email: persona.email, password: DEV_PERSONA_PASSWORD, email_confirm: true });
-      if (created.error || !created.data.user) throw new Error(created.error?.message ?? "Unable to create dev persona account.");
-      userId = created.data.user.id;
-    } else {
-      // keep the password in sync in case it was ever changed from a real sign-in during testing
-      await supabaseAdmin.auth.admin.updateUserById(userId, { password: DEV_PERSONA_PASSWORD });
-    }
-
-    if (persona.role) {
-      await supabaseAdmin.from("user_roles").upsert({ user_id: userId, role: persona.role }, { onConflict: "user_id,role" });
-    }
-
-    const personaName = persona.label.split(" — ")[0]!;
-    const nameParts = personaName.split(" ");
-    await supabaseAdmin.from("profiles").upsert({
-      user_id: userId,
-      first_name: nameParts[0] ?? null,
-      last_name: nameParts.slice(1).join(" ") || null,
-      display_name: personaName,
-      updated_at: new Date().toISOString(),
+    const caller = await supabaseAdmin.auth.admin.getUserById(context.userId);
+    const user = await supabaseAdmin.auth.admin.getUserById(target.id);
+    if (
+      caller.error ||
+      !caller.data.user?.email_confirmed_at ||
+      (caller.data.user.banned_until && Date.parse(caller.data.user.banned_until) > Date.now()) ||
+      !isSwitchPersona(caller.data.user.id, caller.data.user.email)
+    )
+      throw new Error("This account cannot switch profiles.");
+    if (
+      user.error ||
+      !user.data.user?.email_confirmed_at ||
+      (user.data.user.banned_until && Date.parse(user.data.user.banned_until) > Date.now()) ||
+      !isSwitchPersona(user.data.user.id, user.data.user.email)
+    )
+      throw new Error("The test profile is unavailable.");
+    const generated = await supabaseAdmin.auth.admin.generateLink({
+      type: "magiclink",
+      email: target.email,
     });
-
-    if (persona.email === "georgia.adams@smartify.co.za" || persona.email === "nonastasia@gmail.com") {
-      const { data: existingCompany } = await supabaseAdmin.from("companies").select("id").or(`hr_email.eq.${persona.email},mentor_email.eq.${persona.email}`).maybeSingle();
-      if (!existingCompany) {
-        const { data: maxRow } = await supabaseAdmin.from("companies").select("id").order("id", { ascending: false }).limit(1).maybeSingle();
-        const nextId = (maxRow?.id ?? 0) + 1;
-        const inAWeek = new Date(Date.now() + 7 * 86400000);
-        const dateStr = `${inAWeek.getMonth() + 1}/${inAWeek.getDate()}/${inAWeek.getFullYear()}`;
-        await supabaseAdmin.from("companies").insert({
-          id: nextId,
-          company: "Internet Solutions",
-          sector: "Information Technology", career: "Software Developer",
-          location: "Cape Town", address: "1 Long Street, Cape Town",
-          description: "A digital consultancy building web and mobile products for South African businesses.",
-          dates: dateStr, availability: [dateStr],
-          hr_name: "Georgia Adams", hr_email: "georgia.adams@smartify.co.za", hr_phone: "+27821112222",
-          mentor_name: "Anastasia", mentor_email: "nonastasia@gmail.com", mentor_phone: "+27823334444", mentor_position: "Senior Developer",
-          max_applicants: 2, days_per_shadow: 1, amount: 350, mode: "In person", active: true,
-        });
-      }
-    }
-
-    return { ok: true };
+    if (
+      generated.error ||
+      generated.data.user?.id !== target.id ||
+      !generated.data.properties?.hashed_token
+    )
+      throw new Error("Unable to switch profile.");
+    const { createClient } = await import("@supabase/supabase-js");
+    const publicKey = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
+    const client = createClient(process.env["SUPABASE_URL"]!, publicKey, {
+      global: {
+        fetch: (input, init) => {
+          const headers = new Headers(init?.headers);
+          if (
+            (publicKey.startsWith("sb_publishable_") || publicKey.startsWith("sb_secret_")) &&
+            headers.get("Authorization") === `Bearer ${publicKey}`
+          )
+            headers.delete("Authorization");
+          headers.set("apikey", publicKey);
+          return fetch(input, { ...init, headers });
+        },
+      },
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    });
+    const verified = await client.auth.verifyOtp({
+      type: "magiclink",
+      token_hash: generated.data.properties.hashed_token,
+    });
+    const session = verified.data.session;
+    if (verified.error || !session || verified.data.user?.id !== target.id)
+      throw new Error("Unable to switch profile.");
+    return { access_token: session.access_token, refresh_token: session.refresh_token };
   });

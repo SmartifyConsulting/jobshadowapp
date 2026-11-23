@@ -1,18 +1,50 @@
 import { describe, expect, it } from "vitest";
 import { journeyProgress, isJourneyDestination } from "@/lib/journey-progress";
 
-const blank = { registered: true, profile: true, bookings: [], provider: true, hostProfile: false, placements: [], hostBookings: [], evaluations: [] };
+const blank = {
+  registered: true,
+  profile: true,
+  bookings: [],
+  provider: true,
+  hostProfile: false,
+  placements: [],
+  hostBookings: [],
+  evaluations: [],
+};
 describe("Personal journey completion", () => {
   it("does not complete booking or paperwork steps just because someone visited", () => {
-    expect(journeyProgress(blank).student).toEqual([true, true, false, false, false, false, false]);
+    expect(journeyProgress(blank).student).toEqual([
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+    ]);
     expect(journeyProgress(blank).provider[3]).toBe(false);
   });
   it("keeps new booking progress separate from an older completed experience", () => {
-    const progress = journeyProgress({ ...blank, bookings: [{ id: "new", status: "awaiting_payment", career: "Accountant" }, { id: "old", status: "completed", career: "Teacher" }], evaluations: [{ booking_id: "old", role: "scholar" }] });
-    expect(progress.student).toEqual([true, true, true, true, false, false, false]);
+    const progress = journeyProgress({
+      ...blank,
+      bookings: [
+        { id: "new", status: "awaiting_payment", career: "Accountant" },
+        { id: "old", status: "completed", career: "Teacher" },
+      ],
+      evaluations: [{ booking_id: "old", role: "scholar" }],
+    });
+    expect(progress.student).toEqual([true, true, true, true, false, false, false, false]);
   });
   it("ticks feedback only for the completed booking and verifies availability times", () => {
-    const progress = journeyProgress({ ...blank, bookings: [{ id: "done", status: "completed", career: "Accountant" }], evaluations: [{ booking_id: "done", role: "scholar" }], placements: [{ active: true, dates: "12/1/2026", arrival_time: "09:00", collection_time: null }] });
+    const progress = journeyProgress({
+      ...blank,
+      bookings: [{ id: "done", status: "completed", career: "Accountant" }],
+      evaluations: [{ booking_id: "done", role: "scholar" }],
+      placements: [
+        { active: true, dates: "12/1/2026", arrival_time: "09:00", collection_time: null },
+      ],
+    });
     expect(progress.student.every(Boolean)).toBe(true);
     expect(progress.provider[2]).toBe(false);
   });
@@ -20,5 +52,13 @@ describe("Personal journey completion", () => {
     expect(isJourneyDestination("studentForms")).toBe(true);
     expect(isJourneyDestination("https://evil.example")).toBe(false);
     expect(isJourneyDestination("constructor")).toBe(false);
+  });
+  it("marks recorded payment separately from outstanding forms", () => {
+    const result = journeyProgress({
+      ...blank,
+      bookings: [{ id: "paid", status: "indemnity_required", career: "Accountant" }],
+    });
+    expect(result.student[4]).toBe(true);
+    expect(result.student[5]).toBe(false);
   });
 });

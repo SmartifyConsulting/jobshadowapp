@@ -1,1837 +1,1849 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.18"
-  }
+    PostgrestVersion: "14.18";
+  };
   public: {
     Tables: {
       country_holiday_calendars: {
-        Row: { country_code: string; year: number; dates: string[]; synced_at: string }
-        Insert: { country_code: string; year: number; dates: string[]; synced_at?: string }
-        Update: { country_code?: string; year?: number; dates?: string[]; synced_at?: string }
-        Relationships: []
-      }
+        Row: { country_code: string; year: number; dates: string[]; synced_at: string };
+        Insert: { country_code: string; year: number; dates: string[]; synced_at?: string };
+        Update: { country_code?: string; year?: number; dates?: string[]; synced_at?: string };
+        Relationships: [];
+      };
       account_classification_reviews: {
-        Row: { user_id: string; reason: string; created_at: string }
-        Insert: { user_id: string; reason?: string; created_at?: string }
-        Update: { user_id?: string; reason?: string; created_at?: string }
-        Relationships: []
-      }
+        Row: { user_id: string; reason: string; created_at: string };
+        Insert: { user_id: string; reason?: string; created_at?: string };
+        Update: { user_id?: string; reason?: string; created_at?: string };
+        Relationships: [];
+      };
       scholar_profile_drafts: {
-        Row: { user_id: string; data: Json; step: string; updated_at: string }
-        Insert: { user_id: string; data?: Json; step?: string; updated_at?: string }
-        Update: { user_id?: string; data?: Json; step?: string; updated_at?: string }
-        Relationships: []
-      }
+        Row: { user_id: string; data: Json; step: string; updated_at: string };
+        Insert: { user_id: string; data?: Json; step?: string; updated_at?: string };
+        Update: { user_id?: string; data?: Json; step?: string; updated_at?: string };
+        Relationships: [];
+      };
       activity_log: {
         Row: {
-          action: string
-          actor_user_id: string | null
-          created_at: string
-          id: string
-          record_id: string
-          resource_type: string
-        }
+          action: string;
+          actor_user_id: string | null;
+          created_at: string;
+          id: string;
+          record_id: string;
+          resource_type: string;
+        };
         Insert: {
-          action: string
-          actor_user_id?: string | null
-          created_at?: string
-          id?: string
-          record_id: string
-          resource_type: string
-        }
+          action: string;
+          actor_user_id?: string | null;
+          created_at?: string;
+          id?: string;
+          record_id: string;
+          resource_type: string;
+        };
         Update: {
-          action?: string
-          actor_user_id?: string | null
-          created_at?: string
-          id?: string
-          record_id?: string
-          resource_type?: string
-        }
-        Relationships: []
-      }
+          action?: string;
+          actor_user_id?: string | null;
+          created_at?: string;
+          id?: string;
+          record_id?: string;
+          resource_type?: string;
+        };
+        Relationships: [];
+      };
       ai_token_ledger: {
         Row: {
-          actor_user_id: string | null
-          cached_input_tokens: number | null
-          cached_rate_per_million: number | null
-          cost_source: string
-          cost_usd: number | null
-          created_at: string
-          error_code: string | null
-          feature: string
-          id: string
-          input_rate_per_million: number | null
-          input_tokens: number | null
-          model: string
-          output_rate_per_million: number | null
-          output_tokens: number | null
-          provider: string
-          request_id: string | null
-          succeeded: boolean
-          total_tokens: number | null
-        }
+          actor_user_id: string | null;
+          cached_input_tokens: number | null;
+          cached_rate_per_million: number | null;
+          cost_source: string;
+          cost_usd: number | null;
+          created_at: string;
+          error_code: string | null;
+          feature: string;
+          id: string;
+          input_rate_per_million: number | null;
+          input_tokens: number | null;
+          model: string;
+          output_rate_per_million: number | null;
+          output_tokens: number | null;
+          provider: string;
+          request_id: string | null;
+          succeeded: boolean;
+          total_tokens: number | null;
+        };
         Insert: {
-          actor_user_id?: string | null
-          cached_input_tokens?: number | null
-          cached_rate_per_million?: number | null
-          cost_source?: string
-          cost_usd?: number | null
-          created_at?: string
-          error_code?: string | null
-          feature: string
-          id?: string
-          input_rate_per_million?: number | null
-          input_tokens?: number | null
-          model: string
-          output_rate_per_million?: number | null
-          output_tokens?: number | null
-          provider: string
-          request_id?: string | null
-          succeeded: boolean
-          total_tokens?: number | null
-        }
+          actor_user_id?: string | null;
+          cached_input_tokens?: number | null;
+          cached_rate_per_million?: number | null;
+          cost_source?: string;
+          cost_usd?: number | null;
+          created_at?: string;
+          error_code?: string | null;
+          feature: string;
+          id?: string;
+          input_rate_per_million?: number | null;
+          input_tokens?: number | null;
+          model: string;
+          output_rate_per_million?: number | null;
+          output_tokens?: number | null;
+          provider: string;
+          request_id?: string | null;
+          succeeded: boolean;
+          total_tokens?: number | null;
+        };
         Update: {
-          actor_user_id?: string | null
-          cached_input_tokens?: number | null
-          cached_rate_per_million?: number | null
-          cost_source?: string
-          cost_usd?: number | null
-          created_at?: string
-          error_code?: string | null
-          feature?: string
-          id?: string
-          input_rate_per_million?: number | null
-          input_tokens?: number | null
-          model?: string
-          output_rate_per_million?: number | null
-          output_tokens?: number | null
-          provider?: string
-          request_id?: string | null
-          succeeded?: boolean
-          total_tokens?: number | null
-        }
-        Relationships: []
-      }
+          actor_user_id?: string | null;
+          cached_input_tokens?: number | null;
+          cached_rate_per_million?: number | null;
+          cost_source?: string;
+          cost_usd?: number | null;
+          created_at?: string;
+          error_code?: string | null;
+          feature?: string;
+          id?: string;
+          input_rate_per_million?: number | null;
+          input_tokens?: number | null;
+          model?: string;
+          output_rate_per_million?: number | null;
+          output_tokens?: number | null;
+          provider?: string;
+          request_id?: string | null;
+          succeeded?: boolean;
+          total_tokens?: number | null;
+        };
+        Relationships: [];
+      };
       booking_settings: {
         Row: {
-          blackout_dates: string[]
-          cancellation_cutoff_days: number
-          documentation_deadline_days: number
-          id: number
-          max_advance_days: number
-          max_pending_requests: number
-          mentor_reminder_days: number[]
-          min_lead_days: number
-          no_availability_message: string
-          public_holidays: string[]
-          request_expiry_hours: number
-          reschedule_allowed: boolean
-          reschedule_min_notice_days: number
-          scholar_reminder_days: number[]
-          season_end_month: number
-          season_start_month: number
-          waitlist_expiry_hours: number
-        }
+          blackout_dates: string[];
+          cancellation_cutoff_days: number;
+          documentation_deadline_days: number;
+          id: number;
+          max_advance_days: number;
+          max_pending_requests: number;
+          mentor_reminder_days: number[];
+          min_lead_days: number;
+          no_availability_message: string;
+          public_holidays: string[];
+          request_expiry_hours: number;
+          reschedule_allowed: boolean;
+          reschedule_min_notice_days: number;
+          scholar_reminder_days: number[];
+          season_end_month: number;
+          season_start_month: number;
+          waitlist_expiry_hours: number;
+        };
         Insert: {
-          blackout_dates?: string[]
-          cancellation_cutoff_days?: number
-          documentation_deadline_days?: number
-          id?: number
-          max_advance_days?: number
-          max_pending_requests?: number
-          mentor_reminder_days?: number[]
-          min_lead_days?: number
-          no_availability_message?: string
-          public_holidays?: string[]
-          request_expiry_hours?: number
-          reschedule_allowed?: boolean
-          reschedule_min_notice_days?: number
-          scholar_reminder_days?: number[]
-          season_end_month?: number
-          season_start_month?: number
-          waitlist_expiry_hours?: number
-        }
+          blackout_dates?: string[];
+          cancellation_cutoff_days?: number;
+          documentation_deadline_days?: number;
+          id?: number;
+          max_advance_days?: number;
+          max_pending_requests?: number;
+          mentor_reminder_days?: number[];
+          min_lead_days?: number;
+          no_availability_message?: string;
+          public_holidays?: string[];
+          request_expiry_hours?: number;
+          reschedule_allowed?: boolean;
+          reschedule_min_notice_days?: number;
+          scholar_reminder_days?: number[];
+          season_end_month?: number;
+          season_start_month?: number;
+          waitlist_expiry_hours?: number;
+        };
         Update: {
-          blackout_dates?: string[]
-          cancellation_cutoff_days?: number
-          documentation_deadline_days?: number
-          id?: number
-          max_advance_days?: number
-          max_pending_requests?: number
-          mentor_reminder_days?: number[]
-          min_lead_days?: number
-          no_availability_message?: string
-          public_holidays?: string[]
-          request_expiry_hours?: number
-          reschedule_allowed?: boolean
-          reschedule_min_notice_days?: number
-          scholar_reminder_days?: number[]
-          season_end_month?: number
-          season_start_month?: number
-          waitlist_expiry_hours?: number
-        }
-        Relationships: []
-      }
+          blackout_dates?: string[];
+          cancellation_cutoff_days?: number;
+          documentation_deadline_days?: number;
+          id?: number;
+          max_advance_days?: number;
+          max_pending_requests?: number;
+          mentor_reminder_days?: number[];
+          min_lead_days?: number;
+          no_availability_message?: string;
+          public_holidays?: string[];
+          request_expiry_hours?: number;
+          reschedule_allowed?: boolean;
+          reschedule_min_notice_days?: number;
+          scholar_reminder_days?: number[];
+          season_end_month?: number;
+          season_start_month?: number;
+          waitlist_expiry_hours?: number;
+        };
+        Relationships: [];
+      };
       bookings: {
         Row: {
-          ad_hoc_note: string | null
-          ad_hoc_requested: boolean
-          amount_due: number
-          base_amount: number
-          career: string | null
-          company: string | null
-          company_id: number
-          company_indemnity_path: string | null
-          company_indemnity_signed_at: string | null
-          created_at: string
-          day_before_reminder_sent_at: string | null
-          decline_reason: string | null
-          discount: number
-          guardian_signature_status: string
-          guardian_signed_at: string | null
-          id: string
-          indemnity_path: string | null
-          indemnity_received: boolean
-          internship_notes: string | null
-          internship_preapproved: boolean
-          location: string | null
-          mentor_reminders_sent: number[]
-          mode: string | null
-          no_show_by: string | null
-          no_show_reason: string | null
-          paid_at: string | null
-          refund_credited_at: string | null
-          refund_status: string
-          reminder_sent_at: string | null
-          scholar_reminders_sent: number[]
-          sector: string | null
-          shadow_date: string
-          status: string
-          user_id: string
-          voucher_code: string | null
-        }
+          ad_hoc_note: string | null;
+          ad_hoc_requested: boolean;
+          amount_due: number;
+          base_amount: number;
+          career: string | null;
+          company: string | null;
+          company_id: number;
+          company_indemnity_path: string | null;
+          company_indemnity_signed_at: string | null;
+          created_at: string;
+          day_before_reminder_sent_at: string | null;
+          decline_reason: string | null;
+          discount: number;
+          guardian_signature_status: string;
+          guardian_signed_at: string | null;
+          id: string;
+          indemnity_path: string | null;
+          indemnity_received: boolean;
+          internship_notes: string | null;
+          internship_preapproved: boolean;
+          location: string | null;
+          mentor_reminders_sent: number[];
+          mode: string | null;
+          no_show_by: string | null;
+          no_show_reason: string | null;
+          paid_at: string | null;
+          refund_credited_at: string | null;
+          refund_status: string;
+          reminder_sent_at: string | null;
+          scholar_reminders_sent: number[];
+          sector: string | null;
+          shadow_date: string;
+          status: string;
+          user_id: string;
+          voucher_code: string | null;
+        };
         Insert: {
-          ad_hoc_note?: string | null
-          ad_hoc_requested?: boolean
-          amount_due?: number
-          base_amount?: number
-          career?: string | null
-          company?: string | null
-          company_id: number
-          company_indemnity_path?: string | null
-          company_indemnity_signed_at?: string | null
-          created_at?: string
-          day_before_reminder_sent_at?: string | null
-          decline_reason?: string | null
-          discount?: number
-          guardian_signature_status?: string
-          guardian_signed_at?: string | null
-          id?: string
-          indemnity_path?: string | null
-          indemnity_received?: boolean
-          internship_notes?: string | null
-          internship_preapproved?: boolean
-          location?: string | null
-          mentor_reminders_sent?: number[]
-          mode?: string | null
-          no_show_by?: string | null
-          no_show_reason?: string | null
-          paid_at?: string | null
-          refund_credited_at?: string | null
-          refund_status?: string
-          reminder_sent_at?: string | null
-          scholar_reminders_sent?: number[]
-          sector?: string | null
-          shadow_date: string
-          status?: string
-          user_id?: string
-          voucher_code?: string | null
-        }
+          ad_hoc_note?: string | null;
+          ad_hoc_requested?: boolean;
+          amount_due?: number;
+          base_amount?: number;
+          career?: string | null;
+          company?: string | null;
+          company_id: number;
+          company_indemnity_path?: string | null;
+          company_indemnity_signed_at?: string | null;
+          created_at?: string;
+          day_before_reminder_sent_at?: string | null;
+          decline_reason?: string | null;
+          discount?: number;
+          guardian_signature_status?: string;
+          guardian_signed_at?: string | null;
+          id?: string;
+          indemnity_path?: string | null;
+          indemnity_received?: boolean;
+          internship_notes?: string | null;
+          internship_preapproved?: boolean;
+          location?: string | null;
+          mentor_reminders_sent?: number[];
+          mode?: string | null;
+          no_show_by?: string | null;
+          no_show_reason?: string | null;
+          paid_at?: string | null;
+          refund_credited_at?: string | null;
+          refund_status?: string;
+          reminder_sent_at?: string | null;
+          scholar_reminders_sent?: number[];
+          sector?: string | null;
+          shadow_date: string;
+          status?: string;
+          user_id?: string;
+          voucher_code?: string | null;
+        };
         Update: {
-          ad_hoc_note?: string | null
-          ad_hoc_requested?: boolean
-          amount_due?: number
-          base_amount?: number
-          career?: string | null
-          company?: string | null
-          company_id?: number
-          company_indemnity_path?: string | null
-          company_indemnity_signed_at?: string | null
-          created_at?: string
-          day_before_reminder_sent_at?: string | null
-          decline_reason?: string | null
-          discount?: number
-          guardian_signature_status?: string
-          guardian_signed_at?: string | null
-          id?: string
-          indemnity_path?: string | null
-          indemnity_received?: boolean
-          internship_notes?: string | null
-          internship_preapproved?: boolean
-          location?: string | null
-          mentor_reminders_sent?: number[]
-          mode?: string | null
-          no_show_by?: string | null
-          no_show_reason?: string | null
-          paid_at?: string | null
-          refund_credited_at?: string | null
-          refund_status?: string
-          reminder_sent_at?: string | null
-          scholar_reminders_sent?: number[]
-          sector?: string | null
-          shadow_date?: string
-          status?: string
-          user_id?: string
-          voucher_code?: string | null
-        }
-        Relationships: []
-      }
+          ad_hoc_note?: string | null;
+          ad_hoc_requested?: boolean;
+          amount_due?: number;
+          base_amount?: number;
+          career?: string | null;
+          company?: string | null;
+          company_id?: number;
+          company_indemnity_path?: string | null;
+          company_indemnity_signed_at?: string | null;
+          created_at?: string;
+          day_before_reminder_sent_at?: string | null;
+          decline_reason?: string | null;
+          discount?: number;
+          guardian_signature_status?: string;
+          guardian_signed_at?: string | null;
+          id?: string;
+          indemnity_path?: string | null;
+          indemnity_received?: boolean;
+          internship_notes?: string | null;
+          internship_preapproved?: boolean;
+          location?: string | null;
+          mentor_reminders_sent?: number[];
+          mode?: string | null;
+          no_show_by?: string | null;
+          no_show_reason?: string | null;
+          paid_at?: string | null;
+          refund_credited_at?: string | null;
+          refund_status?: string;
+          reminder_sent_at?: string | null;
+          scholar_reminders_sent?: number[];
+          sector?: string | null;
+          shadow_date?: string;
+          status?: string;
+          user_id?: string;
+          voucher_code?: string | null;
+        };
+        Relationships: [];
+      };
       career_favourites: {
         Row: {
-          career_slug: string
-          created_at: string
-          user_id: string
-        }
+          career_slug: string;
+          created_at: string;
+          user_id: string;
+        };
         Insert: {
-          career_slug: string
-          created_at?: string
-          user_id: string
-        }
+          career_slug: string;
+          created_at?: string;
+          user_id: string;
+        };
         Update: {
-          career_slug?: string
-          created_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
+          career_slug?: string;
+          created_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       career_merge_backup_2026: {
         Row: {
-          old_career: string | null
-          old_mode: string | null
-          record_id: string | null
-          source: string | null
-        }
+          old_career: string | null;
+          old_mode: string | null;
+          record_id: string | null;
+          source: string | null;
+        };
         Insert: {
-          old_career?: string | null
-          old_mode?: string | null
-          record_id?: string | null
-          source?: string | null
-        }
+          old_career?: string | null;
+          old_mode?: string | null;
+          record_id?: string | null;
+          source?: string | null;
+        };
         Update: {
-          old_career?: string | null
-          old_mode?: string | null
-          record_id?: string | null
-          source?: string | null
-        }
-        Relationships: []
-      }
+          old_career?: string | null;
+          old_mode?: string | null;
+          record_id?: string | null;
+          source?: string | null;
+        };
+        Relationships: [];
+      };
       careers: {
         Row: {
-          ai_exposure_level: string | null
-          ai_exposure_note: string | null
-          archived: boolean
-          description: string | null
-          future_outlook: string | null
-          id: number
-          ideal_for: string | null
-          interpersonal_skills: string[]
-          name: string
-          portrayed_availability: number
-          recommended_courses: string[]
-          school_skills: string[] | null
-          self_directed_learning: string[]
-          specialisations: string[] | null
-          subjects: string[] | null
-          workplace_skills: string[] | null
-        }
+          mentor_target_count: number;
+          mentor_available_count: number | null;
+          ai_exposure_level: string | null;
+          ai_exposure_note: string | null;
+          archived: boolean;
+          description: string | null;
+          future_outlook: string | null;
+          id: number;
+          ideal_for: string | null;
+          interpersonal_skills: string[];
+          name: string;
+          portrayed_availability: number;
+          recommended_courses: string[];
+          school_skills: string[] | null;
+          self_directed_learning: string[];
+          specialisations: string[] | null;
+          subjects: string[] | null;
+          workplace_skills: string[] | null;
+        };
         Insert: {
-          ai_exposure_level?: string | null
-          ai_exposure_note?: string | null
-          archived?: boolean
-          description?: string | null
-          future_outlook?: string | null
-          id: number
-          ideal_for?: string | null
-          interpersonal_skills?: string[]
-          name: string
-          portrayed_availability?: number
-          recommended_courses?: string[]
-          school_skills?: string[] | null
-          self_directed_learning?: string[]
-          specialisations?: string[] | null
-          subjects?: string[] | null
-          workplace_skills?: string[] | null
-        }
+          mentor_target_count?: number;
+          mentor_available_count?: number | null;
+          ai_exposure_level?: string | null;
+          ai_exposure_note?: string | null;
+          archived?: boolean;
+          description?: string | null;
+          future_outlook?: string | null;
+          id: number;
+          ideal_for?: string | null;
+          interpersonal_skills?: string[];
+          name: string;
+          portrayed_availability?: number;
+          recommended_courses?: string[];
+          school_skills?: string[] | null;
+          self_directed_learning?: string[];
+          specialisations?: string[] | null;
+          subjects?: string[] | null;
+          workplace_skills?: string[] | null;
+        };
         Update: {
-          ai_exposure_level?: string | null
-          ai_exposure_note?: string | null
-          archived?: boolean
-          description?: string | null
-          future_outlook?: string | null
-          id?: number
-          ideal_for?: string | null
-          interpersonal_skills?: string[]
-          name?: string
-          portrayed_availability?: number
-          recommended_courses?: string[]
-          school_skills?: string[] | null
-          self_directed_learning?: string[]
-          specialisations?: string[] | null
-          subjects?: string[] | null
-          workplace_skills?: string[] | null
-        }
-        Relationships: []
-      }
+          mentor_target_count?: number;
+          mentor_available_count?: number | null;
+          ai_exposure_level?: string | null;
+          ai_exposure_note?: string | null;
+          archived?: boolean;
+          description?: string | null;
+          future_outlook?: string | null;
+          id?: number;
+          ideal_for?: string | null;
+          interpersonal_skills?: string[];
+          name?: string;
+          portrayed_availability?: number;
+          recommended_courses?: string[];
+          school_skills?: string[] | null;
+          self_directed_learning?: string[];
+          specialisations?: string[] | null;
+          subjects?: string[] | null;
+          workplace_skills?: string[] | null;
+        };
+        Relationships: [];
+      };
       companies: {
         Row: {
-          country_code: string
-          active: boolean
-          address: string | null
-          allow_off_season: boolean
-          allow_weekends: boolean
-          amount: number | null
-          arrival_instruction: string | null
-          arrival_time: string | null
-          availability: string[] | null
-          backup_mentor_email: string | null
-          backup_mentor_first_name: string | null
-          backup_mentor_last_name: string | null
-          backup_mentor_name: string | null
-          backup_mentor_phone: string | null
-          career: string | null
-          collection_time: string | null
-          company: string | null
-          company_code: string | null
-          custom_indemnity_path: string | null
-          custom_indemnity_text: string | null
-          dates: string | null
-          days_per_shadow: number | null
-          description: string | null
-          hr_contact_email: string | null
-          hr_contact_first_name: string | null
-          hr_contact_last_name: string | null
-          hr_contact_name: string | null
-          hr_contact_phone: string | null
-          hr_email: string | null
-          hr_name: string | null
-          hr_phone: string | null
-          id: number
-          location: string | null
-          logo_path: string | null
-          max_applicants: number | null
-          mentor_email: string | null
-          mentor_first_name: string | null
-          mentor_last_name: string | null
-          mentor_name: string | null
-          mentor_phone: string | null
-          mentor_position: string | null
-          mode: string | null
-          period: string | null
-          sector: string | null
-          total_days: number | null
-          website: string | null
-          year: number
-        }
+          country_code: string;
+          active: boolean;
+          address: string | null;
+          allow_off_season: boolean;
+          allow_weekends: boolean;
+          amount: number | null;
+          arrival_instruction: string | null;
+          arrival_time: string | null;
+          availability: string[] | null;
+          backup_mentor_email: string | null;
+          backup_mentor_first_name: string | null;
+          backup_mentor_last_name: string | null;
+          backup_mentor_name: string | null;
+          backup_mentor_phone: string | null;
+          career: string | null;
+          collection_time: string | null;
+          company: string | null;
+          company_code: string | null;
+          custom_indemnity_path: string | null;
+          custom_indemnity_text: string | null;
+          dates: string | null;
+          days_per_shadow: number | null;
+          description: string | null;
+          hr_contact_email: string | null;
+          hr_contact_first_name: string | null;
+          hr_contact_last_name: string | null;
+          hr_contact_name: string | null;
+          hr_contact_phone: string | null;
+          hr_email: string | null;
+          hr_name: string | null;
+          hr_phone: string | null;
+          id: number;
+          location: string | null;
+          logo_path: string | null;
+          max_applicants: number | null;
+          mentor_email: string | null;
+          mentor_first_name: string | null;
+          mentor_last_name: string | null;
+          mentor_name: string | null;
+          mentor_phone: string | null;
+          mentor_position: string | null;
+          mode: string | null;
+          period: string | null;
+          sector: string | null;
+          total_days: number | null;
+          website: string | null;
+          year: number;
+        };
         Insert: {
-          active?: boolean
-          address?: string | null
-          allow_off_season?: boolean
-          allow_weekends?: boolean
-          amount?: number | null
-          arrival_instruction?: string | null
-          arrival_time?: string | null
-          availability?: string[] | null
-          backup_mentor_email?: string | null
-          backup_mentor_first_name?: string | null
-          backup_mentor_last_name?: string | null
-          backup_mentor_name?: string | null
-          backup_mentor_phone?: string | null
-          career?: string | null
-          collection_time?: string | null
-          company?: string | null
-          company_code?: string | null
-          custom_indemnity_path?: string | null
-          custom_indemnity_text?: string | null
-          dates?: string | null
-          days_per_shadow?: number | null
-          description?: string | null
-          hr_contact_email?: string | null
-          hr_contact_first_name?: string | null
-          hr_contact_last_name?: string | null
-          hr_contact_name?: string | null
-          hr_contact_phone?: string | null
-          hr_email?: string | null
-          hr_name?: string | null
-          hr_phone?: string | null
-          id: number
-          location?: string | null
-          logo_path?: string | null
-          max_applicants?: number | null
-          mentor_email?: string | null
-          mentor_first_name?: string | null
-          mentor_last_name?: string | null
-          mentor_name?: string | null
-          mentor_phone?: string | null
-          mentor_position?: string | null
-          mode?: string | null
-          period?: string | null
-          sector?: string | null
-          total_days?: number | null
-          website?: string | null
-          year?: number
-        }
+          active?: boolean;
+          address?: string | null;
+          allow_off_season?: boolean;
+          allow_weekends?: boolean;
+          amount?: number | null;
+          arrival_instruction?: string | null;
+          arrival_time?: string | null;
+          availability?: string[] | null;
+          backup_mentor_email?: string | null;
+          backup_mentor_first_name?: string | null;
+          backup_mentor_last_name?: string | null;
+          backup_mentor_name?: string | null;
+          backup_mentor_phone?: string | null;
+          career?: string | null;
+          collection_time?: string | null;
+          company?: string | null;
+          company_code?: string | null;
+          custom_indemnity_path?: string | null;
+          custom_indemnity_text?: string | null;
+          dates?: string | null;
+          days_per_shadow?: number | null;
+          description?: string | null;
+          hr_contact_email?: string | null;
+          hr_contact_first_name?: string | null;
+          hr_contact_last_name?: string | null;
+          hr_contact_name?: string | null;
+          hr_contact_phone?: string | null;
+          hr_email?: string | null;
+          hr_name?: string | null;
+          hr_phone?: string | null;
+          id: number;
+          location?: string | null;
+          logo_path?: string | null;
+          max_applicants?: number | null;
+          mentor_email?: string | null;
+          mentor_first_name?: string | null;
+          mentor_last_name?: string | null;
+          mentor_name?: string | null;
+          mentor_phone?: string | null;
+          mentor_position?: string | null;
+          mode?: string | null;
+          period?: string | null;
+          sector?: string | null;
+          total_days?: number | null;
+          website?: string | null;
+          year?: number;
+        };
         Update: {
-          active?: boolean
-          address?: string | null
-          allow_off_season?: boolean
-          allow_weekends?: boolean
-          amount?: number | null
-          arrival_instruction?: string | null
-          arrival_time?: string | null
-          availability?: string[] | null
-          backup_mentor_email?: string | null
-          backup_mentor_first_name?: string | null
-          backup_mentor_last_name?: string | null
-          backup_mentor_name?: string | null
-          backup_mentor_phone?: string | null
-          career?: string | null
-          collection_time?: string | null
-          company?: string | null
-          company_code?: string | null
-          custom_indemnity_path?: string | null
-          custom_indemnity_text?: string | null
-          dates?: string | null
-          days_per_shadow?: number | null
-          description?: string | null
-          hr_contact_email?: string | null
-          hr_contact_first_name?: string | null
-          hr_contact_last_name?: string | null
-          hr_contact_name?: string | null
-          hr_contact_phone?: string | null
-          hr_email?: string | null
-          hr_name?: string | null
-          hr_phone?: string | null
-          id?: number
-          location?: string | null
-          logo_path?: string | null
-          max_applicants?: number | null
-          mentor_email?: string | null
-          mentor_first_name?: string | null
-          mentor_last_name?: string | null
-          mentor_name?: string | null
-          mentor_phone?: string | null
-          mentor_position?: string | null
-          mode?: string | null
-          period?: string | null
-          sector?: string | null
-          total_days?: number | null
-          website?: string | null
-          year?: number
-        }
-        Relationships: []
-      }
+          active?: boolean;
+          address?: string | null;
+          allow_off_season?: boolean;
+          allow_weekends?: boolean;
+          amount?: number | null;
+          arrival_instruction?: string | null;
+          arrival_time?: string | null;
+          availability?: string[] | null;
+          backup_mentor_email?: string | null;
+          backup_mentor_first_name?: string | null;
+          backup_mentor_last_name?: string | null;
+          backup_mentor_name?: string | null;
+          backup_mentor_phone?: string | null;
+          career?: string | null;
+          collection_time?: string | null;
+          company?: string | null;
+          company_code?: string | null;
+          custom_indemnity_path?: string | null;
+          custom_indemnity_text?: string | null;
+          dates?: string | null;
+          days_per_shadow?: number | null;
+          description?: string | null;
+          hr_contact_email?: string | null;
+          hr_contact_first_name?: string | null;
+          hr_contact_last_name?: string | null;
+          hr_contact_name?: string | null;
+          hr_contact_phone?: string | null;
+          hr_email?: string | null;
+          hr_name?: string | null;
+          hr_phone?: string | null;
+          id?: number;
+          location?: string | null;
+          logo_path?: string | null;
+          max_applicants?: number | null;
+          mentor_email?: string | null;
+          mentor_first_name?: string | null;
+          mentor_last_name?: string | null;
+          mentor_name?: string | null;
+          mentor_phone?: string | null;
+          mentor_position?: string | null;
+          mode?: string | null;
+          period?: string | null;
+          sector?: string | null;
+          total_days?: number | null;
+          website?: string | null;
+          year?: number;
+        };
+        Relationships: [];
+      };
       email_outbox: {
         Row: {
-          body: string
-          booking_id: string | null
-          created_at: string
-          id: string
-          recipient: string | null
-          status: string
-          subject: string
-          template: string
-          user_id: string | null
-        }
+          body: string;
+          booking_id: string | null;
+          created_at: string;
+          id: string;
+          recipient: string | null;
+          status: string;
+          subject: string;
+          template: string;
+          user_id: string | null;
+        };
         Insert: {
-          body: string
-          booking_id?: string | null
-          created_at?: string
-          id?: string
-          recipient?: string | null
-          status?: string
-          subject: string
-          template: string
-          user_id?: string | null
-        }
+          body: string;
+          booking_id?: string | null;
+          created_at?: string;
+          id?: string;
+          recipient?: string | null;
+          status?: string;
+          subject: string;
+          template: string;
+          user_id?: string | null;
+        };
         Update: {
-          body?: string
-          booking_id?: string | null
-          created_at?: string
-          id?: string
-          recipient?: string | null
-          status?: string
-          subject?: string
-          template?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
+          body?: string;
+          booking_id?: string | null;
+          created_at?: string;
+          id?: string;
+          recipient?: string | null;
+          status?: string;
+          subject?: string;
+          template?: string;
+          user_id?: string | null;
+        };
+        Relationships: [];
+      };
       evaluations: {
         Row: {
-          booking_id: string
-          comments_text: string | null
-          continue_text: string | null
-          created_at: string
-          extra_text: string | null
-          id: string
-          ratings: number[]
-          role: string
-          start_text: string | null
-          stop_text: string | null
-        }
+          booking_id: string;
+          comments_text: string | null;
+          continue_text: string | null;
+          created_at: string;
+          extra_text: string | null;
+          id: string;
+          ratings: number[];
+          role: string;
+          start_text: string | null;
+          stop_text: string | null;
+        };
         Insert: {
-          booking_id: string
-          comments_text?: string | null
-          continue_text?: string | null
-          created_at?: string
-          extra_text?: string | null
-          id?: string
-          ratings: number[]
-          role: string
-          start_text?: string | null
-          stop_text?: string | null
-        }
+          booking_id: string;
+          comments_text?: string | null;
+          continue_text?: string | null;
+          created_at?: string;
+          extra_text?: string | null;
+          id?: string;
+          ratings: number[];
+          role: string;
+          start_text?: string | null;
+          stop_text?: string | null;
+        };
         Update: {
-          booking_id?: string
-          comments_text?: string | null
-          continue_text?: string | null
-          created_at?: string
-          extra_text?: string | null
-          id?: string
-          ratings?: number[]
-          role?: string
-          start_text?: string | null
-          stop_text?: string | null
-        }
+          booking_id?: string;
+          comments_text?: string | null;
+          continue_text?: string | null;
+          created_at?: string;
+          extra_text?: string | null;
+          id?: string;
+          ratings?: number[];
+          role?: string;
+          start_text?: string | null;
+          stop_text?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "evaluations_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "bookings"
-            referencedColumns: ["id"]
+            foreignKeyName: "evaluations_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       host_profiles: {
         Row: {
-          avoid_weekends: boolean
-          bio: string | null
-          certifications: string | null
-          contact_hours_note: string | null
-          cv_path: string | null
-          engagement_notes: string | null
-          has_hr_admin: boolean
-          hr_email: string | null
-          hr_first_name: string | null
-          hr_last_name: string | null
-          linkedin_url: string | null
-          mentor_email: string
-          preferred_contact: string
-          specialties: string[]
-          updated_at: string
-          via_company: boolean
-        }
+          avoid_weekends: boolean;
+          bio: string | null;
+          certifications: string | null;
+          contact_hours_note: string | null;
+          cv_path: string | null;
+          engagement_notes: string | null;
+          has_hr_admin: boolean;
+          hr_email: string | null;
+          hr_first_name: string | null;
+          hr_last_name: string | null;
+          linkedin_url: string | null;
+          mentor_email: string;
+          preferred_contact: string;
+          specialties: string[];
+          updated_at: string;
+          via_company: boolean;
+        };
         Insert: {
-          avoid_weekends?: boolean
-          bio?: string | null
-          certifications?: string | null
-          contact_hours_note?: string | null
-          cv_path?: string | null
-          engagement_notes?: string | null
-          has_hr_admin?: boolean
-          hr_email?: string | null
-          hr_first_name?: string | null
-          hr_last_name?: string | null
-          linkedin_url?: string | null
-          mentor_email: string
-          preferred_contact?: string
-          specialties?: string[]
-          updated_at?: string
-          via_company?: boolean
-        }
+          avoid_weekends?: boolean;
+          bio?: string | null;
+          certifications?: string | null;
+          contact_hours_note?: string | null;
+          cv_path?: string | null;
+          engagement_notes?: string | null;
+          has_hr_admin?: boolean;
+          hr_email?: string | null;
+          hr_first_name?: string | null;
+          hr_last_name?: string | null;
+          linkedin_url?: string | null;
+          mentor_email: string;
+          preferred_contact?: string;
+          specialties?: string[];
+          updated_at?: string;
+          via_company?: boolean;
+        };
         Update: {
-          avoid_weekends?: boolean
-          bio?: string | null
-          certifications?: string | null
-          contact_hours_note?: string | null
-          cv_path?: string | null
-          engagement_notes?: string | null
-          has_hr_admin?: boolean
-          hr_email?: string | null
-          hr_first_name?: string | null
-          hr_last_name?: string | null
-          linkedin_url?: string | null
-          mentor_email?: string
-          preferred_contact?: string
-          specialties?: string[]
-          updated_at?: string
-          via_company?: boolean
-        }
-        Relationships: []
-      }
+          avoid_weekends?: boolean;
+          bio?: string | null;
+          certifications?: string | null;
+          contact_hours_note?: string | null;
+          cv_path?: string | null;
+          engagement_notes?: string | null;
+          has_hr_admin?: boolean;
+          hr_email?: string | null;
+          hr_first_name?: string | null;
+          hr_last_name?: string | null;
+          linkedin_url?: string | null;
+          mentor_email?: string;
+          preferred_contact?: string;
+          specialties?: string[];
+          updated_at?: string;
+          via_company?: boolean;
+        };
+        Relationships: [];
+      };
       host_settings: {
         Row: {
-          auto_accept: boolean
-          available_slots: Json
-          blackout_dates: string[]
-          buffer_days: number | null
-          max_consecutive_hours: number | null
-          max_shadows_per_month: number | null
-          max_shadows_per_week: number | null
-          mentor_email: string
-          paused: boolean
-          updated_at: string
-        }
+          auto_accept: boolean;
+          available_slots: Json;
+          blackout_dates: string[];
+          buffer_days: number | null;
+          max_consecutive_hours: number | null;
+          max_shadows_per_month: number | null;
+          max_shadows_per_week: number | null;
+          mentor_email: string;
+          paused: boolean;
+          updated_at: string;
+        };
         Insert: {
-          auto_accept?: boolean
-          available_slots?: Json
-          blackout_dates?: string[]
-          buffer_days?: number | null
-          max_consecutive_hours?: number | null
-          max_shadows_per_month?: number | null
-          max_shadows_per_week?: number | null
-          mentor_email: string
-          paused?: boolean
-          updated_at?: string
-        }
+          auto_accept?: boolean;
+          available_slots?: Json;
+          blackout_dates?: string[];
+          buffer_days?: number | null;
+          max_consecutive_hours?: number | null;
+          max_shadows_per_month?: number | null;
+          max_shadows_per_week?: number | null;
+          mentor_email: string;
+          paused?: boolean;
+          updated_at?: string;
+        };
         Update: {
-          auto_accept?: boolean
-          available_slots?: Json
-          blackout_dates?: string[]
-          buffer_days?: number | null
-          max_consecutive_hours?: number | null
-          max_shadows_per_month?: number | null
-          max_shadows_per_week?: number | null
-          mentor_email?: string
-          paused?: boolean
-          updated_at?: string
-        }
-        Relationships: []
-      }
+          auto_accept?: boolean;
+          available_slots?: Json;
+          blackout_dates?: string[];
+          buffer_days?: number | null;
+          max_consecutive_hours?: number | null;
+          max_shadows_per_month?: number | null;
+          max_shadows_per_week?: number | null;
+          mentor_email?: string;
+          paused?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       legacy_applications: {
         Row: {
-          cancelled: boolean | null
-          career: string | null
-          company: string | null
-          company_code: string | null
-          contact: string | null
-          dates: string | null
-          email: string | null
-          first_name: string | null
-          id: number
-          id_number: string | null
-          imported_at: string
-          indemnity: boolean | null
-          last_name: string | null
-          location: string | null
-          name: string | null
-          paid: boolean | null
-          referral: string | null
-          school: string | null
-          sector: string | null
-        }
+          cancelled: boolean | null;
+          career: string | null;
+          company: string | null;
+          company_code: string | null;
+          contact: string | null;
+          dates: string | null;
+          email: string | null;
+          first_name: string | null;
+          id: number;
+          id_number: string | null;
+          imported_at: string;
+          indemnity: boolean | null;
+          last_name: string | null;
+          location: string | null;
+          name: string | null;
+          paid: boolean | null;
+          referral: string | null;
+          school: string | null;
+          sector: string | null;
+        };
         Insert: {
-          cancelled?: boolean | null
-          career?: string | null
-          company?: string | null
-          company_code?: string | null
-          contact?: string | null
-          dates?: string | null
-          email?: string | null
-          first_name?: string | null
-          id: number
-          id_number?: string | null
-          imported_at?: string
-          indemnity?: boolean | null
-          last_name?: string | null
-          location?: string | null
-          name?: string | null
-          paid?: boolean | null
-          referral?: string | null
-          school?: string | null
-          sector?: string | null
-        }
+          cancelled?: boolean | null;
+          career?: string | null;
+          company?: string | null;
+          company_code?: string | null;
+          contact?: string | null;
+          dates?: string | null;
+          email?: string | null;
+          first_name?: string | null;
+          id: number;
+          id_number?: string | null;
+          imported_at?: string;
+          indemnity?: boolean | null;
+          last_name?: string | null;
+          location?: string | null;
+          name?: string | null;
+          paid?: boolean | null;
+          referral?: string | null;
+          school?: string | null;
+          sector?: string | null;
+        };
         Update: {
-          cancelled?: boolean | null
-          career?: string | null
-          company?: string | null
-          company_code?: string | null
-          contact?: string | null
-          dates?: string | null
-          email?: string | null
-          first_name?: string | null
-          id?: number
-          id_number?: string | null
-          imported_at?: string
-          indemnity?: boolean | null
-          last_name?: string | null
-          location?: string | null
-          name?: string | null
-          paid?: boolean | null
-          referral?: string | null
-          school?: string | null
-          sector?: string | null
-        }
-        Relationships: []
-      }
+          cancelled?: boolean | null;
+          career?: string | null;
+          company?: string | null;
+          company_code?: string | null;
+          contact?: string | null;
+          dates?: string | null;
+          email?: string | null;
+          first_name?: string | null;
+          id?: number;
+          id_number?: string | null;
+          imported_at?: string;
+          indemnity?: boolean | null;
+          last_name?: string | null;
+          location?: string | null;
+          name?: string | null;
+          paid?: boolean | null;
+          referral?: string | null;
+          school?: string | null;
+          sector?: string | null;
+        };
+        Relationships: [];
+      };
       legacy_users: {
         Row: {
-          email: string | null
-          first_name: string | null
-          has_profile: boolean | null
-          id: number
-          is_spam: boolean
-          last_name: string | null
-          name: string | null
-        }
+          email: string | null;
+          first_name: string | null;
+          has_profile: boolean | null;
+          id: number;
+          is_spam: boolean;
+          last_name: string | null;
+          name: string | null;
+        };
         Insert: {
-          email?: string | null
-          first_name?: string | null
-          has_profile?: boolean | null
-          id: number
-          is_spam?: boolean
-          last_name?: string | null
-          name?: string | null
-        }
+          email?: string | null;
+          first_name?: string | null;
+          has_profile?: boolean | null;
+          id: number;
+          is_spam?: boolean;
+          last_name?: string | null;
+          name?: string | null;
+        };
         Update: {
-          email?: string | null
-          first_name?: string | null
-          has_profile?: boolean | null
-          id?: number
-          is_spam?: boolean
-          last_name?: string | null
-          name?: string | null
-        }
-        Relationships: []
-      }
+          email?: string | null;
+          first_name?: string | null;
+          has_profile?: boolean | null;
+          id?: number;
+          is_spam?: boolean;
+          last_name?: string | null;
+          name?: string | null;
+        };
+        Relationships: [];
+      };
       legal_documents: {
         Row: {
-          body: string
-          key: string
-          title: string
-          updated_at: string
-        }
+          body: string;
+          key: string;
+          title: string;
+          updated_at: string;
+        };
         Insert: {
-          body: string
-          key: string
-          title: string
-          updated_at?: string
-        }
+          body: string;
+          key: string;
+          title: string;
+          updated_at?: string;
+        };
         Update: {
-          body?: string
-          key?: string
-          title?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
+          body?: string;
+          key?: string;
+          title?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       partner_applications: {
         Row: {
-          applicant_type: string
-          company: string
-          created_at: string
-          email: string
-          first_name: string
-          id: string
-          last_name: string
-          message: string
-          phone: string
-          reviewed_at: string | null
-          status: string
-          user_id: string
-        }
+          applicant_type: string;
+          company: string;
+          created_at: string;
+          email: string;
+          first_name: string;
+          id: string;
+          last_name: string;
+          message: string;
+          phone: string;
+          reviewed_at: string | null;
+          status: string;
+          user_id: string;
+        };
         Insert: {
-          applicant_type: string
-          company: string
-          created_at?: string
-          email: string
-          first_name: string
-          id?: string
-          last_name: string
-          message?: string
-          phone: string
-          reviewed_at?: string | null
-          status?: string
-          user_id: string
-        }
+          applicant_type: string;
+          company: string;
+          created_at?: string;
+          email: string;
+          first_name: string;
+          id?: string;
+          last_name: string;
+          message?: string;
+          phone: string;
+          reviewed_at?: string | null;
+          status?: string;
+          user_id: string;
+        };
         Update: {
-          applicant_type?: string
-          company?: string
-          created_at?: string
-          email?: string
-          first_name?: string
-          id?: string
-          last_name?: string
-          message?: string
-          phone?: string
-          reviewed_at?: string | null
-          status?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
+          applicant_type?: string;
+          company?: string;
+          created_at?: string;
+          email?: string;
+          first_name?: string;
+          id?: string;
+          last_name?: string;
+          message?: string;
+          phone?: string;
+          reviewed_at?: string | null;
+          status?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
-          avatar_path: string | null
-          display_name: string | null
-          first_name: string | null
-          last_name: string | null
-          self_registered: boolean
-          updated_at: string
-          user_id: string
-        }
+          avatar_path: string | null;
+          display_name: string | null;
+          first_name: string | null;
+          last_name: string | null;
+          self_registered: boolean;
+          updated_at: string;
+          user_id: string;
+        };
         Insert: {
-          avatar_path?: string | null
-          display_name?: string | null
-          first_name?: string | null
-          last_name?: string | null
-          self_registered?: boolean
-          updated_at?: string
-          user_id: string
-        }
+          avatar_path?: string | null;
+          display_name?: string | null;
+          first_name?: string | null;
+          last_name?: string | null;
+          self_registered?: boolean;
+          updated_at?: string;
+          user_id: string;
+        };
         Update: {
-          avatar_path?: string | null
-          display_name?: string | null
-          first_name?: string | null
-          last_name?: string | null
-          self_registered?: boolean
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
+          avatar_path?: string | null;
+          display_name?: string | null;
+          first_name?: string | null;
+          last_name?: string | null;
+          self_registered?: boolean;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       role_descriptions: {
         Row: {
-          created_at: string
-          field: string
-          id: number
-          summary: string
-          title: string
-          updated_at: string
-          video: string | null
-        }
+          created_at: string;
+          field: string;
+          id: number;
+          summary: string;
+          title: string;
+          updated_at: string;
+          video: string | null;
+        };
         Insert: {
-          created_at?: string
-          field: string
-          id?: number
-          summary?: string
-          title: string
-          updated_at?: string
-          video?: string | null
-        }
+          created_at?: string;
+          field: string;
+          id?: number;
+          summary?: string;
+          title: string;
+          updated_at?: string;
+          video?: string | null;
+        };
         Update: {
-          created_at?: string
-          field?: string
-          id?: number
-          summary?: string
-          title?: string
-          updated_at?: string
-          video?: string | null
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          field?: string;
+          id?: number;
+          summary?: string;
+          title?: string;
+          updated_at?: string;
+          video?: string | null;
+        };
+        Relationships: [];
+      };
       role_notify_subscriptions: {
         Row: {
-          career: string
-          created_at: string
-          email: string
-          id: string
-          notified_at: string | null
-        }
+          career: string;
+          created_at: string;
+          email: string;
+          id: string;
+          notified_at: string | null;
+        };
         Insert: {
-          career: string
-          created_at?: string
-          email: string
-          id?: string
-          notified_at?: string | null
-        }
+          career: string;
+          created_at?: string;
+          email: string;
+          id?: string;
+          notified_at?: string | null;
+        };
         Update: {
-          career?: string
-          created_at?: string
-          email?: string
-          id?: string
-          notified_at?: string | null
-        }
-        Relationships: []
-      }
+          career?: string;
+          created_at?: string;
+          email?: string;
+          id?: string;
+          notified_at?: string | null;
+        };
+        Relationships: [];
+      };
       scholar_profiles: {
         Row: {
-          career_interests: string | null
-          citizenship: string | null
-          contact_no: string
-          created_at: string
-          dietary: string | null
-          disability: string | null
-          first_name: string | null
-          full_name: string
-          gender: string | null
-          guardian_contact: string | null
-          guardian_email: string | null
-          guardian_first_name: string | null
-          guardian_id: string | null
-          guardian_last_name: string | null
-          guardian_name: string | null
-          id_file_path: string | null
-          id_number: string
-          id_verified: boolean
-          id_verified_at: string | null
-          info_accurate: boolean
-          last_name: string | null
-          photo_path: string | null
-          popi_accepted: boolean
-          popi_accepted_at: string | null
-          population_group: string | null
-          school: string
-          school_type: string
-          tc_accepted: boolean
-          tc_accepted_at: string | null
-          updated_at: string
-          user_id: string
-          where_heard: string | null
-        }
+          school_country_code: string | null;
+          career_interests: string | null;
+          citizenship: string | null;
+          contact_no: string;
+          created_at: string;
+          dietary: string | null;
+          disability: string | null;
+          first_name: string | null;
+          full_name: string;
+          gender: string | null;
+          guardian_contact: string | null;
+          guardian_email: string | null;
+          guardian_first_name: string | null;
+          guardian_id: string | null;
+          guardian_last_name: string | null;
+          guardian_name: string | null;
+          id_file_path: string | null;
+          id_number: string;
+          id_verified: boolean;
+          id_verified_at: string | null;
+          info_accurate: boolean;
+          last_name: string | null;
+          photo_path: string | null;
+          popi_accepted: boolean;
+          popi_accepted_at: string | null;
+          population_group: string | null;
+          school: string;
+          school_type: string;
+          tc_accepted: boolean;
+          tc_accepted_at: string | null;
+          updated_at: string;
+          user_id: string;
+          where_heard: string | null;
+        };
         Insert: {
-          career_interests?: string | null
-          citizenship?: string | null
-          contact_no: string
-          created_at?: string
-          dietary?: string | null
-          disability?: string | null
-          first_name?: string | null
-          full_name: string
-          gender?: string | null
-          guardian_contact?: string | null
-          guardian_email?: string | null
-          guardian_first_name?: string | null
-          guardian_id?: string | null
-          guardian_last_name?: string | null
-          guardian_name?: string | null
-          id_file_path?: string | null
-          id_number: string
-          id_verified?: boolean
-          id_verified_at?: string | null
-          info_accurate?: boolean
-          last_name?: string | null
-          photo_path?: string | null
-          popi_accepted?: boolean
-          popi_accepted_at?: string | null
-          population_group?: string | null
-          school: string
-          school_type: string
-          tc_accepted?: boolean
-          tc_accepted_at?: string | null
-          updated_at?: string
-          user_id: string
-          where_heard?: string | null
-        }
+          school_country_code?: string | null;
+          career_interests?: string | null;
+          citizenship?: string | null;
+          contact_no: string;
+          created_at?: string;
+          dietary?: string | null;
+          disability?: string | null;
+          first_name?: string | null;
+          full_name: string;
+          gender?: string | null;
+          guardian_contact?: string | null;
+          guardian_email?: string | null;
+          guardian_first_name?: string | null;
+          guardian_id?: string | null;
+          guardian_last_name?: string | null;
+          guardian_name?: string | null;
+          id_file_path?: string | null;
+          id_number: string;
+          id_verified?: boolean;
+          id_verified_at?: string | null;
+          info_accurate?: boolean;
+          last_name?: string | null;
+          photo_path?: string | null;
+          popi_accepted?: boolean;
+          popi_accepted_at?: string | null;
+          population_group?: string | null;
+          school: string;
+          school_type: string;
+          tc_accepted?: boolean;
+          tc_accepted_at?: string | null;
+          updated_at?: string;
+          user_id: string;
+          where_heard?: string | null;
+        };
         Update: {
-          career_interests?: string | null
-          citizenship?: string | null
-          contact_no?: string
-          created_at?: string
-          dietary?: string | null
-          disability?: string | null
-          first_name?: string | null
-          full_name?: string
-          gender?: string | null
-          guardian_contact?: string | null
-          guardian_email?: string | null
-          guardian_first_name?: string | null
-          guardian_id?: string | null
-          guardian_last_name?: string | null
-          guardian_name?: string | null
-          id_file_path?: string | null
-          id_number?: string
-          id_verified?: boolean
-          id_verified_at?: string | null
-          info_accurate?: boolean
-          last_name?: string | null
-          photo_path?: string | null
-          popi_accepted?: boolean
-          popi_accepted_at?: string | null
-          population_group?: string | null
-          school?: string
-          school_type?: string
-          tc_accepted?: boolean
-          tc_accepted_at?: string | null
-          updated_at?: string
-          user_id?: string
-          where_heard?: string | null
-        }
-        Relationships: []
-      }
+          school_country_code?: string | null;
+          career_interests?: string | null;
+          citizenship?: string | null;
+          contact_no?: string;
+          created_at?: string;
+          dietary?: string | null;
+          disability?: string | null;
+          first_name?: string | null;
+          full_name?: string;
+          gender?: string | null;
+          guardian_contact?: string | null;
+          guardian_email?: string | null;
+          guardian_first_name?: string | null;
+          guardian_id?: string | null;
+          guardian_last_name?: string | null;
+          guardian_name?: string | null;
+          id_file_path?: string | null;
+          id_number?: string;
+          id_verified?: boolean;
+          id_verified_at?: string | null;
+          info_accurate?: boolean;
+          last_name?: string | null;
+          photo_path?: string | null;
+          popi_accepted?: boolean;
+          popi_accepted_at?: string | null;
+          population_group?: string | null;
+          school?: string;
+          school_type?: string;
+          tc_accepted?: boolean;
+          tc_accepted_at?: string | null;
+          updated_at?: string;
+          user_id?: string;
+          where_heard?: string | null;
+        };
+        Relationships: [];
+      };
       sectors: {
         Row: {
-          id: number
-          name: string
-        }
+          id: number;
+          name: string;
+        };
         Insert: {
-          id: number
-          name: string
-        }
+          id: number;
+          name: string;
+        };
         Update: {
-          id?: number
-          name?: string
-        }
-        Relationships: []
-      }
+          id?: number;
+          name?: string;
+        };
+        Relationships: [];
+      };
       user_notification_state: {
         Row: {
-          dismissed_at: string | null
-          notification_id: string
-          read_at: string | null
-          user_id: string
-        }
+          dismissed_at: string | null;
+          notification_id: string;
+          read_at: string | null;
+          user_id: string;
+        };
         Insert: {
-          dismissed_at?: string | null
-          notification_id: string
-          read_at?: string | null
-          user_id: string
-        }
+          dismissed_at?: string | null;
+          notification_id: string;
+          read_at?: string | null;
+          user_id: string;
+        };
         Update: {
-          dismissed_at?: string | null
-          notification_id?: string
-          read_at?: string | null
-          user_id?: string
-        }
+          dismissed_at?: string | null;
+          notification_id?: string;
+          read_at?: string | null;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "user_notification_state_notification_id_fkey"
-            columns: ["notification_id"]
-            isOneToOne: false
-            referencedRelation: "email_outbox"
-            referencedColumns: ["id"]
+            foreignKeyName: "user_notification_state_notification_id_fkey";
+            columns: ["notification_id"];
+            isOneToOne: false;
+            referencedRelation: "email_outbox";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       user_roles: {
         Row: {
-          id: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
+          id: string;
+          role: Database["public"]["Enums"]["app_role"];
+          user_id: string;
+        };
         Insert: {
-          id?: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
+          id?: string;
+          role: Database["public"]["Enums"]["app_role"];
+          user_id: string;
+        };
         Update: {
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id?: string
-        }
-        Relationships: []
-      }
+          id?: string;
+          role?: Database["public"]["Enums"]["app_role"];
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       vouchers: {
         Row: {
-          available_from: string | null
-          available_until: string | null
-          careers: string[] | null
-          code: string | null
-          discount: number | null
-          id: number
-          name: string | null
-          usage_limit: number | null
-        }
+          available_from: string | null;
+          available_until: string | null;
+          careers: string[] | null;
+          code: string | null;
+          discount: number | null;
+          id: number;
+          name: string | null;
+          usage_limit: number | null;
+        };
         Insert: {
-          available_from?: string | null
-          available_until?: string | null
-          careers?: string[] | null
-          code?: string | null
-          discount?: number | null
-          id: number
-          name?: string | null
-          usage_limit?: number | null
-        }
+          available_from?: string | null;
+          available_until?: string | null;
+          careers?: string[] | null;
+          code?: string | null;
+          discount?: number | null;
+          id: number;
+          name?: string | null;
+          usage_limit?: number | null;
+        };
         Update: {
-          available_from?: string | null
-          available_until?: string | null
-          careers?: string[] | null
-          code?: string | null
-          discount?: number | null
-          id?: number
-          name?: string | null
-          usage_limit?: number | null
-        }
-        Relationships: []
-      }
+          available_from?: string | null;
+          available_until?: string | null;
+          careers?: string[] | null;
+          code?: string | null;
+          discount?: number | null;
+          id?: number;
+          name?: string | null;
+          usage_limit?: number | null;
+        };
+        Relationships: [];
+      };
       wallet_transactions: {
         Row: {
-          amount: number
-          booking_id: string | null
-          created_at: string
-          id: string
-          reason: string
-          user_id: string
-        }
+          amount: number;
+          booking_id: string | null;
+          created_at: string;
+          id: string;
+          reason: string;
+          user_id: string;
+        };
         Insert: {
-          amount: number
-          booking_id?: string | null
-          created_at?: string
-          id?: string
-          reason: string
-          user_id: string
-        }
+          amount: number;
+          booking_id?: string | null;
+          created_at?: string;
+          id?: string;
+          reason: string;
+          user_id: string;
+        };
         Update: {
-          amount?: number
-          booking_id?: string | null
-          created_at?: string
-          id?: string
-          reason?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
+          amount?: number;
+          booking_id?: string | null;
+          created_at?: string;
+          id?: string;
+          reason?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       wallets: {
         Row: {
-          balance: number
-          updated_at: string
-          user_id: string
-        }
+          balance: number;
+          updated_at: string;
+          user_id: string;
+        };
         Insert: {
-          balance?: number
-          updated_at?: string
-          user_id: string
-        }
+          balance?: number;
+          updated_at?: string;
+          user_id: string;
+        };
         Update: {
-          balance?: number
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-    }
+          balance?: number;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+    };
     Views: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Functions: {
-      get_placement_country: { Args: { _id: number }; Returns: string }
-      get_country_public_holidays: { Args: { _country_code: string }; Returns: string[] }
-      store_country_public_holidays: { Args: { _country_code: string; _year: number; _dates: string[] }; Returns: undefined }
-      set_placement_country: { Args: { _id: number; _country_code: string }; Returns: undefined }
+      get_placement_country: { Args: { _id: number }; Returns: string };
+      get_country_public_holidays: { Args: { _country_code: string }; Returns: string[] };
+      store_country_public_holidays: {
+        Args: { _country_code: string; _year: number; _dates: string[] };
+        Returns: undefined;
+      };
+      set_placement_country: { Args: { _id: number; _country_code: string }; Returns: undefined };
       admin_list_accounts: {
-        Args: never
+        Args: never;
         Returns: {
-          avatar_path: string
-          booking_count: number
-          contact_no: string
-          created_at: string
-          display_name: string
-          email: string
-          first_name: string
-          full_name: string
-          has_profile: boolean
-          has_scholar_profile: boolean
-          id: string
-          id_file_path: string
-          id_number: string
-          id_verified: boolean
-          is_spam: boolean
-          last_accessed_at: string
-          last_name: string
-          photo_path: string
-          roles: string[]
-          scholar_first_name: string
-          scholar_last_name: string
-          school: string
-          self_registered: boolean
-        }[]
-      }
+          avatar_path: string;
+          booking_count: number;
+          contact_no: string;
+          created_at: string;
+          display_name: string;
+          email: string;
+          first_name: string;
+          full_name: string;
+          has_profile: boolean;
+          has_scholar_profile: boolean;
+          id: string;
+          id_file_path: string;
+          id_number: string;
+          id_verified: boolean;
+          is_spam: boolean;
+          last_accessed_at: string;
+          last_name: string;
+          photo_path: string;
+          roles: string[];
+          scholar_first_name: string;
+          scholar_last_name: string;
+          school: string;
+          self_registered: boolean;
+        }[];
+      };
       admin_list_mentor_classifications: {
-        Args: never
+        Args: never;
         Returns: {
-          avoid_weekends: boolean
-          contact_hours_note: string
-          engagement_notes: string
-          has_hr_admin: boolean
-          hr_email: string
-          hr_first_name: string
-          hr_last_name: string
-          mentor_email: string
-          preferred_contact: string
-          via_company: boolean
-        }[]
-      }
+          avoid_weekends: boolean;
+          contact_hours_note: string;
+          engagement_notes: string;
+          has_hr_admin: boolean;
+          hr_email: string;
+          hr_first_name: string;
+          hr_last_name: string;
+          mentor_email: string;
+          preferred_contact: string;
+          via_company: boolean;
+        }[];
+      };
       admin_list_pending_refunds: {
-        Args: never
+        Args: never;
         Returns: {
-          amount_due: number
-          career: string
-          company: string
-          id: string
-          no_show_reason: string
-          scholar_name: string
-          shadow_date: string
-        }[]
-      }
+          amount_due: number;
+          career: string;
+          company: string;
+          id: string;
+          no_show_reason: string;
+          scholar_name: string;
+          shadow_date: string;
+        }[];
+      };
       admin_review_no_show_refund: {
-        Args: { _approve: boolean; _booking: string }
-        Returns: undefined
-      }
+        Args: { _approve: boolean; _booking: string };
+        Returns: undefined;
+      };
       admin_user_applications: {
-        Args: { _user_id: string }
+        Args: { _user_id: string };
         Returns: {
-          cancelled: boolean
-          career: string
-          company: string
-          dates: string
-          id: string
-          indemnity: boolean
-          paid: boolean
-          source: string
-        }[]
-      }
+          cancelled: boolean;
+          career: string;
+          company: string;
+          dates: string;
+          id: string;
+          indemnity: boolean;
+          paid: boolean;
+          source: string;
+        }[];
+      };
       can_read_own_notification: {
-        Args: { _notification: string }
-        Returns: boolean
-      }
+        Args: { _notification: string };
+        Returns: boolean;
+      };
       check_voucher: {
-        Args: { _code: string }
+        Args: { _code: string };
         Returns: {
-          code: string
-          discount: number
-        }[]
-      }
-      complete_and_request_evaluations: { Args: never; Returns: undefined }
-      confirm_test_payment: { Args: { _booking: string }; Returns: undefined }
+          code: string;
+          discount: number;
+        }[];
+      };
+      complete_and_request_evaluations: { Args: never; Returns: undefined };
+      confirm_test_payment: { Args: { _booking: string }; Returns: undefined };
       copy_companies_to_year: {
-        Args: { _from_year: number; _to_year: number }
-        Returns: number
-      }
+        Args: { _from_year: number; _to_year: number };
+        Returns: number;
+      };
       credit_wallet: {
         Args: {
-          _amount: number
-          _booking_id?: string
-          _reason: string
-          _user_id: string
-        }
-        Returns: undefined
-      }
+          _amount: number;
+          _booking_id?: string;
+          _reason: string;
+          _user_id: string;
+        };
+        Returns: undefined;
+      };
       email_company_bee_report: {
-        Args: { _hr_email: string }
-        Returns: undefined
-      }
+        Args: { _hr_email: string };
+        Returns: undefined;
+      };
       get_booking_company_details: {
-        Args: { _booking: string }
+        Args: { _booking: string };
         Returns: {
-          address: string
-          arrival_time: string
-          collection_time: string
-          company: string
-          custom_indemnity_text: string
-          location: string
-        }[]
-      }
+          address: string;
+          arrival_time: string;
+          collection_time: string;
+          company: string;
+          custom_indemnity_text: string;
+          location: string;
+        }[];
+      };
       get_company_bee_report: {
-        Args: { _hr_email: string }
+        Args: { _hr_email: string };
         Returns: {
-          career: string
-          citizenship: string
-          days_per_shadow: number
-          disability: string
-          gender: string
-          mentor_name: string
-          population_group: string
-          scholar_name: string
-          school: string
-          shadow_date: string
-          status: string
-        }[]
-      }
+          career: string;
+          citizenship: string;
+          days_per_shadow: number;
+          disability: string;
+          gender: string;
+          mentor_name: string;
+          population_group: string;
+          scholar_name: string;
+          school: string;
+          shadow_date: string;
+          status: string;
+        }[];
+      };
       get_evaluation_context: {
-        Args: { _booking: string }
+        Args: { _booking: string };
         Returns: {
-          already_submitted: boolean
-          career: string
-          company: string
-          shadow_date: string
-          viewer_role: string
-        }[]
-      }
+          already_submitted: boolean;
+          career: string;
+          company: string;
+          shadow_date: string;
+          viewer_role: string;
+        }[];
+      };
       get_host_profile_for_placement: {
-        Args: { _company_id: number }
+        Args: { _company_id: number };
         Returns: {
-          bio: string
-          certifications: string
-          specialties: string[]
-        }[]
-      }
+          bio: string;
+          certifications: string;
+          specialties: string[];
+        }[];
+      };
       get_indemnity_context: {
-        Args: { _booking: string }
+        Args: { _booking: string };
         Returns: {
-          career: string
-          company: string
-          company_signed: boolean
-          custom_indemnity_text: string
-          location: string
-          needs_company_doc: boolean
-          scholar_name: string
-          school: string
-          shadow_date: string
-          standard_signed: boolean
-          viewer_role: string
-        }[]
-      }
+          career: string;
+          company: string;
+          company_signed: boolean;
+          custom_indemnity_text: string;
+          location: string;
+          needs_company_doc: boolean;
+          scholar_name: string;
+          school: string;
+          shadow_date: string;
+          standard_signed: boolean;
+          viewer_role: string;
+        }[];
+      };
       get_my_host_profile: {
-        Args: never
+        Args: never;
         Returns: {
-          avoid_weekends: boolean
-          bio: string | null
-          certifications: string | null
-          contact_hours_note: string | null
-          cv_path: string | null
-          engagement_notes: string | null
-          has_hr_admin: boolean
-          hr_email: string | null
-          hr_first_name: string | null
-          hr_last_name: string | null
-          linkedin_url: string | null
-          mentor_email: string
-          preferred_contact: string
-          specialties: string[]
-          updated_at: string
-          via_company: boolean
-        }
+          avoid_weekends: boolean;
+          bio: string | null;
+          certifications: string | null;
+          contact_hours_note: string | null;
+          cv_path: string | null;
+          engagement_notes: string | null;
+          has_hr_admin: boolean;
+          hr_email: string | null;
+          hr_first_name: string | null;
+          hr_last_name: string | null;
+          linkedin_url: string | null;
+          mentor_email: string;
+          preferred_contact: string;
+          specialties: string[];
+          updated_at: string;
+          via_company: boolean;
+        };
         SetofOptions: {
-          from: "*"
-          to: "host_profiles"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
+          from: "*";
+          to: "host_profiles";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       get_my_host_settings: {
-        Args: never
+        Args: never;
         Returns: {
-          auto_accept: boolean
-          available_slots: Json
-          blackout_dates: string[]
-          buffer_days: number | null
-          max_consecutive_hours: number | null
-          max_shadows_per_month: number | null
-          max_shadows_per_week: number | null
-          mentor_email: string
-          paused: boolean
-          updated_at: string
-        }
+          auto_accept: boolean;
+          available_slots: Json;
+          blackout_dates: string[];
+          buffer_days: number | null;
+          max_consecutive_hours: number | null;
+          max_shadows_per_month: number | null;
+          max_shadows_per_week: number | null;
+          mentor_email: string;
+          paused: boolean;
+          updated_at: string;
+        };
         SetofOptions: {
-          from: "*"
-          to: "host_settings"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
+          from: "*";
+          to: "host_settings";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       get_my_notifications: {
-        Args: never
+        Args: never;
         Returns: {
-          body: string
-          created_at: string
-          id: string
-          read_at: string
-          subject: string
-        }[]
-      }
-      get_my_wallet_balance: { Args: never; Returns: number }
-      get_no_availability_message: { Args: never; Returns: string }
+          body: string;
+          created_at: string;
+          id: string;
+          read_at: string;
+          subject: string;
+        }[];
+      };
+      get_my_wallet_balance: { Args: never; Returns: number };
+      get_no_availability_message: { Args: never; Returns: string };
       get_parent_children: {
-        Args: never
+        Args: never;
         Returns: {
-          career_interests: string
-          full_name: string
-          pending_bookings: Json
-          scholar_user_id: string
-          school: string
-        }[]
-      }
+          career_interests: string;
+          full_name: string;
+          pending_bookings: Json;
+          scholar_user_id: string;
+          school: string;
+        }[];
+      };
       get_public_career_content: {
-        Args: never
+        Args: never;
         Returns: {
-          description: string
-          name: string
-        }[]
-      }
+          description: string;
+          name: string;
+        }[];
+      };
       get_public_career_details: {
-        Args: never
+        Args: never;
         Returns: {
-          description: string
-          name: string
-          school_skills: string[]
-          workplace_skills: string[]
-        }[]
-      }
+          description: string;
+          name: string;
+          school_skills: string[];
+          workplace_skills: string[];
+        }[];
+      };
       get_public_career_guidance: {
-        Args: never
+        Args: never;
         Returns: {
-          description: string
-          ideal_for: string
-          name: string
-          school_skills: string[]
-          specialisations: string[]
-          subjects: string[]
-          workplace_skills: string[]
-        }[]
-      }
-      get_public_holidays: { Args: never; Returns: string[] }
+          description: string;
+          ideal_for: string;
+          name: string;
+          school_skills: string[];
+          specialisations: string[];
+          subjects: string[];
+          workplace_skills: string[];
+        }[];
+      };
+      get_public_holidays: { Args: never; Returns: string[] };
       get_season_window: {
-        Args: never
+        Args: never;
         Returns: {
-          season_end_month: number
-          season_start_month: number
-        }[]
-      }
+          season_end_month: number;
+          season_start_month: number;
+        }[];
+      };
       has_role: {
         Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
+          _role: Database["public"]["Enums"]["app_role"];
+          _user_id: string;
+        };
+        Returns: boolean;
+      };
       is_mentor_email_match: {
-        Args: { _mentor_email: string }
-        Returns: boolean
-      }
+        Args: { _mentor_email: string };
+        Returns: boolean;
+      };
       list_mentor_bookings: {
-        Args: never
+        Args: never;
         Returns: {
-          career: string
-          company: string
-          decline_reason: string
-          id: string
-          indemnity_received: boolean
-          internship_notes: string
-          internship_preapproved: boolean
-          location: string
-          scholar_contact: string
-          scholar_name: string
-          scholar_school: string
-          shadow_date: string
-          status: string
-        }[]
-      }
+          career: string;
+          company: string;
+          decline_reason: string;
+          id: string;
+          indemnity_received: boolean;
+          internship_notes: string;
+          internship_preapproved: boolean;
+          location: string;
+          scholar_contact: string;
+          scholar_name: string;
+          scholar_school: string;
+          shadow_date: string;
+          status: string;
+        }[];
+      };
       list_mentor_placements: {
-        Args: never
+        Args: never;
         Returns: {
-          active: boolean
-          allow_off_season: boolean
-          allow_weekends: boolean
-          arrival_time: string
-          career: string
-          collection_time: string
-          company: string
-          dates: string
-          days_per_shadow: number
-          description: string
-          id: number
-          location: string
-          max_applicants: number
-          mode: string
-          sector: string
-        }[]
-      }
+          active: boolean;
+          allow_off_season: boolean;
+          allow_weekends: boolean;
+          arrival_time: string;
+          career: string;
+          collection_time: string;
+          company: string;
+          dates: string;
+          days_per_shadow: number;
+          description: string;
+          id: number;
+          location: string;
+          max_applicants: number;
+          mode: string;
+          sector: string;
+        }[];
+      };
+      get_public_career_availability: {
+        Args: never;
+        Returns: { name: string; mentor_target_count: number; mentor_available_count: number }[];
+      };
+      search_country_schools: {
+        Args: { _country: string; _search?: string };
+        Returns: { id: string; name: string; region: string; city: string; school_type: string }[];
+      };
+      list_my_company_mentors: {
+        Args: never;
+        Returns: Json;
+      };
       list_my_hr_companies: {
-        Args: never
+        Args: never;
         Returns: {
-          company: string
-          hr_email: string
-        }[]
-      }
+          company: string;
+          hr_email: string;
+        }[];
+      };
       list_partner_logos: {
-        Args: never
+        Args: never;
         Returns: {
-          company: string
-          logo_path: string
-        }[]
-      }
+          company: string;
+          logo_path: string;
+        }[];
+      };
       list_placements: {
-        Args: never
+        Args: never;
         Returns: {
-          amount: number
-          arrival_time: string
-          availability: string
-          career: string
-          collection_time: string
-          company: string
-          days_per_shadow: number
-          description: string
-          id: number
-          location: string
-          mode: string
-          sector: string
-        }[]
-      }
+          amount: number;
+          arrival_time: string;
+          availability: string;
+          career: string;
+          collection_time: string;
+          company: string;
+          days_per_shadow: number;
+          description: string;
+          id: number;
+          location: string;
+          mode: string;
+          sector: string;
+        }[];
+      };
       list_public_careers: {
-        Args: never
+        Args: never;
         Returns: {
-          ai_exposure_level: string
-          ai_exposure_note: string
-          description: string
-          future_outlook: string
-          id: number
-          interpersonal_skills: string[]
-          name: string
-          portrayed_availability: number
-          recommended_courses: string[]
-          self_directed_learning: string[]
-        }[]
-      }
-      normalize_career_name: { Args: { _n: string }; Returns: string }
-      release_expired_booking_holds: { Args: never; Returns: undefined }
-      report_mentor_no_show: { Args: { _booking: string }; Returns: undefined }
+          ai_exposure_level: string;
+          ai_exposure_note: string;
+          description: string;
+          future_outlook: string;
+          id: number;
+          interpersonal_skills: string[];
+          name: string;
+          portrayed_availability: number;
+          recommended_courses: string[];
+          self_directed_learning: string[];
+        }[];
+      };
+      normalize_career_name: { Args: { _n: string }; Returns: string };
+      release_expired_booking_holds: { Args: never; Returns: undefined };
+      report_mentor_no_show: { Args: { _booking: string }; Returns: undefined };
       report_scholar_no_show: {
-        Args: { _booking: string; _reason: string }
-        Returns: undefined
-      }
+        Args: { _booking: string; _reason: string };
+        Returns: undefined;
+      };
       respond_to_booking_request: {
-        Args: { _approve: boolean; _booking: string; _decline_reason?: string }
-        Returns: undefined
-      }
-      send_scheduled_reminders: { Args: never; Returns: undefined }
+        Args: { _approve: boolean; _booking: string; _decline_reason?: string };
+        Returns: undefined;
+      };
+      send_scheduled_reminders: { Args: never; Returns: undefined };
       set_company_indemnity_path: {
-        Args: { _booking: string; _path: string }
-        Returns: undefined
-      }
+        Args: { _booking: string; _path: string };
+        Returns: undefined;
+      };
       set_indemnity_path: {
-        Args: { _booking: string; _path: string }
-        Returns: undefined
-      }
+        Args: { _booking: string; _path: string };
+        Returns: undefined;
+      };
       set_internship_preapproval: {
-        Args: { _booking: string; _notes: string; _preapproved: boolean }
-        Returns: undefined
-      }
+        Args: { _booking: string; _notes: string; _preapproved: boolean };
+        Returns: undefined;
+      };
       set_my_notification_state: {
-        Args: { _action: string; _notification: string }
-        Returns: undefined
-      }
+        Args: { _action: string; _notification: string };
+        Returns: undefined;
+      };
       submit_evaluation: {
         Args: {
-          _booking: string
-          _comments: string
-          _continue: string
-          _extra: string
-          _ratings: number[]
-          _role: string
-          _start: string
-          _stop: string
-        }
-        Returns: undefined
-      }
+          _booking: string;
+          _comments: string;
+          _continue: string;
+          _extra: string;
+          _ratings: number[];
+          _role: string;
+          _start: string;
+          _stop: string;
+        };
+        Returns: undefined;
+      };
       submit_guardian_signature: {
-        Args: { _booking: string; _document: string; _path: string }
-        Returns: undefined
-      }
-      submit_indemnity: { Args: { _booking: string }; Returns: undefined }
+        Args: { _booking: string; _document: string; _path: string };
+        Returns: undefined;
+      };
+      submit_indemnity: { Args: { _booking: string }; Returns: undefined };
       submit_partner_application: {
         Args: {
-          _applicant_type: string
-          _company: string
-          _first_name: string
-          _last_name: string
-          _message?: string
-          _phone: string
-        }
-        Returns: string
-      }
+          _applicant_type: string;
+          _company: string;
+          _first_name: string;
+          _last_name: string;
+          _message?: string;
+          _phone: string;
+        };
+        Returns: string;
+      };
       update_mentor_placement: {
         Args: {
-          _active: boolean
-          _arrival_time: string
-          _collection_time: string
-          _dates: string
-          _description: string
-          _id: number
-          _max_applicants: number
-        }
-        Returns: undefined
-      }
+          _active: boolean;
+          _arrival_time: string;
+          _collection_time: string;
+          _dates: string;
+          _description: string;
+          _id: number;
+          _max_applicants: number;
+        };
+        Returns: undefined;
+      };
       update_my_host_profile: {
         Args: {
-          _avoid_weekends?: boolean
-          _bio: string
-          _certifications: string
-          _contact_hours_note?: string
-          _cv_path: string
-          _engagement_notes?: string
-          _has_hr_admin?: boolean
-          _hr_email?: string
-          _hr_first_name?: string
-          _hr_last_name?: string
-          _linkedin_url: string
-          _preferred_contact?: string
-          _specialties: string[]
-          _via_company?: boolean
-        }
-        Returns: undefined
-      }
+          _avoid_weekends?: boolean;
+          _bio: string;
+          _certifications: string;
+          _contact_hours_note?: string;
+          _cv_path: string;
+          _engagement_notes?: string;
+          _has_hr_admin?: boolean;
+          _hr_email?: string;
+          _hr_first_name?: string;
+          _hr_last_name?: string;
+          _linkedin_url: string;
+          _preferred_contact?: string;
+          _specialties: string[];
+          _via_company?: boolean;
+        };
+        Returns: undefined;
+      };
       update_my_host_settings:
         | {
             Args: {
-              _blackout_dates: string[]
-              _buffer_days: number
-              _max_shadows_per_month: number
-              _max_shadows_per_week: number
-              _paused: boolean
-            }
-            Returns: undefined
+              _blackout_dates: string[];
+              _buffer_days: number;
+              _max_shadows_per_month: number;
+              _max_shadows_per_week: number;
+              _paused: boolean;
+            };
+            Returns: undefined;
           }
         | {
             Args: {
-              _available_slots: Json
-              _blackout_dates: string[]
-              _buffer_days: number
-              _max_consecutive_hours: number
-              _max_shadows_per_month: number
-              _max_shadows_per_week: number
-              _paused: boolean
-            }
-            Returns: undefined
+              _available_slots: Json;
+              _blackout_dates: string[];
+              _buffer_days: number;
+              _max_consecutive_hours: number;
+              _max_shadows_per_month: number;
+              _max_shadows_per_week: number;
+              _paused: boolean;
+            };
+            Returns: undefined;
           }
         | {
             Args: {
-              _auto_accept?: boolean
-              _blackout_dates: string[]
-              _buffer_days: number
-              _max_consecutive_hours: number
-              _max_shadows_per_month: number
-              _max_shadows_per_week: number
-              _paused: boolean
-            }
-            Returns: undefined
-          }
-    }
+              _auto_accept?: boolean;
+              _blackout_dates: string[];
+              _buffer_days: number;
+              _max_consecutive_hours: number;
+              _max_shadows_per_month: number;
+              _max_shadows_per_week: number;
+              _paused: boolean;
+            };
+            Returns: undefined;
+          };
+    };
     Enums: {
-      app_role: "admin" | "user" | "mentor" | "hr_admin" | "school" | "parent"
-    }
+      app_role: "admin" | "user" | "mentor" | "hr_admin" | "school" | "parent";
+    };
     CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-}
+      [_ in never]: never;
+    };
+  };
+};
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">];
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
+      Row: infer R;
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R;
       }
       ? R
       : never
-    : never
+    : never;
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
+    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
+      Insert: infer I;
     }
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
+        Insert: infer I;
       }
       ? I
       : never
-    : never
+    : never;
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
+    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
+      Update: infer U;
     }
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
+        Update: infer U;
       }
       ? U
       : never
-    : never
+    : never;
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
+    keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals },
   EnumName extends (DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
+    : never;
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
+    keyof DefaultSchema["CompositeTypes"] | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+    : never;
 
 export const Constants = {
   public: {
@@ -1839,4 +1851,4 @@ export const Constants = {
       app_role: ["admin", "user", "mentor", "hr_admin", "school", "parent"],
     },
   },
-} as const
+} as const;
