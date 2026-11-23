@@ -19,11 +19,10 @@ export const ADMIN_NAV = [
   { key: "legal", label: "Legal Content", icon: Scale },
 ];
 const MENTOR_NAV = [
+  { key: "profile", label: "Profile", icon: UserCircle },
   { key: "calendar", label: "Calendar", icon: CalendarDays },
   { key: "shadows", label: "Job Shadows", icon: Briefcase },
   { key: "messages", label: "Messages", icon: MessageSquare },
-  { key: "profile", label: "Profile", icon: UserCircle },
-  { key: "settings", label: "Settings", icon: Settings },
 ];
 export function portalNavigationKind(roles: string[], pathname: string) {
   if (pathname === "/admin" && roles.includes("admin")) return "admin";

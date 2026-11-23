@@ -15,7 +15,6 @@ import {
   MessageSquare,
   ChevronLeft,
   ChevronRight,
-  Settings as SettingsIcon,
   X,
   UserCircle,
   Award,
@@ -92,11 +91,10 @@ const STATUS: Record<string, string> = {
 
 type Section = "calendar" | "shadows" | "messages" | "profile" | "settings";
 const MENU: { id: Section; label: string; icon: typeof CalendarDays }[] = [
+  { id: "profile", label: "Profile", icon: UserCircle },
   { id: "calendar", label: "Calendar", icon: CalendarDays },
   { id: "shadows", label: "Job Shadows", icon: Briefcase },
   { id: "messages", label: "Messages", icon: MessageSquare },
-  { id: "profile", label: "Profile", icon: UserCircle },
-  { id: "settings", label: "Settings", icon: SettingsIcon },
 ];
 
 function todayKey() {
@@ -105,7 +103,8 @@ function todayKey() {
 }
 
 function MentorPortal() {
-  const section = Route.useSearch().section;
+  const requestedSection = Route.useSearch().section;
+  const section = requestedSection === "settings" ? "profile" : requestedSection;
   const [active, setActive] = useState<Section>(section ?? "calendar");
   useEffect(() => {
     if (section) setActive(section);
@@ -143,7 +142,7 @@ function MentorPortal() {
       <SiteHeader portal />
       <div className="flex min-w-0 flex-1 flex-col md:flex-row">
         <aside className="shrink-0 bg-cta text-black shadow-warm md:w-60">
-          <p className="px-6 pt-4 text-xs font-bold uppercase tracking-widest text-foreground/70 md:pt-6">
+          <p className="px-6 pt-4 text-xs font-bold uppercase tracking-widest text-black md:pt-6">
             Mentor Portal
           </p>
           <nav
@@ -174,8 +173,11 @@ function MentorPortal() {
               />
             )}
             {active === "messages" && <HostMessages />}
-            {active === "profile" && <HostProfile />}
-            {active === "settings" && <HostSettings />}
+            {active === "profile" && (
+              <HostProfile
+                initialTab={requestedSection === "settings" ? "availability" : "personal"}
+              />
+            )}
           </main>
         </div>
       </div>
@@ -433,9 +435,9 @@ function DatesPicker({
   );
 }
 
-function HostProfile() {
+function HostProfile({ initialTab = "personal" }: { initialTab?: string }) {
   const qc = useQueryClient();
-  const [profileTab, setProfileTab] = useState("personal");
+  const [profileTab, setProfileTab] = useState(initialTab);
   const profile = useQuery({
     queryKey: ["host-profile"],
     staleTime: 15_000,
@@ -552,6 +554,7 @@ function HostProfile() {
           <TabsTrigger value="personal">Personal Details</TabsTrigger>
           <TabsTrigger value="professional">Professional Details</TabsTrigger>
           <TabsTrigger value="secondary">Secondary Information</TabsTrigger>
+          <TabsTrigger value="availability">Availability &amp; Bookings</TabsTrigger>
         </TabsList>
         <TabsContent forceMount value="personal" className="mt-4 data-[state=inactive]:hidden">
           <AccountPersonalDetails />
@@ -739,13 +742,16 @@ function HostProfile() {
             </label>
           </div>
         </TabsContent>
+        <TabsContent forceMount value="availability" className="mt-4 data-[state=inactive]:hidden">
+          <HostSettings />
+        </TabsContent>
       </Tabs>
-      {(err || profile.error) && (
+      {profileTab !== "availability" && (err || profile.error) && (
         <p role="alert" className="text-sm text-destructive">
           {err || "Unable to load your profile. Please refresh before saving."}
         </p>
       )}
-      {profileTab !== "personal" && (
+      {(profileTab === "professional" || profileTab === "secondary") && (
         <button
           onClick={save}
           disabled={busy || profile.isPending}
@@ -818,11 +824,6 @@ function HostSettings() {
 
   return (
     <section className="w-full space-y-5">
-      <h1 className="text-2xl font-bold">Settings</h1>
-      <p className="text-sm text-muted-foreground">
-        Set your booking limits and choose the dates and times you are available for each placement.
-      </p>
-
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
         <div className="space-y-4">
           <div className="rounded-lg border bg-card p-4">
@@ -916,7 +917,7 @@ function HostSettings() {
             disabled={busy || settings.isPending || !!settings.error}
             className="rounded bg-primary px-5 py-2.5 text-sm font-bold uppercase text-primary-foreground disabled:opacity-50"
           >
-            {saved ? "Saved" : "Save settings"}
+            {saved ? "Saved" : "Save Booking Preferences"}
           </button>
         </div>
         <section className="min-w-0 space-y-4" aria-label="Available dates and times">

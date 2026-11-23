@@ -27,6 +27,9 @@ describe("Host availability settings", () => {
       defaultOptions: { queries: { staleTime: Infinity, retry: false } },
     });
     client.setQueryData(["mentor-bookings"], []);
+    client.setQueryData(["me"], { id: "mentor" });
+    client.setQueryData(["profile", "mentor"], { first_name: "Alex" });
+    client.setQueryData(["host-profile"], {});
     client.setQueryData(
       ["mentor-placements"],
       [
@@ -61,7 +64,16 @@ describe("Host availability settings", () => {
         <Page />
       </QueryClientProvider>,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+    expect(
+      screen.getByRole("navigation", { name: "Mentor navigation" }).querySelector("button"),
+    ).toHaveTextContent("Profile");
+    expect(screen.queryByRole("button", { name: "Settings" })).toBeNull();
+    expect(screen.getByText("Mentor Portal")).toHaveClass("text-black");
+    fireEvent.click(screen.getByRole("button", { name: "Profile" }));
+    fireEvent.mouseDown(await screen.findByRole("tab", { name: "Availability & Bookings" }), {
+      button: 0,
+      ctrlKey: false,
+    });
     expect(screen.getByRole("heading", { name: "Available Dates and Times" })).toBeVisible();
     expect(screen.queryByText("Personal blackout dates")).not.toBeInTheDocument();
     await screen.findByRole("combobox", { name: "2030-06-11 From" });
