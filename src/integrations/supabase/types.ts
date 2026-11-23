@@ -304,30 +304,42 @@ export type Database = {
       }
       careers: {
         Row: {
+          archived: boolean
           description: string | null
+          future_outlook: string | null
           id: number
           ideal_for: string | null
+          interpersonal_skills: string[]
           name: string
+          recommended_courses: string[]
           school_skills: string[] | null
           specialisations: string[] | null
           subjects: string[] | null
           workplace_skills: string[] | null
         }
         Insert: {
+          archived?: boolean
           description?: string | null
+          future_outlook?: string | null
           id: number
           ideal_for?: string | null
+          interpersonal_skills?: string[]
           name: string
+          recommended_courses?: string[]
           school_skills?: string[] | null
           specialisations?: string[] | null
           subjects?: string[] | null
           workplace_skills?: string[] | null
         }
         Update: {
+          archived?: boolean
           description?: string | null
+          future_outlook?: string | null
           id?: number
           ideal_for?: string | null
+          interpersonal_skills?: string[]
           name?: string
+          recommended_courses?: string[]
           school_skills?: string[] | null
           specialisations?: string[] | null
           subjects?: string[] | null
@@ -792,6 +804,8 @@ export type Database = {
       }
       profiles: {
         Row: {
+          archive_warned_at: string | null
+          archived: boolean
           avatar_path: string | null
           display_name: string | null
           first_name: string | null
@@ -801,6 +815,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          archive_warned_at?: string | null
+          archived?: boolean
           avatar_path?: string | null
           display_name?: string | null
           first_name?: string | null
@@ -810,6 +826,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          archive_warned_at?: string | null
+          archived?: boolean
           avatar_path?: string | null
           display_name?: string | null
           first_name?: string | null
@@ -1358,8 +1376,11 @@ export type Database = {
         Args: never
         Returns: {
           description: string | null
+          future_outlook: string | null
           id: number
+          interpersonal_skills: string[]
           name: string
+          recommended_courses: string[]
         }[]
       }
       list_placements: {

@@ -8,6 +8,9 @@ const draftSchema = z.object({
   ideal_for: z.string().trim().min(1).max(1000),
   specialisations: z.array(skill).min(1).max(12),
   subjects: z.array(skill).min(1).max(10),
+  interpersonal_skills: z.array(skill).min(1).max(8),
+  recommended_courses: z.array(skill).min(1).max(8),
+  future_outlook: z.string().trim().min(1).max(800),
 });
 
 export type CareerDraft = z.infer<typeof draftSchema>;
@@ -15,7 +18,7 @@ export type CareerDraft = z.infer<typeof draftSchema>;
 export function parseCareerDraft(text: string) {
   try {
     const result = draftSchema.parse(JSON.parse(text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "")));
-    return { ...result, school_skills: [...new Set(result.school_skills)], workplace_skills: [...new Set(result.workplace_skills)] };
+    return { ...result, school_skills: [...new Set(result.school_skills)], workplace_skills: [...new Set(result.workplace_skills)], interpersonal_skills: [...new Set(result.interpersonal_skills)], recommended_courses: [...new Set(result.recommended_courses)] };
   } catch {
     throw new Error("The AI returned an incomplete career draft. Your current content has been preserved; please try again.");
   }

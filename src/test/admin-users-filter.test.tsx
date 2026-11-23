@@ -155,15 +155,15 @@ describe("Visible provider directories and career wizard", () => {
     client.setQueryData(['admin', 'company-contact-classification'], []);
     client.setQueryData(['admin', 'sectors', false], []);
     client.setQueryData(['admin', 'careers', false], [{ id: 1, name: 'Accountant', description: 'Original description' }]);
-    const draft = { description: 'Draft overview', ideal_for: 'Draft ideal person', specialisations: ['Draft role'], subjects: ['Accounting'], school_skills: ['Numeracy'], workplace_skills: ['Financial reporting'] };
+    const draft = { description: 'Draft overview', ideal_for: 'Draft ideal person', specialisations: ['Draft role'], subjects: ['Accounting'], school_skills: ['Numeracy'], workplace_skills: ['Financial reporting'], interpersonal_skills: ['Teamwork'], recommended_courses: ['BCom Accounting'], future_outlook: 'Automation will shift the role toward advisory work.' };
     vi.mocked(draftCareerDescription).mockResolvedValue(draft);
     const Page = Route.options.component as () => React.JSX.Element;
     render(<QueryClientProvider client={client}><Page /></QueryClientProvider>);
     fireEvent.click(screen.getByRole('button', { name: 'Sectors and Careers' }));
     expect(screen.getByRole('tab', { name: 'Sectors' })).toHaveAttribute('aria-selected', 'true');
     fireEvent.mouseDown(screen.getByRole('tab', { name: 'Careers' }), { button: 0 });
-    const file = screen.getByLabelText('Upload careers CSV');
-    expect(file.closest('div.flex.flex-wrap.items-center.gap-3')).toContainElement(screen.getByRole('button', { name: 'Export' }));
+    const uploadButton = screen.getByRole('button', { name: 'Import CSV' });
+    expect(uploadButton.closest('div.flex.flex-wrap.items-center.gap-3')).toContainElement(screen.getByRole('button', { name: 'Export' }));
     fireEvent.click(screen.getByRole('button', { name: /^A.*1/ }));
     expect(screen.getByRole('button', { name: 'AI wizard' })).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'AI wizard' }));

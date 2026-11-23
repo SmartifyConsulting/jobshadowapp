@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { deleteAccount, listAccounts, editAccount, createAccountSilently, syncCompanyContactsAsUsers, type AccountRow } from "./users.server";
+import { deleteAccount, listAccounts, editAccount, createAccountSilently, type AccountRow } from "./users.server";
 
 export const getAccounts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -29,14 +29,6 @@ export const updateAccount = createServerFn({ method: "POST" })
     if (data.userId === context.userId && !data.roles.includes("admin")) throw new Error("You cannot remove your own admin access.");
     await editAccount(data);
     return { ok: true };
-  });
-
-export const syncCompanyContacts = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
-    if (!isAdmin) throw new Error("Forbidden");
-    return syncCompanyContactsAsUsers();
   });
 
 export const removeAccount = createServerFn({ method: "POST" })

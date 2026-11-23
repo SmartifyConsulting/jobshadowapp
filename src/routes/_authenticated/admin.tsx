@@ -17,7 +17,7 @@ import { BoolIcon } from "@/components/BoolIcon";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { Users as UsersIcon, FileText, ShoppingCart, Briefcase, GraduationCap, Pencil, Trash2, IdCard, Image as ImageIcon, Download, BadgeCheck, ChevronDown, LayoutGrid, List, X, Sparkles, Clock, Calendar as CalendarIcon, CalendarX, RotateCcw, Bell, type LucideIcon } from "lucide-react";
+import { Users as UsersIcon, FileText, ShoppingCart, Briefcase, GraduationCap, Pencil, Trash2, IdCard, Image as ImageIcon, Download, BadgeCheck, ChevronDown, LayoutGrid, List, X, Sparkles, Clock, Calendar as CalendarIcon, CalendarX, RotateCcw, Bell, Archive, ArchiveRestore, type LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { RichText } from "@/components/RichText";
 import { CareerSkills } from "@/components/CareerSkills";
@@ -34,7 +34,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
 import { sendQueuedEmails } from "@/lib/email.functions";
-import { updateAccount, removeAccount, syncCompanyContacts } from "@/lib/users.functions";
+import { updateAccount, removeAccount } from "@/lib/users.functions";
 import type { AccountApplication } from "@/lib/user-applications";
 import { extractCompanyIndemnity } from "@/lib/indemnity-ai.functions";
 import { lookupPublicHolidays } from "@/lib/public-holidays.functions";
@@ -313,6 +313,12 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
     qc.invalidateQueries({ queryKey: ["admin", table] }); if (table === "companies") void qc.invalidateQueries({ queryKey: ["admin", "company-contact-classification"] });
   }
 
+  async function toggleArchived(row: Record<string, unknown>) {
+    const { error } = await (supabase.from("careers") as any).update({ archived: !row["archived"] }).eq("id", row["id"]);
+    if (error) return notify(error.message, "error");
+    qc.invalidateQueries({ queryKey: ["admin", table] });
+  }
+
   if (editing) {
     const onDone = () => { setEditing(null); qc.invalidateQueries({ queryKey: ["admin", table] }); if (table === "companies") void qc.invalidateQueries({ queryKey: ["admin", "company-contact-classification"] }); };
     const onCancel = () => setEditing(null);
@@ -404,11 +410,12 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
                                   {table === "careers" && (
                                     <button type="button" aria-expanded={descOpen} aria-label={descOpen ? "Hide description" : "Show description"} onClick={() => setOpenDesc((prev) => { const n = new Set(prev); n.has(rid) ? n.delete(rid) : n.add(rid); return n; })} className="grid h-5 w-5 shrink-0 place-items-center rounded border border-warm-divider text-xs font-bold text-muted-foreground hover:text-primary">{descOpen ? "−" : "+"}</button>
                                   )}
-                                  <div className="min-w-0"><span className="block truncate text-sm font-medium leading-tight">{fmt(r["name"])}</span>{!descOpen && r["description"] ? <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{String(r["description"]).replace(/\*\*/g, "").split("\n")[0]}</p> : null}</div>
+                                  <div className="min-w-0"><span className="block truncate text-sm font-medium leading-tight">{fmt(r["name"])}{!!r["archived"] && <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">Archived</span>}</span>{!descOpen && r["description"] ? <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{String(r["description"]).replace(/\*\*/g, "").split("\n")[0]}</p> : null}</div>
                                   <span className="shrink-0 text-xs text-muted-foreground">{fmt(r["_student_count"])} scholars</span>
                                 </div>
                                 <div className="flex shrink-0 gap-1.5">
                                   <button onClick={() => setEditing(r)} className="inline-flex items-center gap-1 rounded border border-warm-divider px-2 py-1 text-xs hover:text-primary"><Sparkles className="h-3 w-3" />AI wizard</button>
+                                  <button onClick={() => void toggleArchived(r)} className="rounded border border-warm-divider p-1.5 text-muted-foreground transition hover:text-primary" aria-label={r["archived"] ? "Unarchive" : "Archive"} title={r["archived"] ? "Unarchive — show this career to users again" : "Archive — hide this career from users without deleting it"}>{r["archived"] ? <ArchiveRestore className="h-3 w-3" /> : <Archive className="h-3 w-3" />}</button>
                                   <button onClick={() => setEditing(r)} className="rounded border border-warm-divider p-1.5 text-muted-foreground transition hover:text-primary" aria-label="Edit"><Pencil className="h-3 w-3" /></button>
                                   <button onClick={() => remove(r)} className="rounded p-1.5 text-muted-foreground transition hover:bg-destructive/5 hover:text-destructive" aria-label="Delete"><Trash2 className="h-3 w-3" /></button>
                                 </div>
@@ -847,20 +854,6 @@ export function AdminUsers() {
   const qc = useQueryClient();
   const updateRoleFn = useServerFn(updateAccount);
   const removeAccountFn = useServerFn(removeAccount);
-  const syncCompanyContactsFn = useServerFn(syncCompanyContacts);
-  const [syncing, setSyncing] = useState(false);
-  async function runSyncCompanyContacts() {
-    setSyncing(true);
-    try {
-      const result = await syncCompanyContactsFn();
-      await qc.invalidateQueries({ queryKey: ["admin", "accounts"] });
-      notify(`Created ${result.created} new account${result.created === 1 ? "" : "s"} from company contacts.${result.failed ? ` ${result.failed} failed.` : ""}`, result.failed ? "error" : "success");
-    } catch (e) {
-      notify((e as Error).message, "error");
-    } finally {
-      setSyncing(false);
-    }
-  }
   const accounts = useQuery({
     queryKey: ["admin", "accounts"],
     queryFn: async () => {
@@ -1022,10 +1015,7 @@ export function AdminUsers() {
             Search
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name, email, school, company or career" className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none" />
           </label>
-          <div className="ml-auto flex flex-wrap gap-2">
-            <Button variant="outline" disabled={syncing} onClick={runSyncCompanyContacts}>{syncing ? "Syncing…" : "Sync company contacts"}</Button>
-            {!isUnclassified && <Button onClick={() => setCreateOpen(true)}>Add {roleTab === "individual_mentor" ? "Mentor" : ROLE_LABELS[accountRole]}</Button>}
-          </div>
+          {!isUnclassified && <Button className="ml-auto" onClick={() => setCreateOpen(true)}>Add {roleTab === "individual_mentor" ? "Mentor" : ROLE_LABELS[accountRole]}</Button>}
         </div>
         {accounts.isLoading ? (
           <p className="mt-6">Loading…</p>
@@ -2089,7 +2079,7 @@ function EditRecord({ title, table, cols, row, onDone, onCancel }: { title: stri
   );
 }
 
-export function CareerDescriptionField({ career, value, onChange, skills, onSkillsChange, guidance, onGuidanceChange, onDraft }: { career: string; value: string; onChange: (v: string) => void; skills: { school: string[]; workplace: string[] }; onSkillsChange: (skills: { school: string[]; workplace: string[] }) => void; guidance: ReturnType<typeof getCareerGuidance>; onGuidanceChange: (patch: { ideal_for?: string; specialisations?: string[]; subjects?: string[] }) => void; onDraft: (draft: CareerDraft) => void }) {
+export function CareerDescriptionField({ career, value, onChange, skills, onSkillsChange, guidance, onGuidanceChange, onDraft }: { career: string; value: string; onChange: (v: string) => void; skills: { school: string[]; workplace: string[] }; onSkillsChange: (skills: { school: string[]; workplace: string[] }) => void; guidance: ReturnType<typeof getCareerGuidance>; onGuidanceChange: (patch: { ideal_for?: string; specialisations?: string[]; subjects?: string[]; interpersonal_skills?: string[]; recommended_courses?: string[]; future_outlook?: string }) => void; onDraft: (draft: CareerDraft) => void }) {
   const draft = useServerFn(draftCareerDescription);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -2117,6 +2107,8 @@ export function CareerDescriptionField({ career, value, onChange, skills, onSkil
       </fieldset>
       <div className="mt-4 space-y-4"><label className="block text-sm">Ideal for<textarea rows={3} value={guidance.idealFor} onChange={(e) => onGuidanceChange({ ideal_for: e.target.value })} className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary" /></label>
         {([['specialisations', 'Specialisations & Roles'], ['subjects', 'Suggested Subjects']] as const).map(([key, label]) => <label key={key} className="block text-sm">{label}<input value={guidance[key].join(', ')} onChange={(e) => onGuidanceChange({ [key]: e.target.value.split(',').map((value) => value.trimStart()) })} onBlur={() => onGuidanceChange({ [key]: guidance[key].map((value) => value.trim()).filter(Boolean) })} className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary" /></label>)}
+        {([['interpersonalSkills', 'interpersonal_skills', 'Interpersonal Skills'], ['recommendedCourses', 'recommended_courses', 'Recommended Courses']] as const).map(([guidanceKey, patchKey, label]) => <label key={guidanceKey} className="block text-sm">{label}<input value={guidance[guidanceKey].join(', ')} onChange={(e) => onGuidanceChange({ [patchKey]: e.target.value.split(',').map((value) => value.trimStart()) })} onBlur={() => onGuidanceChange({ [patchKey]: guidance[guidanceKey].map((value) => value.trim()).filter(Boolean) })} className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary" /></label>)}
+        <label className="block text-sm">Future of this Career<textarea rows={2} value={guidance.futureOutlook} onChange={(e) => onGuidanceChange({ future_outlook: e.target.value })} className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary" /></label>
       </div>
       {err && <p className="mt-1 text-xs text-destructive">{err}</p>}
     </div>
