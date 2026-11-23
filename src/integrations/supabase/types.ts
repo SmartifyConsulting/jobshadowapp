@@ -579,28 +579,43 @@ export type Database = {
           bio: string | null
           certifications: string | null
           cv_path: string | null
+          has_hr_admin: boolean
+          hr_email: string | null
+          hr_first_name: string | null
+          hr_last_name: string | null
           linkedin_url: string | null
           mentor_email: string
           specialties: string[]
           updated_at: string
+          via_company: boolean
         }
         Insert: {
           bio?: string | null
           certifications?: string | null
           cv_path?: string | null
+          has_hr_admin?: boolean
+          hr_email?: string | null
+          hr_first_name?: string | null
+          hr_last_name?: string | null
           linkedin_url?: string | null
           mentor_email: string
           specialties?: string[]
           updated_at?: string
+          via_company?: boolean
         }
         Update: {
           bio?: string | null
           certifications?: string | null
           cv_path?: string | null
+          has_hr_admin?: boolean
+          hr_email?: string | null
+          hr_first_name?: string | null
+          hr_last_name?: string | null
           linkedin_url?: string | null
           mentor_email?: string
           specialties?: string[]
           updated_at?: string
+          via_company?: boolean
         }
         Relationships: []
       }
@@ -1216,10 +1231,15 @@ export type Database = {
           bio: string | null
           certifications: string | null
           cv_path: string | null
+          has_hr_admin: boolean
+          hr_email: string | null
+          hr_first_name: string | null
+          hr_last_name: string | null
           linkedin_url: string | null
           mentor_email: string
           specialties: string[]
           updated_at: string
+          via_company: boolean
         }
         SetofOptions: {
           from: "*"
@@ -1460,10 +1480,26 @@ export type Database = {
           _bio: string
           _certifications: string
           _cv_path: string
+          _has_hr_admin?: boolean
+          _hr_email?: string
+          _hr_first_name?: string
+          _hr_last_name?: string
           _linkedin_url: string
           _specialties: string[]
+          _via_company?: boolean
         }
         Returns: undefined
+      }
+      admin_list_mentor_classifications: {
+        Args: never
+        Returns: {
+          has_hr_admin: boolean
+          hr_email: string | null
+          hr_first_name: string | null
+          hr_last_name: string | null
+          mentor_email: string
+          via_company: boolean
+        }[]
       }
       update_my_host_settings:
         | {

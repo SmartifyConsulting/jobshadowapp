@@ -884,11 +884,14 @@ export function AdminUsers() {
   const soleMentors = useMemo(() => individualMentorEmails((mentorCompanies.data ?? []) as { company: string | null; mentor_email: string | null; backup_mentor_email: string | null }[]), [mentorCompanies.data]);
   const companyEmails = useMemo(() => new Set(((mentorCompanies.data ?? []) as { mentor_email: string | null; backup_mentor_email: string | null }[]).flatMap((c) => [c.mentor_email, c.backup_mentor_email]).map((e) => (e ?? "").trim().toLowerCase()).filter(Boolean)), [mentorCompanies.data]);
   const mentorDomainCounts = useMemo(() => { const m = new Map<string, number>(); for (const a of accounts.data ?? []) if (a.roles.includes("mentor")) { const d = (a.email ?? "").toLowerCase().split("@")[1] ?? ""; if (FREE_MAIL.has(d)) continue; m.set(d, (m.get(d) ?? 0) + 1); } return m; }, [accounts.data]);
-  // Hosts and mentors are the same role now; an "Independent Mentor" is one not tied to a
-  // company record (a sole-named mentor, or a mentor whose email domain isn't shared with
-  // another mentor's), everyone else with the mentor/hr_admin role is a "Company Mentor".
+  // A mentor's own registration answer (host_profiles.via_company) is the source of truth once
+  // they've set it; accounts that haven't fall back to the company-record / shared-domain guess.
+  const mentorClassifications = useQuery({ queryKey: ["admin", "mentor-classifications"], queryFn: async () => { const result = await supabase.rpc("admin_list_mentor_classifications"); if (result.error) throw result.error; return result.data ?? []; } });
+  const declaredViaCompany = useMemo(() => new Map(mentorClassifications.data?.map((row) => [row.mentor_email.trim().toLowerCase(), row.via_company]) ?? []), [mentorClassifications.data]);
   const isIndependentMentor = (a: AccountRow) => {
     const email = (a.email ?? "").trim().toLowerCase();
+    const declared = declaredViaCompany.get(email);
+    if (declared !== undefined) return !declared;
     return soleMentors.has(email) || (a.roles.includes("mentor") && !companyEmails.has(email) && (mentorDomainCounts.get(email.split("@")[1] ?? "") ?? 0) < 2);
   };
   const matchesRole = (a: AccountRow, tab = roleTab) => {

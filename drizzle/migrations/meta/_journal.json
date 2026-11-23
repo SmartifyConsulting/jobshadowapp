@@ -512,6 +512,13 @@
       "when": 1794964100000,
       "tag": "0072_last_accessed_on_accounts",
       "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "7",
+      "when": 1794964200000,
+      "tag": "0073_mentor_company_classification",
+      "breakpoints": true
     }
   ]
 }

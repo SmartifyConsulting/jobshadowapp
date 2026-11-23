@@ -218,6 +218,11 @@ function HostProfile() {
   const [linkedinUrl, setLinkedinUrl] = useState("");
   const [cvPath, setCvPath] = useState<string | null>(null);
   const [cvBusy, setCvBusy] = useState(false);
+  const [viaCompany, setViaCompany] = useState(false);
+  const [hasHrAdmin, setHasHrAdmin] = useState(false);
+  const [hrFirstName, setHrFirstName] = useState("");
+  const [hrLastName, setHrLastName] = useState("");
+  const [hrEmail, setHrEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -230,6 +235,11 @@ function HostProfile() {
     setCertifications(p.certifications ?? "");
     setLinkedinUrl(p.linkedin_url ?? "");
     setCvPath(p.cv_path ?? null);
+    setViaCompany(p.via_company ?? false);
+    setHasHrAdmin(p.has_hr_admin ?? false);
+    setHrFirstName(p.hr_first_name ?? "");
+    setHrLastName(p.hr_last_name ?? "");
+    setHrEmail(p.hr_email ?? "");
   }, [profile.data]);
 
   async function uploadCv(file: File) {
@@ -251,6 +261,10 @@ function HostProfile() {
   }
 
   async function save() {
+    if (viaCompany && hasHrAdmin && (!hrFirstName.trim() || !hrLastName.trim() || !hrEmail.trim())) {
+      setErr("Please provide your HR admin's first name, last name and email.");
+      return;
+    }
     setBusy(true);
     setErr(null);
     setSaved(false);
@@ -260,6 +274,11 @@ function HostProfile() {
       _certifications: certifications || null,
       _linkedin_url: linkedinUrl || null,
       _cv_path: cvPath,
+      _via_company: viaCompany,
+      _has_hr_admin: viaCompany && hasHrAdmin,
+      _hr_first_name: viaCompany && hasHrAdmin ? hrFirstName.trim() : null,
+      _hr_last_name: viaCompany && hasHrAdmin ? hrLastName.trim() : null,
+      _hr_email: viaCompany && hasHrAdmin ? hrEmail.trim() : null,
     } as never);
     setBusy(false);
     if (error) return setErr(error.message);
@@ -290,6 +309,18 @@ function HostProfile() {
           Certifications / qualifications
           <textarea rows={2} value={certifications} onChange={(e) => setCertifications(e.target.value)} className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none" />
         </label>
+      </div>
+
+      <div className="rounded-lg border bg-card p-4 space-y-3">
+        <p className="text-sm font-semibold">How are you mentoring?</p>
+        <p className="text-xs text-muted-foreground">This decides whether you show up as an Independent Mentor or a Company Mentor, and who we can loop in with updates.</p>
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={viaCompany} onChange={(e) => { setViaCompany(e.target.checked); if (!e.target.checked) setHasHrAdmin(false); }} />Is this mentorship being done through a company?</label>
+        {viaCompany && <label className="ml-6 flex items-center gap-2 text-sm"><input type="checkbox" checked={hasHrAdmin} onChange={(e) => setHasHrAdmin(e.target.checked)} />Do you have an HR admin you report results to?</label>}
+        {viaCompany && hasHrAdmin && <div className="ml-6 grid gap-3 sm:grid-cols-2">
+          <label className="block text-sm">HR first name<input value={hrFirstName} onChange={(e) => setHrFirstName(e.target.value)} className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none" /></label>
+          <label className="block text-sm">HR last name<input value={hrLastName} onChange={(e) => setHrLastName(e.target.value)} className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none" /></label>
+          <label className="block text-sm sm:col-span-2">HR email<input type="email" value={hrEmail} onChange={(e) => setHrEmail(e.target.value)} className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none" /></label>
+        </div>}
       </div>
 
       <div className="rounded-lg border bg-card p-4">
