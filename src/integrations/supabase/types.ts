@@ -400,6 +400,7 @@ export type Database = {
           sector: string | null
           total_days: number | null
           website: string | null
+          year: number
         }
         Insert: {
           active?: boolean
@@ -447,6 +448,7 @@ export type Database = {
           sector?: string | null
           total_days?: number | null
           website?: string | null
+          year?: number
         }
         Update: {
           active?: boolean
@@ -494,6 +496,7 @@ export type Database = {
           sector?: string | null
           total_days?: number | null
           website?: string | null
+          year?: number
         }
         Relationships: []
       }
@@ -1181,6 +1184,7 @@ export type Database = {
       }
       complete_and_request_evaluations: { Args: never; Returns: undefined }
       confirm_test_payment: { Args: { _booking: string }; Returns: undefined }
+      copy_companies_to_year: { Args: { _from_year: number; _to_year: number }; Returns: number }
       email_company_bee_report: {
         Args: { _hr_email: string }
         Returns: undefined

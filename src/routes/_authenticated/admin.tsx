@@ -120,7 +120,7 @@ function AdminPage() {
       <aside className="w-60 shrink-0 border-r border-primary/20 bg-accent text-accent-foreground shadow-warm">
         <p className="px-5 pb-3 pt-6 text-xs font-bold uppercase tracking-widest text-foreground/70">Admin Portal</p>
         <nav className="space-y-1 px-3 pb-6">
-          {TABLES.filter((t) => !["sectors", "vouchers", "bookings", "evaluations", "companies"].includes(t.id)).map((t) => (
+          {TABLES.filter((t) => !["sectors", "vouchers", "bookings", "evaluations"].includes(t.id)).map((t) => (
             <button key={t.id} onClick={() => setActive(t.id)} className={`flex w-full items-center gap-3 rounded-md border-l-2 px-3 py-2.5 text-left text-sm font-medium transition ${active === t.id ? "border-primary bg-primary/10 text-foreground" : "border-transparent text-foreground/85 hover:bg-primary/5 hover:text-foreground"}`}>
               <t.icon className="h-4 w-4" /> {t.label}
             </button>
@@ -1326,7 +1326,7 @@ const BOOKING_STATUS_LABELS: Record<string, string> = { awaiting_payment: "Await
 
 
 
-function ProviderDirectory({ kind }: { kind: "mentor" | "host" }) {
+function ProviderDirectory({ kind, year }: { kind: "mentor" | "host"; year: number | null }) {
   const qc = useQueryClient();
   const config = TABLES.find((entry) => entry.id === "companies")!;
   const data = useQuery({ queryKey: ["admin", "companies", false], queryFn: () => fetchAllRows(async (from, to) => { const result = await supabase.from("companies").select("*").order("id", { ascending: false }).range(from, to); if (result.error) throw result.error; return result.data ?? []; }) });
@@ -1338,7 +1338,7 @@ function ProviderDirectory({ kind }: { kind: "mentor" | "host" }) {
   const [creating, setCreating] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [expandedHosts, setExpandedHosts] = useState<string[]>([]);
-  const all = data.data ?? [];
+  const all = (data.data ?? []).filter((row) => year === null || row["year"] === year);
   const mentors = mentorGroups(all);
   const hostKeys = new Set(providerGroups(all).filter((group) => group.kind === 'host').map((group) => group.key));
   const groups = (kind === 'mentor' ? mentors.filter((m) => !hostKeys.has(companyKey(m.company))) : providerGroups(all).filter((group) => group.kind === 'host')).sort((a, b) => (kind === 'mentor' ? a.names[0] || a.company : a.company).localeCompare(kind === 'mentor' ? b.names[0] || b.company : b.company));
@@ -1392,11 +1392,46 @@ function CompaniesList({ kind }: { kind?: "mentor" | "host" } = {}) {
 }
 
 function CompanyPlacements() {
+  const qc = useQueryClient();
+  const thisYear = new Date().getFullYear();
+  const years = useQuery({ queryKey: ["admin", "company-years"], queryFn: async () => { const result = await supabase.from("companies").select("year"); if (result.error) throw result.error; return [...new Set((result.data ?? []).map((r) => r.year))].sort((a, b) => b - a); } });
+  const [year, setYear] = useState<number | null>(null);
+  const [copying, setCopying] = useState(false);
+  useEffect(() => { if (year === null && years.data?.length) setYear(years.data.includes(thisYear) ? thisYear : years.data[0]!); }, [years.data]);
+
+  async function copyForward() {
+    if (year === null) return;
+    const toYear = year + 1;
+    if (!(await confirmAction(`Copy every ${year} host/mentor record forward to ${toYear}? You can then remove the ones no longer mentoring in ${toYear}. The ${year} records are kept as-is.`, { confirmLabel: "Copy forward" }))) return;
+    setCopying(true);
+    try {
+      const { data: count, error } = await supabase.rpc("copy_companies_to_year", { _from_year: year, _to_year: toYear });
+      if (error) throw new Error(error.message);
+      notify(`Copied ${count ?? 0} record${count === 1 ? "" : "s"} to ${toYear}.`, "success");
+      await qc.invalidateQueries({ queryKey: ["admin", "companies"] });
+      await qc.invalidateQueries({ queryKey: ["admin", "company-years"] });
+      setYear(toYear);
+    } catch (e) {
+      notify((e as Error).message, "error");
+    } finally {
+      setCopying(false);
+    }
+  }
+
   return <Tabs defaultValue="host" className="bg-ivory">
-    <AdminScreenHeader title="Companies" />
+    <AdminScreenHeader title="Companies" actions={
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="flex items-center gap-1.5 text-sm">Year
+          <select value={year ?? ""} onChange={(e) => setYear(Number(e.target.value))} className="rounded border border-input bg-background px-2 py-1.5 text-sm">
+            {(years.data ?? []).map((y) => <option key={y} value={y}>{y}</option>)}
+          </select>
+        </label>
+        <Button variant="outline" disabled={year === null || copying} onClick={() => void copyForward()}>{copying ? "Copying…" : `Copy ${year ?? ""} to ${year !== null ? year + 1 : ""}`}</Button>
+      </div>
+    } />
     <div className="overflow-x-auto bg-ivory px-6 py-4"><TabsList aria-label="Company placements"><TabsTrigger value="host">Hosts</TabsTrigger><TabsTrigger value="mentor">Mentors</TabsTrigger></TabsList></div>
-    <TabsContent value="host" className="mt-0"><ProviderDirectory kind="host" /></TabsContent>
-    <TabsContent value="mentor" className="mt-0"><ProviderDirectory kind="mentor" /></TabsContent>
+    <TabsContent value="host" className="mt-0"><ProviderDirectory kind="host" year={year} /></TabsContent>
+    <TabsContent value="mentor" className="mt-0"><ProviderDirectory kind="mentor" year={year} /></TabsContent>
   </Tabs>;
 }
 
