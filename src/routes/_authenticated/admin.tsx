@@ -1,3 +1,5 @@
+import type { Database } from "@/integrations/supabase/types";
+import { useCareerAutosave } from "@/lib/use-career-autosave";
 import { ADMIN_NAV } from "@/components/RoleNavigation";
 import { BulkCareerDrafts, type CareerBatchDrafts } from "@/components/BulkCareerDrafts";
 import { careerContentForAI } from "@/lib/career-batch";
@@ -480,6 +482,17 @@ function DataTable({
   const [editing, setEditing] = useState<Record<string, unknown> | null>(null);
   const [creating, setCreating] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const generateCareer = useServerFn(draftCareerDescription);
+  const [draftingCareer, setDraftingCareer] = useState<string | null>(null);
+  const [regeneratedDrafts, setRegeneratedDrafts] = useState<Set<string>>(new Set());
+  const [initialCareerDraft, setInitialCareerDraft] = useState<Partial<CareerDraft> | undefined>();
+  const careerListMounted = useRef(true);
+  useEffect(() => {
+    careerListMounted.current = true;
+    return () => {
+      careerListMounted.current = false;
+    };
+  }, []);
   const [careerDrafts, setCareerDrafts] = useState<CareerBatchDrafts>({});
   const [initialAiAction, setInitialAiAction] = useState<"fill" | "regenerate" | undefined>(
     undefined,
@@ -491,6 +504,69 @@ function DataTable({
   const isUsers = table === "legacy_users";
   const isNameOnly = table === "sectors" || table === "careers";
 
+  async function generateFromCareerRow(row: Record<string, unknown>, regenerate = false) {
+    if (draftingCareer) return;
+    const id = String(row["id"]),
+      career = String(row["name"] ?? "");
+    const fields = regenerate
+      ? [...CAREER_DRAFT_FIELDS]
+      : missingCareerFields(careerContentForAI(row));
+    if (!fields.length) return notify("All career fields already have content.");
+    if (
+      regenerate &&
+      !(await confirmAction(
+        "Regenerate the content for " +
+          career +
+          "? The draft will wait for your review before saving.",
+        { title: "Regenerate This Career", confirmLabel: "Regenerate" },
+      ))
+    )
+      return;
+    if (!careerListMounted.current) return;
+    setDraftingCareer(id);
+    try {
+      const result = await generateCareer({ data: { career, fields } });
+      if (!careerListMounted.current) return;
+      const requested = Object.fromEntries(
+        Object.entries(result).filter(([key]) => fields.includes(key as (typeof fields)[number])),
+      ) as Partial<CareerDraft>;
+      const draft = careerDraftPatch(careerContentForAI(row), requested, regenerate);
+      setCareerDrafts((current) => ({ ...current, [id]: draft }));
+      setRegeneratedDrafts((current) => {
+        const next = new Set(current);
+        if (regenerate) next.add(id);
+        else next.delete(id);
+        return next;
+      });
+      notify("AI draft ready for " + career + ". Review it when you're ready.");
+    } catch (error) {
+      if (careerListMounted.current)
+        notify(error instanceof Error ? error.message : "Could not generate this career.", "error");
+    } finally {
+      if (careerListMounted.current) setDraftingCareer(null);
+    }
+  }
+  async function reviewCareerDraft(id: string) {
+    try {
+      const result = await supabase.from("careers").select("*").eq("id", Number(id)).maybeSingle();
+      if (result.error) throw result.error;
+      if (!result.data) return notify("This career no longer exists.", "error");
+      setInitialAiAction(undefined);
+      setInitialCareerDraft(
+        careerDraftPatch(
+          careerContentForAI(result.data),
+          careerDrafts[id] ?? {},
+          regeneratedDrafts.has(id),
+        ),
+      );
+      setEditing(result.data);
+    } catch (error) {
+      notify(
+        error instanceof Error ? error.message : "Could not load this career for review.",
+        "error",
+      );
+    }
+  }
   async function addNamed() {
     const name = newName.trim();
     if (!name) return;
@@ -715,7 +791,13 @@ function DataTable({
         delete next[String(editing["id"])];
         return next;
       });
+      setRegeneratedDrafts((current) => {
+        const next = new Set(current);
+        next.delete(String(editing["id"]));
+        return next;
+      });
       setInitialAiAction(undefined);
+      setInitialCareerDraft(undefined);
       setEditing(null);
       qc.invalidateQueries({ queryKey: ["admin", table] });
       if (table === "companies")
@@ -723,6 +805,7 @@ function DataTable({
     };
     const onCancel = () => {
       setInitialAiAction(undefined);
+      setInitialCareerDraft(undefined);
       setEditing(null);
     };
     return indemnityEdit ? (
@@ -734,6 +817,7 @@ function DataTable({
         cols={cols}
         row={editing}
         initialAiAction={initialAiAction}
+        initialCareerDraft={initialCareerDraft}
         onDone={onDone}
         onCancel={onCancel}
       />
@@ -849,35 +933,16 @@ function DataTable({
               <BulkCareerDrafts
                 records={data ?? []}
                 drafts={careerDrafts}
-                disabled={isLoading}
-                onDraft={(id, draft) => setCareerDrafts((current) => ({ ...current, [id]: draft }))}
-                onReview={async (id) => {
-                  try {
-                    const result = await supabase
-                      .from("careers")
-                      .select("*")
-                      .eq("id", Number(id))
-                      .maybeSingle();
-                    if (result.error) throw result.error;
-                    if (!result.data) {
-                      notify("This career no longer exists.", "error");
-                      return;
-                    }
-                    const fresh = result.data;
-                    setInitialAiAction(undefined);
-                    setEditing({
-                      ...fresh,
-                      ...careerDraftPatch(careerContentForAI(fresh), careerDrafts[id] ?? {}),
-                    });
-                  } catch (error) {
-                    notify(
-                      error instanceof Error
-                        ? error.message
-                        : "Could not load this career for review.",
-                      "error",
-                    );
-                  }
+                disabled={isLoading || draftingCareer !== null}
+                onDraft={(id, draft) => {
+                  setCareerDrafts((current) => ({ ...current, [id]: draft }));
+                  setRegeneratedDrafts((current) => {
+                    const next = new Set(current);
+                    next.delete(id);
+                    return next;
+                  });
                 }}
+                onReview={reviewCareerDraft}
               />
             )}
             {csvUpload && (table === "careers" || table === "sectors") && (
@@ -986,30 +1051,45 @@ function DataTable({
                                     </span>
                                     <button
                                       type="button"
-                                      onClick={() => {
-                                        setInitialAiAction("fill");
-                                        setEditing(r);
-                                      }}
+                                      onClick={() => void generateFromCareerRow(r)}
+                                      disabled={draftingCareer !== null}
                                       aria-label={
                                         "AI: Fill missing fields for " + String(r["name"])
                                       }
                                       title="AI: Fill missing fields"
                                       className="rounded border border-warm-divider p-1.5 text-muted-foreground hover:text-primary"
                                     >
-                                      <Sparkles className="h-3 w-3" />
+                                      <Sparkles
+                                        className={
+                                          "h-3 w-3 " +
+                                          (draftingCareer === rid ? "animate-pulse" : "")
+                                        }
+                                      />
                                     </button>
                                     <button
                                       type="button"
-                                      onClick={() => {
-                                        setInitialAiAction("regenerate");
-                                        setEditing(r);
-                                      }}
+                                      onClick={() => void generateFromCareerRow(r, true)}
+                                      disabled={draftingCareer !== null}
                                       aria-label={"Regenerate " + String(r["name"])}
                                       title="Regenerate this career"
                                       className="rounded border border-warm-divider p-1.5 text-muted-foreground hover:text-primary"
                                     >
                                       <RotateCcw className="h-3 w-3" />
                                     </button>
+                                    {draftingCareer === rid && (
+                                      <span role="status" className="text-xs text-muted-foreground">
+                                        Generating…
+                                      </span>
+                                    )}
+                                    {careerDrafts[rid] && (
+                                      <button
+                                        type="button"
+                                        onClick={() => void reviewCareerDraft(rid)}
+                                        className="text-xs text-primary underline"
+                                      >
+                                        Review Draft
+                                      </button>
+                                    )}
                                     <button
                                       onClick={() => void toggleArchived(r)}
                                       className="rounded border border-warm-divider p-1.5 text-muted-foreground transition hover:text-primary"
@@ -5343,6 +5423,7 @@ function CompanyIndemnityUpload({
 
 function EditRecord({
   initialAiAction,
+  initialCareerDraft,
   title,
   table,
   cols,
@@ -5351,6 +5432,7 @@ function EditRecord({
   onCancel,
 }: {
   initialAiAction?: "fill" | "regenerate" | undefined;
+  initialCareerDraft?: Partial<CareerDraft> | undefined;
   title: string;
   table: string;
   cols: Col[];
@@ -5360,12 +5442,50 @@ function EditRecord({
 }) {
   const syncHolidays = useServerFn(syncAutomaticHolidays);
   const qc = useQueryClient();
-  const [vals, setVals] = useState<Record<string, unknown>>(row);
+  const [vals, setVals] = useState<Record<string, unknown>>({ ...row, ...initialCareerDraft });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const editable = cols.filter((c) => c.key !== "id" && !c.key.startsWith("_"));
+  const [aiState, setAiState] = useState<"idle" | "generating" | "draft">(
+    initialCareerDraft ? "draft" : "idle",
+  );
+  const careerSave = useCareerAutosave({
+    enabled: table === "careers",
+    initialSavedValues: row,
+    values: vals,
+    paused: aiState !== "idle",
+    savePatch: async (patch, signal) => {
+      const result = await supabase
+        .from("careers")
+        .update(patch as Database["public"]["Tables"]["careers"]["Update"])
+        .eq("id", Number(row["id"]))
+        .abortSignal(signal);
+      if (result.error) throw result.error;
+      void qc.invalidateQueries({ queryKey: ["public-career-content"] });
+      void qc.invalidateQueries({ queryKey: ["public-career-availability"] });
+      void qc.invalidateQueries({ queryKey: ["public-careers-catalog"] });
+    },
+  });
+  async function cancelEditing() {
+    if (
+      table === "careers" &&
+      careerSave.dirty &&
+      !(await confirmAction("Leave without saving your latest changes?", {
+        title: "Unsaved Changes",
+        confirmLabel: "Leave",
+      }))
+    )
+      return;
+    onCancel();
+  }
 
   async function save() {
+    if (table === "careers") {
+      if (aiState === "generating") return;
+      if (await careerSave.saveNow()) onDone();
+      return;
+    }
+
     setBusy(true);
     setErr(null);
     if (
@@ -5391,10 +5511,6 @@ function EditRecord({
       .eq("id", row["id"]);
     setBusy(false);
     if (error) return setErr(error.message);
-    if (table === "careers") {
-      qc.invalidateQueries({ queryKey: ["public-career-content"] });
-      qc.invalidateQueries({ queryKey: ["public-career-availability"] });
-    }
     onDone();
   }
 
@@ -5565,6 +5681,8 @@ function EditRecord({
         {table === "careers" && (
           <CareerDescriptionField
             autoAction={initialAiAction}
+            onAiStateChange={setAiState}
+            disabled={careerSave.saving}
             career={String(vals["name"] ?? "")}
             value={(vals["description"] as string) ?? ""}
             onChange={(v) => setVals({ ...vals, description: v })}
@@ -5594,10 +5712,35 @@ function EditRecord({
             }
           />
         )}
+        {table === "careers" && (
+          <p
+            role="status"
+            aria-live="polite"
+            className={
+              "mt-2 text-xs " + (careerSave.error ? "text-destructive" : "text-muted-foreground")
+            }
+          >
+            {careerSave.error ??
+              (careerSave.saving
+                ? "Saving…"
+                : aiState !== "idle"
+                  ? "Autosave paused — review the AI draft and click Update."
+                  : careerSave.dirty
+                    ? "Unsaved changes · autosaves every 30 seconds"
+                    : careerSave.savedAt
+                      ? "Saved at " +
+                        careerSave.savedAt.toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          second: "2-digit",
+                        })
+                      : "Autosave every 30 seconds")}
+          </p>
+        )}
         {err && <p className="mt-4 text-sm font-medium">{err}</p>}
         <button
           onClick={save}
-          disabled={busy}
+          disabled={busy || careerSave.saving || aiState === "generating"}
           className={
             "rounded-md bg-teal/20 hover:bg-teal/30 px-5 py-2.5 text-sm font-medium uppercase text-foreground " +
             (table === "careers" ? "mt-3" : "mt-6")
@@ -5606,7 +5749,11 @@ function EditRecord({
           Update
         </button>
         {table === "careers" && (
-          <button type="button" onClick={onCancel} className="ml-3 text-sm hover:underline">
+          <button
+            type="button"
+            onClick={() => void cancelEditing()}
+            className="ml-3 text-sm hover:underline"
+          >
             Back to list
           </button>
         )}
@@ -5617,6 +5764,8 @@ function EditRecord({
 
 export function CareerDescriptionField({
   autoAction,
+  onAiStateChange,
+  disabled = false,
   career,
   value,
   onChange,
@@ -5627,6 +5776,8 @@ export function CareerDescriptionField({
   onDraft,
 }: {
   autoAction?: "fill" | "regenerate" | undefined;
+  onAiStateChange?: ((state: "idle" | "generating" | "draft") => void) | undefined;
+  disabled?: boolean;
   career: string;
   value: string;
   onChange: (v: string) => void;
@@ -5679,10 +5830,12 @@ export function CareerDescriptionField({
       ))
     )
       return;
+    onAiStateChange?.("generating");
     setBusy(true);
     setErr(null);
     try {
       const generated = await draft({ data: { career, fields } });
+      onAiStateChange?.("draft");
       onDraft(
         Object.fromEntries(
           Object.entries(generated).filter(([key]) =>
@@ -5692,6 +5845,7 @@ export function CareerDescriptionField({
         regenerate,
       );
     } catch (e) {
+      onAiStateChange?.("idle");
       setErr((e as Error).message);
     } finally {
       setBusy(false);
@@ -5706,13 +5860,13 @@ export function CareerDescriptionField({
   return (
     <div className="mt-3 w-full">
       <fieldset className="rounded border border-charcoal/25 p-3">
-        <legend className="px-1 text-sm font-medium">Career Overview</legend>
+        <legend className="px-1 text-sm font-bold">Career Overview</legend>
         <div className="flex items-center justify-end gap-3">
           <div className="flex flex-wrap justify-end gap-2">
             <button
               type="button"
               onClick={() => void suggest()}
-              disabled={busy}
+              disabled={busy || disabled}
               aria-label="AI: Fill missing fields"
               title="AI: Fill missing fields"
               className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary bg-primary/10 text-primary text-xs hover:bg-primary/20 disabled:cursor-wait disabled:opacity-50"
@@ -5722,7 +5876,7 @@ export function CareerDescriptionField({
             <button
               type="button"
               onClick={() => void suggest(true)}
-              disabled={busy}
+              disabled={busy || disabled}
               aria-label="Regenerate this career"
               title="Regenerate this career"
               className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary bg-primary/10 text-primary text-xs hover:bg-primary/20 disabled:cursor-wait disabled:opacity-50"
@@ -5736,7 +5890,7 @@ export function CareerDescriptionField({
             Generating career content…
           </p>
         )}
-        <fieldset disabled={busy}>
+        <fieldset disabled={busy || disabled}>
           <label className="mt-1 block text-sm">
             Role Description
             <textarea
@@ -5777,9 +5931,9 @@ export function CareerDescriptionField({
           </label>
         </fieldset>
       </fieldset>
-      <fieldset disabled={busy}>
+      <fieldset disabled={busy || disabled}>
         <fieldset className="mt-3 grid gap-3 rounded border border-charcoal/25 p-3 sm:grid-cols-3">
-          <legend className="px-1 text-sm font-medium">Skills Required</legend>
+          <legend className="px-1 text-sm font-bold">Skills Required</legend>
           <p className="text-xs text-muted-foreground sm:col-span-3">
             Separate skills with commas.
           </p>
@@ -5830,7 +5984,7 @@ export function CareerDescriptionField({
           </label>
         </fieldset>
         <fieldset className="mt-3 grid gap-3 rounded border border-charcoal/25 p-3 sm:grid-cols-2">
-          <legend className="px-1 text-sm font-medium">Career Preparation</legend>
+          <legend className="px-1 text-sm font-bold">Career Preparation</legend>
           {([["subjects", "Suggested Subjects"]] as const).map(([key, label]) => (
             <label key={key} className="block text-sm">
               {label}
@@ -5882,32 +6036,34 @@ export function CareerDescriptionField({
               className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary"
             />
           </label>
-          <label className="block text-sm">
-            AI Exposure Level
-            <select
-              value={guidance.aiExposureLevel ?? ""}
-              onChange={(e) =>
-                onGuidanceChange({
-                  ai_exposure_level: (e.target.value || null) as "low" | "medium" | "high" | null,
-                })
-              }
-              className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary"
-            >
-              <option value="">Not set</option>
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-            </select>
-          </label>
-          <label className="block text-sm">
-            AI Exposure Note
-            <textarea
-              rows={2}
-              value={guidance.aiExposureNote}
-              onChange={(e) => onGuidanceChange({ ai_exposure_note: e.target.value })}
-              className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary"
-            />
-          </label>
+          <div className="grid gap-3 sm:col-span-2 sm:grid-cols-[9rem_minmax(0,1fr)]">
+            <label className="block text-sm">
+              AI Exposure Level
+              <select
+                value={guidance.aiExposureLevel ?? ""}
+                onChange={(e) =>
+                  onGuidanceChange({
+                    ai_exposure_level: (e.target.value || null) as "low" | "medium" | "high" | null,
+                  })
+                }
+                className="mt-1 w-24 max-w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary"
+              >
+                <option value="">Not set</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </label>
+            <label className="block text-sm">
+              AI Exposure Note
+              <textarea
+                rows={2}
+                value={guidance.aiExposureNote}
+                onChange={(e) => onGuidanceChange({ ai_exposure_note: e.target.value })}
+                className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary"
+              />
+            </label>
+          </div>
         </fieldset>
       </fieldset>
       {err && (

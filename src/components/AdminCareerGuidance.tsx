@@ -5,7 +5,7 @@ import { RichText } from "./RichText";
 function Frame({ title, children }: { title: string; children: ReactNode }) {
   return (
     <fieldset className="min-w-0 rounded border border-charcoal/25 p-3" aria-label={title}>
-      <legend className="px-1 text-sm font-medium">{title}</legend>
+      <legend className="px-1 text-sm font-bold">{title}</legend>
       {children}
     </fieldset>
   );
@@ -73,12 +73,14 @@ export function AdminCareerGuidance({
             <p className="text-sm leading-relaxed">{guidance.futureOutlook || "Not added yet."}</p>
           </section>
           <section>
-            <h3 className="mb-2 text-xs font-medium">AI Exposure</h3>
-            <p className="text-sm leading-relaxed">
-              {guidance.aiExposureLevel
-                ? guidance.aiExposureLevel[0]!.toUpperCase() + guidance.aiExposureLevel.slice(1)
-                : "Not added yet."}
-            </p>
+            <h3 className="mb-2 flex items-center gap-2 text-xs font-medium">
+              AI Exposure:
+              <span>
+                {guidance.aiExposureLevel
+                  ? guidance.aiExposureLevel[0]!.toUpperCase() + guidance.aiExposureLevel.slice(1)
+                  : "Not added yet."}
+              </span>
+            </h3>
             {guidance.aiExposureNote && (
               <p className="mt-1 text-sm leading-relaxed">{guidance.aiExposureNote}</p>
             )}

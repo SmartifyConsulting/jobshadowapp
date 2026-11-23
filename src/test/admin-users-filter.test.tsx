@@ -23,7 +23,7 @@ vi.mock("@/lib/career-ai.functions", () => ({ draftCareerDescription: vi.fn() })
 vi.mock("@/lib/csv-import.functions", () => ({ mapCsvColumns: vi.fn() }));
 vi.mock("@/components/SiteLayout", () => ({ SiteHeader: () => null, SiteFooter: () => null }));
 vi.mock("@/lib/indemnity-ai.functions", () => ({ extractCompanyIndemnity: vi.fn() }));
-vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
+vi.mock("@/integrations/supabase/client", () => ({ supabase: { from: vi.fn() } }));
 import {
   AdminUsers,
   Route,
@@ -33,6 +33,7 @@ import {
 import { draftCareerDescription } from "@/lib/career-ai.functions";
 import { getCareerGuidance } from "@/lib/career-guidance";
 import { CAREER_DRAFT_FIELDS } from "@/lib/career-draft";
+import { supabase } from "@/integrations/supabase/client";
 import { resolveConfirm } from "@/lib/dialogs";
 import { accountInitial, alphabetInitial } from "@/lib/alphabet";
 
@@ -407,6 +408,20 @@ describe("Visible provider directories and career wizard", () => {
       screen.getByRole("button", { name: "AI: Fill missing fields for Accountant" }),
     ).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "AI: Fill missing fields for Accountant" }));
+    await screen.findByRole("button", { name: "Review Draft" });
+    expect(screen.queryByRole("button", { name: "Update" })).not.toBeInTheDocument();
+    vi.mocked(supabase.from).mockReturnValue({
+      select: () => ({
+        eq: () => ({
+          maybeSingle: async () => ({
+            data: { id: 1, name: "Accountant", description: "Original description" },
+            error: null,
+          }),
+        }),
+      }),
+    } as any);
+    fireEvent.click(screen.getByRole("button", { name: "Review Draft" }));
+
     await waitFor(() => expect(screen.getByDisplayValue("Teamwork")).toBeVisible());
     expect(screen.getByDisplayValue("Original description")).toBeVisible();
     expect(screen.queryByDisplayValue("Draft overview")).not.toBeInTheDocument();
