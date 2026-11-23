@@ -46,12 +46,14 @@ describe("expandable school scholars", () => {
     expect(screen.queryByText("Amy Scholar")).toBeNull();
     fireEvent.click(school);
     expect(school).toHaveAttribute("aria-expanded", "true");
-    const children = screen.getByRole("list", { name: "Scholars at Kitso Ya Boleng" });
-    expect(within(children).getAllByRole("listitem")).toHaveLength(2);
+    const children = school.closest("tbody")!;
+    expect(within(children).getAllByRole("row")).toHaveLength(3);
     expect(within(children).getByText("Amy Scholar")).toBeVisible();
     expect(within(children).getByText("ben@example.com")).toBeVisible();
     expect(screen.queryByText("Cleo Scholar")).toBeNull();
-    expect(screen.getAllByRole("columnheader")).toHaveLength(2);
+    expect(screen.getAllByRole("columnheader")).toHaveLength(3);
+    expect(screen.queryByRole("button", { name: /View school details/ })).toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
     fireEvent.click(school);
     expect(screen.queryByText("Amy Scholar")).toBeNull();
     expect(school.closest("tr")).toHaveTextContent("2");

@@ -4767,16 +4767,23 @@ function SettingsFrame({
   icon: Icon,
   tint = "bg-rose-100 text-rose-600",
   children,
+  compact = false,
 }: {
   title: string;
   description: string;
   icon?: LucideIcon;
   tint?: string;
   children: React.ReactNode;
+  compact?: boolean;
 }) {
   return (
     <section className="overflow-hidden rounded-lg border border-warm-divider bg-ivory">
-      <header className="flex items-start gap-3 border-b border-warm-divider px-4 py-3">
+      <header
+        className={
+          "flex items-start gap-3 border-b border-warm-divider " +
+          (compact ? "px-3 py-2" : "px-4 py-3")
+        }
+      >
         {Icon && (
           <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${tint}`}>
             <Icon className="h-4 w-4" />
@@ -4793,6 +4800,7 @@ function SettingsFrame({
 }
 
 function NumberField({
+  compact = false,
   label,
   hint,
   value,
@@ -4800,13 +4808,20 @@ function NumberField({
   suffix,
 }: {
   label: string;
+  compact?: boolean;
   hint?: string;
   value: string;
   onChange: (v: string) => void;
   suffix?: string;
 }) {
   return (
-    <label className="grid items-start gap-4 px-4 py-3 text-sm md:grid-cols-[minmax(0,1fr)_minmax(14rem,0.6fr)]">
+    <label
+      className={
+        compact
+          ? "grid items-start gap-2 px-3 py-2 text-sm sm:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)]"
+          : "grid items-start gap-4 px-4 py-3 text-sm md:grid-cols-[minmax(0,1fr)_minmax(14rem,0.6fr)]"
+      }
+    >
       <span>
         <span>{label}</span>
         {hint && <span className="mt-1 block max-w-xl text-xs text-muted-foreground">{hint}</span>}
@@ -4922,44 +4937,44 @@ export function BookingSettings() {
             <TabsTrigger value="notify">Notifications &amp; Messages</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="rules" className={sectionClass + " mt-6"}>
-            <SettingsFrame
-              title="Scheduling Windows &amp; Lead Times"
-              description="Choose when scholars can request a booking."
-              icon={Clock}
-              tint="bg-rose-100 text-rose-600"
-            >
-              <NumberField
-                label="Minimum request lead time"
-                suffix="days before the shadow date"
-                value={f("min_lead_days")}
-                onChange={set("min_lead_days")}
-                hint="How many days’ notice is needed before a visit."
-              />
-              <NumberField
-                label="Maximum advance booking window"
-                suffix="days ahead"
-                value={f("max_advance_days")}
-                onChange={set("max_advance_days")}
-                hint="How far ahead scholars can book."
-              />
-            </SettingsFrame>
-            <SettingsFrame
-              title="Operating Season &amp; Request Caps"
-              description="Choose booking months and request limits."
-              icon={CalendarIcon}
-              tint="bg-orange-100 text-orange-600"
-            >
-              <div className="grid items-start gap-4 px-4 py-3 md:grid-cols-2">
-                <div>
-                  <p className="text-sm">Operating season range</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Choose the months when visits can take place. Individual hosts can offer extra
-                    dates.
-                  </p>
-                </div>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+          <TabsContent
+            value="rules"
+            className="mt-3 grid items-start gap-3 text-foreground lg:grid-cols-2"
+          >
+            <div className="space-y-3">
+              <SettingsFrame
+                compact
+                title="Scheduling Windows &amp; Lead Times"
+                description="Choose when scholars can request a booking."
+                icon={Clock}
+                tint="bg-rose-100 text-rose-600"
+              >
+                <NumberField
+                  compact
+                  label="Minimum request lead time"
+                  suffix="days before the shadow date"
+                  value={f("min_lead_days")}
+                  onChange={set("min_lead_days")}
+                  hint="How many days’ notice is needed before a visit."
+                />
+                <NumberField
+                  compact
+                  label="Maximum advance booking window"
+                  suffix="days ahead"
+                  value={f("max_advance_days")}
+                  onChange={set("max_advance_days")}
+                  hint="How far ahead scholars can book."
+                />
+              </SettingsFrame>
+              <SettingsFrame
+                compact
+                title="Operating Season &amp; Request Caps"
+                description="Choose booking months and request limits."
+                icon={CalendarIcon}
+                tint="bg-orange-100 text-orange-600"
+              >
+                <div className="space-y-2 px-3 py-2">
+                  <div className="grid grid-cols-2 gap-3">
                     {(
                       [
                         ["season_start_month", "Season starts"],
@@ -4983,7 +4998,7 @@ export function BookingSettings() {
                     ))}
                   </div>
                   <div>
-                    <p className="mb-1 text-xs text-muted-foreground">Annual Season Preview</p>
+                    <p className="mb-1 text-xs text-muted-foreground">Operating months</p>
                     <ol className="grid grid-cols-12 gap-1" aria-label="Annual season preview">
                       {Array.from({ length: 12 }, (_, i) => {
                         const m = i + 1,
@@ -5012,27 +5027,29 @@ export function BookingSettings() {
                     </ol>
                   </div>
                 </div>
-              </div>
-              <NumberField
-                label="Maximum pending requests per scholar"
-                suffix="active requests"
-                value={f("max_pending_requests")}
-                onChange={set("max_pending_requests")}
-                hint={NOT_ENFORCED_HINT}
-              />
-            </SettingsFrame>
+                <NumberField
+                  compact
+                  label="Maximum pending requests per scholar"
+                  suffix="active requests"
+                  value={f("max_pending_requests")}
+                  onChange={set("max_pending_requests")}
+                  hint={NOT_ENFORCED_HINT}
+                />
+              </SettingsFrame>
+            </div>
             <SettingsFrame
+              compact
               title="Blackout Dates &amp; Public Holidays"
               description="Choose extra dates when bookings are closed. Public holidays are blocked automatically."
               icon={CalendarX}
               tint="bg-slate-100 text-slate-600"
             >
-              <div className="px-4 py-3">
+              <div className="px-3 py-2">
                 <p className="text-sm">
                   Blackout dates{" "}
                   <span className="text-xs text-muted-foreground">(no bookings allowed)</span>
                 </p>
-                <div className="mt-2 flex items-center justify-between text-xs">
+                <div className="mt-1 flex items-center justify-between text-xs">
                   <span>Blocked dates ({blackoutDates.length})</span>
                   <button
                     type="button"
@@ -5051,11 +5068,11 @@ export function BookingSettings() {
                     classNames={{
                       root: "w-full",
                       months: "relative flex w-full flex-col",
-                      day: "group/day relative h-10 w-full select-none p-0 text-center",
+                      day: "group/day relative h-8 w-full select-none p-0 text-center",
                     }}
-                    className="rounded-md border border-warm-divider bg-background [&_button[data-day]]:aspect-auto [&_button[data-day]]:h-10 [&_[data-selected-single=true]]:bg-black [&_[data-selected-single=true]]:text-white [&_[data-selected-single=true]:hover]:bg-black [&_[data-selected-single=true]:hover]:text-white"
+                    className="rounded-md border border-warm-divider bg-background [&_button[data-day]]:aspect-auto [&_button[data-day]]:h-8 [&_[data-selected-single=true]]:bg-black [&_[data-selected-single=true]]:text-white [&_[data-selected-single=true]:hover]:bg-black [&_[data-selected-single=true]:hover]:text-white"
                   />
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="max-h-20 overflow-y-auto flex flex-wrap gap-1.5">
                     {blackoutDates.length === 0 && (
                       <span className="text-xs text-muted-foreground">No blackout dates set.</span>
                     )}
@@ -5080,7 +5097,7 @@ export function BookingSettings() {
                   </div>
                 </div>
               </div>
-              <p className="px-4 py-3 text-xs text-muted-foreground">
+              <p className="px-3 py-2 text-xs text-muted-foreground">
                 Public holidays in the host’s country are blocked automatically.
               </p>
             </SettingsFrame>
@@ -5387,7 +5404,12 @@ function EditRecord({
 
   return (
     <div>
-      <div className="flex items-center justify-between border-b border-border bg-background px-6 py-5 text-foreground">
+      <div
+        className={
+          "flex items-center justify-between border-b border-border bg-background text-foreground " +
+          (table === "careers" ? "px-4 py-3" : "px-6 py-5")
+        }
+      >
         <h1 className="text-xl font-medium">
           Edit {title.replace(/s$/, "")} #{String(row["id"])}
         </h1>
@@ -5395,8 +5417,12 @@ function EditRecord({
           Back to list
         </button>
       </div>
-      <div className="bg-background px-6 py-6 text-foreground">
-        <div className="grid gap-5 sm:grid-cols-3">
+      <div
+        className={
+          "bg-background text-foreground " + (table === "careers" ? "px-4 py-4" : "px-6 py-6")
+        }
+      >
+        <div className={"grid sm:grid-cols-3 " + (table === "careers" ? "gap-3" : "gap-5")}>
           {table === "companies" && (
             <CountrySelect
               value={String(vals["country_code"] ?? "ZA")}
@@ -5494,49 +5520,51 @@ function EditRecord({
               </label>
             ),
           )}
+          {table === "careers" && (
+            <>
+              <label className="block text-sm">
+                Mentor target
+                <input
+                  type="number"
+                  min="0"
+                  max="10000"
+                  value={String(vals["mentor_target_count"] ?? "")}
+                  onChange={(e) =>
+                    setVals({ ...vals, mentor_target_count: Number(e.target.value) })
+                  }
+                  className="mt-1 w-full rounded border border-input bg-transparent p-2"
+                />
+                <span className="mt-1 block text-xs text-muted-foreground">
+                  Number of mentors you aim to offer.
+                </span>
+              </label>
+              <label className="block text-sm">
+                Actual mentors available
+                <input
+                  type="number"
+                  min="0"
+                  max={Number(vals["mentor_target_count"] ?? 10000)}
+                  placeholder="Automatic"
+                  value={
+                    vals["mentor_available_count"] == null
+                      ? ""
+                      : String(vals["mentor_available_count"])
+                  }
+                  onChange={(e) =>
+                    setVals({
+                      ...vals,
+                      mentor_available_count: e.target.value === "" ? null : Number(e.target.value),
+                    })
+                  }
+                  className="mt-1 w-full rounded border border-input bg-transparent p-2"
+                />
+                <span className="mt-1 block text-xs text-muted-foreground">
+                  Leave blank for live availability, or enter a verified count.
+                </span>
+              </label>
+            </>
+          )}
         </div>
-        {table === "careers" && (
-          <div className="my-5 grid gap-4 sm:grid-cols-2">
-            <label className="block text-sm">
-              Mentor target
-              <input
-                type="number"
-                min="0"
-                max="10000"
-                value={String(vals["mentor_target_count"] ?? "")}
-                onChange={(e) => setVals({ ...vals, mentor_target_count: Number(e.target.value) })}
-                className="mt-1 w-full rounded border border-input bg-transparent p-2"
-              />
-              <span className="mt-1 block text-xs text-muted-foreground">
-                Number of mentors you aim to offer.
-              </span>
-            </label>
-            <label className="block text-sm">
-              Actual mentors available
-              <input
-                type="number"
-                min="0"
-                max={Number(vals["mentor_target_count"] ?? 10000)}
-                placeholder="Automatic"
-                value={
-                  vals["mentor_available_count"] == null
-                    ? ""
-                    : String(vals["mentor_available_count"])
-                }
-                onChange={(e) =>
-                  setVals({
-                    ...vals,
-                    mentor_available_count: e.target.value === "" ? null : Number(e.target.value),
-                  })
-                }
-                className="mt-1 w-full rounded border border-input bg-transparent p-2"
-              />
-              <span className="mt-1 block text-xs text-muted-foreground">
-                Leave blank for live availability, or enter a verified count.
-              </span>
-            </label>
-          </div>
-        )}
         {table === "careers" && (
           <CareerDescriptionField
             autoAction={initialAiAction}
@@ -5573,7 +5601,10 @@ function EditRecord({
         <button
           onClick={save}
           disabled={busy}
-          className="mt-6 rounded-md bg-teal/20 hover:bg-teal/30 px-5 py-2.5 text-sm font-medium uppercase text-foreground"
+          className={
+            "rounded-md bg-teal/20 hover:bg-teal/30 px-5 py-2.5 text-sm font-medium uppercase text-foreground " +
+            (table === "careers" ? "mt-3" : "mt-6")
+          }
         >
           Update
         </button>
@@ -5671,7 +5702,7 @@ export function CareerDescriptionField({
     }
   }, [autoAction]);
   return (
-    <div className="mt-6 max-w-3xl">
+    <div className="mt-3 w-full">
       <div className="flex items-center justify-between gap-3">
         <span className="text-sm font-semibold">Career Content</span>
         <div className="flex flex-wrap justify-end gap-2">
@@ -5699,21 +5730,22 @@ export function CareerDescriptionField({
       </div>
       <fieldset disabled={busy}>
         <textarea
-          rows={4}
+          rows={3}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="A brief description of this career"
           className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary"
         />
         {value && (
-          <div className="mt-2 rounded bg-muted/40 p-2 text-sm">
+          <details className="mt-1 rounded bg-muted/40 p-2 text-sm">
+            <summary className="cursor-pointer">Preview description</summary>
             <RichText text={value} />
-          </div>
+          </details>
         )}
-        <fieldset className="mt-4 space-y-3">
+        <fieldset className="mt-3 grid gap-3 sm:grid-cols-2">
           <legend className="text-sm font-semibold">Skills Required</legend>
-          <p className="text-xs text-muted-foreground">
-            Separate skills with commas. AI suggestions remain a draft until you click Update.
+          <p className="text-xs text-muted-foreground sm:col-span-2">
+            Separate skills with commas. AI drafts are saved with Update.
           </p>
           {(
             [
@@ -5741,13 +5773,18 @@ export function CareerDescriptionField({
               />
             </label>
           ))}
-          <CareerSkills {...skills} />
+          <details className="sm:col-span-2">
+            <summary className="cursor-pointer text-xs text-muted-foreground">
+              Preview skills
+            </summary>
+            <CareerSkills {...skills} />
+          </details>
         </fieldset>
-        <div className="mt-4 space-y-4">
-          <label className="block text-sm">
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <label className="block text-sm sm:col-span-2">
             Ideal for
             <textarea
-              rows={3}
+              rows={2}
               value={guidance.idealFor}
               onChange={(e) => onGuidanceChange({ ideal_for: e.target.value })}
               className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary"

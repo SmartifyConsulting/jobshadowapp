@@ -1,15 +1,9 @@
-import { Fragment, useMemo, useState } from "react";
-import { ChevronRight, Info, Pencil, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ChevronRight, Pencil, Trash2 } from "lucide-react";
 import { schoolDirectory } from "@/lib/school-directory";
 import type { AccountRow } from "@/lib/users.server";
 import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
+
 export function SchoolsDirectory({
   accounts,
   onAdd,
@@ -27,7 +21,6 @@ export function SchoolsDirectory({
   const [query, setQuery] = useState("");
   const [letter, setLetter] = useState("");
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const [selected, setSelected] = useState<string | null>(null);
   const shown = schools.filter(
     (school) =>
       (!letter || school.name.toUpperCase().startsWith(letter)) &&
@@ -35,7 +28,6 @@ export function SchoolsDirectory({
         name.toLowerCase().includes(query.trim().toLowerCase()),
       ),
   );
-  const detail = schools.find((school) => school.key === selected);
   const contacts = accounts.filter(
     (account) => account.roles.includes("school") && !account.is_spam,
   );
@@ -72,26 +64,30 @@ export function SchoolsDirectory({
           className="mt-1 w-full rounded border border-input bg-background px-3 py-2"
         />
       </label>
-      <table className="w-full table-fixed text-left text-sm">
-        <thead>
-          <tr className="border-b border-border">
-            <th className="px-3 py-2 font-medium">School</th>
-            <th className="w-28 px-3 py-2 text-right font-medium">Scholars</th>
-          </tr>
-        </thead>
-        <tbody>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[560px] table-fixed text-left text-xs">
+          <colgroup>
+            <col className="w-[45%]" />
+            <col className="w-[43%]" />
+            <col className="w-[12%]" />
+          </colgroup>
+          <thead>
+            <tr className="border-b border-border">
+              <th className="px-3 py-2 font-medium">School / Scholar</th>
+              <th className="px-3 py-2 font-medium">Email</th>
+              <th className="px-3 py-2 text-right font-medium">Scholars</th>
+            </tr>
+          </thead>
           {shown.map((school) => {
             const open = expanded.has(school.key);
-            const childrenId = "school-children-" + encodeURIComponent(school.key);
             return (
-              <Fragment key={school.key}>
-                <tr className="border-b border-border">
-                  <td className="px-3 py-2">
+              <tbody key={school.key}>
+                <tr className="border-t border-warm-divider hover:bg-teal/5">
+                  <td className="px-3 py-2 font-medium">
                     <button
                       type="button"
                       className="flex items-center gap-2 text-left hover:text-primary"
                       aria-expanded={open}
-                      aria-controls={childrenId}
                       onClick={() =>
                         setExpanded((current) => {
                           const next = new Set(current);
@@ -113,67 +109,46 @@ export function SchoolsDirectory({
                         other.key !== school.key &&
                         other.name.toLowerCase() === school.name.toLowerCase(),
                     ) && (
-                      <span className="ml-6 text-xs text-muted-foreground">
+                      <span className="ml-6 text-muted-foreground">
                         {school.country ?? "Country not recorded"}
                       </span>
                     )}
                   </td>
-                  <td className="px-3 py-2 text-right">
-                    <span className="inline-flex items-center gap-3">
-                      {school.scholars.length}
-                      <button
-                        type="button"
-                        title="School details"
-                        aria-label={"View school details for " + school.name}
-                        className="rounded p-1 text-muted-foreground hover:text-primary"
-                        onClick={() => setSelected(school.key)}
-                      >
-                        <Info className="h-4 w-4" />
-                      </button>
-                    </span>
-                  </td>
+                  <td className="px-3 py-2" />
+                  <td className="px-3 py-2 text-right">{school.scholars.length}</td>
                 </tr>
-                {open && (
-                  <tr>
-                    <td colSpan={2} className="border-b border-border bg-ivory px-3 py-1">
-                      <ul
-                        id={childrenId}
-                        aria-label={"Scholars at " + school.name}
-                        className="ml-2 divide-y divide-border border-l border-border pl-5"
+                {open &&
+                  [...school.scholars]
+                    .sort((a, b) =>
+                      (a.full_name || a.display_name || a.email || "").localeCompare(
+                        b.full_name || b.display_name || b.email || "",
+                      ),
+                    )
+                    .map((account) => (
+                      <tr
+                        key={account.id}
+                        className="border-t border-warm-divider bg-muted/20 text-muted-foreground"
                       >
-                        {[...school.scholars]
-                          .sort((a, b) =>
-                            (a.full_name || a.display_name || a.email || "").localeCompare(
-                              b.full_name || b.display_name || b.email || "",
-                            ),
-                          )
-                          .map((account) => (
-                            <li
-                              key={account.id}
-                              className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-2 text-sm"
-                            >
-                              <span>
-                                {account.full_name ||
-                                  account.display_name ||
-                                  [account.first_name, account.last_name]
-                                    .filter(Boolean)
-                                    .join(" ") ||
-                                  "Name not recorded"}
-                              </span>
-                              <span className="break-all text-xs text-muted-foreground">
-                                {account.email || "Email not recorded"}
-                              </span>
-                            </li>
-                          ))}
-                      </ul>
-                    </td>
-                  </tr>
-                )}
-              </Fragment>
+                        <td className="py-2 pl-8 pr-3">
+                          <span aria-hidden>↳ </span>
+                          <span>
+                            {account.full_name ||
+                              account.display_name ||
+                              [account.first_name, account.last_name].filter(Boolean).join(" ") ||
+                              "Name not recorded"}
+                          </span>
+                        </td>
+                        <td className="truncate px-3 py-2" title={account.email ?? undefined}>
+                          {account.email || "Email not recorded"}
+                        </td>
+                        <td className="px-3 py-2" />
+                      </tr>
+                    ))}
+              </tbody>
             );
           })}
-        </tbody>
-      </table>
+        </table>
+      </div>
       {!shown.length && (
         <p className="py-3 text-sm text-muted-foreground">No schools match this search.</p>
       )}
@@ -209,53 +184,6 @@ export function SchoolsDirectory({
           </ul>
         </details>
       )}
-      <Sheet
-        open={!!detail}
-        onOpenChange={(open) => {
-          if (!open) setSelected(null);
-        }}
-      >
-        <SheetContent className="overflow-y-auto bg-ivory">
-          <SheetHeader>
-            <SheetTitle>{detail?.name}</SheetTitle>
-            <SheetDescription>{detail?.scholars.length} scholars</SheetDescription>
-          </SheetHeader>
-          {detail && (
-            <div className="mt-4 rounded border border-border p-3">
-              <h3 className="text-sm font-medium">Recorded school names</h3>
-              <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-                {detail.sourceNames.map((name) => (
-                  <li key={name}>
-                    {name} ·{" "}
-                    {
-                      detail.scholars.filter(
-                        (account) => account.school?.trim().replace(/\s+/g, " ") === name,
-                      ).length
-                    }{" "}
-                    scholars
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Original profile entries are preserved.
-              </p>
-            </div>
-          )}
-          <ul className="mt-4 divide-y divide-border">
-            {detail?.scholars.map((account) => (
-              <li key={account.id} className="py-2 text-sm">
-                <p>
-                  {account.full_name ||
-                    account.display_name ||
-                    [account.first_name, account.last_name].filter(Boolean).join(" ") ||
-                    account.email}
-                </p>
-                <p className="text-xs text-muted-foreground">{account.email}</p>
-              </li>
-            ))}
-          </ul>
-        </SheetContent>
-      </Sheet>
     </div>
   );
 }
