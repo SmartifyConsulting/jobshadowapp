@@ -41,8 +41,15 @@ describe("How To links", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Mentors" }));
     expect(
-      within(screen.getByRole("navigation", { name: "How-to steps" })).getAllByRole("link"),
+      within(screen.getByRole("navigation", { name: "Vetting and onboarding steps" })).getAllByRole(
+        "link",
+      ),
     ).toHaveLength(8);
+    expect(
+      within(screen.getByRole("navigation", { name: "Hosting and feedback steps" })).getAllByRole(
+        "link",
+      ),
+    ).toHaveLength(6);
     fireEvent.click(screen.getByRole("button", { name: "Hosts" }));
     expect(screen.getByRole("link", { name: "Register as a host" })).toHaveAttribute(
       "href",
@@ -89,9 +96,12 @@ describe("How To links", () => {
     state.roles = ["mentor"];
     const Page = Route.options.component as () => React.JSX.Element;
     render(<Page />);
-    const links = within(screen.getByRole("navigation", { name: "How-to steps" })).getAllByRole(
-      "link",
-    );
-    expect(links[2]).toHaveAttribute("href", "/mentor?section=settings");
+    expect(screen.queryByRole("button", { name: "Scholars" })).toBeNull();
+    expect(screen.getByText("Phase 1: Vetting & Onboarding")).toBeVisible();
+    expect(screen.getByText("Phase 2: Hosting & Feedback")).toBeVisible();
+    const links = within(
+      screen.getByRole("navigation", { name: "Hosting and feedback steps" }),
+    ).getAllByRole("link");
+    expect(links[0]).toHaveAttribute("href", "/mentor?section=settings");
   });
 });

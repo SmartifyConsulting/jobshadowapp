@@ -17,6 +17,13 @@ import {
   Bell,
   ArrowRight,
   CreditCard,
+  Mail,
+  Linkedin,
+  ShieldCheck,
+  ContactRound,
+  BookOpen,
+  Building2,
+  Award,
 } from "lucide-react";
 import { SiteLayout, useSiteSession } from "@/components/SiteLayout";
 import { YouTube } from "@/components/YouTube";
@@ -47,6 +54,17 @@ const MENTOR_STEPS: Step[] = [
   { icon: Bell, label: "Get feedback &\nbuild your profile" },
 ];
 
+const MENTOR_ONBOARDING_STEPS: Step[] = [
+  { icon: UserPlus, label: "Register\nas a mentor" },
+  { icon: User, label: "Create & verify\nyour profile" },
+  { icon: Mail, label: "Email OTP" },
+  { icon: Linkedin, label: "LinkedIn\nprofile" },
+  { icon: ContactRound, label: "Reference\nchecks" },
+  { icon: BookOpen, label: "Safeguarding\ntraining" },
+  { icon: Building2, label: "Employer\nsign-off" },
+  { icon: Award, label: "Verified &\nactive" },
+];
+
 const SCHOOL_STEPS: Step[] = [
   { icon: UserPlus, label: "Register\nas a school" },
   { icon: User, label: "Create\nyour profile" },
@@ -61,14 +79,20 @@ function StepRow({
   steps,
   links,
   complete = [],
+  label = "How-to steps",
+  startNumber = 1,
+  showCurrent = true,
 }: {
   steps: Step[];
   links: string[];
   complete?: boolean[];
+  label?: string;
+  startNumber?: number;
+  showCurrent?: boolean;
 }) {
-  const next = steps.findIndex((_, index) => !complete[index]);
+  const next = showCurrent ? steps.findIndex((_, index) => !complete[index]) : -1;
   return (
-    <nav aria-label="How-to steps" className="overflow-x-auto py-5">
+    <nav aria-label={label} className="overflow-x-auto py-5">
       <ol className="flex min-w-[590px] items-start">
         {steps.map((step, index) => (
           <li key={index} className="relative min-w-0 flex-1 text-center">
@@ -108,7 +132,7 @@ function StepRow({
                       : "bg-muted text-muted-foreground")
                   }
                 >
-                  {index + 1}
+                  {index + startNumber}
                 </span>
               )}
               <step.icon className="h-7 w-7" aria-hidden />
@@ -177,19 +201,52 @@ function HowTo() {
         ["host", "Hosts"],
         ["school", "Schools"],
       ] as const)
-    : ([
-        ["scholar", "Scholars"],
-        ["mentor", "Mentors / Hosts"],
-      ] as const);
-  const defaultView = scholar
-    ? "scholar"
     : provider
-      ? "mentor"
+      ? roles.includes("mentor")
+        ? ([["mentor", "Mentors"]] as const)
+        : ([["host", "Hosts"]] as const)
       : roles.includes("school")
-        ? "school"
-        : "scholar";
+        ? ([["school", "Schools"]] as const)
+        : ([
+            ["scholar", "Scholars"],
+            ["mentor", "Mentors / Hosts"],
+          ] as const);
+  const defaultView =
+    isAdmin && scholar
+      ? "scholar"
+      : provider
+        ? roles.includes("mentor")
+          ? "mentor"
+          : "host"
+        : roles.includes("school")
+          ? "school"
+          : "scholar";
   const view =
-    selectedView?.userId === session?.user?.id && selectedView ? selectedView.view : defaultView;
+    selectedView?.userId === session?.user?.id &&
+    selectedView &&
+    guides.some(([key]) => key === selectedView.view)
+      ? selectedView.view
+      : defaultView;
+  const onboarding = [
+    !!progress.data?.mentor[0],
+    !!progress.data?.mentor[1],
+    !!session?.user?.email_confirmed_at,
+    !!progress.data?.mentorLinkedin,
+    false,
+    false,
+    false,
+    false,
+  ];
+  const onboardingLinks = [
+    session?.user ? destination("providerProfile") : "/register",
+    destination("providerProfile"),
+    "/my-account?view=profile",
+    session?.user ? "/mentor?section=professional" : destination("providerProfile"),
+    "/contact?type=mentor",
+    "/contact?type=mentor",
+    "/contact?type=mentor",
+    "/contact?type=mentor",
+  ];
   const content = {
     scholar: {
       steps: STUDENT_STEPS,
@@ -210,9 +267,9 @@ function HowTo() {
       ],
     },
     mentor: {
-      steps: MENTOR_STEPS,
-      complete: progress.data?.mentor ?? [],
-      links: providerLinks("mentor"),
+      steps: [...MENTOR_ONBOARDING_STEPS, ...MENTOR_STEPS.slice(2)],
+      complete: [...onboarding, ...(progress.data?.mentor ?? []).slice(2)],
+      links: [...onboardingLinks, ...providerLinks("mentor").slice(2)],
     },
     host: {
       steps: MENTOR_STEPS.map((step, index) =>
@@ -239,27 +296,44 @@ function HowTo() {
           "Help your scholars prepare for their visits.",
           "Review feedback with JobShadow.",
         ]
-      : view === "scholar"
+      : view === "mentor"
         ? [
-            "Create an account to start your job shadow journey.",
-            "Add your details so we can arrange your visit.",
-            "Explore careers and find a host near you.",
-            "Choose a host and request a date that suits you.",
-            "Make payment once your booking is ready.",
-            "Complete the required forms with your parent or guardian.",
-            "Check your arrangements and enjoy your job shadow.",
-            "Tell us what you learned from your visit.",
-          ]
-        : [
-            "Apply to become a mentor or host.",
-            "Introduce yourself and your experience.",
-            "Choose the dates and times you can host.",
-            "Complete the forms needed for hosting.",
-            "Review the scholars who have requested a visit.",
-            "Confirm the booking details.",
-            "Welcome your scholar and host the experience.",
+            "Register to begin mentoring.",
+            "Add your professional experience and CV.",
+            "Check your account email verification with Job Shadow.",
+            "Add your LinkedIn profile in Professional Details.",
+            "Arrange your reference checks with Job Shadow.",
+            "Arrange safeguarding training with Job Shadow.",
+            "Coordinate employer sign-off with Job Shadow where needed.",
+            "Contact Job Shadow to confirm your vetting outcome.",
+            "Choose the days and times you can host.",
+            "Complete your hosting forms with Job Shadow.",
+            "Review incoming student bookings.",
+            "Confirm your booking arrangements.",
+            "Welcome your scholar and host the session.",
             "Read feedback and keep your profile up to date.",
-          ];
+          ]
+        : view === "scholar"
+          ? [
+              "Create an account to start your job shadow journey.",
+              "Add your details so we can arrange your visit.",
+              "Explore careers and find a host near you.",
+              "Choose a host and request a date that suits you.",
+              "Make payment once your booking is ready.",
+              "Complete the required forms with your parent or guardian.",
+              "Check your arrangements and enjoy your job shadow.",
+              "Tell us what you learned from your visit.",
+            ]
+          : [
+              "Apply to become a mentor or host.",
+              "Introduce yourself and your experience.",
+              "Choose the dates and times you can host.",
+              "Complete the forms needed for hosting.",
+              "Review the scholars who have requested a visit.",
+              "Confirm the booking details.",
+              "Welcome your scholar and host the experience.",
+              "Read feedback and keep your profile up to date.",
+            ];
   return (
     <SiteLayout className="lg:[&>footer>div:first-child]:py-3">
       <div className="bg-cta text-cta-foreground">
@@ -299,7 +373,33 @@ function HowTo() {
             </span>
           </div>
           <p className="sr-only">Click on each step to complete it.</p>
-          <StepRow steps={content.steps} complete={content.complete} links={content.links} />
+          {view === "mentor" ? (
+            <div className="mt-4 grid gap-4 xl:grid-cols-2">
+              <fieldset className="min-w-0 rounded border border-charcoal/25 p-3">
+                <legend className="px-1 text-sm font-bold">
+                  Phase 1: Vetting &amp; Onboarding
+                </legend>
+                <StepRow
+                  label="Vetting and onboarding steps"
+                  steps={MENTOR_ONBOARDING_STEPS}
+                  complete={onboarding}
+                  links={onboardingLinks}
+                />
+              </fieldset>
+              <fieldset className="min-w-0 rounded border border-charcoal/25 p-3">
+                <legend className="px-1 text-sm font-bold">Phase 2: Hosting &amp; Feedback</legend>
+                <StepRow
+                  label="Hosting and feedback steps"
+                  steps={MENTOR_STEPS.slice(2)}
+                  complete={(progress.data?.mentor ?? []).slice(2)}
+                  links={providerLinks("mentor").slice(2)}
+                  showCurrent={onboarding.every(Boolean)}
+                />
+              </fieldset>
+            </div>
+          ) : (
+            <StepRow steps={content.steps} complete={content.complete} links={content.links} />
+          )}
           {nextStep >= 0 ? (
             <div className="mt-2 flex flex-wrap items-center justify-between gap-4 rounded-lg bg-muted/50 px-5 py-4">
               <div>
@@ -331,7 +431,7 @@ function HowTo() {
               ? "School arrangements are managed with JobShadow; completion is not tracked here yet."
               : "Green ticks show your own saved progress."}
             {(view === "mentor" || view === "host") &&
-              " Contact us for host indemnity and NDA forms; their completion is not tracked in the app yet."}
+              " Contact Job Shadow to complete vetting, training and hosting forms."}
           </p>
         </div>
       </section>

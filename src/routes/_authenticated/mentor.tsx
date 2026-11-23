@@ -1,3 +1,4 @@
+import { draftMentorProfileFromCv } from "@/lib/mentor-cv.functions";
 import { TimePicker } from "@/components/TimePicker";
 import { displayTime } from "@/lib/time-entry";
 import { selectedDaySlots, validDaySlot, type DaySlot } from "@/lib/placement-day-times";
@@ -8,7 +9,7 @@ import { syncAutomaticHolidays } from "@/lib/public-holidays.functions";
 import { CountrySelect } from "@/components/CountrySelect";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, X, Award, Upload } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
 import { PortalLoading } from "@/components/PortalLoading";
@@ -18,7 +19,7 @@ import { Calendar } from "@/components/ui/calendar";
 
 export const Route = createFileRoute("/_authenticated/mentor")({
   validateSearch: (search: Record<string, unknown>): { section?: Section | undefined } => ({
-    section: ["calendar", "shadows", "messages", "profile", "settings"].includes(
+    section: ["calendar", "shadows", "messages", "profile", "professional", "settings"].includes(
       String(search["section"]),
     )
       ? (search["section"] as Section)
@@ -79,7 +80,7 @@ const STATUS: Record<string, string> = {
   cancelled: "Cancelled",
 };
 
-type Section = "calendar" | "shadows" | "messages" | "profile" | "settings";
+type Section = "calendar" | "shadows" | "messages" | "profile" | "professional" | "settings";
 function todayKey() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -120,11 +121,13 @@ function MentorPortal() {
       <main className="min-w-0 flex-1 p-4 md:p-6">
         <HostProfile
           initialTab={
-            requestedSection === "settings"
-              ? "availability"
-              : requestedSection === "calendar" || requestedSection === "shadows"
-                ? "shadows"
-                : "personal"
+            requestedSection === "professional"
+              ? "professional"
+              : requestedSection === "settings"
+                ? "availability"
+                : requestedSection === "calendar" || requestedSection === "shadows"
+                  ? "shadows"
+                  : "personal"
           }
           bookings={bookings.data ?? []}
           placements={placements.data ?? []}
@@ -234,8 +237,8 @@ function JobShadows({
   return (
     <section className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Job Shadows</h1>
-        <div aria-label="Job Shadows filters" className="flex flex-wrap gap-1.5">
+        <h1 className="text-2xl font-bold">Bookings</h1>
+        <div aria-label="Booking filters" className="flex flex-wrap gap-1.5">
           {(["upcoming", "pending", "all"] as const).map((f) => (
             <button
               key={f}
@@ -423,6 +426,10 @@ function HostProfile({
   loadingBookings: boolean;
 }) {
   const qc = useQueryClient();
+  const draftCv = useServerFn(draftMentorProfileFromCv);
+  const initialized = useRef(false);
+  const [cvAiBusy, setCvAiBusy] = useState(false);
+  const [cvDraftNote, setCvDraftNote] = useState("");
   const [profileTab, setProfileTab] = useState(initialTab);
   const profile = useQuery({
     queryKey: ["host-profile"],
@@ -453,7 +460,8 @@ function HostProfile({
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    if (!profile.data) return;
+    if (!profile.data || initialized.current) return;
+    initialized.current = true;
     const p = profile.data;
     setBio(p.bio ?? "");
     setSpecialties((p.specialties ?? []).join(", "));
@@ -471,7 +479,38 @@ function HostProfile({
     setEngagementNotes(p.engagement_notes ?? "");
   }, [profile.data]);
 
+  async function fillFromCv() {
+    if (!cvPath || cvAiBusy) return;
+    setCvAiBusy(true);
+    setErr(null);
+    setCvDraftNote("");
+    try {
+      const draft = await draftCv({ data: { storagePath: cvPath } });
+      setBio((current) => (current.trim() ? current : (draft.bio ?? "")));
+      setSpecialties((current) =>
+        current.trim() ? current : (draft.specialties ?? []).join(", "),
+      );
+      setCertifications((current) => (current.trim() ? current : (draft.certifications ?? "")));
+      setLinkedinUrl((current) => (current.trim() ? current : (draft.linkedin_url ?? "")));
+      setSaved(false);
+      setCvDraftNote("CV draft added to empty fields. Please review, then Save Profile.");
+    } catch (error) {
+      setErr(
+        error instanceof Error
+          ? error.message
+          : "Could not read your CV. Your current fields have been preserved.",
+      );
+    } finally {
+      setCvAiBusy(false);
+    }
+  }
+
   async function uploadCv(file: File) {
+    if (file.size > 10 * 1024 * 1024) {
+      setErr("Choose a CV smaller than 10 MB.");
+      return;
+    }
+    setCvDraftNote("");
     setCvBusy(true);
     setErr(null);
     try {
@@ -497,7 +536,7 @@ function HostProfile({
       hasHrAdmin &&
       (!hrFirstName.trim() || !hrLastName.trim() || !hrEmail.trim())
     ) {
-      setProfileTab("secondary");
+      setProfileTab("availability");
       setErr("Please provide your HR admin's first name, last name and email.");
       return;
     }
@@ -539,9 +578,8 @@ function HostProfile({
         >
           <TabsTrigger value="personal">Personal Details</TabsTrigger>
           <TabsTrigger value="professional">Professional Details</TabsTrigger>
-          <TabsTrigger value="secondary">Secondary Information</TabsTrigger>
-          <TabsTrigger value="availability">Availability &amp; Bookings</TabsTrigger>
-          <TabsTrigger value="shadows">Job Shadows</TabsTrigger>
+          <TabsTrigger value="availability">Preferences</TabsTrigger>
+          <TabsTrigger value="shadows">Bookings</TabsTrigger>
         </TabsList>
         <TabsContent forceMount value="personal" className="mt-4 data-[state=inactive]:hidden">
           <AccountPersonalDetails />
@@ -560,7 +598,7 @@ function HostProfile({
                   type="file"
                   accept=".pdf,.doc,.docx"
                   hidden
-                  disabled={cvBusy}
+                  disabled={cvBusy || cvAiBusy}
                   onChange={(e) => {
                     const f = e.target.files?.[0];
                     if (f) void uploadCv(f);
@@ -573,6 +611,35 @@ function HostProfile({
                 </span>
               )}
             </div>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={fillFromCv}
+                disabled={
+                  !cvPath ||
+                  !/\.pdf$/i.test(cvPath) ||
+                  cvBusy ||
+                  cvAiBusy ||
+                  !!(
+                    bio.trim() &&
+                    specialties.trim() &&
+                    certifications.trim() &&
+                    linkedinUrl.trim()
+                  )
+                }
+                className="rounded bg-primary px-3 py-2 text-xs font-bold text-primary-foreground disabled:opacity-50"
+              >
+                {cvAiBusy ? "Reading CV…" : "Fill From My CV"}
+              </button>
+              <p className="text-xs text-muted-foreground">
+                Uses OpenAI to fill empty fields from your PDF CV. Review before saving.
+              </p>
+            </div>
+            {cvDraftNote && (
+              <p role="status" className="mt-2 text-sm">
+                {cvDraftNote}
+              </p>
+            )}
           </ProfessionalFrame>
           <p className="text-sm text-muted-foreground lg:col-span-2">
             Shown to scholars and HR before your identity is revealed — it's what gives them
@@ -625,111 +692,116 @@ function HostProfile({
             </label>
           </ProfessionalFrame>
         </TabsContent>
-        <TabsContent value="secondary" className="mt-4 grid gap-3 lg:grid-cols-2">
-          {" "}
-          <div className="rounded-lg border bg-card p-4 space-y-3">
-            <p className="text-sm font-semibold">How are you mentoring?</p>
-            <p className="text-xs text-muted-foreground">
-              This decides whether you show up as an Independent Mentor or a Company Mentor, and who
-              we can loop in with updates.
-            </p>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={viaCompany}
-                onChange={(e) => {
-                  setViaCompany(e.target.checked);
-                  if (!e.target.checked) setHasHrAdmin(false);
-                }}
-              />
-              Is this mentorship being done through a company?
-            </label>
-            {viaCompany && (
-              <label className="ml-6 flex items-center gap-2 text-sm">
+        <TabsContent
+          forceMount
+          value="availability"
+          className="mt-4 space-y-4 data-[state=inactive]:hidden"
+        >
+          <div className="grid gap-3 lg:grid-cols-2">
+            {" "}
+            <div className="rounded-lg border bg-card p-4 space-y-3">
+              <p className="text-sm font-semibold">Company Contact</p>
+              <p className="text-sm">{viaCompany ? "Company Mentor" : "Independent Mentor"}</p>
+              {viaCompany && (
+                <label className="ml-6 flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={hasHrAdmin}
+                    onChange={(e) => setHasHrAdmin(e.target.checked)}
+                  />
+                  Do you have an HR admin you report results to?
+                </label>
+              )}
+              {viaCompany && hasHrAdmin && (
+                <div className="ml-6 grid gap-3 sm:grid-cols-2">
+                  <label className="block text-sm">
+                    HR first name
+                    <input
+                      value={hrFirstName}
+                      onChange={(e) => setHrFirstName(e.target.value)}
+                      className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                    />
+                  </label>
+                  <label className="block text-sm">
+                    HR last name
+                    <input
+                      value={hrLastName}
+                      onChange={(e) => setHrLastName(e.target.value)}
+                      className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                    />
+                  </label>
+                  <label className="block text-sm sm:col-span-2">
+                    HR email
+                    <input
+                      type="email"
+                      value={hrEmail}
+                      onChange={(e) => setHrEmail(e.target.value)}
+                      className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                    />
+                  </label>
+                </div>
+              )}
+            </div>
+            <div className="rounded-lg border bg-card p-4 space-y-3">
+              <p className="text-sm font-semibold">Rules of Engagement</p>
+              <p className="text-xs text-muted-foreground">
+                Help admin know how best to reach you.
+              </p>
+              <label className="block text-sm">
+                Preferred contact method
+                <select
+                  value={preferredContact}
+                  onChange={(e) => setPreferredContact(e.target.value)}
+                  className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                >
+                  <option value="email">Email</option>
+                  <option value="whatsapp">WhatsApp</option>
+                  <option value="phone">Phone call</option>
+                  <option value="sms">SMS</option>
+                </select>
+              </label>
+              <label className="block text-sm">
+                Best times to contact you (optional)
+                <input
+                  value={contactHoursNote}
+                  onChange={(e) => setContactHoursNote(e.target.value)}
+                  placeholder="e.g. Weekdays 9am-5pm only"
+                  className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                />
+              </label>
+              <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
-                  checked={hasHrAdmin}
-                  onChange={(e) => setHasHrAdmin(e.target.checked)}
+                  checked={avoidWeekends}
+                  onChange={(e) => setAvoidWeekends(e.target.checked)}
                 />
-                Do you have an HR admin you report results to?
+                Please don't contact me on weekends
               </label>
-            )}
-            {viaCompany && hasHrAdmin && (
-              <div className="ml-6 grid gap-3 sm:grid-cols-2">
-                <label className="block text-sm">
-                  HR first name
-                  <input
-                    value={hrFirstName}
-                    onChange={(e) => setHrFirstName(e.target.value)}
-                    className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-                  />
-                </label>
-                <label className="block text-sm">
-                  HR last name
-                  <input
-                    value={hrLastName}
-                    onChange={(e) => setHrLastName(e.target.value)}
-                    className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-                  />
-                </label>
-                <label className="block text-sm sm:col-span-2">
-                  HR email
-                  <input
-                    type="email"
-                    value={hrEmail}
-                    onChange={(e) => setHrEmail(e.target.value)}
-                    className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-                  />
-                </label>
-              </div>
-            )}
+              <label className="block text-sm">
+                Anything else admin should know (optional)
+                <textarea
+                  rows={2}
+                  value={engagementNotes}
+                  onChange={(e) => setEngagementNotes(e.target.value)}
+                  placeholder="e.g. prefers written briefs before a call, out of office in December"
+                  className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                />
+              </label>
+            </div>
           </div>
-          <div className="rounded-lg border bg-card p-4 space-y-3">
-            <p className="text-sm font-semibold">Rules of engagement</p>
-            <p className="text-xs text-muted-foreground">Help admin know how best to reach you.</p>
-            <label className="block text-sm">
-              Preferred contact method
-              <select
-                value={preferredContact}
-                onChange={(e) => setPreferredContact(e.target.value)}
-                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-              >
-                <option value="email">Email</option>
-                <option value="whatsapp">WhatsApp</option>
-                <option value="phone">Phone call</option>
-                <option value="sms">SMS</option>
-              </select>
-            </label>
-            <label className="block text-sm">
-              Best times to contact you (optional)
-              <input
-                value={contactHoursNote}
-                onChange={(e) => setContactHoursNote(e.target.value)}
-                placeholder="e.g. Weekdays 9am-5pm only"
-                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-              />
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={avoidWeekends}
-                onChange={(e) => setAvoidWeekends(e.target.checked)}
-              />
-              Please don't contact me on weekends
-            </label>
-            <label className="block text-sm">
-              Anything else admin should know (optional)
-              <textarea
-                rows={2}
-                value={engagementNotes}
-                onChange={(e) => setEngagementNotes(e.target.value)}
-                placeholder="e.g. prefers written briefs before a call, out of office in December"
-                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-              />
-            </label>
-          </div>
-        </TabsContent>
-        <TabsContent forceMount value="availability" className="mt-4 data-[state=inactive]:hidden">
+          <button
+            type="button"
+            onClick={save}
+            disabled={busy || profile.isPending || !!profile.error}
+            className="rounded bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-50"
+          >
+            {saved ? "Saved" : "Save Contact Preferences"}
+          </button>
+          {(err || profile.error) && (
+            <p role="alert" className="text-sm text-destructive">
+              {err || "Unable to load your preferences. Please refresh."}
+            </p>
+          )}
           <HostSettings />
         </TabsContent>
         <TabsContent value="shadows" className="mt-4">
@@ -749,10 +821,10 @@ function HostProfile({
           {err || "Unable to load your profile. Please refresh before saving."}
         </p>
       )}
-      {(profileTab === "professional" || profileTab === "secondary") && (
+      {profileTab === "professional" && (
         <button
           onClick={save}
-          disabled={busy || profile.isPending}
+          disabled={busy || profile.isPending || cvAiBusy || cvBusy}
           className="rounded bg-primary px-5 py-2.5 text-sm font-bold uppercase text-primary-foreground disabled:opacity-50"
         >
           {saved ? "Saved" : "Save profile"}

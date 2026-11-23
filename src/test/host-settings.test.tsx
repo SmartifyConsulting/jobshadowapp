@@ -1,3 +1,5 @@
+const cvDraft = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/mentor-cv.functions", () => ({ draftMentorProfileFromCv: cvDraft }));
 vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
 vi.mock("@/lib/public-holidays.functions", () => ({
   syncAutomaticHolidays: vi.fn().mockResolvedValue({ updated: 0, failures: [] }),
@@ -67,7 +69,7 @@ describe("Host availability settings", () => {
     expect(screen.queryByRole("navigation", { name: "Mentor navigation" })).toBeNull();
     expect(await screen.findByRole("heading", { name: "Profile" })).toBeVisible();
     expect(screen.queryByText("Mentor Portal")).toBeNull();
-    fireEvent.mouseDown(await screen.findByRole("tab", { name: "Availability & Bookings" }), {
+    fireEvent.mouseDown(await screen.findByRole("tab", { name: "Preferences" }), {
       button: 0,
       ctrlKey: false,
     });
@@ -104,7 +106,7 @@ describe("Host availability settings", () => {
         _collection_time: "14:00",
       }),
     );
-    fireEvent.mouseDown(screen.getByRole("tab", { name: "Job Shadows" }), {
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Bookings" }), {
       button: 0,
       ctrlKey: false,
     });
@@ -140,5 +142,65 @@ it("lands directly on profile after its data is ready without showing a sidebar"
   expect(await screen.findByRole("heading", { name: "Profile" })).toBeVisible();
   expect(screen.queryByRole("navigation", { name: "Mentor navigation" })).toBeNull();
   expect(screen.queryByRole("status")).toBeNull();
+  client.clear();
+});
+it("reviews CV drafts, preserves populated fields and keeps edits made while AI is running", async () => {
+  const client = new QueryClient({
+    defaultOptions: { queries: { staleTime: Infinity, retry: false } },
+  });
+  client.setQueryData(["me"], { id: "mentor" });
+  client.setQueryData(["profile", "mentor"], { first_name: "Alex" });
+  client.setQueryData(["mentor-bookings"], []);
+  client.setQueryData(["mentor-placements"], []);
+  client.setQueryData(["host-settings"], {});
+  client.setQueryData(["host-profile"], {
+    bio: "My original bio",
+    specialties: [],
+    cv_path: "mentor@example.com/cv.pdf",
+  });
+  let finish!: (value: unknown) => void;
+  cvDraft.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  const Page = Route.options.component as () => React.JSX.Element;
+  render(
+    <QueryClientProvider client={client}>
+      <Page />
+    </QueryClientProvider>,
+  );
+  fireEvent.mouseDown(screen.getByRole("tab", { name: "Professional Details" }), {
+    button: 0,
+    ctrlKey: false,
+  });
+  const groups = screen.getAllByRole("group");
+  expect(groups.find((group) => group.getAttribute("aria-label") === "CV")).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "Fill From My CV" }));
+  const specialties = screen.getByLabelText("Specialties (comma separated)");
+  fireEvent.change(specialties, { target: { value: "Manually entered while waiting" } });
+  finish({
+    bio: "AI replacement",
+    specialties: ["AI specialty"],
+    certifications: "BSc Computing",
+    linkedin_url: "https://www.linkedin.com/in/example",
+  });
+  await screen.findByText("CV draft added to empty fields. Please review, then Save Profile.");
+  expect(screen.getByLabelText("Experience / Bio")).toHaveValue("My original bio");
+  expect(specialties).toHaveValue("Manually entered while waiting");
+  expect(screen.getByLabelText("Certifications / qualifications")).toHaveValue("BSc Computing");
+  expect(rpc.mock.calls.some((call) => call[0] === "update_my_host_profile")).toBe(false);
+  fireEvent.click(screen.getByRole("button", { name: "Save profile" }));
+  await waitFor(() =>
+    expect(rpc).toHaveBeenCalledWith(
+      "update_my_host_profile",
+      expect.objectContaining({
+        _bio: "My original bio",
+        _specialties: ["Manually entered while waiting"],
+        _certifications: "BSc Computing",
+      }),
+    ),
+  );
   client.clear();
 });

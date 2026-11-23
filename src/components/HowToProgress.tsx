@@ -65,6 +65,7 @@ export function useHowToProgress(userId: string | undefined, roles: string[]) {
         evaluations,
       });
       return {
+        mentorLinkedin: !!hostProfile.data?.linkedin_url?.trim(),
         student: progress.student,
         mentor: progress.provider.map((done, i) =>
           i === 0

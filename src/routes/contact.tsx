@@ -97,7 +97,7 @@ function Contact() {
             <Link to="/share-experience" className="mt-3 inline-block text-sm font-semibold text-accent hover:underline">Share your experience with us</Link>
           </div>
           <div className="space-y-3">
-              <div className="rounded-xl border border-foreground/10 bg-cta p-3 text-cta-foreground sm:p-4">
+              <div className="rounded-xl border border-foreground/10 bg-accent p-3 text-accent-foreground sm:p-4">
                 <h2 className="font-display text-xl">Scholars</h2>
                 <p className="mt-2 text-sm leading-snug">Explore careers and experience a working day with a mentor.</p>
                 <ul className="mt-2 space-y-1">{["Discover careers that interest you", "Complete your profile and request a visit", "Share what you learned"].map((point) => <li key={point} className="flex gap-2 text-xs"><Check className="h-3.5 w-3.5 shrink-0" />{point}</li>)}</ul>
