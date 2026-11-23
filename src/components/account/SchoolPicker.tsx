@@ -1,4 +1,5 @@
-import { useEffect, useId, useState } from "react";
+import { ChevronDown } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CountrySelect } from "@/components/CountrySelect";
@@ -16,19 +17,26 @@ export function SchoolPicker({
   onChange: (school: string, country: string, schoolType: string) => void;
   invalid?: boolean;
 }) {
+  const searchCountry = country || "ZA";
+  const [browseAll, setBrowseAll] = useState(false);
   const [open, setOpen] = useState(false);
   const [term, setTerm] = useState(school);
   const [active, setActive] = useState(-1);
   const listId = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     const timer = setTimeout(() => setTerm(school), 250);
     return () => clearTimeout(timer);
   }, [school]);
+  const searchTerm = browseAll ? "" : term.trim();
   const query = useQuery({
-    queryKey: ["school-suggestions", country, term],
-    enabled: !!country && term.trim().length >= 2 && term !== "Home School",
+    queryKey: ["school-suggestions", searchCountry, searchTerm],
+    enabled: open,
     queryFn: async () => {
-      const r = await supabase.rpc("search_country_schools", { _country: country, _search: term });
+      const r = await supabase.rpc("search_country_schools", {
+        _country: searchCountry,
+        _search: searchTerm,
+      });
       if (r.error) throw r.error;
       return r.data ?? [];
     },
@@ -42,11 +50,11 @@ export function SchoolPicker({
     school_type: "Home School",
   };
   const options = [
-    ...(!school.trim() || "home school".includes(school.toLowerCase()) ? [home] : []),
+    ...(browseAll || !school.trim() || "home school".includes(school.toLowerCase()) ? [home] : []),
     ...(query.data ?? []),
   ];
   function choose(option: School) {
-    onChange(option.name, country, option.school_type);
+    onChange(option.name, searchCountry, option.school_type);
     setOpen(false);
     setActive(-1);
   }
@@ -59,18 +67,20 @@ export function SchoolPicker({
     >
       <CountrySelect
         label="School Country"
-        value={country}
+        value={searchCountry}
         onChange={(value) => {
           onChange("", value, "Not recorded");
+          setTerm("");
+          setBrowseAll(true);
           setOpen(false);
         }}
-        allowEmpty
       />
       <div className="relative">
         <label htmlFor="school" className="text-sm font-medium">
           Current School
         </label>
         <input
+          ref={inputRef}
           id="school"
           role="combobox"
           autoComplete="off"
@@ -80,7 +90,7 @@ export function SchoolPicker({
           aria-activedescendant={active >= 0 ? `${listId}-${active}` : undefined}
           aria-invalid={invalid}
           value={school}
-          placeholder={country ? "Start typing your school" : "Choose a country first"}
+          placeholder="Select or type your school"
           onFocus={() => setOpen(true)}
           onChange={(e) => {
             onChange(
@@ -88,6 +98,7 @@ export function SchoolPicker({
               country,
               e.target.value === "Home School" ? "Home School" : "Not recorded",
             );
+            setBrowseAll(false);
             setOpen(true);
             setActive(-1);
           }}
@@ -99,6 +110,7 @@ export function SchoolPicker({
             if (e.key === "ArrowDown" || e.key === "ArrowUp") {
               e.preventDefault();
               setOpen(true);
+              inputRef.current?.focus();
               setActive((i) =>
                 options.length
                   ? (i + (e.key === "ArrowDown" ? 1 : -1) + options.length) % options.length
@@ -110,8 +122,32 @@ export function SchoolPicker({
               if (active >= 0 && options[active]) choose(options[active]);
             }
           }}
-          className={`mt-1 w-full border bg-transparent px-3 py-2 text-sm ${invalid ? "border-destructive outline outline-1 outline-destructive" : "border-input"}`}
+          className={`mt-1 w-full border bg-transparent pl-3 pr-10 py-2 text-sm ${invalid ? "border-destructive outline outline-1 outline-destructive" : "border-input"}`}
         />
+        <button
+          type="button"
+          aria-label="Show school list"
+          aria-expanded={open}
+          aria-controls={listId}
+          title="Show school list"
+          className="absolute right-1 top-7 rounded p-1 hover:bg-muted"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => {
+            if (open) {
+              setOpen(false);
+            } else {
+              setBrowseAll(true);
+              setActive(-1);
+              setOpen(true);
+              inputRef.current?.focus();
+            }
+          }}
+        >
+          <ChevronDown className="h-4 w-4" />
+        </button>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Choose from the list or type to find your school.
+        </p>
         {open && (
           <div className="absolute z-30 mt-1 max-h-64 w-full overflow-y-auto rounded border border-input bg-background p-1 shadow-lg">
             <ul id={listId} role="listbox" aria-label="Schools">
@@ -149,13 +185,13 @@ export function SchoolPicker({
               <p role="status" className="px-3 py-2 text-xs">
                 Suggestions are unavailable. You can enter your school name.
               </p>
+            ) : query.data?.length === 40 ? (
+              <p className="px-3 py-2 text-xs text-muted-foreground">
+                Showing the first 40 schools. Type to narrow the list.
+              </p>
             ) : !options.length ? (
               <p className="px-3 py-2 text-xs">
-                {!country
-                  ? "Choose the school’s country."
-                  : term.trim().length < 2
-                    ? "Type at least two letters."
-                    : "No matches. You can enter your school name."}
+                No matches in this country. You can enter your school name.
               </p>
             ) : null}
           </div>

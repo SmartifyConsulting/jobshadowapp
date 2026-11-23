@@ -50,6 +50,7 @@ const personal = {
   id_number: "1234567890123",
   id_file_path: "student/id.pdf",
   school_type: "Public School",
+  school: "Test school",
   tc_accepted: true,
   popi_accepted: true,
   info_accurate: true,
@@ -84,11 +85,11 @@ describe("student profile step saving", () => {
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
     const summary = await screen.findByRole("alert");
     expect(within(summary).getByText("Enter the first name")).toBeVisible();
-    expect(within(summary).getByText(/upload a scan/)).toBeVisible();
+    expect(within(summary).getByText(/current school/)).toBeVisible();
     expect(within(summary).getByText(/accept the Terms/)).toBeVisible();
-    expect(summary.textContent).not.toMatch(/guardian first|current school/);
+    expect(summary.textContent).not.toMatch(/guardian first|scan of|passport/);
     expect(screen.getByLabelText("First Name")).toHaveAttribute("aria-invalid", "true");
-    expect(screen.getByLabelText("Scan of ID")).toHaveAttribute("aria-invalid", "true");
+    expect(screen.queryByLabelText("Scan of ID")).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Next" }).compareDocumentPosition(summary) &
         Node.DOCUMENT_POSITION_FOLLOWING,
@@ -136,8 +137,12 @@ describe("student profile step saving", () => {
     db.draft = { data: { ...personal, school: "Saved school" }, step: "school" };
     mount();
     await ready();
-    expect(screen.getByLabelText("Current School")).toHaveValue("Saved school");
     expect(screen.queryByText(/I agree with/)).not.toBeInTheDocument();
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Personal Details" }), {
+      button: 0,
+      ctrlKey: false,
+    });
+    expect(screen.getByLabelText("Current School")).toHaveValue("Saved school");
   });
   it("saves the completed profile at the final step, preserves consent timestamps and removes the draft", async () => {
     db.draft = {

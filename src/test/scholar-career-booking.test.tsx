@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
 vi.mock("@tanstack/react-router", () => ({
@@ -8,12 +8,10 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
-    rpc: vi
-      .fn()
-      .mockImplementation(async (name: string) => ({
-        data: name === "get_placement_country" ? "ZA" : [],
-        error: null,
-      })),
+    rpc: vi.fn().mockImplementation(async (name: string) => ({
+      data: name === "get_placement_country" ? "ZA" : [],
+      error: null,
+    })),
   },
 }));
 import { NewBooking } from "@/components/account/AccountSections";
@@ -22,6 +20,35 @@ afterEach(cleanup);
 const client = () =>
   new QueryClient({ defaultOptions: { queries: { staleTime: Infinity, retry: false } } });
 describe("guided career and host selection", () => {
+  it("shows the chosen career guidance directly beneath the selector", () => {
+    const cache = client();
+    cache.setQueryData(
+      ["public-career-content"],
+      [{ name: "Accountant", description: "Saved overview" }],
+    );
+    cache.setQueryData(
+      ["public-careers-catalog"],
+      [{ name: "Accountant", recommended_courses: ["BCom Accounting"] }],
+    );
+    const { rerender } = render(
+      <QueryClientProvider client={cache}>
+        <CareerStepBrowser selected="Accountant" onSelect={vi.fn()} />
+      </QueryClientProvider>,
+    );
+    const panel = screen.getByRole("region", { name: "Selected career details" });
+    expect(within(panel).getByText("Saved overview")).toBeVisible();
+    expect(within(panel).getByText("BCom Accounting")).toBeVisible();
+    expect(
+      screen.getByRole("combobox", { name: "Career" }).compareDocumentPosition(panel) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    rerender(
+      <QueryClientProvider client={cache}>
+        <CareerStepBrowser selected="" onSelect={vi.fn()} />
+      </QueryClientProvider>,
+    );
+    expect(screen.queryByRole("region", { name: "Selected career details" })).toBeNull();
+  });
   it("browses descriptions and selects a career inline without a link away", () => {
     const cache = client();
     cache.setQueryData(["public-career-content"], []);

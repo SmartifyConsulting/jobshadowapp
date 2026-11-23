@@ -1,3 +1,4 @@
+import { ProfilePhotoPicker } from "./ProfilePhotoPicker";
 import { bookingDateKey, datesInRange, placementsInDateRange } from "@/lib/placement-search";
 import { fetchAllRows } from "@/lib/admin-export";
 import { CareerStepBrowser } from "./CareerStepBrowser";
@@ -168,7 +169,9 @@ export const SCHOLAR_DETAIL_TABS: { id: string; label: string; rows: [string, st
       ["First name", "first_name"],
       ["Last name", "last_name"],
       ["Contact number", "contact_no"],
-      ["ID / passport", "id_number"],
+      ["School", "school"],
+      ["School type", "school_type"],
+      ["School country", "school_country_code"],
     ],
   },
   {
@@ -179,16 +182,12 @@ export const SCHOLAR_DETAIL_TABS: { id: string; label: string; rows: [string, st
       ["Last name", "guardian_last_name"],
       ["Contact number", "guardian_contact"],
       ["Email address", "guardian_email"],
-      ["ID / passport", "guardian_id"],
     ],
   },
   {
     id: "school",
     label: "Secondary Information",
     rows: [
-      ["School", "school"],
-      ["School type", "school_type"],
-      ["School country", "school_country_code"],
       ["Dietary needs", "dietary"],
       ["Population group", "population_group"],
       ["Gender", "gender"],
@@ -261,10 +260,7 @@ const profileSchema = z.object({
     .string()
     .trim()
     .refine(isPossiblePhoneNumber, "Enter a valid number with its country code"),
-  id_number: z
-    .string()
-    .trim()
-    .regex(/^[A-Za-z0-9]{6,13}$/, "Enter an ID or passport number"),
+  id_number: z.string().trim().default(""),
   school: z.string().trim().min(2, "Enter the current school"),
   school_type: z.enum(["Public School", "Private School", "Home School", "Not recorded"]),
   school_country_code: z
@@ -410,9 +406,6 @@ export function ProfileForm({
     key.startsWith("guardian_")
       ? "guardian"
       : [
-            "school",
-            "school_type",
-            "school_country_code",
             "career_interests",
             "dietary",
             "population_group",
@@ -483,7 +476,9 @@ export function ProfileForm({
             last_name: true,
             full_name: true,
             contact_no: true,
-            id_number: true,
+            school: true,
+            school_type: true,
+            school_country_code: true,
             tc_accepted: true,
             popi_accepted: true,
           })
@@ -501,8 +496,6 @@ export function ProfileForm({
       : Object.fromEntries(
           validation.error.issues.map((issue) => [String(issue.path[0]), issue.message]),
         );
-    if ((activeTab === "personal" || lastStep) && !files.id && !f["id_file_path"])
-      issues["id_file_path"] = "Please upload a scan of the scholar's ID.";
     if (Object.keys(issues).length) {
       setErrors(issues);
       setActiveTab(errorTab(Object.keys(issues)[0]!));
@@ -639,6 +632,11 @@ export function ProfileForm({
             <TabsTrigger value="school">Secondary Information</TabsTrigger>
           </TabsList>
           <TabsContent value="personal" className="mt-4">
+            <ProfilePhotoPicker
+              path={String(f["photo_path"] ?? "")}
+              file={files.photo}
+              onChange={(photo) => setFiles((current) => ({ ...current, photo }))}
+            />
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <PersonNameFields
@@ -661,26 +659,15 @@ export function ProfileForm({
                 )}
               </div>
               {field("contact_no", "Tel No", "Tel no")}
-              {field("id_number", "ID / passport number", "Id no")}
-              <div>
-                <Label htmlFor="id-scan">Scan of ID</Label>
-                <Input
-                  id="id-scan"
-                  type="file"
-                  aria-invalid={!!errors["id_file_path"]}
-                  accept="image/*,application/pdf"
-                  onChange={(e) => setFiles({ ...files, id: e.target.files?.[0] })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="profile-photo">Profile Photo</Label>
-                <Input
-                  id="profile-photo"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setFiles({ ...files, photo: e.target.files?.[0] })}
-                />
-              </div>
+              <SchoolPicker
+                school={String(f["school"] ?? "")}
+                country={String(f["school_country_code"] ?? "")}
+                schoolType={String(f["school_type"] ?? "")}
+                invalid={!!errors["school"] || !!errors["school_country_code"]}
+                onChange={(school, country, schoolType) =>
+                  setF({ ...f, school, school_country_code: country, school_type: schoolType })
+                }
+              />
             </div>
           </TabsContent>
           <TabsContent value="guardian" className="mt-4">
@@ -711,20 +698,10 @@ export function ProfileForm({
               </div>
               {field("guardian_contact", "Contact Number", "Contact number")}
               {field("guardian_email", "Email Address", "name@example.com")}
-              {field("guardian_id", "ID / Passport Number", "ID or passport number")}
             </div>
           </TabsContent>
           <TabsContent value="school" className="mt-4">
             <div className="grid gap-4 sm:grid-cols-2">
-              <SchoolPicker
-                school={String(f["school"] ?? "")}
-                country={String(f["school_country_code"] ?? "")}
-                schoolType={String(f["school_type"] ?? "")}
-                invalid={!!errors["school"] || !!errors["school_country_code"]}
-                onChange={(school, country, schoolType) =>
-                  setF({ ...f, school, school_country_code: country, school_type: schoolType })
-                }
-              />
               <DietaryNeedsPicker
                 value={String(f["dietary"] ?? "")}
                 onChange={(value) => setF({ ...f, dietary: value })}

@@ -53,6 +53,12 @@ describe("Secondary information selectors", () => {
     fireEvent.change(screen.getByRole("combobox", { name: "Current School" }), {
       target: { value: "Exam" },
     });
+    await waitFor(() =>
+      expect(rpc).toHaveBeenCalledWith("search_country_schools", {
+        _country: "ZA",
+        _search: "Exam",
+      }),
+    );
     fireEvent.click(await screen.findByRole("button", { name: /Example Private/ }));
     expect(rpc).toHaveBeenCalledWith("search_country_schools", { _country: "ZA", _search: "Exam" });
     expect(screen.getByRole("combobox", { name: "Current School" })).toHaveValue("Example Private");
@@ -70,7 +76,31 @@ describe("Secondary information selectors", () => {
     fireEvent.click(screen.getByRole("button", { name: "Home School" }));
     expect(screen.getByRole("combobox", { name: "Current School" })).toHaveValue("Home School");
     expect(screen.getByText("School Type: Home School")).toBeVisible();
-    expect(rpc).not.toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledWith("search_country_schools", { _country: "ZA", _search: "" });
+  });
+  it("browses schools immediately without changing an unknown country or existing school", async () => {
+    const change = vi.fn();
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <SchoolPicker
+          school="Existing school"
+          country=""
+          schoolType="Not recorded"
+          onChange={change}
+        />
+      </QueryClientProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Show school list" }));
+    await screen.findByRole("button", { name: /Example Private/ });
+    expect(rpc).toHaveBeenCalledWith("search_country_schools", { _country: "ZA", _search: "" });
+    expect(change).not.toHaveBeenCalled();
+    expect(screen.getByRole("combobox", { name: "Current School" })).toHaveFocus();
+    fireEvent.change(screen.getByRole("combobox", { name: "Current School" }), {
+      target: { value: "Example" },
+    });
+    expect(change).toHaveBeenCalledWith("Example", "", "Not recorded");
+    fireEvent.click(await screen.findByRole("button", { name: /Example Private/ }));
+    expect(change).toHaveBeenLastCalledWith("Example Private", "ZA", "Private School");
   });
   it("preserves existing allergies and supports common event-menu choices", () => {
     const change = vi.fn();

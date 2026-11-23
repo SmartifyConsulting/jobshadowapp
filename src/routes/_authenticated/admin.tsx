@@ -1,3 +1,4 @@
+import { ADMIN_NAV } from "@/components/RoleNavigation";
 import { BulkCareerDrafts, type CareerBatchDrafts } from "@/components/BulkCareerDrafts";
 import { careerContentForAI } from "@/lib/career-batch";
 import { schoolDirectory } from "@/lib/school-directory";
@@ -350,12 +351,7 @@ function AdminPage() {
             aria-label="Admin navigation"
             className="sticky top-0 max-h-screen space-y-1 overflow-y-auto px-3 pb-6"
           >
-            {TABLES.filter(
-              (t) =>
-                !["sectors", "vouchers", "bookings", "evaluations", "apps", "companies"].includes(
-                  t.id,
-                ),
-            ).map((t) => (
+            {ADMIN_NAV.map((item) => TABLES.find((table) => table.id === item.key)!).map((t) => (
               <button
                 key={t.id}
                 onClick={() => setActive(t.id)}

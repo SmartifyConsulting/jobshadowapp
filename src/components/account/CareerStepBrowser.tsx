@@ -6,6 +6,7 @@ import { careerKey } from "@/lib/career-skills";
 import { CareerGuidance } from "@/components/CareerGuidance";
 import { supabase } from "@/integrations/supabase/client";
 import { YouTube } from "@/components/YouTube";
+import { Plus, Minus } from "lucide-react";
 export function CareerStepBrowser({
   selected,
   onSelect,
@@ -49,6 +50,11 @@ export function CareerStepBrowser({
     return list.sort((a, b) => a.title.localeCompare(b.title));
   }, [catalogue.data]);
   const groups = new Map<string, typeof roles>();
+  const selectedRole = roles.find((role) => role.title === selected);
+  const contentFor = (title: string) => ({
+    ...catalogue.data?.find((row) => careerKey(row.name) === careerKey(title)),
+    ...saved.data?.find((row) => careerKey(row.name) === careerKey(title)),
+  });
   for (const role of roles.filter((role) =>
     (role.title + " " + role.field).toLowerCase().includes(search.toLowerCase()),
   )) {
@@ -71,6 +77,22 @@ export function CareerStepBrowser({
           ))}
         </select>
       </label>
+      {selectedRole && (
+        <section aria-label="Selected career details" className="rounded border border-border p-3">
+          <h3 className="text-sm font-semibold">{selectedRole.title}</h3>
+          <CareerGuidance
+            name={selectedRole.title}
+            description={
+              getCareerDescription(
+                selectedRole.title,
+                contentFor(selectedRole.title).description,
+              ) || selectedRole.summary
+            }
+            saved={contentFor(selectedRole.title)}
+          />
+          {selectedRole.video && <YouTube id={selectedRole.video} title={selectedRole.title} />}
+        </section>
+      )}
       <button
         type="button"
         className="text-sm text-primary underline"
@@ -100,9 +122,7 @@ export function CareerStepBrowser({
             <section key={field} className="overflow-hidden rounded border border-border">
               <h3 className="border-b border-border bg-muted/30 px-3 py-2 font-display">{field}</h3>
               {items.map((role) => {
-                const content = saved.data?.find(
-                  (record) => careerKey(record.name) === careerKey(role.title),
-                );
+                const content = contentFor(role.title);
                 return (
                   <div key={role.slug} className="border-b border-border/50 p-3 last:border-b-0">
                     <div className="flex items-start gap-3">
@@ -115,8 +135,15 @@ export function CareerStepBrowser({
                         onChange={() => onSelect(role.title)}
                         className="mt-1"
                       />
-                      <details className="min-w-0 flex-1">
-                        <summary className="cursor-pointer text-sm font-semibold">
+                      <details className="group min-w-0 flex-1">
+                        <summary className="flex cursor-pointer list-none items-center gap-3 text-sm font-semibold [&::-webkit-details-marker]:hidden">
+                          <span
+                            className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-border"
+                            aria-hidden="true"
+                          >
+                            <Plus className="h-3.5 w-3.5 group-open:hidden" />
+                            <Minus className="hidden h-3.5 w-3.5 group-open:block" />
+                          </span>
                           {role.title}
                         </summary>
                         <CareerGuidance
