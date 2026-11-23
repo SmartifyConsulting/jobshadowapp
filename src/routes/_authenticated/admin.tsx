@@ -5775,8 +5775,8 @@ export function CareerDescriptionField({
           </p>
           {(
             [
-              ["school", "School foundations"],
-              ["workplace", "Workplace skills"],
+              ["school", "School Foundations"],
+              ["workplace", "Workplace Skills"],
             ] as const
           ).map(([key, label]) => (
             <label key={key} className="block text-sm">
@@ -5822,7 +5822,7 @@ export function CareerDescriptionField({
         <fieldset className="mt-3 grid gap-3 rounded border border-border p-3 sm:grid-cols-2">
           <legend className="px-1 text-sm font-semibold">Career Preparation</legend>
           <label className="block text-sm sm:col-span-2">
-            Ideal for
+            Ideal For
             <textarea
               rows={2}
               value={guidance.idealFor}
@@ -5873,7 +5873,7 @@ export function CareerDescriptionField({
             ),
           )}
           <label className="block text-sm">
-            Future of this Career
+            Future of This Career
             <textarea
               rows={2}
               value={guidance.futureOutlook}
