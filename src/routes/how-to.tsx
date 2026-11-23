@@ -93,8 +93,8 @@ function HowTo() {
           <span className="font-display text-2xl uppercase">How To</span>
         </div>
       </div>
-      <section className="bg-[#7CCCC8] px-5 py-5">
-        <div className="mx-auto max-w-7xl space-y-3">
+      <section className="flex min-h-[70vh] items-center bg-[#7CCCC8] px-5 py-16">
+        <div className="mx-auto w-full max-w-7xl space-y-3">
           <p className="text-sm font-semibold">Click on each step to complete it.</p>
           <StepRow steps={content.steps} complete={content.complete} links={content.links} />
           {progress.error && <p role="status" className="text-sm">Saved progress could not be loaded. You can still open each step.</p>}
