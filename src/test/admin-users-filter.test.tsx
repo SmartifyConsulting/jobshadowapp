@@ -52,7 +52,7 @@ describe("User alphabet chips", () => {
     await waitFor(() => expect(onDraft).toHaveBeenCalledWith(existing, true));
     expect(ai).toHaveBeenCalledWith({ data: { career: "Accountant", fields: [...CAREER_DRAFT_FIELDS] } });
   });
-  it("keeps review-flagged Scholars visible in both tabs and uses aligned icon-only actions", () => {
+  it("keeps review-flagged Scholars visible and uses aligned icon-only actions", () => {
     const flagged = { ...account("flagged", "Flagged Scholar"), roles: ["user" as const], role: "user" as const, classification_unconfirmed: true };
     const client = mount([flagged]);
     fireEvent.click(screen.getByRole("button", { name: "F" }));
@@ -63,18 +63,16 @@ describe("User alphabet chips", () => {
     expect(row.lastElementChild).toContainElement(edit);
     const head = screen.getByRole("columnheader", { name: "First Name" }).closest("table")!;
     expect([...head.querySelectorAll("col")].map((col) => col.style.width)).toEqual([...row.closest("table")!.querySelectorAll("col")].map((col) => col.style.width));
-    fireEvent.mouseDown(screen.getByRole("tab", { name: "Unclassified (1)" }), { button: 0 });
-    fireEvent.click(screen.getByRole("button", { name: "F" }));
-    expect(screen.getByRole("button", { name: "View details for Flagged Scholar" })).toBeVisible();
+    expect(screen.queryByRole("tab", { name: /Unclassified/ })).not.toBeInTheDocument();
+    expect(within(row).getByText("Unclassified")).toBeVisible();
     client.clear();
   });
   it("keeps unassigned accounts out of Students and lists them under Unclassified", () => {
     const unknown = { ...account("unknown", "Unknown Person"), role: null, roles: [] };
     const client = mount([unknown]);
     expect(screen.getByRole("tab", { name: "Scholars (2)" })).toBeVisible();
-    fireEvent.mouseDown(screen.getByRole("tab", { name: "Unclassified (1)" }), { button: 0 });
-    fireEvent.click(screen.getByRole("button", { name: "U" }));
-    expect(screen.getByRole("button", { name: "View details for Unknown Person" })).toBeVisible();
+    expect(screen.queryByRole("tab", { name: /Unclassified/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "View details for Unknown Person" })).not.toBeInTheDocument();
     client.clear();
   });
   it("opens the selected displayed-name group and supports switching and re-opening", () => {
@@ -180,8 +178,7 @@ describe("Visible provider directories and career wizard", () => {
     fireEvent.mouseDown(screen.getByRole('tab', { name: 'Mentors (3)' }), { button: 0 });
     fireEvent.click(screen.getAllByRole('button', { name: 'S' }).at(-1)!);
     expect(screen.getByRole('button', { name: 'View details for Solo Person' })).toBeVisible();
-    fireEvent.mouseDown(screen.getByRole('tab', { name: 'Unclassified (0)' }), { button: 0 });
-    expect(screen.queryByRole('button', { name: 'View details for Solo Person' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: /Unclassified/ })).not.toBeInTheDocument();
     client.clear();
   });
   it("exposes the wizard on career rows and fills all guidance fields only as a draft", async () => {
