@@ -1354,6 +1354,14 @@ export type Database = {
           logo_path: string
         }[]
       }
+      list_public_careers: {
+        Args: never
+        Returns: {
+          description: string | null
+          id: number
+          name: string
+        }[]
+      }
       list_placements: {
         Args: never
         Returns: {

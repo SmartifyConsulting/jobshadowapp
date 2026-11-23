@@ -56,6 +56,17 @@ function Roles() {
   const savedContent = useQuery({ queryKey: ["public-career-content"], queryFn: async () => { const result = await supabase.rpc("get_public_career_guidance"); if (result.error) throw result.error; return result.data ?? []; } });
   const careerKey = (name: string) => name.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
   const descriptionFor = (title: string, fallback: string) => getCareerDescription(title, savedContent.data?.find((row) => careerKey(row.name) === careerKey(title))?.description) || fallback;
+
+  // Careers an admin adds directly (via the admin Careers screen) that aren't part of the curated
+  // role library yet - surfaced here so every admin-captured career is actually visible publicly.
+  const adminCareers = useQuery({ queryKey: ["public-careers-catalog"], queryFn: async () => { const result = await supabase.rpc("list_public_careers"); if (result.error) throw result.error; return result.data ?? []; } });
+  const allRoles = useMemo(() => {
+    const known = new Set(ROLES.map((r) => careerKey(r.title)));
+    const extra = (adminCareers.data ?? [])
+      .filter((c) => !known.has(careerKey(c.name)))
+      .map((c) => ({ slug: "other-careers--" + careerKey(c.name), title: c.name, field: "Other Careers", summary: c.description || "Ask us for more detail on this career and the job shadow experience we can arrange.", idealFor: "", video: null }));
+    return [...ROLES, ...extra];
+  }, [adminCareers.data]);
   const [location, setLocation] = useState("");
   const placements = useQuery({
     queryKey: ["placements"],
@@ -78,14 +89,14 @@ function Roles() {
 
   const filteredRoles = useMemo(() => {
     const q = search.trim().toLowerCase();
-    let list = q ? ROLES.filter((r) => r.title.toLowerCase().includes(q) || r.field.toLowerCase().includes(q)) : ROLES;
+    let list = q ? allRoles.filter((r) => r.title.toLowerCase().includes(q) || r.field.toLowerCase().includes(q)) : allRoles;
     if (favouritesOnly) list = list.filter((r) => favourites.data?.has(r.slug));
     if (location) list = list.filter((r) => careersAtLocation.has(r.title.trim().toLowerCase()));
     return list;
-  }, [search, favouritesOnly, favourites.data, location, careersAtLocation]);
+  }, [search, favouritesOnly, favourites.data, location, careersAtLocation, allRoles]);
 
   const grouped = useMemo(() => {
-    const m = new Map<string, typeof ROLES>();
+    const m = new Map<string, typeof allRoles>();
     filteredRoles.forEach((r) => m.set(r.field, [...(m.get(r.field) ?? []), r]));
     return [...m.entries()].map(([f, roles]) => [f, [...roles].sort((a, b) => a.title.localeCompare(b.title))] as const);
   }, [filteredRoles]);
