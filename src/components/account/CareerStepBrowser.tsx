@@ -78,9 +78,10 @@ export function CareerStepBrowser({
         </select>
       </label>
       {selectedRole && (
-        <section aria-label="Selected career details" className="rounded border border-border p-3">
+        <section aria-label="Selected career details" className="space-y-2">
           <h3 className="text-sm font-semibold">{selectedRole.title}</h3>
           <CareerGuidance
+            framed
             name={selectedRole.title}
             description={
               getCareerDescription(
@@ -147,6 +148,7 @@ export function CareerStepBrowser({
                           {role.title}
                         </summary>
                         <CareerGuidance
+                          framed
                           name={role.title}
                           description={
                             getCareerDescription(role.title, content?.description) || role.summary

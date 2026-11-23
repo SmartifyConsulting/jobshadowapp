@@ -38,6 +38,8 @@ describe("guided career and host selection", () => {
     const panel = screen.getByRole("region", { name: "Selected career details" });
     expect(within(panel).getByText("Saved overview")).toBeVisible();
     expect(within(panel).getByText("BCom Accounting")).toBeVisible();
+    for (const title of ["Career Overview", "Skills Required", "Career Preparation"])
+      expect(within(panel).getByRole("group", { name: title })).toBeVisible();
     expect(
       screen.getByRole("combobox", { name: "Career" }).compareDocumentPosition(panel) &
         Node.DOCUMENT_POSITION_FOLLOWING,

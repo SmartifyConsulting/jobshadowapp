@@ -10,15 +10,17 @@ export function CareerGuidance({
   saved = {},
   showEmptySections = false,
   adminLayout = false,
+  framed = false,
 }: {
   name: string;
   description: string;
   saved?: Parameters<typeof getCareerGuidance>[2];
   showEmptySections?: boolean;
   adminLayout?: boolean;
+  framed?: boolean;
 }) {
   const guidance = getCareerGuidance(name, description, saved);
-  if (adminLayout) return <AdminCareerGuidance guidance={guidance} />;
+  if (adminLayout || framed) return <AdminCareerGuidance guidance={guidance} />;
   return (
     <div className="space-y-5 py-3 text-foreground">
       <section>

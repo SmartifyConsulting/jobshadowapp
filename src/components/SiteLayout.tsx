@@ -344,9 +344,15 @@ export function SiteLayout({
   const { data: session } = useSession();
   const isAdmin = session?.isAdmin ?? false;
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const hasRoleNavigation =
+    (session?.roles ?? []).some((role) =>
+      ["admin", "mentor", "hr_admin", "school"].includes(role),
+    ) && !["/admin", "/mentor", "/school", "/company-report"].includes(pathname);
 
   return (
-    <div className={`flex min-h-screen flex-col ${className}`}>
+    <div
+      className={`flex min-h-screen flex-col ${className} ${hasRoleNavigation ? "has-role-navigation" : ""}`}
+    >
       <SiteHeader headerLogo={headerLogo} />
       <div className="flex min-w-0 flex-1">
         <RoleNavigation roles={session?.roles ?? []} pathname={pathname} />

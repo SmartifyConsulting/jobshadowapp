@@ -78,9 +78,7 @@ export function RoleNavigation({ roles, pathname }: { roles: string[]; pathname:
               },
             ];
   return (
-    <aside
-      className={`w-44 shrink-0 shadow-warm sm:w-52 lg:w-60 ${kind === "admin" ? "bg-accent text-accent-foreground" : "bg-cta text-cta-foreground"}`}
-    >
+    <aside data-role={kind} className="role-navigation w-44 shrink-0 shadow-warm sm:w-52 lg:w-60">
       <div className="sticky top-0 max-h-screen overflow-y-auto">
         <p className="px-5 pb-3 pt-6 text-xs font-bold uppercase tracking-widest">
           {kind === "admin"

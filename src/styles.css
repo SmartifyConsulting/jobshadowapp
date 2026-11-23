@@ -300,11 +300,40 @@ thead th:last-child {
   height: auto;
 }
 
+/* Portal navigation keeps its CI colours even inside the home artwork theme. */
+.role-navigation {
+  background-color: #96c93d;
+  color: var(--charcoal);
+}
+
+.role-navigation[data-role="admin"] {
+  background-color: #e5c61e;
+}
+
+/* A role menu starts directly below the header; contain the logo above it. */
+.home-reference.has-role-navigation > header > div > a {
+  position: static;
+  height: 96px;
+  align-items: center;
+}
+
+.home-reference.has-role-navigation > header > div > a > img {
+  width: auto;
+  height: 82px;
+}
+
 .home-reference > footer {
   background: transparent;
 }
 
 @media (min-width: 1024px) {
+  .home-reference.has-role-navigation > header > div > a {
+    height: 112px;
+  }
+
+  .home-reference.has-role-navigation > header > div > a > img {
+    height: 95px;
+  }
   .home-reference::before {
     top: 112px;
   }
