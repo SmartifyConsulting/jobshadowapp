@@ -2,18 +2,29 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { RoleNavigation } from "@/components/RoleNavigation";
 afterEach(cleanup);
-describe("persistent role navigation", () => {
+describe("portal-only role navigation", () => {
   it.each([
     ["admin", "Users", "/admin?section=users"],
     ["mentor", "Calendar", "/mentor?section=calendar"],
     ["school", "Overview", "/school?section=overview"],
     ["hr_admin", "Mentors", "/company-report?section=mentors"],
-  ])("keeps %s navigation on public/profile screens", (role, label, href) => {
-    render(<RoleNavigation roles={[role!]} pathname="/how-to" />);
+  ])("shows %s navigation inside the matching portal", (role, label, href) => {
+    render(<RoleNavigation roles={[role!]} pathname={href!.split("?")[0]!} />);
     expect(screen.getByRole("link", { name: label })).toHaveAttribute("href", href);
   });
-  it("does not duplicate navigation inside an existing portal", () => {
-    render(<RoleNavigation roles={["mentor"]} pathname="/mentor" />);
+  it.each(["admin", "mentor", "school", "hr_admin"])(
+    "keeps %s sidebars off Home and public/profile pages",
+    (role) => {
+      const view = render(<RoleNavigation roles={[role]} pathname="/" />);
+      expect(screen.queryByRole("navigation")).toBeNull();
+      for (const pathname of ["/roles", "/how-to", "/profile"]) {
+        view.rerender(<RoleNavigation roles={[role]} pathname={pathname} />);
+        expect(screen.queryByRole("navigation")).toBeNull();
+      }
+    },
+  );
+  it("does not show a menu for an unrelated portal", () => {
+    render(<RoleNavigation roles={["mentor"]} pathname="/admin" />);
     expect(screen.queryByRole("navigation")).toBeNull();
   });
   it("does not show administrative menus to scholars or signed-out viewers", () => {
@@ -22,8 +33,8 @@ describe("persistent role navigation", () => {
     r.rerender(<RoleNavigation roles={[]} pathname="/how-to" />);
     expect(screen.queryByRole("navigation")).toBeNull();
   });
-  it("preserves Admin priority for multi-role accounts", () => {
-    render(<RoleNavigation roles={["school", "mentor", "admin"]} pathname="/roles" />);
+  it("matches the visited portal for multi-role accounts", () => {
+    render(<RoleNavigation roles={["school", "mentor", "admin"]} pathname="/admin" />);
     expect(screen.getByRole("link", { name: "Users" })).toBeVisible();
     expect(screen.queryByRole("link", { name: "Calendar" })).toBeNull();
   });

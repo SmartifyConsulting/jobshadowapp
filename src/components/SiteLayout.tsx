@@ -1,4 +1,4 @@
-import { RoleNavigation } from "@/components/RoleNavigation";
+import { RoleNavigation, portalNavigationKind } from "@/components/RoleNavigation";
 import { NotificationInbox } from "@/components/NotificationInbox";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
@@ -344,10 +344,7 @@ export function SiteLayout({
   const { data: session } = useSession();
   const isAdmin = session?.isAdmin ?? false;
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const hasRoleNavigation =
-    (session?.roles ?? []).some((role) =>
-      ["admin", "mentor", "hr_admin", "school"].includes(role),
-    ) && !["/admin", "/mentor", "/school", "/company-report"].includes(pathname);
+  const hasRoleNavigation = !!portalNavigationKind(session?.roles ?? [], pathname);
 
   return (
     <div

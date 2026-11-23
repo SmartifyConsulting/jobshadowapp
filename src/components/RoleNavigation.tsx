@@ -25,17 +25,17 @@ const MENTOR_NAV = [
   { key: "profile", label: "Profile", icon: UserCircle },
   { key: "settings", label: "Settings", icon: Settings },
 ];
+export function portalNavigationKind(roles: string[], pathname: string) {
+  if (pathname === "/admin" && roles.includes("admin")) return "admin";
+  if (pathname === "/company-report" && roles.includes("hr_admin")) return "company";
+  if (pathname === "/mentor" && roles.includes("mentor")) return "mentor";
+  if (pathname === "/school" && roles.includes("school")) return "school";
+  return null;
+}
+
 export function RoleNavigation({ roles, pathname }: { roles: string[]; pathname: string }) {
-  const kind = roles.includes("admin")
-    ? "admin"
-    : roles.includes("hr_admin")
-      ? "company"
-      : roles.includes("mentor")
-        ? "mentor"
-        : roles.includes("school")
-          ? "school"
-          : null;
-  if (!kind || ["/admin", "/mentor", "/school", "/company-report"].includes(pathname)) return null;
+  const kind = portalNavigationKind(roles, pathname);
+  if (!kind) return null;
   const items =
     kind === "admin"
       ? ADMIN_NAV.map((item) => ({ ...item, href: `/admin?section=${item.key}` }))
