@@ -103,7 +103,7 @@ export function SiteAccountMenu() {
 /** The full public-site header (logo, nav, social icons, account menu) — shared verbatim by
  * SiteLayout and the Admin/Mentor Portal shells, so those "look and feel" the same as every
  * other screen instead of reimplementing a slimmer version that drifts out of sync. */
-export function SiteHeader({ headerLogo }: { headerLogo?: ReactNode }) {
+export function SiteHeader({ headerLogo, fullWidth }: { headerLogo?: ReactNode; fullWidth?: boolean }) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { data: session } = useSession();
@@ -119,7 +119,7 @@ export function SiteHeader({ headerLogo }: { headerLogo?: ReactNode }) {
 
   return (
     <header className="sticky top-0 z-40 bg-brand-deep text-primary-foreground shadow-warm">
-      <div className="relative mx-auto flex max-w-7xl items-center justify-center gap-6 px-5 lg:justify-between">
+      <div className={`relative flex items-center justify-center gap-6 px-5 lg:justify-between ${fullWidth ? "" : "mx-auto max-w-7xl"}`}>
         <Link to="/" aria-label="JobShadow home" className={`flex shrink-0 items-end ${headerLogo ? "h-24 lg:h-28" : "h-28 lg:h-32"}`}>
           {headerLogo ?? <HeaderLogo className="h-24 w-auto lg:h-28" />}
         </Link>

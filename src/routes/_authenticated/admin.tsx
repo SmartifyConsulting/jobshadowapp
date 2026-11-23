@@ -115,7 +115,7 @@ function AdminPage() {
 
   return (
     <div className="admin-portal flex min-h-screen flex-col bg-muted/40">
-      <SiteHeader />
+      <SiteHeader fullWidth />
       <div className="flex min-w-0 flex-1">
       <aside className="w-60 shrink-0 border-r border-primary/20 bg-accent text-accent-foreground shadow-warm">
         <p className="px-5 pb-3 pt-6 text-xs font-bold uppercase tracking-widest text-foreground/70">Admin Portal</p>
