@@ -179,7 +179,7 @@ function AccountMenu({
             Profile
           </Link>
         </DropdownMenuItem>
-        {(isAdmin || roles.some((role) => ["mentor", "hr_admin", "school"].includes(role))) && (
+        {(isAdmin || roles.some((role) => ["hr_admin", "school"].includes(role))) && (
           <DropdownMenuItem asChild>
             <Link to="/my-account">Admin</Link>
           </DropdownMenuItem>
