@@ -176,7 +176,6 @@ export type Database = {
           company_indemnity_path: string | null
           company_indemnity_signed_at: string | null
           created_at: string
-          decline_reason: string | null
           day_before_reminder_sent_at: string | null
           discount: number
           guardian_signature_status: string
@@ -189,11 +188,7 @@ export type Database = {
           location: string | null
           mentor_reminders_sent: number[]
           mode: string | null
-          no_show_by: string | null
-          no_show_reason: string | null
           paid_at: string | null
-          refund_credited_at: string | null
-          refund_status: string
           reminder_sent_at: string | null
           scholar_reminders_sent: number[]
           sector: string | null
@@ -213,7 +208,6 @@ export type Database = {
           company_indemnity_path?: string | null
           company_indemnity_signed_at?: string | null
           created_at?: string
-          decline_reason?: string | null
           day_before_reminder_sent_at?: string | null
           discount?: number
           guardian_signature_status?: string
@@ -226,11 +220,7 @@ export type Database = {
           location?: string | null
           mentor_reminders_sent?: number[]
           mode?: string | null
-          no_show_by?: string | null
-          no_show_reason?: string | null
           paid_at?: string | null
-          refund_credited_at?: string | null
-          refund_status?: string
           reminder_sent_at?: string | null
           scholar_reminders_sent?: number[]
           sector?: string | null
@@ -251,7 +241,6 @@ export type Database = {
           company_indemnity_signed_at?: string | null
           created_at?: string
           day_before_reminder_sent_at?: string | null
-          decline_reason?: string | null
           discount?: number
           guardian_signature_status?: string
           guardian_signed_at?: string | null
@@ -263,11 +252,7 @@ export type Database = {
           location?: string | null
           mentor_reminders_sent?: number[]
           mode?: string | null
-          no_show_by?: string | null
-          no_show_reason?: string | null
           paid_at?: string | null
-          refund_credited_at?: string | null
-          refund_status?: string
           reminder_sent_at?: string | null
           scholar_reminders_sent?: number[]
           sector?: string | null
@@ -319,8 +304,6 @@ export type Database = {
       }
       careers: {
         Row: {
-          ai_exposure_level: string | null
-          ai_exposure_note: string | null
           archived: boolean
           description: string | null
           future_outlook: string | null
@@ -331,14 +314,11 @@ export type Database = {
           portrayed_availability: number
           recommended_courses: string[]
           school_skills: string[] | null
-          self_directed_learning: string[]
           specialisations: string[] | null
           subjects: string[] | null
           workplace_skills: string[] | null
         }
         Insert: {
-          ai_exposure_level?: string | null
-          ai_exposure_note?: string | null
           archived?: boolean
           description?: string | null
           future_outlook?: string | null
@@ -349,14 +329,11 @@ export type Database = {
           portrayed_availability?: number
           recommended_courses?: string[]
           school_skills?: string[] | null
-          self_directed_learning?: string[]
           specialisations?: string[] | null
           subjects?: string[] | null
           workplace_skills?: string[] | null
         }
         Update: {
-          ai_exposure_level?: string | null
-          ai_exposure_note?: string | null
           archived?: boolean
           description?: string | null
           future_outlook?: string | null
@@ -367,7 +344,6 @@ export type Database = {
           portrayed_availability?: number
           recommended_courses?: string[]
           school_skills?: string[] | null
-          self_directed_learning?: string[]
           specialisations?: string[] | null
           subjects?: string[] | null
           workplace_skills?: string[] | null
@@ -421,7 +397,6 @@ export type Database = {
           sector: string | null
           total_days: number | null
           website: string | null
-          year: number
         }
         Insert: {
           active?: boolean
@@ -469,7 +444,6 @@ export type Database = {
           sector?: string | null
           total_days?: number | null
           website?: string | null
-          year?: number
         }
         Update: {
           active?: boolean
@@ -517,7 +491,6 @@ export type Database = {
           sector?: string | null
           total_days?: number | null
           website?: string | null
-          year?: number
         }
         Relationships: []
       }
@@ -606,55 +579,43 @@ export type Database = {
       }
       host_profiles: {
         Row: {
-          avoid_weekends: boolean
           bio: string | null
           certifications: string | null
-          contact_hours_note: string | null
           cv_path: string | null
-          engagement_notes: string | null
           has_hr_admin: boolean
           hr_email: string | null
           hr_first_name: string | null
           hr_last_name: string | null
           linkedin_url: string | null
           mentor_email: string
-          preferred_contact: string
           specialties: string[]
           updated_at: string
           via_company: boolean
         }
         Insert: {
-          avoid_weekends?: boolean
           bio?: string | null
           certifications?: string | null
-          contact_hours_note?: string | null
           cv_path?: string | null
-          engagement_notes?: string | null
           has_hr_admin?: boolean
           hr_email?: string | null
           hr_first_name?: string | null
           hr_last_name?: string | null
           linkedin_url?: string | null
           mentor_email: string
-          preferred_contact?: string
           specialties?: string[]
           updated_at?: string
           via_company?: boolean
         }
         Update: {
-          avoid_weekends?: boolean
           bio?: string | null
           certifications?: string | null
-          contact_hours_note?: string | null
           cv_path?: string | null
-          engagement_notes?: string | null
           has_hr_admin?: boolean
           hr_email?: string | null
           hr_first_name?: string | null
           hr_last_name?: string | null
           linkedin_url?: string | null
           mentor_email?: string
-          preferred_contact?: string
           specialties?: string[]
           updated_at?: string
           via_company?: boolean
@@ -663,7 +624,6 @@ export type Database = {
       }
       host_settings: {
         Row: {
-          auto_accept: boolean
           available_slots: Json
           blackout_dates: string[]
           buffer_days: number | null
@@ -675,7 +635,6 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          auto_accept?: boolean
           available_slots?: Json
           blackout_dates?: string[]
           buffer_days?: number | null
@@ -687,7 +646,6 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          auto_accept?: boolean
           available_slots?: Json
           blackout_dates?: string[]
           buffer_days?: number | null
@@ -1113,51 +1071,6 @@ export type Database = {
         }
         Relationships: []
       }
-      wallets: {
-        Row: {
-          balance: number
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          balance?: number
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          balance?: number
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      wallet_transactions: {
-        Row: {
-          amount: number
-          booking_id: string | null
-          created_at: string
-          id: string
-          reason: string
-          user_id: string
-        }
-        Insert: {
-          amount: number
-          booking_id?: string | null
-          created_at?: string
-          id?: string
-          reason: string
-          user_id: string
-        }
-        Update: {
-          amount?: number
-          booking_id?: string | null
-          created_at?: string
-          id?: string
-          reason?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       vouchers: {
         Row: {
           available_from: string | null
@@ -1214,6 +1127,7 @@ export type Database = {
           id_number: string
           id_verified: boolean
           is_spam: boolean
+          last_accessed_at: string
           last_name: string
           photo_path: string
           roles: string[]
@@ -1221,7 +1135,17 @@ export type Database = {
           scholar_last_name: string
           school: string
           self_registered: boolean
-          last_accessed_at: string | null
+        }[]
+      }
+      admin_list_mentor_classifications: {
+        Args: never
+        Returns: {
+          has_hr_admin: boolean
+          hr_email: string
+          hr_first_name: string
+          hr_last_name: string
+          mentor_email: string
+          via_company: boolean
         }[]
       }
       admin_user_applications: {
@@ -1250,23 +1174,6 @@ export type Database = {
       }
       complete_and_request_evaluations: { Args: never; Returns: undefined }
       confirm_test_payment: { Args: { _booking: string }; Returns: undefined }
-      copy_companies_to_year: { Args: { _from_year: number; _to_year: number }; Returns: number }
-      get_my_wallet_balance: { Args: never; Returns: number }
-      report_mentor_no_show: { Args: { _booking: string }; Returns: undefined }
-      report_scholar_no_show: { Args: { _booking: string; _reason: string }; Returns: undefined }
-      admin_review_no_show_refund: { Args: { _approve: boolean; _booking: string }; Returns: undefined }
-      admin_list_pending_refunds: {
-        Args: never
-        Returns: {
-          amount_due: number
-          career: string | null
-          company: string | null
-          id: string
-          no_show_reason: string | null
-          scholar_name: string | null
-          shadow_date: string
-        }[]
-      }
       email_company_bee_report: {
         Args: { _hr_email: string }
         Returns: undefined
@@ -1335,19 +1242,15 @@ export type Database = {
       get_my_host_profile: {
         Args: never
         Returns: {
-          avoid_weekends: boolean
           bio: string | null
           certifications: string | null
-          contact_hours_note: string | null
           cv_path: string | null
-          engagement_notes: string | null
           has_hr_admin: boolean
           hr_email: string | null
           hr_first_name: string | null
           hr_last_name: string | null
           linkedin_url: string | null
           mentor_email: string
-          preferred_contact: string
           specialties: string[]
           updated_at: string
           via_company: boolean
@@ -1362,7 +1265,6 @@ export type Database = {
       get_my_host_settings: {
         Args: never
         Returns: {
-          auto_accept: boolean
           available_slots: Json
           blackout_dates: string[]
           buffer_days: number | null
@@ -1453,7 +1355,6 @@ export type Database = {
         Returns: {
           career: string
           company: string
-          decline_reason: string | null
           id: string
           indemnity_received: boolean
           internship_notes: string
@@ -1465,10 +1366,6 @@ export type Database = {
           shadow_date: string
           status: string
         }[]
-      }
-      respond_to_booking_request: {
-        Args: { _approve: boolean; _booking: string; _decline_reason?: string }
-        Returns: undefined
       }
       list_mentor_placements: {
         Args: never
@@ -1504,21 +1401,6 @@ export type Database = {
           logo_path: string
         }[]
       }
-      list_public_careers: {
-        Args: never
-        Returns: {
-          ai_exposure_level: string | null
-          ai_exposure_note: string | null
-          description: string | null
-          future_outlook: string | null
-          id: number
-          interpersonal_skills: string[]
-          name: string
-          portrayed_availability: number
-          recommended_courses: string[]
-          self_directed_learning: string[]
-        }[]
-      }
       list_placements: {
         Args: never
         Returns: {
@@ -1534,6 +1416,18 @@ export type Database = {
           location: string
           mode: string
           sector: string
+        }[]
+      }
+      list_public_careers: {
+        Args: never
+        Returns: {
+          description: string
+          future_outlook: string
+          id: number
+          interpersonal_skills: string[]
+          name: string
+          portrayed_availability: number
+          recommended_courses: string[]
         }[]
       }
       normalize_career_name: { Args: { _n: string }; Returns: string }
@@ -1598,37 +1492,18 @@ export type Database = {
       }
       update_my_host_profile: {
         Args: {
-          _avoid_weekends?: boolean
           _bio: string
           _certifications: string
-          _contact_hours_note?: string
           _cv_path: string
-          _engagement_notes?: string
           _has_hr_admin?: boolean
           _hr_email?: string
           _hr_first_name?: string
           _hr_last_name?: string
           _linkedin_url: string
-          _preferred_contact?: string
           _specialties: string[]
           _via_company?: boolean
         }
         Returns: undefined
-      }
-      admin_list_mentor_classifications: {
-        Args: never
-        Returns: {
-          avoid_weekends: boolean
-          contact_hours_note: string | null
-          engagement_notes: string | null
-          has_hr_admin: boolean
-          hr_email: string | null
-          hr_first_name: string | null
-          hr_last_name: string | null
-          mentor_email: string
-          preferred_contact: string
-          via_company: boolean
-        }[]
       }
       update_my_host_settings:
         | {
@@ -1655,18 +1530,6 @@ export type Database = {
           }
         | {
             Args: {
-              _blackout_dates: string[]
-              _buffer_days: number
-              _max_consecutive_hours: number
-              _max_shadows_per_month: number
-              _max_shadows_per_week: number
-              _paused: boolean
-            }
-            Returns: undefined
-          }
-        | {
-            Args: {
-              _auto_accept?: boolean
               _blackout_dates: string[]
               _buffer_days: number
               _max_consecutive_hours: number
