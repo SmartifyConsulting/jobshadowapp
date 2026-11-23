@@ -35,18 +35,13 @@ function mount(extra: AccountRow[] = []) {
 afterEach(cleanup);
 
 describe("User alphabet chips", () => {
-  it("keeps unassigned accounts out of Students and exposes Companies as a tab", () => {
+  it("keeps unassigned accounts out of Students and lists them under Unclassified", () => {
     const unknown = { ...account("unknown", "Unknown Person"), role: null, roles: [] };
     const client = mount([unknown]);
-    client.setQueryData(["admin", "companies", false], [{ id: 1, company: "Example Company", career: "Engineer" }]);
     expect(screen.getByRole("tab", { name: "Students (2)" })).toBeVisible();
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Unclassified (1)" }), { button: 0 });
     fireEvent.click(screen.getByRole("button", { name: "U" }));
     expect(screen.getByRole("button", { name: "View details for Unknown Person" })).toBeVisible();
-    fireEvent.mouseDown(screen.getByRole("tab", { name: "Companies" }), { button: 0 });
-    expect(screen.getByRole("heading", { name: "Companies (1)" })).toBeVisible();
-    expect(screen.getByText("Example Company")).toBeVisible();
-    expect(screen.queryByRole("columnheader", { name: "ID" })).not.toBeInTheDocument();
     client.clear();
   });
   it("opens the selected displayed-name group and supports switching and re-opening", () => {
@@ -80,10 +75,7 @@ describe("User alphabet chips", () => {
     const client = mount([school]);
     expect(screen.getByRole("heading", { name: "Users (2)" })).toBeVisible();
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Hosts (1)" }), { button: 0 });
-    fireEvent.click(screen.getByRole("button", { name: "G" }));
-    expect(screen.getByText("Group Company")).toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: "Linked login accounts (2)" }));
-    fireEvent.click(screen.getAllByRole("button", { name: "A" }).find((button) => !(button as HTMLButtonElement).disabled)!);
+    fireEvent.click(screen.getByRole("button", { name: "A" }));
     expect(screen.getByRole("button", { name: "View details for Alice Brown" })).toBeVisible();
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Schools (1)" }), { button: 0 });
     expect(screen.getByRole("heading", { name: "Users (1)" })).toBeVisible();
@@ -147,13 +139,14 @@ describe("Booking settings frames", () => {
 
 
 describe("Visible provider directories and career wizard", () => {
-  it("opens the mentor contact directory directly without a login-account gate", () => {
-    const client = mount();
+  it("reclassifies a zero-role account as a sole mentor instead of Unclassified", () => {
+    const solo = { ...account("solo", "Solo Person"), email: "solo@example.com", role: null, roles: [] as AccountRow["roles"] };
+    const client = mount([solo]);
     fireEvent.mouseDown(screen.getByRole('tab', { name: 'Mentors (1)' }), { button: 0 });
     fireEvent.click(screen.getByRole('button', { name: 'S' }));
-    expect(screen.getByText('Solo Company')).toBeVisible();
-    expect(screen.queryByText('Group Company')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Linked login accounts (0)' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'View details for Solo Person' })).toBeVisible();
+    fireEvent.mouseDown(screen.getByRole('tab', { name: 'Unclassified (0)' }), { button: 0 });
+    expect(screen.queryByRole('button', { name: 'View details for Solo Person' })).not.toBeInTheDocument();
     client.clear();
   });
   it("exposes the wizard on career rows and fills all guidance fields only as a draft", async () => {

@@ -853,15 +853,21 @@ export function AdminUsers() {
   const [openGroups, setOpenGroups] = useState<string[]>([]);
   const [expandedApplicationUser, setExpandedApplicationUser] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
-  const [roleTab, setRoleTab] = useState<AccountRow["roles"][number] | "companies" | "unclassified" | "individual_mentor">("user");
-  const [showProviderAccounts, setShowProviderAccounts] = useState(false);
-  const isProvider = roleTab === "mentor" || roleTab === "individual_mentor";
+  const [roleTab, setRoleTab] = useState<AccountRow["roles"][number] | "unclassified" | "individual_mentor">("user");
   const isUnclassified = roleTab === "unclassified";
-  const accountRole = roleTab === "companies" || isUnclassified ? "user" : roleTab === "individual_mentor" ? "mentor" : roleTab;
+  const accountRole = isUnclassified ? "user" : roleTab === "individual_mentor" ? "mentor" : roleTab;
   const mentorCompanies = useQuery({ queryKey: ["admin", "company-contact-classification"], queryFn: () => fetchAllRows(async (from, to) => { const result = await supabase.from("companies").select("company,mentor_name,mentor_email,backup_mentor_name,backup_mentor_email").order("id").range(from, to); if (result.error) throw result.error; return result.data ?? []; }) });
   const providerTypes = useMemo(() => classifyCompanies((mentorCompanies.data ?? []) as CompanyContacts[]), [mentorCompanies.data]);
   const soleMentors = useMemo(() => individualMentorEmails((mentorCompanies.data ?? []) as { company: string | null; mentor_email: string | null; backup_mentor_email: string | null }[]), [mentorCompanies.data]);
-  const matchesRole = (a: AccountRow, tab = roleTab) => tab === "unclassified" ? a.roles.length === 0 : tab === "individual_mentor" ? a.roles.includes("mentor") && soleMentors.has((a.email ?? "").trim().toLowerCase()) : tab === "mentor" ? a.roles.includes("mentor") && !soleMentors.has((a.email ?? "").trim().toLowerCase()) : tab !== "companies" && a.roles.includes(tab);
+  const matchesRole = (a: AccountRow, tab = roleTab) => {
+    const email = (a.email ?? "").trim().toLowerCase();
+    const isSoleMentorEmail = soleMentors.has(email);
+    if (tab === "unclassified") return a.roles.length === 0 && !isSoleMentorEmail;
+    if (tab === "individual_mentor") return isSoleMentorEmail && (a.roles.length === 0 || a.roles.includes("mentor"));
+    if (tab === "mentor") return a.roles.includes("mentor") && !isSoleMentorEmail;
+    if (tab === "admin") return a.roles.includes("admin") || a.roles.includes("hr_admin");
+    return a.roles.includes(tab);
+  };
   const [showSpam, setShowSpam] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [letter, setLetter] = useState<string | null>(null);
@@ -922,7 +928,7 @@ export function AdminUsers() {
   const letterCounts = useMemo(() => {
     const counts = new Map<string, number>();
     (accounts.data ?? []).forEach((a) => {
-      if (isUnclassified ? a.roles.length > 0 : !a.roles.includes(accountRole)) return;
+      if (!matchesRole(a)) return;
       if (!showSpam && a.is_spam) return;
       const first = accountInitial(a);
       if (first) counts.set(first, (counts.get(first) ?? 0) + 1);
@@ -947,17 +953,16 @@ export function AdminUsers() {
           </form>}
         </DialogContent>
       </Dialog>
-      {roleTab !== "companies" && !isProvider && <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-ivory px-6 py-6 text-foreground">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-ivory px-6 py-6 text-foreground">
         <h1 className="text-2xl font-medium">Users {!accounts.isLoading && `(${rows.length})`}</h1>
         <div role="group" aria-label="Users view" className="flex rounded border border-border p-0.5">
           {([['table', List, 'Table'], ['cards', LayoutGrid, 'Cards']] as const).map(([value, Icon, label]) => <button key={value} onClick={() => setView(value)} aria-pressed={view === value} className={'flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs transition ' + (view === value ? 'bg-background text-primary' : 'hover:bg-primary/5')}><Icon className="h-3.5 w-3.5" />{label}</button>)}
         </div>
-      </div>}
-      <Tabs value={roleTab} onValueChange={(value) => { setRoleTab(value as AccountRow["roles"][number] | "companies" | "unclassified"); setLetter(null); setOpenGroups([]); setSelectedId(null); setShowProviderAccounts(false); }}>
-        <div className="overflow-x-auto border-b border-border bg-ivory px-6 py-3"><TabsList aria-label="User types">{([["user", "Students"], ["mentor", "Hosts"], ["individual_mentor", "Mentors"], ["school", "Schools"], ["hr_admin", "HR Admin"], ["admin", "Admin"], ["companies", "Companies"], ["unclassified", "Unclassified"]] as const).map(([role, name]) => <TabsTrigger key={role} value={role}>{name}{role === "mentor" || role === "individual_mentor" ? ` (${[...providerTypes.values()].filter((type) => type === (role === "mentor" ? "host" : "mentor")).length})` : role !== "companies" && ` (${(accounts.data ?? []).filter((user) => matchesRole(user, role) && (showSpam || !user.is_spam)).length})`}</TabsTrigger>)}</TabsList></div>
+      </div>
+      <Tabs value={roleTab} onValueChange={(value) => { setRoleTab(value as AccountRow["roles"][number] | "unclassified" | "individual_mentor"); setLetter(null); setOpenGroups([]); setSelectedId(null); }}>
+        <div className="overflow-x-auto border-b border-border bg-ivory px-6 py-3"><TabsList aria-label="User types">{([["user", "Students"], ["mentor", "Hosts"], ["individual_mentor", "Mentors"], ["school", "Schools"], ["admin", "Admin"], ["unclassified", "Unclassified"]] as const).map(([role, name]) => <TabsTrigger key={role} value={role}>{name}{role === "mentor" || role === "individual_mentor" ? ` (${[...providerTypes.values()].filter((type) => type === (role === "mentor" ? "host" : "mentor")).length})` : ` (${(accounts.data ?? []).filter((user) => matchesRole(user, role) && (showSpam || !user.is_spam)).length})`}</TabsTrigger>)}</TabsList></div>
       <TabsContent value={roleTab} className="mt-0">
-      {isProvider && <><ProviderDirectory key={roleTab} kind={roleTab === "mentor" ? "host" : "mentor"} /><button type="button" onClick={() => setShowProviderAccounts((open) => !open)} aria-expanded={showProviderAccounts} className="w-full border-t border-border px-6 py-4 text-left text-sm font-medium">Linked login accounts ({rows.length})</button></>}
-      {roleTab === "companies" ? <CompaniesList /> : isProvider && !showProviderAccounts ? null : <div className="flex flex-col items-start xl:flex-row">
+      <div className="flex flex-col items-start xl:flex-row">
       <div className={'min-w-0 w-full flex-1 px-4 py-2 text-foreground ' + 'bg-ivory'}>
         <div className="flex flex-wrap gap-1.5">
           <button
@@ -1017,7 +1022,7 @@ export function AdminUsers() {
         )}
       </div>
       {selectedAccount && <UserDetailPanel account={selectedAccount} onClose={() => setSelectedId(null)} onEdit={() => setEditing({ ...selectedAccount, roles: [...selectedAccount.roles] })} />}
-      </div>}
+      </div>
       </TabsContent>
       </Tabs>
     </div>
