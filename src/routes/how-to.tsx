@@ -5,6 +5,7 @@ import { ChevronDown, Users, UserPlus, User, Search, CalendarDays, ClipboardChec
 import { SiteLayout, useSiteSession } from "@/components/SiteLayout";
 import { YouTube } from "@/components/YouTube";
 import { VIDEOS } from "@/lib/content";
+import { useState } from "react";
 
 type Step = { icon: typeof User; label: string };
 
@@ -79,30 +80,35 @@ function HowTo() {
   const destination = (key: keyof typeof HOW_TO_DESTINATIONS) => session?.user ? HOW_TO_DESTINATIONS[key] : "/auth?go=" + key;
   const providerLinks = (type: "mentor" | "host") => ["/contact?type=" + type, destination("providerProfile"), destination("providerAvailability"), "/contact", destination("providerBookings"), destination("providerBookings"), destination("providerExperience"), destination("providerProfile")];
   const roles = session?.roles ?? [];
-  const view: "mentor" | "school" | "scholar" = roles.includes("mentor") || roles.includes("hr_admin") ? "mentor" : roles.includes("school") ? "school" : "scholar";
+  const scholar = roles.includes("learner") || roles.includes("scholar") || progress.data?.student[1] === true;
+  const provider = roles.includes("mentor") || roles.includes("hr_admin");
+  const [selectedView, setSelectedView] = useState<{ userId?: string | undefined; view: "mentor" | "school" | "scholar" } | null>(null);
+  const defaultView = scholar ? "scholar" : provider ? "mentor" : roles.includes("school") ? "school" : "scholar";
+  const view = selectedView?.userId === session?.user?.id && selectedView ? selectedView.view : defaultView;
   const content = {
     scholar: { steps: STUDENT_STEPS, complete: progress.data?.student ?? [], links: [session?.user ? destination("studentProfile") : "/register", ...(["studentProfile", "studentCareers", "studentRequest", "studentForms", "studentExperience", "studentFeedback"] as const).map(destination)] },
     mentor: { steps: MENTOR_STEPS, complete: progress.data?.mentor ?? [], links: providerLinks("mentor") },
     school: { steps: SCHOOL_STEPS, complete: [] as boolean[], links: ["/contact?type=school", ...Array(SCHOOL_STEPS.length - 1).fill("/contact")] },
   }[view];
   return (
-    <SiteLayout>
+    <SiteLayout className="lg:[&>footer>div:first-child]:py-3">
       <div className="bg-cta text-cta-foreground">
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-5 py-4">
           <ChevronDown className="h-6 w-6" />
           <span className="font-display text-2xl uppercase">How To</span>
         </div>
       </div>
-      <section className="flex min-h-[70vh] items-center bg-[#7CCCC8] px-5 py-16">
+      <section className="flex flex-1 items-center bg-[#7CCCC8] px-5 py-4">
         <div className="mx-auto w-full max-w-7xl space-y-3">
           <p className="text-sm font-semibold">Click on each step to complete it.</p>
+          {scholar && provider && <div role="group" aria-label="Choose your How To guide" className="flex gap-2">{([['scholar', 'Scholars'], ['mentor', 'Mentors / Hosts']] as const).map(([key, label]) => <button type="button" key={key} aria-pressed={view === key} onClick={() => setSelectedView({ userId: session?.user?.id, view: key })} className={`rounded-full border px-3 py-1 text-sm ${view === key ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background text-foreground"}`}>{label}</button>)}</div>}
           <StepRow steps={content.steps} complete={content.complete} links={content.links} />
           {progress.error && <p role="status" className="text-sm">Saved progress could not be loaded. You can still open each step.</p>}
-          <p className="text-xs">Green ticks show saved progress. Contact us for host indemnity and NDA forms; their completion is not tracked in the app yet.</p>
+          <p className="text-xs">Green ticks show saved progress.{view === "mentor" && " Contact us for host indemnity and NDA forms; their completion is not tracked in the app yet."}</p>
         </div>
       </section>
       <section className="bg-primary">
-        <div className="mx-auto grid max-w-7xl gap-6 px-5 py-14 md:grid-cols-3">
+        <div className="mx-auto grid max-w-5xl gap-3 px-5 py-3 md:grid-cols-3">
           {VIDEOS.map((v) => (
             <YouTube key={v.id} {...v} />
           ))}

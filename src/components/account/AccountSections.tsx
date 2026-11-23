@@ -147,11 +147,29 @@ const profileSchema = z.object({
   citizenship: z.string().trim().max(50).optional(),
 });
 
-function ProfileForm({ userId, initialProfile, onSaved }: { userId: string; initialProfile?: Record<string, unknown> | undefined; onSaved?: (() => void) | undefined }) {
+export function ProfileForm({ userId, initialProfile, onSaved }: { userId: string; initialProfile?: Record<string, unknown> | undefined; onSaved?: (() => void) | undefined }) {
   const qc = useQueryClient();
   const [f, setF] = useState<Record<string, string | boolean>>(() => ({ school_type: "Public School", tc_accepted: false, popi_accepted: false, ...Object.fromEntries(Object.entries(initialProfile ?? {}).filter(([, value]) => typeof value === "string" || typeof value === "boolean")), info_accurate: true, contact_no: initialProfile?.["contact_no"] ? phoneWithCountryCode(String(initialProfile["contact_no"]), "ZA") : "", guardian_contact: initialProfile?.["guardian_contact"] ? phoneWithCountryCode(String(initialProfile["guardian_contact"]), "ZA") : "" }));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+  const [activeTab, setActiveTab] = useState("personal");
+  const [draftReady, setDraftReady] = useState(false);
+  const draft = useQuery({ queryKey: ["scholar-profile-draft", userId], retry: false, queryFn: async () => {
+    const result = await supabase.from("scholar_profile_drafts").select("*").eq("user_id", userId).maybeSingle();
+    if (result.error) throw result.error;
+    return result.data;
+  } });
+  useEffect(() => {
+    if (!draft.isSuccess || draftReady) return;
+    if (draft.data) {
+      const values = z.record(z.union([z.string(), z.boolean()])).safeParse(draft.data.data);
+      if (values.success) {
+        setF((current) => ({ ...current, ...values.data }));
+        setActiveTab(draft.data.step);
+      }
+    }
+    setDraftReady(true);
+  }, [draft.isSuccess, draft.data, draftReady]);
   const account = useQuery({ queryKey: ["profile", userId], queryFn: async () => (await supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle()).data });
   useEffect(() => {
     const a = account.data;
@@ -163,9 +181,15 @@ function ProfileForm({ userId, initialProfile, onSaved }: { userId: string; init
     });
   }, [account.data]);
   const [files, setFiles] = useState<{ id?: File | undefined; photo?: File | undefined }>({});
+  const errorTab = (key: string) => key.startsWith("guardian_") ? "guardian" : ["school", "school_type", "career_interests", "dietary"].includes(key) ? "school" : ["population_group", "gender", "disability", "citizenship"].includes(key) ? "diversity" : "personal";
+  function showError(key: string) {
+    setActiveTab(errorTab(key));
+    const target = key === "first_name" || key === "full_name" ? "learner-name-first" : key === "last_name" ? "learner-name-last" : key === "guardian_first_name" || key === "guardian_name" ? "guardian-name-first" : key === "guardian_last_name" ? "guardian-name-last" : key === "id_file_path" ? "id-scan" : key;
+    setTimeout(() => document.getElementById(target)?.focus(), 0);
+  }
 
   const field = (k: string, label: string, placeholder?: string) => (
-    <div className="min-w-0">
+    <div className={`min-w-0 ${errors[k] ? "rounded outline outline-2 outline-destructive" : ""}`}>
       <Label htmlFor={k}>{label}</Label>
       {["contact_no", "guardian_contact"].includes(k) ? <PhoneInput id={k} label={label} value={String(f[k] ?? "")} onChange={(value) => setF({ ...f, [k]: value })} /> : <Input id={k} placeholder={placeholder} value={(f[k] as string) ?? ""} onChange={(e) => setF({ ...f, [k]: e.target.value })} />}
       {errors[k] && <p className="text-xs text-destructive">{errors[k]}</p>}
@@ -173,13 +197,24 @@ function ProfileForm({ userId, initialProfile, onSaved }: { userId: string; init
   );
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    const r = profileSchema.safeParse(f);
-    if (!r.success) {
-      setErrors(Object.fromEntries(r.error.issues.map((i) => [String(i.path[0]), i.message])));
+    await saveStep();
+  }
+  async function saveStep() {
+    if (busy || !draftReady) return;
+    const values = { ...Object.fromEntries(Object.keys(profileSchema.shape).map((key) => [key, f[key] ?? ""])),
+      full_name: joinPersonName(String(f["first_name"] ?? ""), String(f["last_name"] ?? "")),
+      guardian_name: joinPersonName(String(f["guardian_first_name"] ?? ""), String(f["guardian_last_name"] ?? "")) };
+    const lastStep = activeTab === "guardian";
+    const schema = lastStep ? profileSchema : activeTab === "personal" ? profileSchema.pick({ first_name: true, last_name: true, full_name: true, contact_no: true, id_number: true, tc_accepted: true, popi_accepted: true }) : activeTab === "school" ? profileSchema.pick({ school: true, school_type: true, career_interests: true, dietary: true }) : profileSchema.pick({ population_group: true, gender: true, disability: true, citizenship: true });
+    const validation = schema.safeParse(values);
+    const issues = validation.success ? {} : Object.fromEntries(validation.error.issues.map((issue) => [String(issue.path[0]), issue.message]));
+    if ((activeTab === "personal" || lastStep) && !files.id && !f["id_file_path"]) issues["id_file_path"] = "Please upload a scan of the scholar's ID.";
+    if (Object.keys(issues).length) {
+      setErrors(issues);
+      setActiveTab(errorTab(Object.keys(issues)[0]!));
       return;
     }
     setErrors({});
-    if (!files.id && !initialProfile?.["id_file_path"]) return setErrors({ form: "Please upload a scan of the scholar's ID." });
     setBusy(true);
     const upload = async (file: File | undefined, kind: string) => {
       if (!file) return null;
@@ -188,32 +223,48 @@ function ProfileForm({ userId, initialProfile, onSaved }: { userId: string; init
       if (res.error) throw new Error(res.error.message);
       return path;
     };
-    let id_file_path: string | null = typeof initialProfile?.["id_file_path"] === "string" ? initialProfile["id_file_path"] : null;
-    let photo_path: string | null = typeof initialProfile?.["photo_path"] === "string" ? initialProfile["photo_path"] : null;
+    let id_file_path: string | null = typeof f["id_file_path"] === "string" ? f["id_file_path"] : null;
+    let photo_path: string | null = typeof f["photo_path"] === "string" ? f["photo_path"] : null;
     try {
       if (files.id) id_file_path = await upload(files.id, "id");
       if (files.photo) photo_path = await upload(files.photo, "photo");
+      const saved = { ...f, ...values, ...(id_file_path ? { id_file_path } : {}), ...(photo_path ? { photo_path } : {}),
+        ...(f["tc_accepted"] === true && !f["tc_accepted_at"] ? { tc_accepted_at: new Date().toISOString() } : {}),
+        ...(f["popi_accepted"] === true && !f["popi_accepted_at"] ? { popi_accepted_at: new Date().toISOString() } : {}) };
+      const nextTab = SCHOLAR_DETAIL_TABS[SCHOLAR_DETAIL_TABS.findIndex((tab) => tab.id === activeTab) + 1]?.id ?? "guardian";
+      const draftSave = await supabase.from("scholar_profile_drafts").upsert({ user_id: userId, data: saved, step: nextTab, updated_at: new Date().toISOString() });
+      if (draftSave.error) throw draftSave.error;
+      setF(saved);
+      setFiles({});
+      if (!lastStep) { setActiveTab(nextTab); return; }
+      const r = profileSchema.parse(values);
+      const patch = { ...r, career_interests: r.career_interests || null, dietary: r.dietary || null, guardian_id: r.guardian_id || null, population_group: r.population_group || null, gender: r.gender || null, disability: r.disability || null, citizenship: r.citizenship || null, user_id: userId, id_file_path, photo_path, tc_accepted_at: String(saved["tc_accepted_at"]), popi_accepted_at: String(saved["popi_accepted_at"]) };
+      const result = await supabase.from("scholar_profiles").upsert(patch, { onConflict: "user_id" });
+      if (result.error) throw result.error;
+      const accountSave = await supabase.from("profiles").upsert({ user_id: userId, first_name: r.first_name, last_name: r.last_name, display_name: r.full_name, updated_at: new Date().toISOString() });
+      if (accountSave.error) throw accountSave.error;
+      const cleanup = await supabase.from("scholar_profile_drafts").delete().eq("user_id", userId);
+      if (cleanup.error) throw cleanup.error;
+      await qc.invalidateQueries({ queryKey: ["scholar-profile-draft", userId] });
+      await qc.invalidateQueries({ queryKey: ["scholar-profile"] });
+      await qc.invalidateQueries({ queryKey: ["profile"] });
+      await qc.invalidateQueries({ queryKey: ["site-session"] });
+      await qc.invalidateQueries({ queryKey: ["how-to-progress"] });
+      onSaved?.();
     } catch (ex) {
+      setErrors({ form: ex instanceof Error ? ex.message : String((ex as { message?: string }).message ?? "Your progress could not be saved. Please try again.") });
+    } finally {
       setBusy(false);
-      return setErrors({ form: (ex as Error).message });
     }
-    const patch = { ...r.data, career_interests: r.data.career_interests ?? null, dietary: r.data.dietary ?? null, guardian_id: r.data.guardian_id ?? null, population_group: r.data.population_group || null, gender: r.data.gender || null, disability: r.data.disability || null, citizenship: r.data.citizenship || null, user_id: userId, id_file_path, photo_path, ...(!initialProfile || initialProfile["tc_accepted"] !== true ? { tc_accepted_at: new Date().toISOString() } : {}), ...(!initialProfile || initialProfile["popi_accepted"] !== true ? { popi_accepted_at: new Date().toISOString() } : {}) };
-    const { error } = initialProfile ? await supabase.from("scholar_profiles").update(patch).eq("user_id", userId) : await supabase.from("scholar_profiles").insert(patch);
-    setBusy(false);
-    if (error) return setErrors({ form: error.message });
-    await supabase.from("profiles").upsert({ user_id: userId, first_name: r.data.first_name, last_name: r.data.last_name, display_name: `${r.data.first_name} ${r.data.last_name}`.trim(), updated_at: new Date().toISOString() });
-    await qc.invalidateQueries({ queryKey: ["scholar-profile"] });
-    await qc.invalidateQueries({ queryKey: ["profile"] });
-    await qc.invalidateQueries({ queryKey: ["site-session"] });
-    onSaved?.();
   }
   return (
-    <form onSubmit={save} className="min-w-0 w-full space-y-5">
+    <form noValidate onSubmit={save} className="min-w-0 w-full space-y-5 [&_[aria-invalid=true]]:border-destructive [&_[aria-invalid=true]]:ring-1 [&_[aria-invalid=true]]:ring-destructive">
       <div>
         <h1 className="font-display text-4xl">Personal Details</h1>
         <h5 className="mt-1 font-semibold">NOTE: no more than one scholar per registration.</h5>
       </div>
-      <Tabs defaultValue="personal" className="w-full">
+      <fieldset disabled={busy || !draftReady} className="min-w-0 space-y-5">
+      <Tabs value={activeTab} onValueChange={(target) => { if (SCHOLAR_DETAIL_TABS.findIndex((tab) => tab.id === target) < SCHOLAR_DETAIL_TABS.findIndex((tab) => tab.id === activeTab)) { setActiveTab(target); setErrors({}); } else { void saveStep(); } }} className="w-full">
         <TabsList className="flex w-full flex-wrap justify-start">
           <TabsTrigger value="personal">Personal Details</TabsTrigger>
           <TabsTrigger value="school">School &amp; Interests</TabsTrigger>
@@ -222,12 +273,12 @@ function ProfileForm({ userId, initialProfile, onSaved }: { userId: string; init
         </TabsList>
         <TabsContent value="personal" className="mt-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="sm:col-span-2"><PersonNameFields id="learner-name" label="Name" originalName={String(initialProfile?.["full_name"] ?? "")} required firstName={String(f["first_name"] ?? "")} lastName={String(f["last_name"] ?? "")} onChange={(first, last, full) => setF({ ...f, first_name: first, last_name: last, full_name: full })} />{(errors["first_name"] || errors["last_name"]) && <p className="text-xs text-destructive">{errors["first_name"] || errors["last_name"]}</p>}</div>
+            <div className="sm:col-span-2"><PersonNameFields id="learner-name" label="Name" originalName={String(initialProfile?.["full_name"] ?? "")} required firstName={String(f["first_name"] ?? "")} lastName={String(f["last_name"] ?? "")} firstNameInvalid={!!errors["first_name"]} lastNameInvalid={!!errors["last_name"]} onChange={(first, last, full) => setF({ ...f, first_name: first, last_name: last, full_name: full })} />{(errors["first_name"] || errors["last_name"]) && <p className="text-xs text-destructive">{errors["first_name"] || errors["last_name"]}</p>}</div>
             {field("contact_no", "Tel No", "Tel no")}
             {field("id_number", "ID / passport number", "Id no")}
             <div>
               <Label htmlFor="id-scan">Scan of ID</Label>
-              <Input id="id-scan" type="file" accept="image/*,application/pdf" onChange={(e) => setFiles({ ...files, id: e.target.files?.[0] })} />
+              <Input id="id-scan" type="file" aria-invalid={!!errors["id_file_path"]} accept="image/*,application/pdf" onChange={(e) => setFiles({ ...files, id: e.target.files?.[0] })} />
             </div>
             <div>
               <Label htmlFor="profile-photo">Profile Photo</Label>
@@ -282,16 +333,17 @@ function ProfileForm({ userId, initialProfile, onSaved }: { userId: string; init
         </TabsContent>
         <TabsContent value="guardian" className="mt-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="sm:col-span-2"><PersonNameFields id="guardian-name" originalName={String(initialProfile?.["guardian_name"] ?? "")} required firstName={String(f["guardian_first_name"] ?? "")} lastName={String(f["guardian_last_name"] ?? "")} onChange={(first, last, full) => setF({ ...f, guardian_first_name: first, guardian_last_name: last, guardian_name: full })} />{(errors["guardian_first_name"] || errors["guardian_last_name"]) && <p className="text-xs text-destructive">{errors["guardian_first_name"] || errors["guardian_last_name"]}</p>}</div>
+            <div className="sm:col-span-2"><PersonNameFields id="guardian-name" originalName={String(initialProfile?.["guardian_name"] ?? "")} required firstName={String(f["guardian_first_name"] ?? "")} lastName={String(f["guardian_last_name"] ?? "")} firstNameInvalid={!!errors["guardian_first_name"]} lastNameInvalid={!!errors["guardian_last_name"]} onChange={(first, last, full) => setF({ ...f, guardian_first_name: first, guardian_last_name: last, guardian_name: full })} />{(errors["guardian_first_name"] || errors["guardian_last_name"]) && <p className="text-xs text-destructive">{errors["guardian_first_name"] || errors["guardian_last_name"]}</p>}</div>
             {field("guardian_contact", "Contact Number", "Contact number")}
             {field("guardian_email", "Email Address", "name@example.com")}
             {field("guardian_id", "ID / Passport Number", "ID or passport number")}
           </div>
         </TabsContent>
       </Tabs>
+      {activeTab === "personal" && <>
       <div className="min-w-0 w-full space-y-1 rounded-md bg-cta px-4 py-3 text-cta-foreground">
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={!!f["tc_accepted"]} onChange={(e) => setF({ ...f, tc_accepted: e.target.checked })} />
+          <input id="tc_accepted" type="checkbox" aria-invalid={!!errors["tc_accepted"]} checked={!!f["tc_accepted"]} onChange={(e) => setF({ ...f, tc_accepted: e.target.checked })} />
           I agree with the <Link to="/legal" target="_blank" className="font-bold underline">Terms &amp; Conditions</Link>
         </label>
         {typeof initialProfile?.["tc_accepted_at"] === "string" && <p className="pl-6 text-xs opacity-80">Agreed {formatAcceptedAt(initialProfile["tc_accepted_at"])}</p>}
@@ -299,14 +351,18 @@ function ProfileForm({ userId, initialProfile, onSaved }: { userId: string; init
       {errors["tc_accepted"] && <p className="text-xs text-destructive">{errors["tc_accepted"]}</p>}
       <div className="min-w-0 w-full space-y-1 rounded-md bg-cta px-4 py-3 text-cta-foreground">
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={!!f["popi_accepted"]} onChange={(e) => setF({ ...f, popi_accepted: e.target.checked })} />
+          <input id="popi_accepted" type="checkbox" aria-invalid={!!errors["popi_accepted"]} checked={!!f["popi_accepted"]} onChange={(e) => setF({ ...f, popi_accepted: e.target.checked })} />
           As parent/guardian, I give <Link to="/legal" target="_blank" className="font-bold underline">POPI consent</Link> to process this information
         </label>
         {typeof initialProfile?.["popi_accepted_at"] === "string" && <p className="pl-6 text-xs opacity-80">Agreed {formatAcceptedAt(initialProfile["popi_accepted_at"])}</p>}
       </div>
       {errors["popi_accepted"] && <p className="text-xs text-destructive">{errors["popi_accepted"]}</p>}
-      {errors["form"] && <p className="text-sm text-destructive">{errors["form"]}</p>}
-      <Button type="submit" disabled={busy} className="bg-primary text-primary-foreground">{initialProfile ? "Save Profile" : "Complete Profile & Continue"}</Button>
+      </>}
+      </fieldset>
+      {draft.error && <p role="alert" className="text-sm text-destructive">Saved progress could not be loaded. <button type="button" className="underline" onClick={() => void draft.refetch()}>Try again</button></p>}
+      <div className="flex justify-end"><Button type="submit" disabled={busy || !draftReady} className="bg-primary text-primary-foreground">{busy ? "Saving…" : "Next"}</Button></div>
+      {errors["form"] && <p role="alert" className="text-sm text-destructive">{errors["form"]}</p>}
+      {Object.keys(errors).some((key) => key !== "form") && <div role="alert" className="text-sm text-destructive"><p className="font-semibold">Please complete the following required fields:</p><ul className="list-disc pl-5">{Object.entries(errors).filter(([key]) => key !== "form" && !["full_name", "guardian_name"].includes(key)).map(([key, message]) => <li key={key}><button type="button" className="text-left underline" onClick={() => showError(key)}>{message}</button></li>)}</ul></div>}
     </form>
   );
 }

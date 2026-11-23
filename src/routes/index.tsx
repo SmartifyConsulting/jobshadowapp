@@ -48,9 +48,7 @@ function InlineSignIn() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setBusy(false);
     if (error) return setMsg(/email.*not.*confirmed/i.test(error.message) ? "Please confirm your email first — check your inbox." : "Email or password is incorrect.");
-    const { data: u } = await supabase.auth.getUser();
-    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: u.user!.id, _role: "admin" });
-    navigate({ to: isAdmin ? "/admin" : "/my-account" });
+    navigate({ to: "/profile", search: { tab: "bookings", step: "profile" } });
   }
 
   const input = "w-full rounded-full border border-primary-foreground/40 bg-primary-foreground/10 px-4 py-2 text-sm text-primary-foreground placeholder:text-primary-foreground/60 outline-none focus:border-primary-foreground/70";
@@ -78,7 +76,7 @@ function Home() {
   const [showSignUp, setShowSignUp] = useState(false);
 
   function focusSignIn() {
-    if (signedIn) { void navigate({ to: "/my-account" }); return; }
+    if (signedIn) { void navigate({ to: "/profile", search: { tab: "bookings", step: "profile" } }); return; }
     setShowSignIn(true);
     setShowSignUp(false);
     requestAnimationFrame(() => {

@@ -14,6 +14,12 @@ export type Database = {
   }
   public: {
     Tables: {
+      scholar_profile_drafts: {
+        Row: { user_id: string; data: Json; step: string; updated_at: string }
+        Insert: { user_id: string; data?: Json; step?: string; updated_at?: string }
+        Update: { user_id?: string; data?: Json; step?: string; updated_at?: string }
+        Relationships: []
+      }
       activity_log: {
         Row: {
           action: string

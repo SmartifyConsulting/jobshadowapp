@@ -1,3 +1,4 @@
+import { mentorAvailability } from "@/lib/mentor-availability";
 import { fetchAllAccounts } from "@/lib/admin-accounts";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { providerGroups, mentorGroups } from "@/lib/provider-directory";
@@ -278,12 +279,9 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
         rows.forEach((r) => { r["_student_count"] = counts.get(String(r["name"]).trim().toLowerCase()) ?? 0; });
       }
       if (table === "careers") {
-        const today = new Date(); today.setHours(0, 0, 0, 0);
-        const hasOpenDates = (dates: string | null) => (dates ?? "").split(",").some((d) => { const [m, day, y] = d.trim().split("/").map(Number); return m && day && y && new Date(y, m - 1, day) >= today; });
-        const companyRows = await fetchAllRows(async (from, to) => { const result = await supabase.from("companies").select("career, active, dates").order("id").range(from, to); if (result.error) throw result.error; return result.data ?? []; }) as { career: string | null; active: boolean; dates: string | null }[];
-        const availableNow = new Map<string, number>();
-        (companyRows ?? []).forEach((c) => { const key = (c.career ?? "").trim().toLowerCase(); if (key && c.active && hasOpenDates(c.dates)) availableNow.set(key, (availableNow.get(key) ?? 0) + 1); });
-        rows.forEach((r) => { r["_real_availability"] = availableNow.get(String(r["name"]).trim().toLowerCase()) ?? 0; });
+        const companyRows = await fetchAllRows(async (from, to) => { const result = await supabase.from("companies").select("company, career, mentor_name, mentor_email, active, dates, arrival_time, collection_time").order("id").range(from, to); if (result.error) throw result.error; return result.data ?? []; });
+        const availability = mentorAvailability(companyRows);
+        rows.forEach((row) => { const count = availability.get(String(row["name"]).toLowerCase().replace(/[^a-z0-9]/g, "")); row["_real_availability"] = count?.available ?? 0; row["_total_mentors"] = count?.total ?? 0; });
       }
       return table === "careers" ? withCareerDescriptions(rows) : rows;
     },
@@ -328,12 +326,6 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
     qc.invalidateQueries({ queryKey: ["admin", table] });
   }
 
-  async function setPortrayedAvailability(row: Record<string, unknown>, value: number) {
-    const { error } = await (supabase.from("careers") as any).update({ portrayed_availability: value }).eq("id", row["id"]);
-    if (error) return notify(error.message, "error");
-    qc.invalidateQueries({ queryKey: ["admin", table] });
-    void qc.invalidateQueries({ queryKey: ["public-careers-catalog"] });
-  }
 
   if (editing) {
     const onDone = () => { setEditing(null); qc.invalidateQueries({ queryKey: ["admin", table] }); if (table === "companies") void qc.invalidateQueries({ queryKey: ["admin", "company-contact-classification"] }); };
@@ -424,14 +416,13 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
                               <div className="flex items-center justify-between gap-3 px-4 py-1.5 odd:bg-ivory even:bg-pale-lime/40">
                                 <div className="flex min-w-0 items-center gap-2">
                                   {table === "careers" && (
-                                    <button type="button" aria-expanded={descOpen} aria-label={descOpen ? "Hide description" : "Show description"} onClick={() => setOpenDesc((prev) => { const n = new Set(prev); n.has(rid) ? n.delete(rid) : n.add(rid); return n; })} className="grid h-5 w-5 shrink-0 place-items-center rounded border border-warm-divider text-xs font-bold text-muted-foreground hover:text-primary">{descOpen ? "−" : "+"}</button>
+                                    <button type="button" aria-expanded={descOpen} aria-label={descOpen ? "Hide description" : "Show description"} onClick={() => setOpenDesc((prev) => { const n = new Set(prev); n.has(rid) ? n.delete(rid) : n.add(rid); return n; })} className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-warm-divider bg-card text-xs font-bold text-muted-foreground hover:text-primary">{descOpen ? "−" : "+"}</button>
                                   )}
-                                  <div className="min-w-0"><span className="block truncate text-sm font-medium leading-tight">{fmt(r["name"])}{!!r["archived"] && <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">Archived</span>}</span>{!descOpen && r["description"] ? <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{String(r["description"]).replace(/\*\*/g, "").split("\n")[0]}</p> : null}</div>
+                                  <div className="min-w-0"><span className="block truncate text-sm font-medium leading-tight">{fmt(r["name"])}{!!r["archived"] && <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">Archived</span>}</span></div>
                                   <span className="shrink-0 text-xs text-muted-foreground">{fmt(r["_student_count"])} scholars</span>
-                                  {table === "careers" && <span className="shrink-0 text-xs text-muted-foreground" title="Companies currently active with open dates for this career">Real availability: {fmt(r["_real_availability"])}</span>}
-                                  {table === "careers" && <label className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground" title="The availability number shown publicly when real availability is 0, so the Careers page never looks empty">Portrayed:<input type="number" min={0} max={9} value={fmt(r["portrayed_availability"])} onChange={(e) => void setPortrayedAvailability(r, Math.max(0, Math.min(9, Number(e.target.value) || 0)))} className="w-10 rounded border border-warm-divider bg-background px-1 py-0.5 text-center" /></label>}
                                 </div>
-                                <div className="flex shrink-0 gap-1.5">
+                                <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+                                  <span className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide ${Number(r["_real_availability"]) > 0 ? "bg-cta text-cta-foreground" : "bg-muted text-foreground"}`} title="Distinct primary mentors at each company; available means active with an upcoming date and a valid start and end time">{fmt(r["_real_availability"])} of {fmt(r["_total_mentors"])} mentors available</span>
                                   <button onClick={() => setEditing(r)} className="inline-flex items-center gap-1 rounded border border-warm-divider px-2 py-1 text-xs hover:text-primary"><Sparkles className="h-3 w-3" />AI wizard</button>
                                   <button onClick={() => void toggleArchived(r)} className="rounded border border-warm-divider p-1.5 text-muted-foreground transition hover:text-primary" aria-label={r["archived"] ? "Unarchive" : "Archive"} title={r["archived"] ? "Unarchive — show this career to users again" : "Archive — hide this career from users without deleting it"}>{r["archived"] ? <ArchiveRestore className="h-3 w-3" /> : <Archive className="h-3 w-3" />}</button>
                                   <button onClick={() => setEditing(r)} className="rounded border border-warm-divider p-1.5 text-muted-foreground transition hover:text-primary" aria-label="Edit"><Pencil className="h-3 w-3" /></button>
@@ -439,8 +430,8 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
                                 </div>
                               </div>
                               {table === "careers" && descOpen && (
-                                <div className="bg-background/60 px-10 py-3 text-sm text-muted-foreground">
-                                  <CareerGuidance name={String(r["name"] ?? "")} description={String(r["description"] ?? "")} saved={r} />
+                                <div className="bg-ivory pb-3 pl-12 pr-4 text-sm text-foreground">
+                                  <CareerGuidance name={String(r["name"] ?? "")} description={String(r["description"] ?? "")} saved={r} showEmptySections />
                                 </div>
                               )}
                             </Fragment>
@@ -1209,7 +1200,11 @@ function LegalContentEditor() {
     queryFn: async () => {
       const { data, error } = await supabase.from("legal_documents").select("*").order("key");
       if (error) throw error;
-      return data ?? [];
+      const order = ["legal_review_notice", "privacy_policy", "consent_forms", "platform_terms", "standard_indemnity_clauses"];
+      return (data ?? []).sort((a, b) => {
+        const rank = (key: string) => { const index = order.indexOf(key); return index < 0 ? order.length : index; };
+        return rank(a.key) - rank(b.key) || a.title.localeCompare(b.title);
+      });
     },
   });
   const [editing, setEditing] = useState<{ key: string; title: string; body: string } | null>(null);
@@ -1517,25 +1512,25 @@ function MentorCoverageReport() {
   const companies = useQuery({
     queryKey: ["admin", "mentor-coverage"],
     queryFn: async () => {
-      const result = await supabase.from("companies").select("career, active, dates");
-      if (result.error) throw result.error;
-      return result.data ?? [];
+      return fetchAllRows(async (from, to) => {
+        const result = await supabase.from("companies").select("company, career, mentor_name, mentor_email, active, dates, arrival_time, collection_time").order("id").range(from, to);
+        if (result.error) throw result.error;
+        return result.data ?? [];
+      });
     },
   });
   const [filter, setFilter] = useState<"all" | "zero" | "inactive">("zero");
   const rows = useMemo(() => {
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const hasOpenDates = (dates: string | null) => (dates ?? "").split(",").some((d) => { const [m, day, y] = d.trim().split("/").map(Number); return m && day && y && new Date(y, m - 1, day) >= today; });
+    const availability = mentorAvailability(companies.data ?? []);
     return ROLE_TITLES.map((career) => {
-      const forCareer = (companies.data ?? []).filter((c) => (c.career ?? "").trim().toLowerCase() === career.trim().toLowerCase());
-      const availableNow = forCareer.filter((c) => c.active && hasOpenDates(c.dates)).length;
-      return { career, total: forCareer.length, availableNow };
+      const count = availability.get(career.toLowerCase().replace(/[^a-z0-9]/g, ""));
+      return { career, total: count?.total ?? 0, availableNow: count?.available ?? 0 };
     }).sort((a, b) => a.availableNow - b.availableNow || a.total - b.total || a.career.localeCompare(b.career));
   }, [companies.data]);
   const shown = rows.filter((r) => filter === "all" ? true : filter === "zero" ? r.total === 0 : r.availableNow === 0);
   return (
     <div className="bg-background p-6">
-      <p className="mb-4 max-w-2xl text-sm text-muted-foreground">Careers with zero real mentors still show a portrayed availability number on the public Careers page (set per career on the Careers screen) so the site never looks empty — this view shows the real picture so you know exactly where mentor recruitment is needed. "No mentors at all" means zero companies have ever been registered for that career; "Registered, not currently available" means a company exists but is inactive or has no open dates right now.</p>
+      <p className="mb-4 max-w-2xl text-sm text-muted-foreground">Availability counts distinct primary mentors at each company. An available mentor needs an active placement, an upcoming date, and valid start and end times. "No mentors at all" means there are no named mentor contacts for that career.</p>
       <div role="group" aria-label="Filter by coverage" className="mb-4 flex flex-wrap gap-1.5">
         {([["zero", "No mentors at all"], ["inactive", "Not currently available"], ["all", "All careers"]] as const).map(([key, label]) => <button key={key} type="button" aria-pressed={filter === key} onClick={() => setFilter(key)} className={`rounded-full border px-3 py-1.5 text-xs font-medium ${filter === key ? "border-primary bg-primary text-primary-foreground" : "border-border hover:bg-muted"}`}>{label}</button>)}
       </div>
@@ -2219,7 +2214,7 @@ export function CareerDescriptionField({ career, value, onChange, skills, onSkil
       </fieldset>
       <div className="mt-4 space-y-4"><label className="block text-sm">Ideal for<textarea rows={3} value={guidance.idealFor} onChange={(e) => onGuidanceChange({ ideal_for: e.target.value })} className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary" /></label>
         {([['specialisations', 'Specialisations & Roles'], ['subjects', 'Suggested Subjects']] as const).map(([key, label]) => <label key={key} className="block text-sm">{label}<input value={guidance[key].join(', ')} onChange={(e) => onGuidanceChange({ [key]: e.target.value.split(',').map((value) => value.trimStart()) })} onBlur={() => onGuidanceChange({ [key]: guidance[key].map((value) => value.trim()).filter(Boolean) })} className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary" /></label>)}
-        {([['interpersonalSkills', 'interpersonal_skills', 'Interpersonal Skills'], ['recommendedCourses', 'recommended_courses', 'Recommended Courses'], ['selfDirectedLearning', 'self_directed_learning', 'Explore On Your Own (self-directed)']] as const).map(([guidanceKey, patchKey, label]) => <label key={guidanceKey} className="block text-sm">{label}<input value={guidance[guidanceKey].join(', ')} onChange={(e) => onGuidanceChange({ [patchKey]: e.target.value.split(',').map((value) => value.trimStart()) })} onBlur={() => onGuidanceChange({ [patchKey]: guidance[guidanceKey].map((value) => value.trim()).filter(Boolean) })} className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary" /></label>)}
+        {([['interpersonalSkills', 'interpersonal_skills', 'Interpersonal Skills'], ['recommendedCourses', 'recommended_courses', 'Recommended Training'], ['selfDirectedLearning', 'self_directed_learning', 'Explore On Your Own (self-directed)']] as const).map(([guidanceKey, patchKey, label]) => <label key={guidanceKey} className="block text-sm">{label}<input value={guidance[guidanceKey].join(', ')} onChange={(e) => onGuidanceChange({ [patchKey]: e.target.value.split(',').map((value) => value.trimStart()) })} onBlur={() => onGuidanceChange({ [patchKey]: guidance[guidanceKey].map((value) => value.trim()).filter(Boolean) })} className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary" /></label>)}
         <label className="block text-sm">Future of this Career<textarea rows={2} value={guidance.futureOutlook} onChange={(e) => onGuidanceChange({ future_outlook: e.target.value })} className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary" /></label>
         <label className="block text-sm">AI Exposure Level
           <select value={guidance.aiExposureLevel ?? ""} onChange={(e) => onGuidanceChange({ ai_exposure_level: (e.target.value || null) as "low" | "medium" | "high" | null })} className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary">

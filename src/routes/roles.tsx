@@ -1,3 +1,4 @@
+import { hasPlacementTimes } from "@/lib/mentor-availability";
 import { CareerGuidance } from "@/components/CareerGuidance";
 import { getCareerDescription } from "@/lib/career-descriptions";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -70,7 +71,7 @@ function Roles() {
   const [location, setLocation] = useState("");
   const placements = useQuery({
     queryKey: ["placements"],
-    queryFn: async () => ((await supabase.rpc("list_placements")).data ?? []) as { career: string; location: string | null }[],
+    queryFn: async () => { const result = await supabase.rpc("list_placements"); if (result.error) throw result.error; return (result.data ?? []).filter(hasPlacementTimes); },
   });
   const locations = useMemo(() => [...new Set((placements.data ?? []).map((p) => p.location).filter((l): l is string => !!l))].sort(), [placements.data]);
   const careersAtLocation = useMemo(() => new Set((placements.data ?? []).filter((p) => p.location === location).map((p) => p.career.trim().toLowerCase())), [placements.data, location]);
@@ -78,15 +79,6 @@ function Roles() {
     queryKey: ["no-availability-message"],
     queryFn: async () => (await supabase.rpc("get_no_availability_message")).data,
   });
-  // A career with zero real mentors still shows a believable, fixed-but-varied number publicly
-  // (never a flat "5") so the catalogue doesn't look empty; admin always sees the real 0.
-  const portrayedFor = (title: string) => {
-    const fromAdmin = adminCareers.data?.find((c) => careerKey(c.name) === careerKey(title))?.portrayed_availability;
-    if (fromAdmin != null) return fromAdmin;
-    let hash = 0;
-    for (const ch of title) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
-    return (hash % 3) + 1;
-  };
   const mentorCounts = useMemo(() => {
     const m = new Map<string, number>();
     (placements.data ?? []).forEach((p) => {
@@ -223,13 +215,9 @@ function Roles() {
                             >
                               <Heart className={`h-4 w-4 ${favourites.data?.has(r.slug) ? "fill-cta text-cta" : ""}`} />
                             </button>
-                            {count > 0 ? (
-                              <span className="rounded-full bg-cta px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-cta-foreground">
-                                {count} mentor{count === 1 ? "" : "s"} available
-                              </span>
-                            ) : (
-                              (() => { const shown = portrayedFor(r.title); return <span className="rounded-full bg-cta px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-cta-foreground">{shown} mentor{shown === 1 ? "" : "s"} available</span>; })()
-                            )}
+                            <span className={"rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide " + (count > 0 ? "bg-cta text-cta-foreground" : "bg-muted text-foreground")}>
+                              {placements.isError ? "Availability unavailable" : placements.isPending ? "Checking availability…" : count + " mentor" + (count === 1 ? "" : "s") + " available"}
+                            </span>
                           </div>
                         </div>
                         {open && (

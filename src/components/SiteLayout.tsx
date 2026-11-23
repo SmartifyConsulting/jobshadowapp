@@ -183,6 +183,7 @@ export function SiteLayout({ children, headerLogo, className = "" }: { children:
 
 /** The site footer, shared verbatim with SiteHeader by Admin/Mentor Portal. */
 export function SiteFooter() {
+  const { data: session } = useSession();
   return (
     <footer className="bg-brand-deep text-primary-foreground">
       <div className="mx-auto grid max-w-7xl gap-6 px-5 py-6 md:grid-cols-4">
@@ -201,7 +202,7 @@ export function SiteFooter() {
           <p className="font-display text-base text-accent">Explore</p>
           <ul className="mt-1 space-y-0.5 opacity-90">
             <li><Link to="/roles">Sectors and Careers</Link></li>
-            <li><Link to="/auth">Book a Job Shadow</Link></li>
+            <li>{session?.user ? <Link to="/profile" search={{ tab: "bookings", step: "profile" }}>Book a Job Shadow</Link> : <Link to="/auth" search={{ go: "studentProfile" }}>Book a Job Shadow</Link>}</li>
             <li><Link to="/how-to">How To</Link></li>
             <li><Link to="/send-to-a-friend">Share</Link></li>
             <li><Link to="/real-stories">Real Stories</Link></li>
