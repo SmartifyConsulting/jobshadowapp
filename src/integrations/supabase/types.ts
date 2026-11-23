@@ -582,43 +582,55 @@ export type Database = {
       }
       host_profiles: {
         Row: {
+          avoid_weekends: boolean
           bio: string | null
           certifications: string | null
+          contact_hours_note: string | null
           cv_path: string | null
+          engagement_notes: string | null
           has_hr_admin: boolean
           hr_email: string | null
           hr_first_name: string | null
           hr_last_name: string | null
           linkedin_url: string | null
           mentor_email: string
+          preferred_contact: string
           specialties: string[]
           updated_at: string
           via_company: boolean
         }
         Insert: {
+          avoid_weekends?: boolean
           bio?: string | null
           certifications?: string | null
+          contact_hours_note?: string | null
           cv_path?: string | null
+          engagement_notes?: string | null
           has_hr_admin?: boolean
           hr_email?: string | null
           hr_first_name?: string | null
           hr_last_name?: string | null
           linkedin_url?: string | null
           mentor_email: string
+          preferred_contact?: string
           specialties?: string[]
           updated_at?: string
           via_company?: boolean
         }
         Update: {
+          avoid_weekends?: boolean
           bio?: string | null
           certifications?: string | null
+          contact_hours_note?: string | null
           cv_path?: string | null
+          engagement_notes?: string | null
           has_hr_admin?: boolean
           hr_email?: string | null
           hr_first_name?: string | null
           hr_last_name?: string | null
           linkedin_url?: string | null
           mentor_email?: string
+          preferred_contact?: string
           specialties?: string[]
           updated_at?: string
           via_company?: boolean
@@ -1237,15 +1249,19 @@ export type Database = {
       get_my_host_profile: {
         Args: never
         Returns: {
+          avoid_weekends: boolean
           bio: string | null
           certifications: string | null
+          contact_hours_note: string | null
           cv_path: string | null
+          engagement_notes: string | null
           has_hr_admin: boolean
           hr_email: string | null
           hr_first_name: string | null
           hr_last_name: string | null
           linkedin_url: string | null
           mentor_email: string
+          preferred_contact: string
           specialties: string[]
           updated_at: string
           via_company: boolean
@@ -1493,14 +1509,18 @@ export type Database = {
       }
       update_my_host_profile: {
         Args: {
+          _avoid_weekends?: boolean
           _bio: string
           _certifications: string
+          _contact_hours_note?: string
           _cv_path: string
+          _engagement_notes?: string
           _has_hr_admin?: boolean
           _hr_email?: string
           _hr_first_name?: string
           _hr_last_name?: string
           _linkedin_url: string
+          _preferred_contact?: string
           _specialties: string[]
           _via_company?: boolean
         }
@@ -1509,11 +1529,15 @@ export type Database = {
       admin_list_mentor_classifications: {
         Args: never
         Returns: {
+          avoid_weekends: boolean
+          contact_hours_note: string | null
+          engagement_notes: string | null
           has_hr_admin: boolean
           hr_email: string | null
           hr_first_name: string | null
           hr_last_name: string | null
           mentor_email: string
+          preferred_contact: string
           via_company: boolean
         }[]
       }

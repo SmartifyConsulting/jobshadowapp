@@ -834,14 +834,21 @@ function UserTableRow({ a, selectedId, busyId, expandedApplicationUser, mentorBa
   </Fragment>;
 }
 
-function UserDetailPanel({ account: a, onClose, onEdit }: { account: AccountRow; onClose: () => void; onEdit: () => void }) {
+function UserDetailPanel({ account: a, mentorInfo, onClose, onEdit }: { account: AccountRow; mentorInfo?: { preferred_contact: string; contact_hours_note: string | null; avoid_weekends: boolean; engagement_notes: string | null } | undefined; onClose: () => void; onEdit: () => void }) {
   const label = a.display_name || a.full_name || a.email || a.id;
   const applications = useUserApplications(a.id);
+  const CONTACT_LABEL: Record<string, string> = { email: "Email", whatsapp: "WhatsApp", phone: "Phone call", sms: "SMS" };
   return <aside aria-label="Selected user details" className="w-full shrink-0 border-t border-border bg-background p-5 xl:sticky xl:top-0 xl:max-h-screen xl:w-72 xl:overflow-y-auto xl:border-l xl:border-t-0">
     <div className="mb-4 flex items-start justify-between gap-3"><div><h2 className="font-sans text-sm font-medium">{label}</h2><div className="mt-1 flex flex-wrap gap-1">{a.roles.length === 0 && <span className="text-xs text-muted-foreground">Unclassified</span>}{a.roles.map((role) => <span key={role} className="rounded bg-teal/15 px-1.5 py-0.5 text-[10px]">{ROLE_LABELS[role]}</span>)}</div></div><button onClick={onClose} aria-label="Close user details" className="rounded p-1 text-muted-foreground hover:bg-muted"><X className="h-4 w-4" /></button></div>
     <dl className="space-y-2 text-xs">
       {([['Email', a.email], ['Phone', a.contact_no], ['School', a.school], ['ID / passport', a.id_number], ['Joined', new Date(a.created_at).toLocaleDateString()], ['Last accessed', a.last_accessed_at ? new Date(a.last_accessed_at).toLocaleString() : 'Never signed in']] as const).map(([title, value]) => <div key={title}><dt className="text-muted-foreground">{title}</dt><dd className="break-words">{value || '—'}</dd></div>)}
     </dl>
+    {mentorInfo && <section className="mt-4 space-y-2 border-t border-border pt-4 text-xs"><h3 className="text-xs font-medium">Rules of engagement</h3>
+      <div><dt className="text-muted-foreground">Preferred contact</dt><dd>{CONTACT_LABEL[mentorInfo.preferred_contact] ?? mentorInfo.preferred_contact}</dd></div>
+      {mentorInfo.contact_hours_note && <div><dt className="text-muted-foreground">Best times to contact</dt><dd className="break-words">{mentorInfo.contact_hours_note}</dd></div>}
+      {mentorInfo.avoid_weekends && <p className="text-muted-foreground">Do not contact on weekends.</p>}
+      {mentorInfo.engagement_notes && <div><dt className="text-muted-foreground">Notes</dt><dd className="break-words">{mentorInfo.engagement_notes}</dd></div>}
+    </section>}
     <div className="my-4 flex items-center justify-between"><span className="flex items-center gap-1 text-xs text-muted-foreground"><BoolIcon value={!!a.id_verified} /> {a.id_verified ? 'ID verified' : 'ID not verified'}</span><button onClick={onEdit} className="flex items-center gap-1 text-xs text-primary"><Pencil className="h-3 w-3" />Edit user</button></div>
     <div className="space-y-4 border-t border-border py-4"><UserFilePreview path={a.id_file_path} label="Uploaded ID" /><UserFilePreview path={a.photo_path} label="Uploaded photo" /></div>
     <section className="border-t border-border pt-4"><h3 className="mb-3 text-xs font-medium">Application history {applications.data ? `(${applications.data.length})` : ""}</h3><div className="space-y-3">{applications.isLoading ? <p className="text-xs text-muted-foreground">Loading…</p> : applications.data?.length ? applications.data.map((application) => <article key={application.source + application.id} className="border-b border-border/60 pb-3 text-xs"><p className="font-medium">{application.career || 'Career not recorded'}</p><p className="text-muted-foreground">{application.company || 'Company not recorded'} · {application.dates || 'Dates not recorded'}</p><p className="mt-1 text-[10px]">{application.source} #{application.id}</p><p className="mt-1 flex flex-wrap items-center gap-x-1 text-[10px] text-muted-foreground"><span className="flex items-center gap-1">Paid: {application.paid === null ? 'Not recorded' : <BoolIcon value={application.paid} />}</span> · <span className="flex items-center gap-1">Indemnity: {application.indemnity === null ? 'Not recorded' : <BoolIcon value={application.indemnity} />}</span> · <span className="flex items-center gap-1">Cancelled: {application.cancelled === null ? 'Not recorded' : <BoolIcon value={!application.cancelled} />}</span></p></article>) : <p className="text-xs text-muted-foreground">No applications recorded.</p>}</div></section>
@@ -1083,7 +1090,7 @@ export function AdminUsers() {
           </div></div>
         )}
       </div>
-      {selectedAccount && <UserDetailPanel account={selectedAccount} onClose={() => setSelectedId(null)} onEdit={() => setEditing({ ...selectedAccount, roles: [...selectedAccount.roles] })} />}
+      {selectedAccount && <UserDetailPanel account={selectedAccount} mentorInfo={mentorClassifications.data?.find((row) => row.mentor_email.trim().toLowerCase() === (selectedAccount.email ?? "").trim().toLowerCase())} onClose={() => setSelectedId(null)} onEdit={() => setEditing({ ...selectedAccount, roles: [...selectedAccount.roles] })} />}
       </div>
       </TabsContent>
       </Tabs>

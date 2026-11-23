@@ -223,6 +223,10 @@ function HostProfile() {
   const [hrFirstName, setHrFirstName] = useState("");
   const [hrLastName, setHrLastName] = useState("");
   const [hrEmail, setHrEmail] = useState("");
+  const [preferredContact, setPreferredContact] = useState("email");
+  const [contactHoursNote, setContactHoursNote] = useState("");
+  const [avoidWeekends, setAvoidWeekends] = useState(false);
+  const [engagementNotes, setEngagementNotes] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -240,6 +244,10 @@ function HostProfile() {
     setHrFirstName(p.hr_first_name ?? "");
     setHrLastName(p.hr_last_name ?? "");
     setHrEmail(p.hr_email ?? "");
+    setPreferredContact(p.preferred_contact ?? "email");
+    setContactHoursNote(p.contact_hours_note ?? "");
+    setAvoidWeekends(p.avoid_weekends ?? false);
+    setEngagementNotes(p.engagement_notes ?? "");
   }, [profile.data]);
 
   async function uploadCv(file: File) {
@@ -279,6 +287,10 @@ function HostProfile() {
       _hr_first_name: viaCompany && hasHrAdmin ? hrFirstName.trim() : null,
       _hr_last_name: viaCompany && hasHrAdmin ? hrLastName.trim() : null,
       _hr_email: viaCompany && hasHrAdmin ? hrEmail.trim() : null,
+      _preferred_contact: preferredContact,
+      _contact_hours_note: contactHoursNote || null,
+      _avoid_weekends: avoidWeekends,
+      _engagement_notes: engagementNotes || null,
     } as never);
     setBusy(false);
     if (error) return setErr(error.message);
@@ -321,6 +333,26 @@ function HostProfile() {
           <label className="block text-sm">HR last name<input value={hrLastName} onChange={(e) => setHrLastName(e.target.value)} className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none" /></label>
           <label className="block text-sm sm:col-span-2">HR email<input type="email" value={hrEmail} onChange={(e) => setHrEmail(e.target.value)} className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none" /></label>
         </div>}
+      </div>
+
+      <div className="rounded-lg border bg-card p-4 space-y-3">
+        <p className="text-sm font-semibold">Rules of engagement</p>
+        <p className="text-xs text-muted-foreground">Help admin know how best to reach you.</p>
+        <label className="block text-sm">Preferred contact method
+          <select value={preferredContact} onChange={(e) => setPreferredContact(e.target.value)} className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none">
+            <option value="email">Email</option>
+            <option value="whatsapp">WhatsApp</option>
+            <option value="phone">Phone call</option>
+            <option value="sms">SMS</option>
+          </select>
+        </label>
+        <label className="block text-sm">Best times to contact you (optional)
+          <input value={contactHoursNote} onChange={(e) => setContactHoursNote(e.target.value)} placeholder="e.g. Weekdays 9am-5pm only" className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none" />
+        </label>
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={avoidWeekends} onChange={(e) => setAvoidWeekends(e.target.checked)} />Please don't contact me on weekends</label>
+        <label className="block text-sm">Anything else admin should know (optional)
+          <textarea rows={2} value={engagementNotes} onChange={(e) => setEngagementNotes(e.target.value)} placeholder="e.g. prefers written briefs before a call, out of office in December" className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none" />
+        </label>
       </div>
 
       <div className="rounded-lg border bg-card p-4">
