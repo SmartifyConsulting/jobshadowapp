@@ -16,3 +16,9 @@
 - [x] Admin careers: description + AI helper (bold career types)
 - [x] Sign-up asks First + Last name; display name = First Last
 - [x] Remove ALL CAPS placeholder hints app-wide
+
+## Nov 23
+- [x] Profile/My Bookings: pre-fill and show all details in 4 tabs (Personal, School & Interests, Diversity, Parent/Guardian)
+- [x] Right-scroll on wide tables so all column headings are reachable
+- [x] Move school-domain users (curro, stithian, holyfamily, inanda, reddford, novapioneer, mblstudent) to Scholars
+- [x] Move listed company users to Mentors (Hosts if the domain repeats)
