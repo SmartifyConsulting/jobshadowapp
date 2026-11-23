@@ -1456,12 +1456,61 @@ function ApplicationsScreen() {
   return editing ? <ApplicationEditPanel table="legacy_applications" row={editing} onDone={refresh} onCancel={() => setEditing(null)} /> : <ApplicationsList onEditImported={setEditing} onDeleteImported={remove} />;
 }
 
+function RefundRequests() {
+  const qc = useQueryClient();
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const requests = useQuery({
+    queryKey: ["admin", "pending-refunds"],
+    queryFn: async () => { const { data, error } = await supabase.rpc("admin_list_pending_refunds"); if (error) throw new Error(error.message); return data ?? []; },
+  });
+
+  async function review(id: string, approve: boolean) {
+    setBusyId(id);
+    try {
+      const { error } = await supabase.rpc("admin_review_no_show_refund", { _booking: id, _approve: approve });
+      if (error) throw new Error(error.message);
+      notify(approve ? "Refund approved and credited to the scholar's wallet." : "Refund request declined.", "success");
+      await qc.invalidateQueries({ queryKey: ["admin", "pending-refunds"] });
+    } catch (e) {
+      notify((e as Error).message, "error");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  return (
+    <div className="bg-background p-6">
+      <p className="mb-4 max-w-2xl text-sm text-muted-foreground">A mentor reported these scholars as no-shows. Approving credits the amount to the scholar's wallet (applied automatically to their next booking); declining does nothing.</p>
+      {requests.isPending ? <p>Loading…</p> : requests.error ? <p role="alert" className="text-destructive">{requests.error.message}</p> : !requests.data?.length ? <p className="text-sm text-muted-foreground">No pending refund requests.</p> : (
+        <div className="max-w-3xl space-y-3">
+          {requests.data.map((r) => (
+            <div key={r.id} className="rounded-lg border border-border bg-card p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <p className="font-semibold">{r.scholar_name ?? "Scholar"} · {r.career} · {r.company}</p>
+                  <p className="text-sm text-muted-foreground">{r.shadow_date} · R{Number(r.amount_due).toFixed(2)}</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" disabled={busyId === r.id} onClick={() => void review(r.id, true)}>Approve</Button>
+                  <Button size="sm" variant="outline" disabled={busyId === r.id} onClick={() => void review(r.id, false)}>Decline</Button>
+                </div>
+              </div>
+              <p className="mt-2 text-sm"><span className="font-medium">Reason: </span>{r.no_show_reason}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AdminReports() {
   return <div className="bg-background">
     <AdminScreenHeader title="Reports" />
     <Tabs defaultValue="bookings">
-      <div className="overflow-x-auto bg-ivory px-6 py-4"><TabsList aria-label="Admin reports" className="justify-start">{["Bookings", "Evaluations", "Vouchers", "BEE / CPD", "Mentor Coverage", "Activity Log", "Token Ledger"].map((label) => <TabsTrigger key={label} value={label.toLowerCase().replaceAll(' / ', '-').replaceAll(' ', '-')}>{label}</TabsTrigger>)}</TabsList></div>
+      <div className="overflow-x-auto bg-ivory px-6 py-4"><TabsList aria-label="Admin reports" className="justify-start">{["Bookings", "Refund Requests", "Evaluations", "Vouchers", "BEE / CPD", "Mentor Coverage", "Activity Log", "Token Ledger"].map((label) => <TabsTrigger key={label} value={label.toLowerCase().replaceAll(' / ', '-').replaceAll(' ', '-')}>{label}</TabsTrigger>)}</TabsList></div>
       <TabsContent value="bookings" className="mt-0"><LiveBookings /></TabsContent>
+      <TabsContent value="refund-requests" className="mt-0"><RefundRequests /></TabsContent>
       <TabsContent value="evaluations" className="mt-0"><Evaluations /></TabsContent>
       <TabsContent value="vouchers" className="mt-0"><VoucherReport /></TabsContent>
       <TabsContent value="bee-cpd" className="mt-0"><BeeCpdReports /></TabsContent>

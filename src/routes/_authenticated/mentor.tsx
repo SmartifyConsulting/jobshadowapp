@@ -499,6 +499,21 @@ function BookingCard({ booking }: { booking: MentorBooking }) {
   const [declineReason, setDeclineReason] = useState("");
   const [respondBusy, setRespondBusy] = useState(false);
   const [respondErr, setRespondErr] = useState<string | null>(null);
+  const [reportingNoShow, setReportingNoShow] = useState(false);
+  const [noShowReason, setNoShowReason] = useState("");
+  const [noShowBusy, setNoShowBusy] = useState(false);
+  const [noShowErr, setNoShowErr] = useState<string | null>(null);
+  const [noShowSent, setNoShowSent] = useState(false);
+
+  async function reportScholarNoShow() {
+    if (!noShowReason.trim()) return setNoShowErr("Please provide a reason.");
+    setNoShowBusy(true); setNoShowErr(null);
+    const { error } = await supabase.rpc("report_scholar_no_show", { _booking: booking.id, _reason: noShowReason.trim() });
+    setNoShowBusy(false);
+    if (error) return setNoShowErr(error.message);
+    setNoShowSent(true);
+    setReportingNoShow(false);
+  }
 
   async function respond(approve: boolean) {
     if (!approve && !declineReason.trim()) { setDeclining(true); return; }
@@ -536,6 +551,23 @@ function BookingCard({ booking }: { booking: MentorBooking }) {
       {booking.status === "completed" && (
         <Link to="/evaluation/$bookingId" params={{ bookingId: booking.id }} className="mt-2 inline-block rounded bg-primary px-3 py-1.5 text-xs font-bold uppercase text-primary-foreground">Evaluate this placement</Link>
       )}
+      {["confirmed", "completed"].includes(booking.status) && !noShowSent && (
+        <div className="mt-3 border-t border-foreground/10 pt-3">
+          {!reportingNoShow ? (
+            <button onClick={() => setReportingNoShow(true)} className="text-xs font-semibold text-destructive underline">Scholar didn't show up?</button>
+          ) : (
+            <div className="space-y-2">
+              <input value={noShowReason} onChange={(e) => setNoShowReason(e.target.value)} placeholder="Reason - admin will review this for a possible refund" className="w-full rounded border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none" />
+              <div className="flex gap-2">
+                <button onClick={() => void reportScholarNoShow()} disabled={noShowBusy} className="rounded bg-destructive px-3 py-1.5 text-xs font-bold uppercase text-destructive-foreground disabled:opacity-50">{noShowBusy ? "Sending…" : "Report to admin"}</button>
+                <button onClick={() => { setReportingNoShow(false); setNoShowErr(null); }} className="rounded border border-foreground/20 px-3 py-1.5 text-xs font-semibold uppercase">Cancel</button>
+              </div>
+              {noShowErr && <p role="alert" className="text-xs text-destructive">{noShowErr}</p>}
+            </div>
+          )}
+        </div>
+      )}
+      {noShowSent && <p className="mt-2 text-xs text-muted-foreground">Reported to admin for review.</p>}
       {booking.status === "pending_approval" && (
         <div className="mt-3 border-t border-foreground/10 pt-3">
           <p className="text-sm">This scholar is waiting on your approval before they can pay.</p>

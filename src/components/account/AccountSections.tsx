@@ -10,6 +10,7 @@ import { ChevronDown, UserRound, Search, CalendarDays, FileText, BadgeCheck, Bri
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import { confirmAction } from "@/lib/dialogs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -325,6 +326,14 @@ export function Bookings({ selectedId }: { selectedId?: string | undefined } = {
     qc.invalidateQueries({ queryKey: ["bookings"] });
     qc.invalidateQueries({ queryKey: ["emails"] });
   }
+  async function reportMentorNoShow(id: string) {
+    if (!(await confirmAction("Report that the mentor did not show up for this job shadow? This immediately refunds the amount to your wallet.", { confirmLabel: "Report no-show" }))) return;
+    setErr(null);
+    const { error } = await supabase.rpc("report_mentor_no_show", { _booking: id });
+    if (error) return setErr(error.message);
+    qc.invalidateQueries({ queryKey: ["bookings"] });
+    qc.invalidateQueries({ queryKey: ["wallet-balance"] });
+  }
   return (
     <div className="space-y-3">
       <h2 className="font-display text-3xl text-teal-foreground">My bookings</h2>
@@ -353,6 +362,10 @@ export function Bookings({ selectedId }: { selectedId?: string | undefined } = {
             {b.status === "completed" && (
               <Link to="/evaluation/$bookingId" params={{ bookingId: b.id }} className="rounded bg-primary px-3 py-1.5 text-xs font-bold uppercase text-primary-foreground">Evaluate this job shadow</Link>
             )}
+            {["confirmed", "completed"].includes(b.status) && (b.refund_status ?? "none") === "none" && (
+              <Button size="sm" variant="outline" onClick={() => reportMentorNoShow(b.id)}>Mentor didn't show up?</Button>
+            )}
+            {b.refund_status === "approved" && <p className="text-xs text-muted-foreground">Refunded to your wallet.</p>}
           </div>
         </div>
       ))}

@@ -74,6 +74,15 @@ function DevAccountSwitcher() {
   </>;
 }
 
+function WalletBadge({ userId }: { userId: string }) {
+  const { data: balance } = useQuery({
+    queryKey: ["wallet-balance", userId],
+    queryFn: async () => { const { data, error } = await supabase.rpc("get_my_wallet_balance"); if (error) throw error; return data ?? 0; },
+  });
+  if (!balance) return null;
+  return <span title="Wallet balance from approved refunds - applied automatically to your next booking" className="flex items-center gap-1 rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-semibold">R{Number(balance).toFixed(2)}</span>;
+}
+
 function AccountMenu({ displayName, avatarUrl, isAdmin, roles, email, logout }: { displayName: string; avatarUrl: string | null; isAdmin: boolean; roles: string[]; email: string | null; logout: () => void }) {
   const canSwitchProfiles = !!email && DEV_PERSONAS.some((p) => p.email.toLowerCase() === email.toLowerCase());
   return <DropdownMenu>
@@ -144,9 +153,10 @@ export function SiteHeader({ headerLogo, fullWidth }: { headerLogo?: ReactNode; 
             ))}
             {user && <NotificationInbox userId={user.id} />}
           </div>
+          {user && roles.includes("user") && <WalletBadge userId={user.id} />}
           {user && <AccountMenu displayName={displayName} avatarUrl={avatarUrl} isAdmin={isAdmin} roles={roles} email={user.email ?? null} logout={logout} />}
         </nav>
-        <div className="absolute right-5 flex items-center gap-3 lg:hidden">{user && <NotificationInbox userId={user.id} />}{user && <AccountMenu displayName={displayName} avatarUrl={avatarUrl} isAdmin={isAdmin} roles={roles} email={user.email ?? null} logout={logout} />}<button className="rounded p-2" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button></div>
+        <div className="absolute right-5 flex items-center gap-3 lg:hidden">{user && <NotificationInbox userId={user.id} />}{user && roles.includes("user") && <WalletBadge userId={user.id} />}{user && <AccountMenu displayName={displayName} avatarUrl={avatarUrl} isAdmin={isAdmin} roles={roles} email={user.email ?? null} logout={logout} />}<button className="rounded p-2" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button></div>
       </div>
       {open && (
         <nav className="flex flex-col gap-3 border-t border-primary-foreground/20 px-5 py-4 font-semibold lg:hidden">
