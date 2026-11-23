@@ -46,7 +46,7 @@ describe("User alphabet chips", () => {
   });
   it("opens the selected displayed-name group and supports switching and re-opening", () => {
     const client = mount();
-    fireEvent.click(screen.getByRole("button", { name: "A" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "A" }).at(-1)!);
     expect(screen.getByRole("button", { name: "View details for Alice Brown" })).toBeVisible();
     expect(screen.queryByRole("button", { name: "View details for Bob Adams" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "B" }));
@@ -59,7 +59,7 @@ describe("User alphabet chips", () => {
   });
   it("keeps the letter filter when switching to cards and clears it with All", () => {
     const client = mount();
-    fireEvent.click(screen.getByRole("button", { name: "A" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "A" }).at(-1)!);
     fireEvent.click(screen.getByRole("button", { name: "Cards" }));
     expect(screen.getByRole("button", { name: "Alice Brown" })).toBeVisible();
     expect(screen.queryByRole("button", { name: "Bob Adams" })).not.toBeInTheDocument();
@@ -75,7 +75,7 @@ describe("User alphabet chips", () => {
     const client = mount([school]);
     expect(screen.getByRole("heading", { name: "Users" })).toBeVisible();
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Hosts (2)" }), { button: 0 });
-    fireEvent.click(screen.getByRole("button", { name: "A" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "A" }).at(-1)!);
     expect(screen.getByRole("button", { name: "View details for Alice Brown" })).toBeVisible();
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Schools (1)" }), { button: 0 });
     expect(screen.getByRole("heading", { name: "Users" })).toBeVisible();
@@ -142,7 +142,7 @@ describe("Visible provider directories and career wizard", () => {
     const solo = { ...account("solo", "Solo Person"), email: "solo@example.com", role: null, roles: [] as AccountRow["roles"] };
     const client = mount([solo]);
     fireEvent.mouseDown(screen.getByRole('tab', { name: 'Mentors (1)' }), { button: 0 });
-    fireEvent.click(screen.getByRole('button', { name: 'S' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'S' }).at(-1)!);
     expect(screen.getByRole('button', { name: 'View details for Solo Person' })).toBeVisible();
     fireEvent.mouseDown(screen.getByRole('tab', { name: 'Unclassified (0)' }), { button: 0 });
     expect(screen.queryByRole('button', { name: 'View details for Solo Person' })).not.toBeInTheDocument();

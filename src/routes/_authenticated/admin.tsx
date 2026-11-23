@@ -120,7 +120,7 @@ function AdminPage() {
       <aside className="w-60 shrink-0 border-r border-primary/20 bg-accent text-accent-foreground shadow-warm">
         <p className="px-5 pb-3 pt-6 text-xs font-bold uppercase tracking-widest text-foreground/70">Admin Portal</p>
         <nav className="space-y-1 px-3 pb-6">
-          {TABLES.filter((t) => !["sectors", "vouchers", "bookings", "evaluations"].includes(t.id)).map((t) => (
+          {TABLES.filter((t) => !["sectors", "vouchers", "bookings", "evaluations", "companies"].includes(t.id)).map((t) => (
             <button key={t.id} onClick={() => setActive(t.id)} className={`flex w-full items-center gap-3 rounded-md border-l-2 px-3 py-2.5 text-left text-sm font-medium transition ${active === t.id ? "border-primary bg-primary/10 text-foreground" : "border-transparent text-foreground/85 hover:bg-primary/5 hover:text-foreground"}`}>
               <t.icon className="h-4 w-4" /> {t.label}
             </button>
@@ -881,14 +881,18 @@ export function AdminUsers() {
   const [openGroups, setOpenGroups] = useState<string[]>([]);
   const [expandedApplicationUser, setExpandedApplicationUser] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const FREE_MAIL = new Set(["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "icloud.com", "live.com", "webmail.co.za", "mweb.co.za", "telkomsa.net", "vodamail.co.za"]);
   const [roleTab, setRoleTab] = useState<AccountRow["roles"][number] | "unclassified" | "individual_mentor">("user");
   const isUnclassified = roleTab === "unclassified";
   const accountRole = isUnclassified ? "user" : roleTab === "individual_mentor" ? "mentor" : roleTab;
   const mentorCompanies = useQuery({ queryKey: ["admin", "company-contact-classification"], queryFn: () => fetchAllRows(async (from, to) => { const result = await supabase.from("companies").select("company,mentor_name,mentor_email,backup_mentor_name,backup_mentor_email").order("id").range(from, to); if (result.error) throw result.error; return result.data ?? []; }) });
   const soleMentors = useMemo(() => individualMentorEmails((mentorCompanies.data ?? []) as { company: string | null; mentor_email: string | null; backup_mentor_email: string | null }[]), [mentorCompanies.data]);
+  const companyEmails = useMemo(() => new Set(((mentorCompanies.data ?? []) as { mentor_email: string | null; backup_mentor_email: string | null }[]).flatMap((c) => [c.mentor_email, c.backup_mentor_email]).map((e) => (e ?? "").trim().toLowerCase()).filter(Boolean)), [mentorCompanies.data]);
+  const mentorDomainCounts = useMemo(() => { const m = new Map<string, number>(); for (const a of accounts.data ?? []) if (a.roles.includes("mentor")) { const d = (a.email ?? "").toLowerCase().split("@")[1] ?? ""; if (FREE_MAIL.has(d)) continue; m.set(d, (m.get(d) ?? 0) + 1); } return m; }, [accounts.data]);
   const matchesRole = (a: AccountRow, tab = roleTab) => {
     const email = (a.email ?? "").trim().toLowerCase();
-    const isSoleMentorEmail = soleMentors.has(email);
+    // Accounts not tied to a company record: a mentor whose email domain is shared with another mentor is a Host; a unique domain is an independent Mentor.
+    const isSoleMentorEmail = soleMentors.has(email) || (a.roles.includes("mentor") && !companyEmails.has(email) && (mentorDomainCounts.get(email.split("@")[1] ?? "") ?? 0) < 2);
     if (tab === "unclassified") return a.roles.length === 0 && !isSoleMentorEmail;
     if (tab === "individual_mentor") return isSoleMentorEmail && (a.roles.length === 0 || a.roles.includes("mentor"));
     if (tab === "mentor") return (a.roles.includes("mentor") && !isSoleMentorEmail) || a.roles.includes("hr_admin");
@@ -988,6 +992,8 @@ export function AdminUsers() {
       <Tabs value={roleTab} onValueChange={(value) => { setRoleTab(value as AccountRow["roles"][number] | "unclassified" | "individual_mentor"); setLetter(null); setOpenGroups([]); setSelectedId(null); }}>
         <div className="overflow-x-auto bg-ivory px-6 py-4"><TabsList aria-label="User Type">{([["user", "Scholars"], ["mentor", "Hosts"], ["individual_mentor", "Mentors"], ["school", "Schools"], ["admin", "Admin"], ["unclassified", "Unclassified"]] as const).map(([role, name]) => <TabsTrigger key={role} value={role}>{name} ({(accounts.data ?? []).filter((user) => matchesRole(user, role) && (showSpam || !user.is_spam)).length})</TabsTrigger>)}</TabsList></div>
       <TabsContent value={roleTab} className="mt-0">
+      {(roleTab === "mentor" || roleTab === "individual_mentor") && <ProviderDirectory key={roleTab} kind={roleTab === "mentor" ? "host" : "mentor"} />}
+      {(roleTab === "mentor" || roleTab === "individual_mentor") && <h2 className="bg-ivory px-6 pt-6 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Login accounts</h2>}
       <div className="flex flex-col items-start xl:flex-row">
       <div className={'min-w-0 w-full flex-1 px-4 py-2 text-foreground ' + 'bg-ivory'}>
         <div className="flex flex-wrap gap-1.5">
@@ -1026,9 +1032,9 @@ export function AdminUsers() {
         ) : accounts.error ? (
           <p className="mt-6 text-destructive">{(accounts.error as Error).message}</p>
         ) : (
-          <>
+          <div className={view === "table" ? "mt-3 overflow-x-auto pb-1 [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-track]:bg-muted" : ""}><div className={view === "table" ? "min-w-[820px]" : ""}>
             {view === "table" && rows.length > 0 && (
-              <div className="mt-3 overflow-x-auto border border-b-0 border-border [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-track]:bg-muted">
+              <div className="border border-b-0 border-border">
                 <table className="w-full min-w-[820px] text-left text-xs">
                   <thead className="bg-background/40 text-foreground"><tr>{["First Name", "Last Name", "Email", "ID / passport", "School", "Documents", "Applications", "Actions"].map((heading) => <th key={heading} className="whitespace-nowrap px-3 py-2 font-normal">{heading}</th>)}</tr></thead>
                 </table>
@@ -1038,7 +1044,7 @@ export function AdminUsers() {
             {[...new Set(rows.map((a) => accountInitial(a)))].sort((a, b) => a === "#" ? 1 : b === "#" ? -1 : a.localeCompare(b)).map((group) => (
               <AccordionItem key={group} value={group}>
                 <AccordionTrigger className="px-3 py-3 text-sm hover:no-underline hover:bg-muted/30"><span className="font-bold text-primary">{group}</span>&nbsp;<span className="text-muted-foreground">({rows.filter((a) => (accountInitial(a)) === group).length})</span></AccordionTrigger>
-                <AccordionContent className="pb-0">{view === "cards" ? <UserCards rows={rows.filter((a) => (accountInitial(a)) === group)} selectedId={selectedId} busyId={busyId} onSelect={setSelectedId} onEdit={(a) => setEditing({ ...a, roles: [...a.roles] })} onDelete={deleteAccountRow} onVerify={setIdVerified} /> : <div className="overflow-x-auto border-t border-border [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-track]:bg-muted">
+                <AccordionContent className="pb-0">{view === "cards" ? <UserCards rows={rows.filter((a) => (accountInitial(a)) === group)} selectedId={selectedId} busyId={busyId} onSelect={setSelectedId} onEdit={(a) => setEditing({ ...a, roles: [...a.roles] })} onDelete={deleteAccountRow} onVerify={setIdVerified} /> : <div className="border-t border-border">
                   <table className="w-full min-w-[820px] text-left text-xs">
                     <tbody>
                     {rows.filter((a) => (accountInitial(a)) === group).map((a) => (
@@ -1055,7 +1061,7 @@ export function AdminUsers() {
             ))}
             {rows.length === 0 && <p className="py-6 text-sm text-muted-foreground">No users match "{q}".</p>}
             </Accordion>
-          </>
+          </div></div>
         )}
       </div>
       {selectedAccount && <UserDetailPanel account={selectedAccount} onClose={() => setSelectedId(null)} onEdit={() => setEditing({ ...selectedAccount, roles: [...selectedAccount.roles] })} />}
@@ -1308,7 +1314,8 @@ function ProviderDirectory({ kind }: { kind: "mentor" | "host" }) {
   const [expandedHosts, setExpandedHosts] = useState<string[]>([]);
   const all = data.data ?? [];
   const mentors = mentorGroups(all);
-  const groups = (kind === 'mentor' ? mentors : providerGroups(all).filter((group) => group.kind === 'host')).sort((a, b) => (kind === 'mentor' ? a.names[0] || a.company : a.company).localeCompare(kind === 'mentor' ? b.names[0] || b.company : b.company));
+  const hostKeys = new Set(providerGroups(all).filter((group) => group.kind === 'host').map((group) => group.key));
+  const groups = (kind === 'mentor' ? mentors.filter((m) => !hostKeys.has(companyKey(m.company))) : providerGroups(all).filter((group) => group.kind === 'host')).sort((a, b) => (kind === 'mentor' ? a.names[0] || a.company : a.company).localeCompare(kind === 'mentor' ? b.names[0] || b.company : b.company));
   const initial = (group: typeof groups[number]) => alphabetInitial(kind === 'mentor' ? group.names[0] || group.company : group.company);
   const matches = groups.filter((group) => (!letter || initial(group) === letter) && (!search.trim() || [group.company, ...group.names, ...group.emails, ...group.careers].join(' ').toLowerCase().includes(search.trim().toLowerCase())));
   const detail = groups.find((group) => group.key === selected);
@@ -1326,27 +1333,27 @@ function ProviderDirectory({ kind }: { kind: "mentor" | "host" }) {
     <div className="flex flex-wrap items-end gap-4"><label className="block max-w-sm flex-1 text-sm">Search<input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name, company, email or career" className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></label><div className="ml-auto flex flex-wrap gap-2"><Button onClick={() => setCreating(true)}>Add placement</Button><Button variant="outline" disabled={data.isPending || !!data.error} onClick={() => exportCsv('Company contacts full', completeExportColumns(config.cols, all), all)}>Export all</Button></div></div>
     {err && <p role="alert" className="text-sm text-destructive">{err}</p>}
     {data.isPending ? <p className="py-4 text-sm">Loading…</p> : data.error ? <p role="alert" className="py-4 text-sm text-destructive">Unable to load contact records.</p> : <>
-      {matches.length > 0 && <div className="overflow-x-auto border border-b-0 border-border"><table className="w-full min-w-[650px] text-left text-xs"><thead><tr>{[kind === 'mentor' ? 'Mentor' : 'Company', kind === 'mentor' ? 'Company' : 'Mentors', 'Email', 'Careers', 'Actions'].map((heading) => <th key={heading} className="px-3 py-2 font-normal">{heading}</th>)}</tr></thead></table></div>}
-      <Accordion type="multiple" value={open} onValueChange={setOpen} className="border-t border-border">{[...new Set(matches.map(initial))].sort().map((ch) => <AccordionItem key={ch} value={ch}><AccordionTrigger className="px-3 py-3 text-sm hover:no-underline hover:bg-muted/30"><span className="font-bold text-primary">{ch}</span>&nbsp;<span className="text-muted-foreground">({matches.filter((group) => initial(group) === ch).length})</span></AccordionTrigger><AccordionContent className="pb-0"><div className="overflow-x-auto"><table className="w-full min-w-[650px] text-left text-xs"><tbody>{matches.filter((group) => initial(group) === ch).map((group) => {
+      <div className="overflow-x-auto pb-1"><div className="min-w-[650px]">{matches.length > 0 && <div className="border border-b-0 border-border"><table className="w-full min-w-[650px] table-fixed text-left text-xs"><colgroup><col className="w-[28%]" /><col className="w-[24%]" /><col className="w-[26%]" /><col className="w-[8%]" /><col className="w-[14%]" /></colgroup><thead><tr>{[kind === 'mentor' ? 'Mentor' : 'Company', kind === 'mentor' ? 'Company' : 'Mentors', 'Email', 'Careers', 'Actions'].map((heading) => <th key={heading} className="px-3 py-2 font-semibold">{heading}</th>)}</tr></thead></table></div>}
+      <Accordion type="multiple" value={open} onValueChange={setOpen} className="border-t border-border">{[...new Set(matches.map(initial))].sort().map((ch) => <AccordionItem key={ch} value={ch}><AccordionTrigger className="px-3 py-3 text-sm hover:no-underline hover:bg-muted/30"><span className="font-bold text-primary">{ch}</span>&nbsp;<span className="text-muted-foreground">({matches.filter((group) => initial(group) === ch).length})</span></AccordionTrigger><AccordionContent className="pb-0"><div><table className="w-full min-w-[650px] table-fixed text-left text-xs"><colgroup><col className="w-[28%]" /><col className="w-[24%]" /><col className="w-[26%]" /><col className="w-[8%]" /><col className="w-[14%]" /></colgroup><tbody>{matches.filter((group) => initial(group) === ch).map((group) => {
         const childMentors = kind === 'host' ? mentors.filter((m) => companyKey(m.company) === group.key) : [];
         const expanded = expandedHosts.includes(group.key);
         return <Fragment key={group.key}>
           <tr className="border-t border-warm-divider hover:bg-teal/5">
             <td className="px-3 py-2 font-medium">{kind === 'mentor' ? group.names.join(' · ') || 'Name not recorded' : group.company}</td>
-            <td className="max-w-64 truncate px-3 py-2" title={kind === 'mentor' ? group.company : group.names.join(', ')}>
+            <td className="truncate px-3 py-2" title={kind === 'mentor' ? group.company : group.names.join(', ')}>
               {kind === 'mentor' ? group.company : childMentors.length > 0 ? (
                 <button type="button" onClick={() => setExpandedHosts(expanded ? expandedHosts.filter((key) => key !== group.key) : [...expandedHosts, group.key])} aria-expanded={expanded} className="flex items-center gap-1 hover:text-primary">
                   <ChevronDown className={'h-3 w-3 shrink-0 transition ' + (expanded ? 'rotate-180' : '')} />{childMentors.length} mentor{childMentors.length === 1 ? '' : 's'}
                 </button>
               ) : (group.names.join(', ') || 'Name not recorded')}
             </td>
-            <td className="max-w-64 truncate px-3 py-2" title={group.emails.join(', ')}>{group.emails.join(', ') || 'Not recorded'}</td>
+            <td className="truncate px-3 py-2" title={kind === 'mentor' ? group.emails.join(', ') : undefined}>{kind === 'mentor' ? (group.emails.join(', ') || 'Not recorded') : ''}</td>
             <td className="px-3 py-2">{group.careers.length}</td>
             <td className="px-3 py-2"><button onClick={() => setSelected(group.key)} className="whitespace-nowrap rounded border border-border px-2 py-1">View / edit</button></td>
           </tr>
-          {expanded && childMentors.map((mentor) => <tr key={mentor.key} className="border-t border-warm-divider bg-muted/20 text-muted-foreground"><td className="py-2 pl-8 pr-3">↳ {mentor.names.join(' · ') || 'Name not recorded'}</td><td className="max-w-64 truncate px-3 py-2"></td><td className="max-w-64 truncate px-3 py-2" title={mentor.emails.join(', ')}>{mentor.emails.join(', ') || 'Not recorded'}</td><td className="px-3 py-2">{mentor.careers.length}</td><td className="px-3 py-2"></td></tr>)}
+          {expanded && childMentors.map((mentor) => <tr key={mentor.key} className="border-t border-warm-divider bg-muted/20 text-muted-foreground"><td className="py-2 pl-8 pr-3">↳ {mentor.names.join(' · ') || 'Name not recorded'}</td><td className="truncate px-3 py-2"></td><td className="truncate px-3 py-2" title={mentor.emails.join(', ')}>{mentor.emails.join(', ') || 'Not recorded'}</td><td className="px-3 py-2">{mentor.careers.length}</td><td className="px-3 py-2"></td></tr>)}
         </Fragment>;
-      })}</tbody></table></div></AccordionContent></AccordionItem>)}{!matches.length && <p className="py-4 text-sm text-muted-foreground">No matching contact records.</p>}</Accordion>
+      })}</tbody></table></div></AccordionContent></AccordionItem>)}{!matches.length && <p className="py-4 text-sm text-muted-foreground">No matching contact records.</p>}</Accordion></div></div>
     </>}
     </div>
     <Sheet open={!!detail} onOpenChange={(value) => { if (!value) setSelected(null); }}><SheetContent className="w-full overflow-y-auto bg-ivory sm:max-w-xl"><SheetHeader><SheetTitle>{detail?.company}</SheetTitle><SheetDescription>{kind === 'mentor' ? 'Individual mentor and linked placements' : 'Host company and contributing mentors'}</SheetDescription></SheetHeader>{detail && <div className="mt-4 space-y-4"><p className="text-sm">{detail.names.join(' · ')}</p><p className="break-words text-xs text-muted-foreground">{detail.emails.join(', ')}</p>{detail.records.map((record) => <details key={String(record['id'])} className="rounded border border-border p-3"><summary className="cursor-pointer text-sm font-medium">{String(record['career'] || 'Placement')} · {String(record['location'] || 'Location not recorded')}</summary><div className="mt-3 flex gap-2"><Button variant="outline" onClick={() => { setSelected(null); setEditing(record); }}>Edit placement</Button><Button variant="outline" onClick={() => void remove(record)}>Delete placement</Button></div><dl className="mt-3 space-y-3 text-xs">{Object.entries(record).map(([key, value]) => <div key={key}><dt className="text-muted-foreground">{key.replaceAll('_', ' ')}</dt><dd className="mt-1 whitespace-pre-wrap break-words">{value == null ? 'Not recorded' : typeof value === 'object' ? JSON.stringify(value) : String(value)}</dd></div>)}</dl></details>)}</div>}</SheetContent></Sheet>

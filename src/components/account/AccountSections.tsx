@@ -89,17 +89,33 @@ export function AccountPanel({ withBookings = false, initialStep }: { withBookin
   );
 }
 
+export const SCHOLAR_DETAIL_TABS: { id: string; label: string; rows: [string, string][] }[] = [
+  { id: "personal", label: "Personal Details", rows: [["First name", "first_name"], ["Last name", "last_name"], ["Contact number", "contact_no"], ["ID / passport", "id_number"]] },
+  { id: "school", label: "School & Interests", rows: [["School", "school"], ["School type", "school_type"], ["Career interests", "career_interests"], ["Dietary needs", "dietary"]] },
+  { id: "diversity", label: "Diversity Information", rows: [["Population group", "population_group"], ["Gender", "gender"], ["Disability status", "disability"], ["Citizenship", "citizenship"]] },
+  { id: "guardian", label: "Parent / Guardian", rows: [["Parent / guardian", "guardian_name"], ["Guardian contact", "guardian_contact"], ["Guardian email", "guardian_email"], ["Guardian ID / passport", "guardian_id"]] },
+];
+
 function ScholarDetails({ p }: { p: Record<string, unknown> }) {
-  const rows: [string, string][] = [["Scholar name","full_name"],["Contact number","contact_no"],["ID / passport","id_number"],["School","school"],["School type","school_type"],["Career interests","career_interests"],["Dietary needs","dietary"],["Parent / guardian","guardian_name"],["Guardian contact","guardian_contact"],["Guardian email","guardian_email"]];
+  const value = (k: string) => (p[k] as string) || (k === "first_name" ? String(p["full_name"] ?? "").split(/\s+/).slice(0, -1).join(" ") || String(p["full_name"] ?? "") : k === "last_name" ? (String(p["full_name"] ?? "").trim().split(/\s+/).length > 1 ? String(p["full_name"]).trim().split(/\s+/).at(-1) : "") : "") || "—";
   return (
-    <dl className="grid gap-4 sm:grid-cols-2">
-      {rows.map(([l, k]) => (
-        <div key={k} className="rounded-lg border bg-card p-3 text-card-foreground">
-          <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{l}</dt>
-          <dd className="mt-1 text-sm">{(p[k] as string) || "—"}</dd>
-        </div>
+    <Tabs defaultValue="personal" className="w-full">
+      <TabsList className="flex w-full flex-wrap justify-start">
+        {SCHOLAR_DETAIL_TABS.map((t) => <TabsTrigger key={t.id} value={t.id}>{t.label}</TabsTrigger>)}
+      </TabsList>
+      {SCHOLAR_DETAIL_TABS.map((t) => (
+        <TabsContent key={t.id} value={t.id} className="mt-4">
+          <dl className="grid gap-4 sm:grid-cols-2">
+            {t.rows.map(([l, k]) => (
+              <div key={k} className="rounded-lg border bg-card p-3 text-card-foreground">
+                <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{l}</dt>
+                <dd className="mt-1 text-sm">{value(k)}</dd>
+              </div>
+            ))}
+          </dl>
+        </TabsContent>
       ))}
-    </dl>
+    </Tabs>
   );
 }
 
@@ -133,6 +149,16 @@ function ProfileForm({ userId, initialProfile, onSaved }: { userId: string; init
   const [f, setF] = useState<Record<string, string | boolean>>(() => ({ school_type: "Public School", tc_accepted: false, popi_accepted: false, ...Object.fromEntries(Object.entries(initialProfile ?? {}).filter(([, value]) => typeof value === "string" || typeof value === "boolean")), info_accurate: true, contact_no: initialProfile?.["contact_no"] ? phoneWithCountryCode(String(initialProfile["contact_no"]), "ZA") : "", guardian_contact: initialProfile?.["guardian_contact"] ? phoneWithCountryCode(String(initialProfile["guardian_contact"]), "ZA") : "" }));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+  const account = useQuery({ queryKey: ["profile", userId], queryFn: async () => (await supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle()).data });
+  useEffect(() => {
+    const a = account.data;
+    if (!a) return;
+    setF((cur) => {
+      const first = String(cur["first_name"] ?? "") || a.first_name || "";
+      const last = String(cur["last_name"] ?? "") || a.last_name || "";
+      return { ...cur, first_name: first, last_name: last, full_name: String(cur["full_name"] ?? "") || `${first} ${last}`.trim() };
+    });
+  }, [account.data]);
   const [files, setFiles] = useState<{ id?: File | undefined; photo?: File | undefined }>({});
 
   const field = (k: string, label: string, placeholder?: string) => (

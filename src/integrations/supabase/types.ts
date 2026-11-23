@@ -306,31 +306,31 @@ export type Database = {
         Row: {
           description: string | null
           id: number
-          name: string
           ideal_for: string | null
+          name: string
+          school_skills: string[] | null
           specialisations: string[] | null
           subjects: string[] | null
-          school_skills: string[] | null
           workplace_skills: string[] | null
         }
         Insert: {
           description?: string | null
-          ideal_for?: string | null
-          specialisations?: string[] | null
-          subjects?: string[] | null
           id: number
+          ideal_for?: string | null
           name: string
           school_skills?: string[] | null
+          specialisations?: string[] | null
+          subjects?: string[] | null
           workplace_skills?: string[] | null
         }
         Update: {
           description?: string | null
-          ideal_for?: string | null
-          specialisations?: string[] | null
-          subjects?: string[] | null
           id?: number
+          ideal_for?: string | null
           name?: string
           school_skills?: string[] | null
+          specialisations?: string[] | null
+          subjects?: string[] | null
           workplace_skills?: string[] | null
         }
         Relationships: []
@@ -746,9 +746,48 @@ export type Database = {
         Relationships: []
       }
       partner_applications: {
-        Row: { id: string; user_id: string; applicant_type: string; company: string; first_name: string; last_name: string; email: string; phone: string; message: string; status: string; created_at: string; reviewed_at: string | null }
-        Insert: { id?: string; user_id: string; applicant_type: string; company: string; first_name: string; last_name: string; email: string; phone: string; message?: string; status?: string; created_at?: string; reviewed_at?: string | null }
-        Update: { status?: string; reviewed_at?: string | null }
+        Row: {
+          applicant_type: string
+          company: string
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          message: string
+          phone: string
+          reviewed_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          applicant_type: string
+          company: string
+          created_at?: string
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+          message?: string
+          phone: string
+          reviewed_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          applicant_type?: string
+          company?: string
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          message?: string
+          phone?: string
+          reviewed_at?: string | null
+          status?: string
+          user_id?: string
+        }
         Relationships: []
       }
       profiles: {
@@ -1217,23 +1256,32 @@ export type Database = {
           school: string
         }[]
       }
-      submit_partner_application: {
-        Args: { _applicant_type: string; _company: string; _first_name: string; _last_name: string; _phone: string; _message?: string }
-        Returns: string
-      }
-      get_public_career_guidance: {
-        Args: Record<PropertyKey, never>
-        Returns: { name: string; description: string | null; school_skills: string[] | null; workplace_skills: string[] | null; ideal_for: string | null; specialisations: string[] | null; subjects: string[] | null }[]
-      }
-      get_public_career_details: {
-        Args: Record<PropertyKey, never>
-        Returns: { name: string; description: string | null; school_skills: string[] | null; workplace_skills: string[] | null }[]
-      }
       get_public_career_content: {
         Args: never
         Returns: {
           description: string
           name: string
+        }[]
+      }
+      get_public_career_details: {
+        Args: never
+        Returns: {
+          description: string
+          name: string
+          school_skills: string[]
+          workplace_skills: string[]
+        }[]
+      }
+      get_public_career_guidance: {
+        Args: never
+        Returns: {
+          description: string
+          ideal_for: string
+          name: string
+          school_skills: string[]
+          specialisations: string[]
+          subjects: string[]
+          workplace_skills: string[]
         }[]
       }
       get_public_holidays: { Args: never; Returns: string[] }
@@ -1360,6 +1408,17 @@ export type Database = {
         Returns: undefined
       }
       submit_indemnity: { Args: { _booking: string }; Returns: undefined }
+      submit_partner_application: {
+        Args: {
+          _applicant_type: string
+          _company: string
+          _first_name: string
+          _last_name: string
+          _message?: string
+          _phone: string
+        }
+        Returns: string
+      }
       update_mentor_placement: {
         Args: {
           _active: boolean
