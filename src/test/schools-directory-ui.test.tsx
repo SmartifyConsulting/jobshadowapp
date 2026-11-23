@@ -40,7 +40,7 @@ describe("expandable school scholars", () => {
         busyId={null}
       />,
     );
-    const school = screen.getByRole("button", { name: "Kitso Ya Boleng", exact: true });
+    const school = screen.getByRole("button", { name: "Kitso Ya Boleng" });
     expect(school).toHaveAttribute("aria-expanded", "false");
     expect(school.closest("tr")).toHaveTextContent("2");
     expect(screen.queryByText("Amy Scholar")).toBeNull();
