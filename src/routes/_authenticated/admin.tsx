@@ -5704,72 +5704,70 @@ export function CareerDescriptionField({
   }, [autoAction]);
   return (
     <div className="mt-3 w-full">
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-sm font-semibold">Career Content</span>
-        <div className="flex flex-wrap justify-end gap-2">
-          <button
-            type="button"
-            onClick={() => void suggest()}
-            disabled={busy}
-            aria-label="AI: Fill missing fields"
-            title="AI: Fill missing fields"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary bg-primary/10 text-primary text-xs hover:bg-primary/20 disabled:cursor-wait disabled:opacity-50"
-          >
-            <Sparkles className={"h-3.5 w-3.5 " + (busy ? "animate-pulse" : "")} aria-hidden />
-          </button>
-          <button
-            type="button"
-            onClick={() => void suggest(true)}
-            disabled={busy}
-            aria-label="Regenerate this career"
-            title="Regenerate this career"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border text-xs hover:border-primary hover:text-primary disabled:opacity-50"
-          >
-            <RotateCcw className="h-3.5 w-3.5" aria-hidden />
-          </button>
+      <fieldset className="rounded border border-border p-3">
+        <legend className="px-1 text-sm font-semibold">Career Content</legend>
+        <div className="flex items-center justify-end gap-3">
+          <div className="flex flex-wrap justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => void suggest()}
+              disabled={busy}
+              aria-label="AI: Fill missing fields"
+              title="AI: Fill missing fields"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary bg-primary/10 text-primary text-xs hover:bg-primary/20 disabled:cursor-wait disabled:opacity-50"
+            >
+              <Sparkles className={"h-3.5 w-3.5 " + (busy ? "animate-pulse" : "")} aria-hidden />
+            </button>
+            <button
+              type="button"
+              onClick={() => void suggest(true)}
+              disabled={busy}
+              aria-label="Regenerate this career"
+              title="Regenerate this career"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary bg-primary/10 text-primary text-xs hover:bg-primary/20 disabled:cursor-wait disabled:opacity-50"
+            >
+              <RotateCcw className="h-3.5 w-3.5" aria-hidden />
+            </button>
+          </div>
         </div>
-      </div>
-      {busy && (
-        <p role="status" className="mt-1 text-xs text-primary">
-          Generating career content…
-        </p>
-      )}
-      <fieldset disabled={busy}>
-        <label className="mt-1 block text-sm">
-          Role Overview
-          <textarea
-            rows={3}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder="A brief description of this career"
-            className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary"
-          />
-        </label>
-        {value && (
-          <details className="mt-1 rounded bg-muted/40 p-2 text-sm">
-            <summary className="cursor-pointer">Preview description</summary>
-            <RichText text={value} />
-          </details>
+        {busy && (
+          <p role="status" className="mt-1 text-xs text-primary">
+            Generating career content…
+          </p>
         )}
-        <label className="mt-1 block text-sm">
-          Specialisations &amp; Roles
-          <input
-            value={guidance.specialisations.join(", ")}
-            onChange={(e) =>
-              onGuidanceChange({
-                specialisations: e.target.value.split(",").map((value) => value.trimStart()),
-              })
-            }
-            onBlur={() =>
-              onGuidanceChange({
-                specialisations: guidance.specialisations
-                  .map((value) => value.trim())
-                  .filter(Boolean),
-              })
-            }
-            className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary"
-          />
-        </label>
+        <fieldset disabled={busy}>
+          <label className="mt-1 block text-sm">
+            Role Overview
+            <textarea
+              rows={3}
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              placeholder="A brief description of this career"
+              className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary"
+            />
+          </label>
+          <label className="mt-1 block text-sm">
+            Specialisations &amp; Roles
+            <input
+              value={guidance.specialisations.join(", ")}
+              onChange={(e) =>
+                onGuidanceChange({
+                  specialisations: e.target.value.split(",").map((value) => value.trimStart()),
+                })
+              }
+              onBlur={() =>
+                onGuidanceChange({
+                  specialisations: guidance.specialisations
+                    .map((value) => value.trim())
+                    .filter(Boolean),
+                })
+              }
+              className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary"
+            />
+          </label>
+        </fieldset>
+      </fieldset>
+      <fieldset disabled={busy}>
         <fieldset className="mt-3 grid gap-3 rounded border border-border p-3 sm:grid-cols-3">
           <legend className="px-1 text-sm font-semibold">Skills Required</legend>
           <p className="text-xs text-muted-foreground sm:col-span-3">
