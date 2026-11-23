@@ -1049,6 +1049,7 @@ function DataTable({
                                       description={String(r["description"] ?? "")}
                                       saved={r}
                                       showEmptySections
+                                      adminLayout
                                     />
                                   </div>
                                 )}
@@ -2771,7 +2772,7 @@ export function AdminUsers() {
                       >
                         <div className={view === "table" ? "min-w-[1100px]" : ""}>
                           {view === "table" && rows.length > 0 && (
-                            <div className="border border-b-0 border-border">
+                            <div>
                               <table className="w-full min-w-[1100px] table-fixed text-left text-xs">
                                 <UserTableColumns />
                                 <thead className="user-list-headings text-foreground">
@@ -5704,8 +5705,8 @@ export function CareerDescriptionField({
   }, [autoAction]);
   return (
     <div className="mt-3 w-full">
-      <fieldset className="rounded border border-border p-3">
-        <legend className="px-1 text-sm font-semibold">Career Content</legend>
+      <fieldset className="rounded border border-charcoal/25 p-3">
+        <legend className="px-1 text-sm font-medium">Career Overview</legend>
         <div className="flex items-center justify-end gap-3">
           <div className="flex flex-wrap justify-end gap-2">
             <button
@@ -5737,7 +5738,7 @@ export function CareerDescriptionField({
         )}
         <fieldset disabled={busy}>
           <label className="mt-1 block text-sm">
-            Role Overview
+            Role Description
             <textarea
               rows={3}
               value={value}
@@ -5765,11 +5766,20 @@ export function CareerDescriptionField({
               className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary"
             />
           </label>
+          <label className="mt-3 block text-sm">
+            Ideal For
+            <textarea
+              rows={2}
+              value={guidance.idealFor}
+              onChange={(e) => onGuidanceChange({ ideal_for: e.target.value })}
+              className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary"
+            />
+          </label>
         </fieldset>
       </fieldset>
       <fieldset disabled={busy}>
-        <fieldset className="mt-3 grid gap-3 rounded border border-border p-3 sm:grid-cols-3">
-          <legend className="px-1 text-sm font-semibold">Skills Required</legend>
+        <fieldset className="mt-3 grid gap-3 rounded border border-charcoal/25 p-3 sm:grid-cols-3">
+          <legend className="px-1 text-sm font-medium">Skills Required</legend>
           <p className="text-xs text-muted-foreground sm:col-span-3">
             Separate skills with commas.
           </p>
@@ -5819,17 +5829,8 @@ export function CareerDescriptionField({
             />
           </label>
         </fieldset>
-        <fieldset className="mt-3 grid gap-3 rounded border border-border p-3 sm:grid-cols-2">
-          <legend className="px-1 text-sm font-semibold">Career Preparation</legend>
-          <label className="block text-sm sm:col-span-2">
-            Ideal For
-            <textarea
-              rows={2}
-              value={guidance.idealFor}
-              onChange={(e) => onGuidanceChange({ ideal_for: e.target.value })}
-              className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary"
-            />
-          </label>
+        <fieldset className="mt-3 grid gap-3 rounded border border-charcoal/25 p-3 sm:grid-cols-2">
+          <legend className="px-1 text-sm font-medium">Career Preparation</legend>
           {([["subjects", "Suggested Subjects"]] as const).map(([key, label]) => (
             <label key={key} className="block text-sm">
               {label}

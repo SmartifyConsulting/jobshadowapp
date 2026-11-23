@@ -2,24 +2,28 @@ import { Briefcase, UserRound, Bot } from "lucide-react";
 import { getCareerGuidance } from "@/lib/career-guidance";
 import { CareerSkills } from "./CareerSkills";
 import { RichText } from "./RichText";
+import { AdminCareerGuidance } from "./AdminCareerGuidance";
 
 export function CareerGuidance({
   name,
   description,
   saved = {},
   showEmptySections = false,
+  adminLayout = false,
 }: {
   name: string;
   description: string;
   saved?: Parameters<typeof getCareerGuidance>[2];
   showEmptySections?: boolean;
+  adminLayout?: boolean;
 }) {
   const guidance = getCareerGuidance(name, description, saved);
+  if (adminLayout) return <AdminCareerGuidance guidance={guidance} />;
   return (
     <div className="space-y-5 py-3 text-foreground">
       <section>
         <h3 className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">
-          Role Overview
+          Role Description
         </h3>
         <RichText text={guidance.overview} className="block text-sm leading-relaxed" />
       </section>

@@ -388,6 +388,21 @@ describe("Visible provider directories and career wizard", () => {
       screen.getByRole("button", { name: "Export" }),
     );
     fireEvent.click(screen.getByRole("button", { name: /^A.*1/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Show description" }));
+    expect(
+      within(screen.getByRole("group", { name: "Career Overview" })).getByRole("heading", {
+        name: "Ideal For",
+      }),
+    ).toBeVisible();
+    expect(
+      within(screen.getByRole("group", { name: "Career Overview" })).getByRole("heading", {
+        name: "Role Description",
+      }),
+    ).toBeVisible();
+    expect(screen.getByRole("group", { name: "Career Preparation" })).toBeVisible();
+    expect(screen.getByRole("group", { name: "Skills Required" })).toBeVisible();
+    expect(screen.queryByText("Explore On Your Own")).not.toBeInTheDocument();
+
     expect(
       screen.getByRole("button", { name: "AI: Fill missing fields for Accountant" }),
     ).toBeVisible();
