@@ -74,7 +74,7 @@ describe("User alphabet chips", () => {
     const school = { ...account("school", "School Contact"), role: "school" as const, roles: ["school" as const] };
     const client = mount([school]);
     expect(screen.getByRole("heading", { name: "Users (2)" })).toBeVisible();
-    fireEvent.mouseDown(screen.getByRole("tab", { name: "Hosts (1)" }), { button: 0 });
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Hosts (2)" }), { button: 0 });
     fireEvent.click(screen.getByRole("button", { name: "A" }));
     expect(screen.getByRole("button", { name: "View details for Alice Brown" })).toBeVisible();
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Schools (1)" }), { button: 0 });

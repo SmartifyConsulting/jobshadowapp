@@ -775,6 +775,8 @@ function UserTableRow({ a, selectedId, busyId, expandedApplicationUser, onSelect
       </div></td>
       <td className="px-3 py-1.5">{lastName || "—"}</td>
       <td className="px-3 py-1.5"><span className="block max-w-48 truncate" title={a.email ?? ""}>{a.email || "—"}</span></td>
+      <td className="px-3 py-1.5">{a.id_number || "—"}</td>
+      <td className="px-3 py-1.5"><span className="block max-w-40 truncate" title={a.school ?? ""}>{a.school || "—"}</span></td>
       <td className="px-3 py-1.5"><div className="flex items-center gap-2">
         <label className="flex items-center" title={a.id_verified === null ? 'No scholar profile to verify' : 'ID verified'}><input type="checkbox" className="accent-primary" checked={a.id_verified === true} disabled={a.id_verified === null || busyId === a.id} onChange={(e) => onVerify(a.id, e.target.checked)} aria-label={'ID verified for ' + label} /></label>
         <UserDocument path={a.id_file_path} kind="id" verified={a.id_verified === true} />
@@ -786,7 +788,7 @@ function UserTableRow({ a, selectedId, busyId, expandedApplicationUser, onSelect
         <button onClick={() => onDelete(a.id, label)} disabled={busyId === a.id} className="rounded p-1.5 text-muted-foreground transition hover:bg-destructive/5 hover:text-destructive disabled:opacity-50" aria-label={'Delete account for ' + label}><Trash2 className="h-3.5 w-3.5" /></button>
       </div></td>
     </tr>
-    {expanded && <tr id={'applications-' + a.id}><td colSpan={6} className="border-t border-border bg-muted/30 px-5 py-3">
+    {expanded && <tr id={'applications-' + a.id}><td colSpan={8} className="border-t border-border bg-muted/30 px-5 py-3">
       <div className="mb-2 flex justify-between text-xs text-muted-foreground"><span>Applications for {label}</span><span>{a.booking_count} bookings · Joined {new Date(a.created_at).toLocaleDateString()}</span></div>
       {applications.isLoading ? <p className="text-xs text-muted-foreground">Loading…</p> : !applications.data?.length ? <p className="text-xs text-muted-foreground">No applications recorded.</p> : (
         <table className="w-full text-left text-xs"><thead><tr>{["ID", "Company", "Career", "Dates", "Paid", "Indemnity", "Cancelled"].map((heading) => <th key={heading} className="px-2 py-2 font-medium">{heading}</th>)}</tr></thead><tbody>{applications.data.map((application) => <tr key={application.source + '-' + application.id} className="border-t border-border/70"><td className="px-2 py-2">{application.source} #{application.id}</td><td className="px-2 py-2">{application.company || '—'}</td><td className="px-2 py-2">{application.career || '—'}</td><td className="px-2 py-2">{application.dates || '—'}</td>{[application.paid, application.indemnity, application.cancelled].map((value, index) => <td key={index} className="px-2 py-2">{value === null ? 'Not recorded' : <BoolIcon value={index === 2 ? !value : value} />}</td>)}</tr>)}</tbody></table>
@@ -859,7 +861,6 @@ export function AdminUsers() {
   const isUnclassified = roleTab === "unclassified";
   const accountRole = isUnclassified ? "user" : roleTab === "individual_mentor" ? "mentor" : roleTab;
   const mentorCompanies = useQuery({ queryKey: ["admin", "company-contact-classification"], queryFn: () => fetchAllRows(async (from, to) => { const result = await supabase.from("companies").select("company,mentor_name,mentor_email,backup_mentor_name,backup_mentor_email").order("id").range(from, to); if (result.error) throw result.error; return result.data ?? []; }) });
-  const providerTypes = useMemo(() => classifyCompanies((mentorCompanies.data ?? []) as CompanyContacts[]), [mentorCompanies.data]);
   const soleMentors = useMemo(() => individualMentorEmails((mentorCompanies.data ?? []) as { company: string | null; mentor_email: string | null; backup_mentor_email: string | null }[]), [mentorCompanies.data]);
   const matchesRole = (a: AccountRow, tab = roleTab) => {
     const email = (a.email ?? "").trim().toLowerCase();
@@ -962,7 +963,7 @@ export function AdminUsers() {
         </div>
       </div>
       <Tabs value={roleTab} onValueChange={(value) => { setRoleTab(value as AccountRow["roles"][number] | "unclassified" | "individual_mentor"); setLetter(null); setOpenGroups([]); setSelectedId(null); }}>
-        <div className="overflow-x-auto border-b border-border bg-ivory px-6 py-3"><TabsList aria-label="User types">{([["user", "Students"], ["mentor", "Hosts"], ["individual_mentor", "Mentors"], ["school", "Schools"], ["admin", "Admin"], ["unclassified", "Unclassified"]] as const).map(([role, name]) => <TabsTrigger key={role} value={role}>{name}{role === "mentor" || role === "individual_mentor" ? ` (${[...providerTypes.values()].filter((type) => type === (role === "mentor" ? "host" : "mentor")).length})` : ` (${(accounts.data ?? []).filter((user) => matchesRole(user, role) && (showSpam || !user.is_spam)).length})`}</TabsTrigger>)}</TabsList></div>
+        <div className="overflow-x-auto border-b border-border bg-ivory px-6 py-3"><TabsList aria-label="User types">{([["user", "Students"], ["mentor", "Hosts"], ["individual_mentor", "Mentors"], ["school", "Schools"], ["admin", "Admin"], ["unclassified", "Unclassified"]] as const).map(([role, name]) => <TabsTrigger key={role} value={role}>{name} ({(accounts.data ?? []).filter((user) => matchesRole(user, role) && (showSpam || !user.is_spam)).length})</TabsTrigger>)}</TabsList></div>
       <TabsContent value={roleTab} className="mt-0">
       <div className="flex flex-col items-start xl:flex-row">
       <div className={'min-w-0 w-full flex-1 px-4 py-2 text-foreground ' + 'bg-ivory'}>
@@ -1005,7 +1006,7 @@ export function AdminUsers() {
                 <AccordionTrigger className="px-3 py-3 text-sm hover:no-underline hover:bg-muted/30"><span className="font-bold text-primary">{group}</span>&nbsp;<span className="text-muted-foreground">({rows.filter((a) => (accountInitial(a)) === group).length})</span></AccordionTrigger>
                 <AccordionContent className="pb-0">{view === "cards" ? <UserCards rows={rows.filter((a) => (accountInitial(a)) === group)} selectedId={selectedId} busyId={busyId} onSelect={setSelectedId} onEdit={(a) => setEditing({ ...a, roles: [...a.roles] })} onDelete={deleteAccountRow} onVerify={setIdVerified} /> : <div className="overflow-x-auto border-t border-border [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-track]:bg-muted">
                   <table className="w-full min-w-[820px] text-left text-xs">
-                    <thead className="bg-background/40 text-foreground"><tr>{["First Name", "Last Name", "Email", "Documents", "Applications", "Actions"].map((heading) => <th key={heading} className="whitespace-nowrap px-3 py-2 font-normal">{heading}</th>)}</tr></thead>
+                    <thead className="bg-background/40 text-foreground"><tr>{["First Name", "Last Name", "Email", "ID / passport", "School", "Documents", "Applications", "Actions"].map((heading) => <th key={heading} className="whitespace-nowrap px-3 py-2 font-normal">{heading}</th>)}</tr></thead>
                     <tbody>
                     {rows.filter((a) => (accountInitial(a)) === group).map((a) => (
                       <UserTableRow
