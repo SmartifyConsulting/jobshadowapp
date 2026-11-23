@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const mock = vi.hoisted(() => ({ generate: vi.fn(), confirm: vi.fn() }));
@@ -93,5 +93,19 @@ describe("catalogue-wide missing career drafts", () => {
     await screen.findByRole("button", { name: "Review AI drafts (1)" });
     expect(mock.generate).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("status")).toHaveTextContent("Stopped");
+  });
+  it("stops additional AI calls when the admin leaves the screen", async () => {
+    let finish!: (value: unknown) => void;
+    mock.generate.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+    );
+    const view = render(<Batch />);
+    fireEvent.click(screen.getByRole("button", { name: "AI: Fill missing across all careers" }));
+    await screen.findByRole("button", { name: "Stop" });
+    view.unmount();
+    await act(async()=>{finish({ interpersonal_skills: ["Teamwork"] });});
+    await waitFor(() => expect(mock.generate).toHaveBeenCalledTimes(1));
   });
 });

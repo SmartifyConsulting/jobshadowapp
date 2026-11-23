@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Sparkles } from "lucide-react";
 import { draftCareerDescription } from "@/lib/career-ai.functions";
@@ -28,6 +28,14 @@ export function BulkCareerDrafts({
   const [failures, setFailures] = useState<{ name: string; message: string }[]>([]);
   const stopped = useRef(false);
   const running = useRef(false);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      stopped.current = true;
+    };
+  }, []);
   const candidates = careersMissingContent(records).filter((row) => !drafts[String(row["id"])]);
   const ready = records.filter((row) => !!drafts[String(row["id"])]);
   async function run() {
@@ -39,6 +47,10 @@ export function BulkCareerDrafts({
         { title: "Generate missing career content", confirmLabel: "Generate drafts" },
       ))
     ) {
+      running.current = false;
+      return;
+    }
+    if (!mounted.current) {
       running.current = false;
       return;
     }
