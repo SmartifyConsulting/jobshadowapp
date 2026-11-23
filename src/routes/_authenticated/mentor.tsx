@@ -458,6 +458,7 @@ function HostProfile({
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [contactSaved, setContactSaved] = useState(false);
 
   useEffect(() => {
     if (!profile.data || initialized.current) return;
@@ -511,6 +512,7 @@ function HostProfile({
       return;
     }
     setCvDraftNote("");
+    setSaved(false);
     setCvBusy(true);
     setErr(null);
     try {
@@ -543,15 +545,21 @@ function HostProfile({
     setBusy(true);
     setErr(null);
     setSaved(false);
+    setContactSaved(false);
+    const saveProfessional = profileTab === "professional";
     const { error } = await supabase.rpc("update_my_host_profile", {
-      _bio: bio || null,
-      _specialties: specialties
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean),
-      _certifications: certifications || null,
-      _linkedin_url: linkedinUrl || null,
-      _cv_path: cvPath,
+      _bio: saveProfessional ? bio || null : (profile.data?.bio ?? null),
+      _specialties: saveProfessional
+        ? specialties
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : (profile.data?.specialties ?? []),
+      _certifications: saveProfessional
+        ? certifications || null
+        : (profile.data?.certifications ?? null),
+      _linkedin_url: saveProfessional ? linkedinUrl || null : (profile.data?.linkedin_url ?? null),
+      _cv_path: saveProfessional ? cvPath : (profile.data?.cv_path ?? null),
       _via_company: viaCompany,
       _has_hr_admin: viaCompany && hasHrAdmin,
       _hr_first_name: viaCompany && hasHrAdmin ? hrFirstName.trim() : null,
@@ -564,7 +572,8 @@ function HostProfile({
     } as never);
     setBusy(false);
     if (error) return setErr(error.message);
-    setSaved(true);
+    setSaved(saveProfessional);
+    setContactSaved(!saveProfessional);
     qc.invalidateQueries({ queryKey: ["host-profile"] });
   }
 
@@ -795,7 +804,7 @@ function HostProfile({
             disabled={busy || profile.isPending || !!profile.error}
             className="rounded bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-50"
           >
-            {saved ? "Saved" : "Save Contact Preferences"}
+            {contactSaved ? "Saved" : "Save Contact Preferences"}
           </button>
           {(err || profile.error) && (
             <p role="alert" className="text-sm text-destructive">

@@ -191,6 +191,22 @@ it("reviews CV drafts, preserves populated fields and keeps edits made while AI 
   expect(specialties).toHaveValue("Manually entered while waiting");
   expect(screen.getByLabelText("Certifications / qualifications")).toHaveValue("BSc Computing");
   expect(rpc.mock.calls.some((call) => call[0] === "update_my_host_profile")).toBe(false);
+  fireEvent.mouseDown(screen.getByRole("tab", { name: "Preferences" }), {
+    button: 0,
+    ctrlKey: false,
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Save Contact Preferences" }));
+  await waitFor(() =>
+    expect(rpc).toHaveBeenCalledWith(
+      "update_my_host_profile",
+      expect.objectContaining({ _bio: "My original bio", _specialties: [], _certifications: null }),
+    ),
+  );
+  fireEvent.mouseDown(screen.getByRole("tab", { name: "Professional Details" }), {
+    button: 0,
+    ctrlKey: false,
+  });
+  expect(screen.getByLabelText("Certifications / qualifications")).toHaveValue("BSc Computing");
   fireEvent.click(screen.getByRole("button", { name: "Save profile" }));
   await waitFor(() =>
     expect(rpc).toHaveBeenCalledWith(
