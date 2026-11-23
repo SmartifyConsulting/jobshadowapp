@@ -9,7 +9,7 @@ import { CountrySelect } from "@/components/CountrySelect";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, X, UserCircle, Award, Upload } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Award, Upload } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
 import { PortalLoading } from "@/components/PortalLoading";
 import { bookingDayKey, countByDay, filterHostBookings } from "@/lib/host-bookings";
@@ -389,6 +389,26 @@ function DatesPicker({
   );
 }
 
+function ProfessionalFrame({
+  title,
+  children,
+  className = "",
+}: {
+  title: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <fieldset
+      aria-label={title}
+      className={"min-w-0 rounded border border-charcoal/25 p-3 " + className}
+    >
+      <legend className="px-1 text-sm font-bold">{title}</legend>
+      {children}
+    </fieldset>
+  );
+}
+
 function HostProfile({
   initialTab = "personal",
   bookings,
@@ -527,58 +547,8 @@ function HostProfile({
           <AccountPersonalDetails />
         </TabsContent>
         <TabsContent value="professional" className="mt-4 grid gap-3 lg:grid-cols-2">
-          {" "}
-          <p className="text-sm text-muted-foreground">
-            Shown to scholars and HR before your identity is revealed — it's what gives them
-            confidence to book, without naming you. Your name, email and phone are never shown here.
-          </p>
-          <div className="rounded-lg border bg-card p-4">
-            <label className="block text-sm font-semibold">
-              <span className="flex items-center gap-1.5">
-                <UserCircle className="h-4 w-4" /> Experience / bio
-              </span>
-              <textarea
-                rows={4}
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                placeholder="A few sentences about your role and experience."
-                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-              />
-            </label>
-          </div>
-          <div className="rounded-lg border bg-card p-4">
-            <label className="block text-sm font-semibold">
-              <span className="flex items-center gap-1.5">
-                <Award className="h-4 w-4" /> Specialties (comma separated)
-              </span>
-              <input
-                value={specialties}
-                onChange={(e) => setSpecialties(e.target.value)}
-                placeholder="e.g. Corporate law, Contract negotiation"
-                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-              />
-            </label>
-            <label className="mt-3 block text-sm font-semibold">
-              Certifications / qualifications
-              <textarea
-                rows={2}
-                value={certifications}
-                onChange={(e) => setCertifications(e.target.value)}
-                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-              />
-            </label>
-          </div>
-          <div className="rounded-lg border bg-card p-4">
-            <label className="block text-sm font-semibold">
-              LinkedIn / professional profile URL
-              <input
-                type="url"
-                value={linkedinUrl}
-                onChange={(e) => setLinkedinUrl(e.target.value)}
-                placeholder="https://linkedin.com/in/..."
-                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-              />
-            </label>
+          <ProfessionalFrame title="CV" className="lg:col-span-2">
+            {" "}
             <div className="mt-3">
               <p className="text-sm font-semibold">
                 CV (private — admin only, never shown to scholars)
@@ -603,7 +573,57 @@ function HostProfile({
                 </span>
               )}
             </div>
-          </div>
+          </ProfessionalFrame>
+          <p className="text-sm text-muted-foreground lg:col-span-2">
+            Shown to scholars and HR before your identity is revealed — it's what gives them
+            confidence to book, without naming you. Your name, email and phone are never shown here.
+          </p>
+          <ProfessionalFrame title="Experience & Bio">
+            <label className="block text-sm font-semibold">
+              <span className="sr-only">Experience / Bio</span>
+              <textarea
+                rows={4}
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder="A few sentences about your role and experience."
+                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+              />
+            </label>
+          </ProfessionalFrame>
+          <ProfessionalFrame title="Expertise & Qualifications">
+            <label className="block text-sm font-semibold">
+              <span className="flex items-center gap-1.5">
+                <Award className="h-4 w-4" /> Specialties (comma separated)
+              </span>
+              <input
+                value={specialties}
+                onChange={(e) => setSpecialties(e.target.value)}
+                placeholder="e.g. Corporate law, Contract negotiation"
+                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+              />
+            </label>
+            <label className="mt-3 block text-sm font-semibold">
+              Certifications / qualifications
+              <textarea
+                rows={2}
+                value={certifications}
+                onChange={(e) => setCertifications(e.target.value)}
+                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+              />
+            </label>
+          </ProfessionalFrame>
+          <ProfessionalFrame title="Professional Links" className="lg:col-span-2">
+            <label className="block text-sm font-semibold">
+              LinkedIn / professional profile URL
+              <input
+                type="url"
+                value={linkedinUrl}
+                onChange={(e) => setLinkedinUrl(e.target.value)}
+                placeholder="https://linkedin.com/in/..."
+                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+              />
+            </label>
+          </ProfessionalFrame>
         </TabsContent>
         <TabsContent value="secondary" className="mt-4 grid gap-3 lg:grid-cols-2">
           {" "}
