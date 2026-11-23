@@ -5,7 +5,8 @@ import { applicationColumns, applicationTableRow, applicationStage, BOOKING_EXPO
 describe("Merged application columns", () => {
   it("preserves the headings from both screens and the booking export", () => {
     const headings = applicationColumns([]).map((column) => column.label);
-    for (const label of ["Reference", "Learner", "User types", "Date", "Status", "Amount due", "Paid", "Indemnity", "Student", "School", "Mentor", "HR contact", "Name", "ID No.", "Email", "Contact", "Dates", "Cancelled", ...BOOKING_EXPORT_COLS.map((column) => column.label)]) expect(headings).toContain(label);
+    for (const label of ["Learner", "User Type", "Date", "Status", "Amount due", "Paid", "Indemnity", "Student", "School", "Mentor", "HR contact", "Name", "ID No.", "Email", "Contact", "Dates", "Cancelled", ...BOOKING_EXPORT_COLS.map((column) => column.label)]) expect(headings).toContain(label);
+    expect(headings).not.toContain("Reference");
     expect(headings).not.toContain("ID");
   });
   it("maps student, guardian and host contacts while preserving extra source columns", () => {

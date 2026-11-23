@@ -38,7 +38,7 @@ describe("User alphabet chips", () => {
   it("keeps unassigned accounts out of Students and lists them under Unclassified", () => {
     const unknown = { ...account("unknown", "Unknown Person"), role: null, roles: [] };
     const client = mount([unknown]);
-    expect(screen.getByRole("tab", { name: "Students (2)" })).toBeVisible();
+    expect(screen.getByRole("tab", { name: "Scholars (2)" })).toBeVisible();
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Unclassified (1)" }), { button: 0 });
     fireEvent.click(screen.getByRole("button", { name: "U" }));
     expect(screen.getByRole("button", { name: "View details for Unknown Person" })).toBeVisible();
@@ -65,7 +65,7 @@ describe("User alphabet chips", () => {
     expect(screen.queryByRole("button", { name: "Bob Adams" })).not.toBeInTheDocument();
     expect(screen.getByText("Host", { exact: true })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "All" }));
-    expect(screen.getByRole("heading", { name: "Users (2)" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Users" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "B" }));
     expect(screen.getByRole("button", { name: "Bob Adams" })).toBeVisible();
     client.clear();
@@ -73,12 +73,12 @@ describe("User alphabet chips", () => {
   it("filters role tabs without dropping multi-role accounts", () => {
     const school = { ...account("school", "School Contact"), role: "school" as const, roles: ["school" as const] };
     const client = mount([school]);
-    expect(screen.getByRole("heading", { name: "Users (2)" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Users" })).toBeVisible();
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Hosts (2)" }), { button: 0 });
     fireEvent.click(screen.getByRole("button", { name: "A" }));
     expect(screen.getByRole("button", { name: "View details for Alice Brown" })).toBeVisible();
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Schools (1)" }), { button: 0 });
-    expect(screen.getByRole("heading", { name: "Users (1)" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Users" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "S" }));
     expect(screen.getByRole("button", { name: "View details for School Contact" })).toBeVisible();
     client.clear();

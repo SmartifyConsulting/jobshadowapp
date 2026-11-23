@@ -1,5 +1,5 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { providerGroups } from "@/lib/provider-directory";
+import { providerGroups, mentorGroups } from "@/lib/provider-directory";
 import { CareerGuidance } from "@/components/CareerGuidance";
 import { getCareerGuidance } from "@/lib/career-guidance";
 import type { CareerDraft } from "@/lib/career-draft";
@@ -168,7 +168,7 @@ function AdminPage() {
  * the same height - use this instead of hand-rolling a header block per screen. */
 function AdminScreenHeader({ title, actions }: { title: React.ReactNode; actions?: React.ReactNode }) {
   return <div className="flex flex-wrap items-center justify-between gap-3 bg-ivory px-6 py-6 text-foreground">
-    <h1 className="text-2xl font-medium">{title}</h1>
+    <h1 className="font-display text-2xl uppercase">{title}</h1>
     {actions}
   </div>;
 }
@@ -329,36 +329,7 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
   return (
     <div className="bg-ivory">
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border bg-ivory px-6 py-6 text-foreground">
-        <h1 className="text-2xl font-medium">{title} {!isLoading && `(${rows.length})`}</h1>
-        {dateCompanyFilter && (
-          <div className="flex flex-wrap items-end gap-4">
-            <label className="text-sm">From<input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="block border-b border-input bg-transparent px-1 py-1 outline-none" /></label>
-            <label className="text-sm">To<input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="block border-b border-input bg-transparent px-1 py-1 outline-none" /></label>
-            <label className="text-sm">Select company
-              <select value={company} onChange={(e) => setCompany(e.target.value)} className="block border-b border-input bg-transparent px-1 py-1 outline-none">
-                {companies.map((c) => <option key={c} value={c} className="text-foreground">{c}</option>)}
-              </select>
-            </label>
-          </div>
-        )}
-        <div className="flex flex-wrap items-center gap-3">
-          {csvUpload && (table === "careers" || table === "sectors") && <NamedCsvUpload table={table} />}
-          {table === "companies" && (
-            <Button onClick={() => setCreating(true)}>Add New Role</Button>
-          )}
-          {isNameOnly && (
-            <div className="flex items-center gap-2">
-              <input
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder={`New ${title.replace(/s$/, "")} name`}
-                className="rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground"
-              />
-              <Button onClick={addNamed} disabled={addBusy || !newName.trim()}>Add</Button>
-            </div>
-          )}
-          <Button variant="outline" onClick={exportAll} disabled={isLoading || exporting}>{exporting ? "Exporting…" : "Export"}</Button>
-        </div>
+        <h1 className="font-display text-2xl uppercase">{title}</h1>
       </div>
       {alphabetField && (
         <div className="flex flex-wrap gap-1.5 border-b border-border bg-ivory px-6 py-4" aria-label={`Filter ${title} alphabetically`}>
@@ -375,12 +346,41 @@ function DataTable({ title, table, cols, csvUpload, dateCompanyFilter, indemnity
             Search
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${title.toLowerCase()}`} className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none" />
           </label>
+          {dateCompanyFilter && (
+            <>
+              <label className="text-sm">From<input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="block border-b border-input bg-transparent px-1 py-1 outline-none" /></label>
+              <label className="text-sm">To<input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="block border-b border-input bg-transparent px-1 py-1 outline-none" /></label>
+              <label className="text-sm">Select company
+                <select value={company} onChange={(e) => setCompany(e.target.value)} className="block border-b border-input bg-transparent px-1 py-1 outline-none">
+                  {companies.map((c) => <option key={c} value={c} className="text-foreground">{c}</option>)}
+                </select>
+              </label>
+            </>
+          )}
           {isUsers && (
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={showSpam} onChange={(e) => setShowSpam(e.target.checked)} />
               Show spam-flagged accounts
             </label>
           )}
+          <div className="ml-auto flex flex-wrap items-center gap-3">
+            {csvUpload && (table === "careers" || table === "sectors") && <NamedCsvUpload table={table} />}
+            {table === "companies" && (
+              <Button onClick={() => setCreating(true)}>Add New Role</Button>
+            )}
+            {isNameOnly && (
+              <div className="flex items-center gap-2">
+                <input
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder={`New ${title.replace(/s$/, "")} name`}
+                  className="rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground"
+                />
+                <Button onClick={addNamed} disabled={addBusy || !newName.trim()}>Add</Button>
+              </div>
+            )}
+            <Button variant="outline" onClick={exportAll} disabled={isLoading || exporting}>{exporting ? "Exporting…" : "Export"}</Button>
+          </div>
         </div>
         {table === "careers" ? (
           <div className="mt-4 space-y-0">
@@ -722,7 +722,7 @@ function UserDocument({ path, kind, verified = false }: { path: string | null; k
   </div>;
 }
 
-const ROLE_LABELS: Record<AccountRow["roles"][number], string> = { user: "Student", mentor: "Host", hr_admin: "HR Admin", school: "School", admin: "Admin", parent: "Parent" };
+const ROLE_LABELS: Record<AccountRow["roles"][number], string> = { user: "Scholar", mentor: "Host", hr_admin: "HR Admin", school: "School", admin: "Admin", parent: "Parent" };
 
 /** Per-user application/booking history, fetched lazily only when a row is expanded or selected -
  * not eagerly embedded for every account, which used to mean loading it for hundreds of users on
@@ -980,13 +980,13 @@ export function AdminUsers() {
           </form>}
         </DialogContent>
       </Dialog>
-      <AdminScreenHeader title={`Users ${!accounts.isLoading ? `(${rows.length})` : ""}`} actions={
+      <AdminScreenHeader title="Users" actions={
         <div role="group" aria-label="Users view" className="flex rounded border border-border p-0.5">
           {([['table', List, 'Table'], ['cards', LayoutGrid, 'Cards']] as const).map(([value, Icon, label]) => <button key={value} onClick={() => setView(value)} aria-pressed={view === value} className={'flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs transition ' + (view === value ? 'bg-background text-primary' : 'hover:bg-primary/5')}><Icon className="h-3.5 w-3.5" />{label}</button>)}
         </div>
       } />
       <Tabs value={roleTab} onValueChange={(value) => { setRoleTab(value as AccountRow["roles"][number] | "unclassified" | "individual_mentor"); setLetter(null); setOpenGroups([]); setSelectedId(null); }}>
-        <div className="overflow-x-auto bg-ivory px-6 py-4"><TabsList aria-label="User types">{([["user", "Students"], ["mentor", "Hosts"], ["individual_mentor", "Mentors"], ["school", "Schools"], ["admin", "Admin"], ["unclassified", "Unclassified"]] as const).map(([role, name]) => <TabsTrigger key={role} value={role}>{name} ({(accounts.data ?? []).filter((user) => matchesRole(user, role) && (showSpam || !user.is_spam)).length})</TabsTrigger>)}</TabsList></div>
+        <div className="overflow-x-auto bg-ivory px-6 py-4"><TabsList aria-label="User Type">{([["user", "Scholars"], ["mentor", "Hosts"], ["individual_mentor", "Mentors"], ["school", "Schools"], ["admin", "Admin"], ["unclassified", "Unclassified"]] as const).map(([role, name]) => <TabsTrigger key={role} value={role}>{name} ({(accounts.data ?? []).filter((user) => matchesRole(user, role) && (showSpam || !user.is_spam)).length})</TabsTrigger>)}</TabsList></div>
       <TabsContent value={roleTab} className="mt-0">
       <div className="flex flex-col items-start xl:flex-row">
       <div className={'min-w-0 w-full flex-1 px-4 py-2 text-foreground ' + 'bg-ivory'}>
@@ -1010,14 +1010,16 @@ export function AdminUsers() {
               </button>
             );
           })}
-          <Button variant="outline" className="ml-auto" disabled={syncing} onClick={runSyncCompanyContacts}>{syncing ? "Syncing…" : "Sync company contacts"}</Button>
-          {!isUnclassified && <Button onClick={() => setCreateOpen(true)}>Add {roleTab === "individual_mentor" ? "Mentor" : ROLE_LABELS[accountRole]}</Button>}
         </div>
         <div className="mt-2 flex flex-wrap items-end gap-4">
           <label className="block max-w-sm text-sm">
             Search
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name, email, school, company or career" className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none" />
           </label>
+          <div className="ml-auto flex flex-wrap gap-2">
+            <Button variant="outline" disabled={syncing} onClick={runSyncCompanyContacts}>{syncing ? "Syncing…" : "Sync company contacts"}</Button>
+            {!isUnclassified && <Button onClick={() => setCreateOpen(true)}>Add {roleTab === "individual_mentor" ? "Mentor" : ROLE_LABELS[accountRole]}</Button>}
+          </div>
         </div>
         {accounts.isLoading ? (
           <p className="mt-6">Loading…</p>
@@ -1107,7 +1109,7 @@ function EmailArchive() {
 
   return (
     <div>
-      <div className="border-b border-border bg-background px-6 py-6 text-foreground"><h1 className="text-2xl font-medium">Email Archive {!emails.isLoading && `(${rows.length})`}</h1></div>
+      <div className="border-b border-border bg-background px-6 py-6 text-foreground"><h1 className="font-display text-2xl uppercase">Email Archive</h1></div>
       <div className="flex flex-wrap items-center gap-2 border-b border-border bg-background px-6 py-3">
         <button onClick={() => flush(false)} disabled={sending} className="rounded-md bg-teal/20 hover:bg-teal/30 px-4 py-2 text-xs font-medium uppercase tracking-wide text-foreground disabled:opacity-50">Send queued emails now</button>
         <button onClick={() => flush(true)} disabled={sending} className="bg-primary px-4 py-2 text-xs font-medium uppercase tracking-wide text-primary-foreground disabled:opacity-50">Retry failed emails</button>
@@ -1205,7 +1207,7 @@ function LegalContentEditor() {
   return (
     <div>
       <div className="border-b border-border bg-background px-6 py-6 text-foreground">
-        <h1 className="text-2xl font-medium">Legal Content</h1>
+        <h1 className="font-display text-2xl uppercase">Legal Content</h1>
         <p className="mt-1 text-sm text-muted-foreground">Edit the text shown on /legal and in the indemnity signing flow directly — no code change needed. Use "## Heading" on its own line for a section heading; leave a blank line between paragraphs.</p>
       </div>
       <div className="bg-background px-6 py-6 text-foreground">
@@ -1258,7 +1260,7 @@ function Evaluations() {
 
   return (
     <div>
-      <div className="border-b border-border bg-background px-6 py-6 text-foreground"><h1 className="text-2xl font-medium">Evaluations {!evals.isLoading && `(${evals.data?.length ?? 0})`}</h1></div>
+      <div className="border-b border-border bg-background px-6 py-6 text-foreground"><h1 className="font-display text-2xl uppercase">Evaluations</h1></div>
       <div className="bg-background px-6 py-6 text-foreground">
         {evals.isLoading ? <p>Loading…</p> : (evals.data?.length ?? 0) === 0 ? <p>No evaluations submitted yet.</p> : (
           <div className="space-y-2">
@@ -1303,8 +1305,10 @@ function ProviderDirectory({ kind }: { kind: "mentor" | "host" }) {
   const [editing, setEditing] = useState<Record<string, unknown> | null>(null);
   const [creating, setCreating] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [expandedHosts, setExpandedHosts] = useState<string[]>([]);
   const all = data.data ?? [];
-  const groups = providerGroups(all).filter((group) => group.kind === kind).sort((a, b) => (kind === 'mentor' ? a.names[0] || a.company : a.company).localeCompare(kind === 'mentor' ? b.names[0] || b.company : b.company));
+  const mentors = mentorGroups(all);
+  const groups = (kind === 'mentor' ? mentors : providerGroups(all).filter((group) => group.kind === 'host')).sort((a, b) => (kind === 'mentor' ? a.names[0] || a.company : a.company).localeCompare(kind === 'mentor' ? b.names[0] || b.company : b.company));
   const initial = (group: typeof groups[number]) => alphabetInitial(kind === 'mentor' ? group.names[0] || group.company : group.company);
   const matches = groups.filter((group) => (!letter || initial(group) === letter) && (!search.trim() || [group.company, ...group.names, ...group.emails, ...group.careers].join(' ').toLowerCase().includes(search.trim().toLowerCase())));
   const detail = groups.find((group) => group.key === selected);
@@ -1317,13 +1321,32 @@ function ProviderDirectory({ kind }: { kind: "mentor" | "host" }) {
   if (editing) return <EditRecord title="Companies" table="companies" cols={config.cols} row={editing} onDone={refresh} onCancel={() => setEditing(null)} />;
   if (creating) return <CreateRole onDone={refresh} onCancel={() => setCreating(false)} />;
   return <section className="bg-ivory">
-    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-5"><h1 className="text-2xl font-medium">{kind === 'mentor' ? 'Mentors' : 'Hosts'} ({groups.length})</h1><div className="flex gap-2"><Button onClick={() => setCreating(true)}>Add placement</Button><Button variant="outline" disabled={data.isPending || !!data.error} onClick={() => exportCsv('Company contacts full', completeExportColumns(config.cols, all), all)}>Export all</Button></div></div>
+    <div className="flex flex-wrap items-center justify-between gap-3 bg-ivory px-6 py-6 text-foreground"><h1 className="font-display text-2xl uppercase">{kind === 'mentor' ? 'Mentors' : 'Hosts'}</h1></div>
     <div className="space-y-3 px-4 py-3"><div className="flex flex-wrap gap-1.5" aria-label="Filter providers alphabetically">{['All', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')].map((ch) => <button key={ch} disabled={ch !== 'All' && !groups.some((group) => initial(group) === ch)} aria-pressed={ch === 'All' ? !letter : letter === ch} onClick={() => { setLetter(ch === 'All' ? null : ch); setOpen(ch === 'All' ? [] : [ch]); }} className={'rounded-full px-2.5 py-1.5 text-xs font-medium uppercase transition disabled:opacity-30 ' + ((ch === 'All' ? !letter : letter === ch) ? 'bg-primary text-primary-foreground' : 'bg-muted/70 text-foreground hover:bg-teal/20')}>{ch}</button>)}</div>
-    <label className="block max-w-sm text-sm">Search<input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name, company, email or career" className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></label>
+    <div className="flex flex-wrap items-end gap-4"><label className="block max-w-sm flex-1 text-sm">Search<input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name, company, email or career" className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></label><div className="ml-auto flex flex-wrap gap-2"><Button onClick={() => setCreating(true)}>Add placement</Button><Button variant="outline" disabled={data.isPending || !!data.error} onClick={() => exportCsv('Company contacts full', completeExportColumns(config.cols, all), all)}>Export all</Button></div></div>
     {err && <p role="alert" className="text-sm text-destructive">{err}</p>}
     {data.isPending ? <p className="py-4 text-sm">Loading…</p> : data.error ? <p role="alert" className="py-4 text-sm text-destructive">Unable to load contact records.</p> : <>
       {matches.length > 0 && <div className="overflow-x-auto border border-b-0 border-border"><table className="w-full min-w-[650px] text-left text-xs"><thead><tr>{[kind === 'mentor' ? 'Mentor' : 'Company', kind === 'mentor' ? 'Company' : 'Mentors', 'Email', 'Careers', 'Actions'].map((heading) => <th key={heading} className="px-3 py-2 font-normal">{heading}</th>)}</tr></thead></table></div>}
-      <Accordion type="multiple" value={open} onValueChange={setOpen} className="border-t border-border">{[...new Set(matches.map(initial))].sort().map((ch) => <AccordionItem key={ch} value={ch}><AccordionTrigger className="px-3 py-3 text-sm hover:no-underline hover:bg-muted/30"><span className="font-bold text-primary">{ch}</span>&nbsp;<span className="text-muted-foreground">({matches.filter((group) => initial(group) === ch).length})</span></AccordionTrigger><AccordionContent className="pb-0"><div className="overflow-x-auto"><table className="w-full min-w-[650px] text-left text-xs"><tbody>{matches.filter((group) => initial(group) === ch).map((group) => <tr key={group.key} className="border-t border-warm-divider hover:bg-teal/5"><td className="px-3 py-2 font-medium">{kind === 'mentor' ? group.names.join(' · ') || 'Name not recorded' : group.company}</td><td className="max-w-64 truncate px-3 py-2" title={kind === 'mentor' ? group.company : group.names.join(', ')}>{kind === 'mentor' ? group.company : group.names.join(', ') || 'Name not recorded'}</td><td className="max-w-64 truncate px-3 py-2" title={group.emails.join(', ')}>{group.emails.join(', ') || 'Not recorded'}</td><td className="px-3 py-2">{group.careers.length}</td><td className="px-3 py-2"><button onClick={() => setSelected(group.key)} className="whitespace-nowrap rounded border border-border px-2 py-1">View / edit</button></td></tr>)}</tbody></table></div></AccordionContent></AccordionItem>)}{!matches.length && <p className="py-4 text-sm text-muted-foreground">No matching contact records.</p>}</Accordion>
+      <Accordion type="multiple" value={open} onValueChange={setOpen} className="border-t border-border">{[...new Set(matches.map(initial))].sort().map((ch) => <AccordionItem key={ch} value={ch}><AccordionTrigger className="px-3 py-3 text-sm hover:no-underline hover:bg-muted/30"><span className="font-bold text-primary">{ch}</span>&nbsp;<span className="text-muted-foreground">({matches.filter((group) => initial(group) === ch).length})</span></AccordionTrigger><AccordionContent className="pb-0"><div className="overflow-x-auto"><table className="w-full min-w-[650px] text-left text-xs"><tbody>{matches.filter((group) => initial(group) === ch).map((group) => {
+        const childMentors = kind === 'host' ? mentors.filter((m) => companyKey(m.company) === group.key) : [];
+        const expanded = expandedHosts.includes(group.key);
+        return <Fragment key={group.key}>
+          <tr className="border-t border-warm-divider hover:bg-teal/5">
+            <td className="px-3 py-2 font-medium">{kind === 'mentor' ? group.names.join(' · ') || 'Name not recorded' : group.company}</td>
+            <td className="max-w-64 truncate px-3 py-2" title={kind === 'mentor' ? group.company : group.names.join(', ')}>
+              {kind === 'mentor' ? group.company : childMentors.length > 0 ? (
+                <button type="button" onClick={() => setExpandedHosts(expanded ? expandedHosts.filter((key) => key !== group.key) : [...expandedHosts, group.key])} aria-expanded={expanded} className="flex items-center gap-1 hover:text-primary">
+                  <ChevronDown className={'h-3 w-3 shrink-0 transition ' + (expanded ? 'rotate-180' : '')} />{childMentors.length} mentor{childMentors.length === 1 ? '' : 's'}
+                </button>
+              ) : (group.names.join(', ') || 'Name not recorded')}
+            </td>
+            <td className="max-w-64 truncate px-3 py-2" title={group.emails.join(', ')}>{group.emails.join(', ') || 'Not recorded'}</td>
+            <td className="px-3 py-2">{group.careers.length}</td>
+            <td className="px-3 py-2"><button onClick={() => setSelected(group.key)} className="whitespace-nowrap rounded border border-border px-2 py-1">View / edit</button></td>
+          </tr>
+          {expanded && childMentors.map((mentor) => <tr key={mentor.key} className="border-t border-warm-divider bg-muted/20 text-muted-foreground"><td className="py-2 pl-8 pr-3">↳ {mentor.names.join(' · ') || 'Name not recorded'}</td><td className="max-w-64 truncate px-3 py-2"></td><td className="max-w-64 truncate px-3 py-2" title={mentor.emails.join(', ')}>{mentor.emails.join(', ') || 'Not recorded'}</td><td className="px-3 py-2">{mentor.careers.length}</td><td className="px-3 py-2"></td></tr>)}
+        </Fragment>;
+      })}</tbody></table></div></AccordionContent></AccordionItem>)}{!matches.length && <p className="py-4 text-sm text-muted-foreground">No matching contact records.</p>}</Accordion>
     </>}
     </div>
     <Sheet open={!!detail} onOpenChange={(value) => { if (!value) setSelected(null); }}><SheetContent className="w-full overflow-y-auto bg-ivory sm:max-w-xl"><SheetHeader><SheetTitle>{detail?.company}</SheetTitle><SheetDescription>{kind === 'mentor' ? 'Individual mentor and linked placements' : 'Host company and contributing mentors'}</SheetDescription></SheetHeader>{detail && <div className="mt-4 space-y-4"><p className="text-sm">{detail.names.join(' · ')}</p><p className="break-words text-xs text-muted-foreground">{detail.emails.join(', ')}</p>{detail.records.map((record) => <details key={String(record['id'])} className="rounded border border-border p-3"><summary className="cursor-pointer text-sm font-medium">{String(record['career'] || 'Placement')} · {String(record['location'] || 'Location not recorded')}</summary><div className="mt-3 flex gap-2"><Button variant="outline" onClick={() => { setSelected(null); setEditing(record); }}>Edit placement</Button><Button variant="outline" onClick={() => void remove(record)}>Delete placement</Button></div><dl className="mt-3 space-y-3 text-xs">{Object.entries(record).map(([key, value]) => <div key={key}><dt className="text-muted-foreground">{key.replaceAll('_', ' ')}</dt><dd className="mt-1 whitespace-pre-wrap break-words">{value == null ? 'Not recorded' : typeof value === 'object' ? JSON.stringify(value) : String(value)}</dd></div>)}</dl></details>)}</div>}</SheetContent></Sheet>
@@ -1337,6 +1360,7 @@ function CompaniesList({ kind }: { kind?: "mentor" | "host" } = {}) {
 
 function CompanyPlacements() {
   return <Tabs defaultValue="host" className="bg-ivory">
+    <AdminScreenHeader title="Companies" />
     <div className="overflow-x-auto bg-ivory px-6 py-4"><TabsList aria-label="Company placements"><TabsTrigger value="host">Hosts</TabsTrigger><TabsTrigger value="mentor">Mentors</TabsTrigger></TabsList></div>
     <TabsContent value="host" className="mt-0"><ProviderDirectory kind="host" /></TabsContent>
     <TabsContent value="mentor" className="mt-0"><ProviderDirectory kind="mentor" /></TabsContent>
@@ -1505,12 +1529,15 @@ function VoucherReport() {
   const columns: Col[] = [{ key: "name", label: "Name" }, { key: "code", label: "Code" }, { key: "discount", label: "Discount" }, { key: "available_from", label: "From" }, { key: "available_until", label: "Until" }, { key: "usage_limit", label: "Usage limit" }, { key: "bookings", label: "All bookings" }, { key: "paid_bookings", label: "Paid bookings" }, { key: "cancelled_bookings", label: "Cancelled bookings" }];
   const all = (report.data ?? []) as Record<string, unknown>[];
   const rows = all.filter((row) => [row["name"], row["code"]].some((value) => String(value ?? "").toLowerCase().includes(search.toLowerCase().trim())));
-  return <section className="bg-ivory p-6">
+  return <section className="bg-ivory">
     {editing && <VoucherEditor voucher={editing} known={all} onDone={refresh} onCancel={() => setEditing(null)} />}
-    <div className="flex flex-wrap items-center justify-between gap-4"><h2 className="text-2xl">Vouchers ({rows.length})</h2><Button disabled={report.isPending || !!report.error} onClick={() => setEditing({})}>Add voucher</Button><Button disabled={report.isPending || !!report.error} onClick={() => exportCsv("Voucher report", completeExportColumns(columns, all), all)} variant="outline">Export all</Button></div>
-    <label className="mt-4 block max-w-sm text-sm">Search<input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Voucher name or code" className="mt-1 w-full rounded border border-input bg-background px-3 py-2" /></label>
-    <p className="mt-2 text-xs text-muted-foreground">Counts include all matching bookings; paid and cancelled counts are shown separately.</p>
-    <div className="mt-4 overflow-x-auto [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-track]:bg-muted"><table className="w-full min-w-[850px] text-left text-xs"><thead><tr>{columns.map((column) => <th key={column.key} className="whitespace-nowrap border-b border-border px-3 py-2 font-medium">{column.label}</th>)}<th className="px-3 py-2 font-medium">Actions</th></tr></thead><tbody>
+    <div className="flex flex-wrap items-center justify-between gap-3 bg-ivory px-6 py-6 text-foreground"><h1 className="font-display text-2xl uppercase">Vouchers</h1></div>
+    <div className="flex flex-wrap items-end gap-4 px-6 py-6">
+      <label className="block max-w-sm flex-1 text-sm">Search<input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Voucher name or code" className="mt-1 w-full rounded border border-input bg-background px-3 py-2" /></label>
+      <div className="ml-auto flex flex-wrap gap-2"><Button disabled={report.isPending || !!report.error} onClick={() => setEditing({})}>Add voucher</Button><Button disabled={report.isPending || !!report.error} onClick={() => exportCsv("Voucher report", completeExportColumns(columns, all), all)} variant="outline">Export all</Button></div>
+    </div>
+    <p className="px-6 text-xs text-muted-foreground">Counts include all matching bookings; paid and cancelled counts are shown separately.</p>
+    <div className="mt-4 overflow-x-auto px-6 pb-6 [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-track]:bg-muted"><table className="w-full min-w-[850px] text-left text-xs"><thead><tr>{columns.map((column) => <th key={column.key} className="whitespace-nowrap border-b border-border px-3 py-2 font-medium">{column.label}</th>)}<th className="px-3 py-2 font-medium">Actions</th></tr></thead><tbody>
       {report.isPending ? <tr><td colSpan={columns.length + 1} className="p-4">Loading…</td></tr> : report.error ? <tr><td colSpan={columns.length + 1} role="alert" className="p-4 text-destructive">{report.error.message}</td></tr> : !rows.length ? <tr><td colSpan={columns.length + 1} className="p-4">No vouchers match this search.</td></tr> : rows.map((row) => <tr key={String(row["id"])}>{columns.map((column) => <td key={column.key} className="border-b border-border px-3 py-2">{fmtCell(row[column.key]) || '—'}</td>)}<td className="px-3 py-2"><div className="flex gap-2"><button onClick={() => setEditing(row)} aria-label={'Edit voucher ' + String(row['code'] ?? row['id'])} className="rounded border border-border px-2 py-1">Edit</button><button onClick={() => void removeVoucher(row)} aria-label={'Delete voucher ' + String(row['code'] ?? row['id'])} className="rounded px-2 py-1 text-destructive">Delete</button></div></td></tr>)}
     </tbody></table></div>
   </section>;
@@ -1577,8 +1604,7 @@ function LiveBookings() {
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border bg-background px-6 py-6 text-foreground">
-        <h1 className="text-2xl font-medium">Bookings {!bookings.isLoading && `(${rows.length})`}</h1>
-        <Button onClick={exportCsvNow} disabled={bookings.isLoading || exporting} className="rounded-md bg-teal/20 hover:bg-teal/30 px-4 py-2 text-sm font-medium uppercase text-foreground">{exporting ? "Exporting…" : "Export CSV"}</Button>
+        <h1 className="font-display text-2xl uppercase">Bookings</h1>
       </div>
       <div className="bg-background px-6 py-6 text-foreground">
         <div className="flex flex-wrap items-end gap-6">
@@ -1591,6 +1617,7 @@ function LiveBookings() {
               {label} <span className="ml-1 opacity-70">{(bookings.data ?? []).filter((booking) => !key || booking["status"] === key).length}</span>
             </button>)}
           </div>
+          <Button onClick={exportCsvNow} disabled={bookings.isLoading || exporting} className="ml-auto rounded-md bg-teal/20 hover:bg-teal/30 px-4 py-2 text-sm font-medium uppercase text-foreground">{exporting ? "Exporting…" : "Export CSV"}</Button>
         </div>
         <div className="mt-6 overflow-x-auto [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-track]:bg-muted">
           <table className="w-full min-w-[1100px] text-left text-xs">
