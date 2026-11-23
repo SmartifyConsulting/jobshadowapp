@@ -1,3 +1,4 @@
+import { MentorOnboardingReview } from "@/components/mentor/MentorOnboardingReview";
 import { AccountProfile, useOwnIdentity } from "@/components/account/AccountProfile";
 import type { Database } from "@/integrations/supabase/types";
 import { useCareerAutosave } from "@/lib/use-career-autosave";
@@ -2173,6 +2174,9 @@ function UserDetailPanel({
         <UserFilePreview path={a.id_file_path} label="Uploaded ID" />
         <UserFilePreview path={a.photo_path} label="Uploaded photo" />
       </div>
+      {a.roles.includes("mentor") && (
+        <MentorOnboardingReview key={a.id} userId={a.id} email={a.email} />
+      )}
       <section className="border-t border-border pt-4">
         <h3 className="mb-3 text-xs font-medium">
           Application history {applications.data ? `(${applications.data.length})` : ""}

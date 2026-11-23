@@ -6,7 +6,7 @@ export const HOW_TO_DESTINATIONS = {
   studentForms: "/profile?tab=bookings&step=forms",
   studentExperience: "/profile?tab=bookings&step=experience",
   studentFeedback: "/profile?tab=bookings&step=feedback",
-  providerProfile: "/mentor?section=profile",
+  providerProfile: "/mentor?entry=onboarding&step=profile",
   providerAvailability: "/mentor?section=settings",
   providerBookings: "/mentor?section=shadows",
   providerExperience: "/mentor?section=calendar",

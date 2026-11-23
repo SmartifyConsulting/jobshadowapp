@@ -1,3 +1,5 @@
+import { MentorOnboardingWizard } from "@/components/mentor/MentorOnboardingWizard";
+import { isMentorStep, type MentorOnboardingStep } from "@/lib/mentor-onboarding";
 import { draftMentorProfileFromCv } from "@/lib/mentor-cv.functions";
 import { TimePicker } from "@/components/TimePicker";
 import { displayTime } from "@/lib/time-entry";
@@ -18,7 +20,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Calendar } from "@/components/ui/calendar";
 
 export const Route = createFileRoute("/_authenticated/mentor")({
-  validateSearch: (search: Record<string, unknown>): { section?: Section | undefined } => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { section?: Section | undefined; entry?: "onboarding"; step?: MentorOnboardingStep } => ({
+    ...(search["entry"] === "onboarding" ? { entry: "onboarding" as const } : {}),
+    ...(isMentorStep(search["step"]) ? { step: search["step"] } : {}),
     section: ["calendar", "shadows", "messages", "profile", "professional", "settings"].includes(
       String(search["section"]),
     )
@@ -87,7 +93,8 @@ function todayKey() {
 }
 
 function MentorPortal() {
-  const requestedSection = Route.useSearch().section;
+  const search = Route.useSearch();
+  const requestedSection = search.section;
   const ownIdentity = useOwnIdentity();
   const placements = useQuery({
     queryKey: ["mentor-placements"],
@@ -119,21 +126,47 @@ function MentorPortal() {
     <div className="flex min-h-screen flex-col bg-ivory">
       <SiteHeader />
       <main className="min-w-0 flex-1 p-4 md:p-6">
-        <HostProfile
-          initialTab={
-            requestedSection === "professional"
-              ? "professional"
-              : requestedSection === "settings"
-                ? "availability"
-                : requestedSection === "calendar" || requestedSection === "shadows"
-                  ? "shadows"
-                  : "personal"
-          }
-          bookings={bookings.data ?? []}
-          placements={placements.data ?? []}
-          loadingPlacements={placements.isPending}
-          loadingBookings={bookings.isPending}
-        />
+        {search.entry === "onboarding" && ownIdentity.user.data && profile.data ? (
+          <MentorOnboardingWizard
+            userId={ownIdentity.user.data.id}
+            hostProfile={profile.data}
+            initialStep={search.step}
+            renderProfile={(onDone) => (
+              <HostProfile
+                wizard
+                onProfileCompleted={onDone}
+                bookings={[]}
+                placements={[]}
+                loadingPlacements={false}
+                loadingBookings={false}
+              />
+            )}
+          />
+        ) : (
+          <>
+            <a
+              href="/mentor?entry=onboarding"
+              className="mb-4 inline-block rounded bg-primary px-4 py-2 text-sm text-primary-foreground"
+            >
+              Continue Mentor Onboarding
+            </a>
+            <HostProfile
+              initialTab={
+                requestedSection === "professional"
+                  ? "professional"
+                  : requestedSection === "settings"
+                    ? "availability"
+                    : requestedSection === "calendar" || requestedSection === "shadows"
+                      ? "shadows"
+                      : "personal"
+              }
+              bookings={bookings.data ?? []}
+              placements={placements.data ?? []}
+              loadingPlacements={placements.isPending}
+              loadingBookings={bookings.isPending}
+            />
+          </>
+        )}
       </main>
       <SiteFooter />
     </div>
@@ -414,18 +447,24 @@ function ProfessionalFrame({
 
 function HostProfile({
   initialTab = "personal",
+  wizard = false,
+  onProfileCompleted,
   bookings,
   placements,
   loadingPlacements,
   loadingBookings,
 }: {
   initialTab?: string;
+  wizard?: boolean;
+  onProfileCompleted?: () => void;
   bookings: MentorBooking[];
   placements: Placement[];
   loadingPlacements: boolean;
   loadingBookings: boolean;
 }) {
   const qc = useQueryClient();
+  const ownIdentity = useOwnIdentity(wizard);
+  const [wizardErrors, setWizardErrors] = useState<string[]>([]);
   const draftCv = useServerFn(draftMentorProfileFromCv);
   const initialized = useRef(false);
   const [cvAiBusy, setCvAiBusy] = useState(false);
@@ -533,7 +572,21 @@ function HostProfile({
   }
 
   async function save() {
+    if (wizard) {
+      const missing = [
+        ...(!ownIdentity.profile.data?.first_name?.trim() ? ["First Name"] : []),
+        ...(!ownIdentity.profile.data?.last_name?.trim() ? ["Last Name"] : []),
+        ...(!bio.trim() ? ["Experience / Bio"] : []),
+        ...(!specialties.split(",").some((value) => value.trim()) ? ["Specialties"] : []),
+      ];
+      setWizardErrors(missing);
+      if (missing.length) {
+        if (missing.some((name) => name.includes("Name"))) setProfileTab("personal");
+        return;
+      }
+    }
     if (
+      !wizard &&
       viaCompany &&
       hasHrAdmin &&
       (!hrFirstName.trim() || !hrLastName.trim() || !hrEmail.trim())
@@ -574,12 +627,13 @@ function HostProfile({
     if (error) return setErr(error.message);
     setSaved(saveProfessional);
     setContactSaved(!saveProfessional);
-    qc.invalidateQueries({ queryKey: ["host-profile"] });
+    await qc.invalidateQueries({ queryKey: ["host-profile"] });
+    if (wizard) onProfileCompleted?.();
   }
 
   return (
     <section className="w-full space-y-4 bg-ivory p-4">
-      <h1 className="text-2xl font-bold">Profile</h1>
+      {!wizard && <h1 className="text-2xl font-bold">Profile</h1>}
       <Tabs value={profileTab} onValueChange={setProfileTab}>
         <TabsList
           className="flex h-auto w-full flex-wrap justify-start"
@@ -587,11 +641,24 @@ function HostProfile({
         >
           <TabsTrigger value="personal">Personal Details</TabsTrigger>
           <TabsTrigger value="professional">Professional Details</TabsTrigger>
-          <TabsTrigger value="availability">Preferences</TabsTrigger>
-          <TabsTrigger value="shadows">Bookings</TabsTrigger>
+          {!wizard && (
+            <>
+              <TabsTrigger value="availability">Preferences</TabsTrigger>
+              <TabsTrigger value="shadows">Bookings</TabsTrigger>
+            </>
+          )}
         </TabsList>
         <TabsContent forceMount value="personal" className="mt-4 data-[state=inactive]:hidden">
-          <AccountPersonalDetails />
+          <AccountPersonalDetails
+            onSaved={
+              wizard
+                ? () => {
+                    setWizardErrors([]);
+                    setProfileTab("professional");
+                  }
+                : undefined
+            }
+          />
         </TabsContent>
         <TabsContent value="professional" className="mt-4 grid gap-3 lg:grid-cols-2">
           <ProfessionalFrame title="CV" className="lg:col-span-2">
@@ -659,6 +726,15 @@ function HostProfile({
               <span className="sr-only">Experience / Bio</span>
               <textarea
                 rows={4}
+                aria-invalid={wizardErrors.includes("Experience / Bio")}
+                style={
+                  wizardErrors.includes("Experience / Bio")
+                    ? {
+                        borderColor: "var(--destructive)",
+                        boxShadow: "0 0 0 1px var(--destructive)",
+                      }
+                    : undefined
+                }
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 placeholder="A few sentences about your role and experience."
@@ -672,6 +748,15 @@ function HostProfile({
                 <Award className="h-4 w-4" /> Specialties (comma separated)
               </span>
               <input
+                aria-invalid={wizardErrors.includes("Specialties")}
+                style={
+                  wizardErrors.includes("Specialties")
+                    ? {
+                        borderColor: "var(--destructive)",
+                        boxShadow: "0 0 0 1px var(--destructive)",
+                      }
+                    : undefined
+                }
                 value={specialties}
                 onChange={(e) => setSpecialties(e.target.value)}
                 placeholder="e.g. Corporate law, Contract negotiation"
@@ -811,7 +896,7 @@ function HostProfile({
               {err || "Unable to load your preferences. Please refresh."}
             </p>
           )}
-          <HostSettings />
+          {!wizard && <HostSettings />}
         </TabsContent>
         <TabsContent value="shadows" className="mt-4">
           {loadingBookings ? (
@@ -834,10 +919,23 @@ function HostProfile({
         <button
           onClick={save}
           disabled={busy || profile.isPending || cvAiBusy || cvBusy}
-          className="rounded bg-primary px-5 py-2.5 text-sm font-bold uppercase text-primary-foreground disabled:opacity-50"
+          className={
+            "rounded bg-primary px-5 py-2.5 text-sm font-bold uppercase text-primary-foreground disabled:opacity-50" +
+            (wizard ? " ml-auto block" : "")
+          }
         >
-          {saved ? "Saved" : "Save profile"}
+          {wizard ? "Next" : saved ? "Saved" : "Save profile"}
         </button>
+      )}
+      {wizardErrors.length > 0 && (
+        <div role="alert" className="text-sm text-destructive">
+          <p className="font-bold">Please complete the following required fields:</p>
+          <ul className="list-disc pl-5">
+            {wizardErrors.map((name) => (
+              <li key={name}>Enter {name}.</li>
+            ))}
+          </ul>
+        </div>
       )}
     </section>
   );

@@ -5,7 +5,7 @@ const upsert = vi.hoisted(() => vi.fn().mockResolvedValue({ error: null }));
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: { from: vi.fn(() => ({ upsert })) },
 }));
-import { AccountProfile } from "@/components/account/AccountProfile";
+import { AccountProfile, AccountPersonalDetails } from "@/components/account/AccountProfile";
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
@@ -42,6 +42,32 @@ it("keeps unsaved own names across profile tabs and saves only the signed-in acc
     expect(upsert).toHaveBeenCalledWith(
       expect.objectContaining({ user_id: "self", first_name: "Edited", last_name: "Example" }),
     ),
+  );
+  cache.clear();
+});
+
+it("requires saved first and last names before the mentor wizard advances", async () => {
+  const cache = new QueryClient({
+    defaultOptions: { queries: { retry: false, staleTime: Infinity } },
+  });
+  cache.setQueryData(["me"], { id: "self", email: "self@example.com" });
+  cache.setQueryData(["profile", "self"], {});
+  const next = vi.fn();
+  render(
+    <QueryClientProvider client={cache}>
+      <AccountPersonalDetails onSaved={next} />
+    </QueryClientProvider>,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Next" }));
+  expect(screen.getByLabelText("First Name")).toHaveAttribute("aria-invalid", "true");
+  expect(screen.getByLabelText("Last Name")).toHaveAttribute("aria-invalid", "true");
+  expect(next).not.toHaveBeenCalled();
+  fireEvent.change(screen.getByLabelText("First Name"), { target: { value: "Synthetic" } });
+  fireEvent.change(screen.getByLabelText("Last Name"), { target: { value: "Mentor" } });
+  fireEvent.click(screen.getByRole("button", { name: "Next" }));
+  await waitFor(() => expect(next).toHaveBeenCalledOnce());
+  expect(upsert).toHaveBeenCalledWith(
+    expect.objectContaining({ user_id: "self", first_name: "Synthetic", last_name: "Mentor" }),
   );
   cache.clear();
 });

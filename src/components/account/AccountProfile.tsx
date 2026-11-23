@@ -34,7 +34,7 @@ export function useOwnIdentity(enabled = true) {
 }
 
 /** Uses the existing own-account update and avatar storage paths. No role or permission edits. */
-export function AccountPersonalDetails() {
+export function AccountPersonalDetails({ onSaved }: { onSaved?: (() => void) | undefined } = {}) {
   const { user, profile, pending } = useOwnIdentity();
   const qc = useQueryClient();
   const [names, setNames] = useState<{ first: string; last: string } | null>(null);
@@ -42,6 +42,7 @@ export function AccountPersonalDetails() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [nameErrors, setNameErrors] = useState<string[]>([]);
   const legacy = (profile.data?.display_name ?? "").trim().split(/\s+/);
   const first = names?.first ?? profile.data?.first_name ?? legacy[0] ?? "";
   const last = names?.last ?? profile.data?.last_name ?? legacy.slice(1).join(" ");
@@ -50,6 +51,12 @@ export function AccountPersonalDetails() {
     : null;
   async function save(avatarBlob?: Blob) {
     if (!user.data || busy) return;
+    const missing =
+      onSaved && !avatarBlob
+        ? [!first.trim() ? "First Name" : "", !last.trim() ? "Last Name" : ""].filter(Boolean)
+        : [];
+    setNameErrors(missing);
+    if (missing.length) return;
     setBusy(true);
     setError("");
     setSaved(false);
@@ -75,6 +82,7 @@ export function AccountPersonalDetails() {
       await qc.invalidateQueries({ queryKey: ["profile", user.data.id] });
       void qc.invalidateQueries({ queryKey: ["site-session"] });
       void qc.invalidateQueries({ queryKey: ["school-account", user.data.id] });
+      if (!avatarBlob) onSaved?.();
     } catch (e) {
       setError(
         e instanceof Error ? e.message : "Your details could not be saved. Please try again.",
@@ -126,6 +134,8 @@ export function AccountPersonalDetails() {
         lastName={last}
         originalName={profile.data?.display_name ?? ""}
         disabled={busy}
+        firstNameInvalid={nameErrors.includes("First Name")}
+        lastNameInvalid={nameErrors.includes("Last Name")}
         onChange={(first, last) => {
           setNames({ first, last });
           setSaved(false);
@@ -144,10 +154,23 @@ export function AccountPersonalDetails() {
         type="button"
         disabled={busy}
         onClick={() => void save()}
-        className="rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+        className={
+          "rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50" +
+          (onSaved ? " ml-auto block" : "")
+        }
       >
-        {busy ? "Saving…" : saved ? "Saved" : "Save Personal Details"}
+        {busy ? "Saving…" : onSaved ? "Next" : saved ? "Saved" : "Save Personal Details"}
       </button>
+      {nameErrors.length > 0 && (
+        <div role="alert" className="text-sm text-destructive">
+          <p className="font-bold">Please complete the following required fields:</p>
+          <ul className="list-disc pl-5">
+            {nameErrors.map((name) => (
+              <li key={name}>Enter your {name}.</li>
+            ))}
+          </ul>
+        </div>
+      )}
       {file && (
         <ImageCropModal
           file={file}

@@ -9,7 +9,17 @@ export function useHowToProgress(userId: string | undefined, roles: string[]) {
     queryKey: ["how-to-progress", userId, provider],
     enabled: !!userId,
     queryFn: async () => {
-      const [profile, bookings, placements, hosted, hostProfile, applications] = await Promise.all([
+      const [
+        profile,
+        bookings,
+        placements,
+        hosted,
+        hostProfile,
+        applications,
+        onboarding,
+        vetting,
+        names,
+      ] = await Promise.all([
         supabase.from("scholar_profiles").select("user_id").eq("user_id", userId!).maybeSingle(),
         supabase
           .from("bookings")
@@ -29,8 +39,39 @@ export function useHowToProgress(userId: string | undefined, roles: string[]) {
           .from("partner_applications")
           .select("applicant_type,status")
           .eq("user_id", userId!),
+        provider
+          ? supabase
+              .from("mentor_onboarding_drafts")
+              .select("data")
+              .eq("user_id", userId!)
+              .maybeSingle()
+          : Promise.resolve({ data: null, error: null }),
+        provider
+          ? supabase
+              .from("mentor_onboarding_reviews")
+              .select("*")
+              .eq("user_id", userId!)
+              .maybeSingle()
+          : Promise.resolve({ data: null, error: null }),
+        provider
+          ? supabase
+              .from("profiles")
+              .select("first_name,last_name")
+              .eq("user_id", userId!)
+              .maybeSingle()
+          : Promise.resolve({ data: null, error: null }),
       ]);
-      for (const result of [profile, bookings, placements, hosted, hostProfile, applications])
+      for (const result of [
+        profile,
+        bookings,
+        placements,
+        hosted,
+        hostProfile,
+        applications,
+        onboarding,
+        vetting,
+        names,
+      ])
         if (result.error) throw result.error;
       const ids = [
         ...new Set(
@@ -64,7 +105,27 @@ export function useHowToProgress(userId: string | undefined, roles: string[]) {
         hostBookings: hosted.data ?? [],
         evaluations,
       });
+      const data = onboarding.data?.data;
+      const noLinkedin = !!(
+        data &&
+        typeof data === "object" &&
+        !Array.isArray(data) &&
+        data["linkedin_unavailable"] === true
+      );
       return {
+        mentorOnboarding: [
+          provider,
+          !!names.data?.first_name?.trim() &&
+            !!names.data?.last_name?.trim() &&
+            !!hostProfile.data?.bio?.trim() &&
+            !!hostProfile.data?.specialties?.length,
+          false,
+          !!hostProfile.data?.linkedin_url || noLinkedin,
+          vetting.data?.references_status === "approved",
+          vetting.data?.training_status === "approved",
+          !hostProfile.data?.via_company || vetting.data?.employer_status === "approved",
+          vetting.data?.final_status === "approved",
+        ],
         mentorLinkedin: !!hostProfile.data?.linkedin_url?.trim(),
         student: progress.student,
         mentor: progress.provider.map((done, i) =>

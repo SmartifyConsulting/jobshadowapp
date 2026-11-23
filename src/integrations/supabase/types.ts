@@ -8,6 +8,44 @@ export type Database = {
   };
   public: {
     Tables: {
+      mentor_onboarding_drafts: {
+        Row: { user_id: string; current_step: string; data: Json; updated_at: string };
+        Insert: { user_id: string; current_step?: string; data?: Json; updated_at?: string };
+        Update: { user_id?: string; current_step?: string; data?: Json; updated_at?: string };
+        Relationships: [];
+      };
+      mentor_onboarding_reviews: {
+        Row: {
+          user_id: string;
+          references_status: string;
+          training_status: string;
+          employer_status: string;
+          final_status: string;
+          notes: Json;
+          reviewed_by: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          references_status?: string;
+          training_status?: string;
+          employer_status?: string;
+          final_status?: string;
+          notes?: Json;
+          reviewed_by?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          references_status?: string;
+          training_status?: string;
+          employer_status?: string;
+          final_status?: string;
+          notes?: Json;
+          reviewed_by?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       placement_day_times: {
         Row: { placement_id: number; available_on: string; from_time: string; to_time: string };
         Insert: { placement_id: number; available_on: string; from_time: string; to_time: string };
@@ -1235,6 +1273,18 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      review_mentor_onboarding: {
+        Args: {
+          _user_id: string;
+          _references_status: string;
+          _training_status: string;
+          _employer_status: string;
+          _final_status: string;
+          _notes: Json;
+          _expected_updated_at?: string;
+        };
+        Returns: undefined;
+      };
       get_placement_day_times: {
         Args: { _id: number };
         Returns: { available_on: string; from_time: string | null; to_time: string | null }[];

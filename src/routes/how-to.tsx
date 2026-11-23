@@ -240,26 +240,36 @@ function HowTo() {
     guides.some(([key]) => key === selectedView.view)
       ? selectedView.view
       : defaultView;
-  const onboarding = [
-    !!progress.data?.mentor[0],
-    !!progress.data?.mentor[1],
-    !!session?.user?.email_confirmed_at,
-    !!progress.data?.mentorLinkedin,
-    false,
-    false,
-    false,
-    false,
-  ];
+  const onboarding = progress.data?.mentorOnboarding
+    ? progress.data.mentorOnboarding.map((done, index) =>
+        index === 2 ? !!session?.user?.email_confirmed_at : done,
+      )
+    : [
+        !!progress.data?.mentor[0],
+        !!progress.data?.mentor[1],
+        !!session?.user?.email_confirmed_at,
+        !!progress.data?.mentorLinkedin,
+        false,
+        false,
+        false,
+        false,
+      ];
   const onboardingLinks = [
-    session?.user ? destination("providerProfile") : "/register",
-    destination("providerProfile"),
-    "/my-account?view=profile",
-    session?.user ? "/mentor?section=professional" : destination("providerProfile"),
-    "/contact?type=mentor",
-    "/contact?type=mentor",
-    "/contact?type=mentor",
-    "/contact?type=mentor",
-  ];
+    "profile",
+    "profile",
+    "email",
+    "linkedin",
+    "references",
+    "training",
+    "employer",
+    "review",
+  ].map((step) =>
+    session?.user
+      ? "/mentor?entry=onboarding&step=" + step
+      : step === "profile"
+        ? "/register"
+        : "/auth?go=providerProfile",
+  );
   const content = {
     scholar: {
       steps: STUDENT_STEPS,
