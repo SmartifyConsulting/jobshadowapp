@@ -1,7 +1,7 @@
 import { getCareerIdealFor } from "./career-ideal-for";
 import { careerKey, cleanSkills, getCareerSkills } from "./career-skills";
 
-type SavedGuidance = { [key: string]: unknown; ideal_for?: unknown; specialisations?: unknown; subjects?: unknown; school_skills?: unknown; workplace_skills?: unknown; interpersonal_skills?: unknown; recommended_courses?: unknown; future_outlook?: unknown };
+type SavedGuidance = { [key: string]: unknown; ideal_for?: unknown; specialisations?: unknown; subjects?: unknown; school_skills?: unknown; workplace_skills?: unknown; interpersonal_skills?: unknown; recommended_courses?: unknown; self_directed_learning?: unknown; future_outlook?: unknown; ai_exposure_level?: unknown; ai_exposure_note?: unknown };
 const specialties: Record<string, string[]> = {
   accountant: ["Financial Accountant", "Management Accountant", "Tax Accountant", "Auditor", "Forensic Accountant", "Public Sector Accountant"],
   mechanicalengineer: ["Design Engineering", "Manufacturing Engineering", "Thermal Engineering", "Maintenance Engineering", "Mechatronics"],
@@ -35,6 +35,9 @@ export function getCareerGuidance(name: string, description: string, saved: Save
     subjects: saved.subjects == null ? [...subjects] : cleanSkills(saved.subjects),
     interpersonalSkills: saved.interpersonal_skills == null ? [] : cleanSkills(saved.interpersonal_skills),
     recommendedCourses: saved.recommended_courses == null ? [] : cleanSkills(saved.recommended_courses),
+    selfDirectedLearning: saved.self_directed_learning == null ? [] : cleanSkills(saved.self_directed_learning),
     futureOutlook: typeof saved.future_outlook === "string" ? saved.future_outlook : "",
+    aiExposureLevel: saved.ai_exposure_level === "low" || saved.ai_exposure_level === "medium" || saved.ai_exposure_level === "high" ? saved.ai_exposure_level : null,
+    aiExposureNote: typeof saved.ai_exposure_note === "string" ? saved.ai_exposure_note : "",
   };
 }

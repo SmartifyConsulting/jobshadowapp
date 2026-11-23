@@ -189,7 +189,11 @@ export type Database = {
           location: string | null
           mentor_reminders_sent: number[]
           mode: string | null
+          no_show_by: string | null
+          no_show_reason: string | null
           paid_at: string | null
+          refund_credited_at: string | null
+          refund_status: string
           reminder_sent_at: string | null
           scholar_reminders_sent: number[]
           sector: string | null
@@ -222,7 +226,11 @@ export type Database = {
           location?: string | null
           mentor_reminders_sent?: number[]
           mode?: string | null
+          no_show_by?: string | null
+          no_show_reason?: string | null
           paid_at?: string | null
+          refund_credited_at?: string | null
+          refund_status?: string
           reminder_sent_at?: string | null
           scholar_reminders_sent?: number[]
           sector?: string | null
@@ -255,7 +263,11 @@ export type Database = {
           location?: string | null
           mentor_reminders_sent?: number[]
           mode?: string | null
+          no_show_by?: string | null
+          no_show_reason?: string | null
           paid_at?: string | null
+          refund_credited_at?: string | null
+          refund_status?: string
           reminder_sent_at?: string | null
           scholar_reminders_sent?: number[]
           sector?: string | null
@@ -307,6 +319,8 @@ export type Database = {
       }
       careers: {
         Row: {
+          ai_exposure_level: string | null
+          ai_exposure_note: string | null
           archived: boolean
           description: string | null
           future_outlook: string | null
@@ -317,11 +331,14 @@ export type Database = {
           portrayed_availability: number
           recommended_courses: string[]
           school_skills: string[] | null
+          self_directed_learning: string[]
           specialisations: string[] | null
           subjects: string[] | null
           workplace_skills: string[] | null
         }
         Insert: {
+          ai_exposure_level?: string | null
+          ai_exposure_note?: string | null
           archived?: boolean
           description?: string | null
           future_outlook?: string | null
@@ -332,11 +349,14 @@ export type Database = {
           portrayed_availability?: number
           recommended_courses?: string[]
           school_skills?: string[] | null
+          self_directed_learning?: string[]
           specialisations?: string[] | null
           subjects?: string[] | null
           workplace_skills?: string[] | null
         }
         Update: {
+          ai_exposure_level?: string | null
+          ai_exposure_note?: string | null
           archived?: boolean
           description?: string | null
           future_outlook?: string | null
@@ -347,6 +367,7 @@ export type Database = {
           portrayed_availability?: number
           recommended_courses?: string[]
           school_skills?: string[] | null
+          self_directed_learning?: string[]
           specialisations?: string[] | null
           subjects?: string[] | null
           workplace_skills?: string[] | null
@@ -1092,6 +1113,51 @@ export type Database = {
         }
         Relationships: []
       }
+      wallets: {
+        Row: {
+          balance: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          booking_id: string | null
+          created_at: string
+          id: string
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          booking_id?: string | null
+          created_at?: string
+          id?: string
+          reason: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string | null
+          created_at?: string
+          id?: string
+          reason?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vouchers: {
         Row: {
           available_from: string | null
@@ -1185,6 +1251,22 @@ export type Database = {
       complete_and_request_evaluations: { Args: never; Returns: undefined }
       confirm_test_payment: { Args: { _booking: string }; Returns: undefined }
       copy_companies_to_year: { Args: { _from_year: number; _to_year: number }; Returns: number }
+      get_my_wallet_balance: { Args: never; Returns: number }
+      report_mentor_no_show: { Args: { _booking: string }; Returns: undefined }
+      report_scholar_no_show: { Args: { _booking: string; _reason: string }; Returns: undefined }
+      admin_review_no_show_refund: { Args: { _approve: boolean; _booking: string }; Returns: undefined }
+      admin_list_pending_refunds: {
+        Args: never
+        Returns: {
+          amount_due: number
+          career: string | null
+          company: string | null
+          id: string
+          no_show_reason: string | null
+          scholar_name: string | null
+          shadow_date: string
+        }[]
+      }
       email_company_bee_report: {
         Args: { _hr_email: string }
         Returns: undefined
@@ -1425,6 +1507,8 @@ export type Database = {
       list_public_careers: {
         Args: never
         Returns: {
+          ai_exposure_level: string | null
+          ai_exposure_note: string | null
           description: string | null
           future_outlook: string | null
           id: number
@@ -1432,6 +1516,7 @@ export type Database = {
           name: string
           portrayed_availability: number
           recommended_courses: string[]
+          self_directed_learning: string[]
         }[]
       }
       list_placements: {

@@ -2150,7 +2150,7 @@ function EditRecord({ title, table, cols, row, onDone, onCancel }: { title: stri
   );
 }
 
-export function CareerDescriptionField({ career, value, onChange, skills, onSkillsChange, guidance, onGuidanceChange, onDraft }: { career: string; value: string; onChange: (v: string) => void; skills: { school: string[]; workplace: string[] }; onSkillsChange: (skills: { school: string[]; workplace: string[] }) => void; guidance: ReturnType<typeof getCareerGuidance>; onGuidanceChange: (patch: { ideal_for?: string; specialisations?: string[]; subjects?: string[]; interpersonal_skills?: string[]; recommended_courses?: string[]; future_outlook?: string }) => void; onDraft: (draft: CareerDraft) => void }) {
+export function CareerDescriptionField({ career, value, onChange, skills, onSkillsChange, guidance, onGuidanceChange, onDraft }: { career: string; value: string; onChange: (v: string) => void; skills: { school: string[]; workplace: string[] }; onSkillsChange: (skills: { school: string[]; workplace: string[] }) => void; guidance: ReturnType<typeof getCareerGuidance>; onGuidanceChange: (patch: { ideal_for?: string; specialisations?: string[]; subjects?: string[]; interpersonal_skills?: string[]; recommended_courses?: string[]; self_directed_learning?: string[]; future_outlook?: string; ai_exposure_level?: "low" | "medium" | "high" | null; ai_exposure_note?: string }) => void; onDraft: (draft: CareerDraft) => void }) {
   const draft = useServerFn(draftCareerDescription);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -2178,8 +2178,17 @@ export function CareerDescriptionField({ career, value, onChange, skills, onSkil
       </fieldset>
       <div className="mt-4 space-y-4"><label className="block text-sm">Ideal for<textarea rows={3} value={guidance.idealFor} onChange={(e) => onGuidanceChange({ ideal_for: e.target.value })} className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary" /></label>
         {([['specialisations', 'Specialisations & Roles'], ['subjects', 'Suggested Subjects']] as const).map(([key, label]) => <label key={key} className="block text-sm">{label}<input value={guidance[key].join(', ')} onChange={(e) => onGuidanceChange({ [key]: e.target.value.split(',').map((value) => value.trimStart()) })} onBlur={() => onGuidanceChange({ [key]: guidance[key].map((value) => value.trim()).filter(Boolean) })} className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary" /></label>)}
-        {([['interpersonalSkills', 'interpersonal_skills', 'Interpersonal Skills'], ['recommendedCourses', 'recommended_courses', 'Recommended Courses']] as const).map(([guidanceKey, patchKey, label]) => <label key={guidanceKey} className="block text-sm">{label}<input value={guidance[guidanceKey].join(', ')} onChange={(e) => onGuidanceChange({ [patchKey]: e.target.value.split(',').map((value) => value.trimStart()) })} onBlur={() => onGuidanceChange({ [patchKey]: guidance[guidanceKey].map((value) => value.trim()).filter(Boolean) })} className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary" /></label>)}
+        {([['interpersonalSkills', 'interpersonal_skills', 'Interpersonal Skills'], ['recommendedCourses', 'recommended_courses', 'Recommended Courses'], ['selfDirectedLearning', 'self_directed_learning', 'Explore On Your Own (self-directed)']] as const).map(([guidanceKey, patchKey, label]) => <label key={guidanceKey} className="block text-sm">{label}<input value={guidance[guidanceKey].join(', ')} onChange={(e) => onGuidanceChange({ [patchKey]: e.target.value.split(',').map((value) => value.trimStart()) })} onBlur={() => onGuidanceChange({ [patchKey]: guidance[guidanceKey].map((value) => value.trim()).filter(Boolean) })} className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary" /></label>)}
         <label className="block text-sm">Future of this Career<textarea rows={2} value={guidance.futureOutlook} onChange={(e) => onGuidanceChange({ future_outlook: e.target.value })} className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary" /></label>
+        <label className="block text-sm">AI Exposure Level
+          <select value={guidance.aiExposureLevel ?? ""} onChange={(e) => onGuidanceChange({ ai_exposure_level: (e.target.value || null) as "low" | "medium" | "high" | null })} className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary">
+            <option value="">Not set</option>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </label>
+        <label className="block text-sm">AI Exposure Note<textarea rows={2} value={guidance.aiExposureNote} onChange={(e) => onGuidanceChange({ ai_exposure_note: e.target.value })} className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary" /></label>
       </div>
       {err && <p className="mt-1 text-xs text-destructive">{err}</p>}
     </div>

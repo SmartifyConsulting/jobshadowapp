@@ -155,7 +155,7 @@ describe("Visible provider directories and career wizard", () => {
     client.setQueryData(['admin', 'company-contact-classification'], []);
     client.setQueryData(['admin', 'sectors', false], []);
     client.setQueryData(['admin', 'careers', false], [{ id: 1, name: 'Accountant', description: 'Original description' }]);
-    const draft = { description: 'Draft overview', ideal_for: 'Draft ideal person', specialisations: ['Draft role'], subjects: ['Accounting'], school_skills: ['Numeracy'], workplace_skills: ['Financial reporting'], interpersonal_skills: ['Teamwork'], recommended_courses: ['BCom Accounting'], future_outlook: 'Automation will shift the role toward advisory work.' };
+    const draft = { description: 'Draft overview', ideal_for: 'Draft ideal person', specialisations: ['Draft role'], subjects: ['Accounting'], school_skills: ['Numeracy'], workplace_skills: ['Financial reporting'], interpersonal_skills: ['Teamwork'], recommended_courses: ['BCom Accounting'], self_directed_learning: ['Free bookkeeping course on Alison'], future_outlook: 'Automation will shift the role toward advisory work.', ai_exposure_level: 'medium' as const, ai_exposure_note: 'AI already drafts routine entries; judgement and client trust stay human.' };
     vi.mocked(draftCareerDescription).mockResolvedValue(draft);
     const Page = Route.options.component as () => React.JSX.Element;
     render(<QueryClientProvider client={client}><Page /></QueryClientProvider>);

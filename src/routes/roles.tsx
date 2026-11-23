@@ -234,7 +234,7 @@ function Roles() {
                         </div>
                         {open && (
                           <div className="mt-2 pl-9">
-                            <CareerGuidance name={r.title} description={description} saved={savedContent.data?.find((row) => careerKey(row.name) === careerKey(r.title)) ?? {}} />
+                            <CareerGuidance name={r.title} description={description} saved={{ ...(adminCareers.data?.find((row) => careerKey(row.name) === careerKey(r.title)) ?? {}), ...(savedContent.data?.find((row) => careerKey(row.name) === careerKey(r.title)) ?? {}) }} />
                             {r.video && <div className="mt-3 max-w-xl"><YouTube id={r.video} title={r.title} /></div>}
                             {count > 0 && (
                               <Link to="/auth" className="mt-3 inline-block rounded-full bg-cta px-5 py-2 text-xs font-semibold uppercase tracking-wider text-cta-foreground">Book this Job Shadow</Link>
