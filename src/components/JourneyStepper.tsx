@@ -44,8 +44,8 @@ export function JourneyStepper({
             aria-current={active === step.id ? "step" : undefined}
             onClick={() => onChange(step.id)}
             className={
-              (fit ? "min-w-0 " : "min-w-[8.5rem] ") +
-              "flex min-h-24 flex-1 flex-col items-center gap-2 rounded-lg border px-3 py-3 text-center disabled:opacity-40 " +
+              (fit ? "min-w-0 min-h-12 flex-row px-2 py-1.5 " : "min-w-[8.5rem] min-h-24 flex-col px-3 py-3 ") +
+              "flex flex-1 items-center gap-2 rounded-lg border text-center disabled:opacity-40 " +
               (active === step.id
                 ? "border-primary bg-accent text-accent-foreground"
                 : "border-border bg-ivory text-foreground")
