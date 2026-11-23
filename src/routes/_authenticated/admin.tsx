@@ -126,7 +126,7 @@ function AdminPage() {
       <aside className="w-60 shrink-0 border-r border-primary/20 bg-accent text-accent-foreground shadow-warm">
         <p className="px-5 pb-3 pt-6 text-xs font-bold uppercase tracking-widest text-foreground/70">Admin Portal</p>
         <nav className="space-y-1 px-3 pb-6">
-          {TABLES.filter((t) => !["sectors", "vouchers", "bookings", "evaluations", "apps"].includes(t.id)).map((t) => (
+          {TABLES.filter((t) => !["sectors", "vouchers", "bookings", "evaluations", "apps", "companies"].includes(t.id)).map((t) => (
             <button key={t.id} onClick={() => setActive(t.id)} className={`flex w-full items-center gap-3 rounded-md border-l-2 px-3 py-2.5 text-left text-sm font-medium transition ${active === t.id ? "border-primary bg-primary/10 text-foreground" : "border-transparent text-foreground/85 hover:bg-primary/5 hover:text-foreground"}`}>
               <t.icon className="h-4 w-4" /> {t.label}
             </button>
@@ -897,6 +897,7 @@ export function AdminUsers() {
   const [createOpen, setCreateOpen] = useState(false);
   const FREE_MAIL = new Set(["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "icloud.com", "live.com", "webmail.co.za", "mweb.co.za", "telkomsa.net", "vodamail.co.za"]);
   const [roleTab, setRoleTab] = useState<AccountRow["roles"][number] | "unclassified">("user");
+  const [mentorKind, setMentorKind] = useState<"company"|"independent">("company");
   const isUnclassified = roleTab === "unclassified";
   const accountRole = isUnclassified ? "user" : roleTab;
   const mentorCompanies = useQuery({ queryKey: ["admin", "company-contact-classification"], queryFn: () => fetchAllRows(async (from, to) => { const result = await supabase.from("companies").select("company,mentor_name,mentor_email,backup_mentor_name,backup_mentor_email").order("id").range(from, to); if (result.error) throw result.error; return result.data ?? []; }) });
@@ -972,25 +973,27 @@ export function AdminUsers() {
     return (accounts.data ?? [])
       .filter((a) => {
         if (!matchesRole(a)) return false;
+        if (roleTab === "mentor" && isIndependentMentor(a) !== (mentorKind === "independent")) return false;
         if (!showSpam && a.is_spam) return false;
         if (s && ![a.email, a.display_name, a.full_name, a.contact_no, a.school, a.id_number, ...a.roles.map((role) => ROLE_LABELS[role])].some((v) => (v ?? "").toLowerCase().includes(s))) return false;
         if (letter && accountInitial(a) !== letter) return false;
         return true;
       })
       .sort((a, b) => (a.display_name || a.full_name || a.email || "").localeCompare(b.display_name || b.full_name || b.email || ""));
-  }, [accounts.data, q, showSpam, letter, accountRole, isUnclassified, soleMentors, roleTab]);
+  }, [accounts.data, q, showSpam, letter, accountRole, isUnclassified, soleMentors, roleTab, mentorKind]);
 
 
   const letterCounts = useMemo(() => {
     const counts = new Map<string, number>();
     (accounts.data ?? []).forEach((a) => {
       if (!matchesRole(a)) return;
+      if (roleTab === "mentor" && isIndependentMentor(a) !== (mentorKind === "independent")) return;
       if (!showSpam && a.is_spam) return;
       const first = accountInitial(a);
       if (first) counts.set(first, (counts.get(first) ?? 0) + 1);
     });
     return counts;
-  }, [accounts.data, showSpam, accountRole, isUnclassified, soleMentors, roleTab]);
+  }, [accounts.data, showSpam, accountRole, isUnclassified, soleMentors, roleTab, mentorKind]);
 
   return (
     <div>
@@ -1018,6 +1021,8 @@ export function AdminUsers() {
         <div className="overflow-x-auto bg-ivory px-6 py-4"><TabsList aria-label="User Type">{([["user", "Scholars"], ["mentor", "Mentors"], ["school", "Schools"], ["admin", "Admin"]] as const).map(([role, name]) => <TabsTrigger key={role} value={role}>{name} ({role === "school" ? schoolDirectory(accounts.data ?? []).length : (accounts.data ?? []).filter((user) => matchesRole(user, role) && (showSpam || !user.is_spam)).length})</TabsTrigger>)}</TabsList></div>
       <TabsContent value={roleTab} className="mt-0">
       {roleTab === "school" ? <SchoolsDirectory accounts={accounts.data ?? []} onAdd={() => setCreateOpen(true)} onEdit={(account) => setEditing({ ...account, roles: [...account.roles] })} onDelete={deleteAccountRow} busyId={busyId} /> : <>
+      {roleTab === "mentor" && <div className="bg-ivory px-4 pt-3"><Tabs value={mentorKind} onValueChange={(value) => { setMentorKind(value as "company"|"independent"); setLetter(null); setOpenGroups([]); setSelectedId(null); }}><TabsList aria-label="Mentor type"><TabsTrigger value="company">Company</TabsTrigger><TabsTrigger value="independent">Independent</TabsTrigger></TabsList></Tabs><ProviderDirectory key={mentorKind} kind="mentor" year={null} mentorType={mentorKind} /></div>}
+      <MentorAccountGroup collapsed={roleTab === "mentor"} count={rows.length}>
       <div className="flex flex-col items-start xl:flex-row">
       <div className={'min-w-0 w-full flex-1 px-4 py-2 text-foreground ' + 'bg-ivory'}>
         <div className="flex flex-wrap gap-1.5">
@@ -1087,12 +1092,15 @@ export function AdminUsers() {
       </div>
       {selectedAccount && <UserDetailPanel account={selectedAccount} mentorInfo={mentorClassifications.data?.find((row) => row.mentor_email.trim().toLowerCase() === (selectedAccount.email ?? "").trim().toLowerCase())} onClose={() => setSelectedId(null)} onEdit={() => setEditing({ ...selectedAccount, roles: [...selectedAccount.roles] })} />}
       </div>
+      </MentorAccountGroup>
       </>}
       </TabsContent>
       </Tabs>
     </div>
   );
 }
+
+function MentorAccountGroup({collapsed,count,children}:{collapsed:boolean;count:number;children:React.ReactNode}) { return collapsed ? <details className="border-t border-border bg-ivory"><summary className="cursor-pointer px-4 py-3 text-sm font-medium">Registered mentor accounts ({count})</summary>{children}</details> : <>{children}</>; }
 
 type EmailRow = { id: string; recipient: string | null; subject: string; body: string; template: string; status: string; created_at: string };
 
@@ -1327,7 +1335,7 @@ const BOOKING_STATUS_LABELS: Record<string, string> = { awaiting_payment: "Await
 
 
 
-function ProviderDirectory({ kind, year }: { kind: "mentor" | "host"; year: number | null }) {
+function ProviderDirectory({ kind, year, mentorType = "independent" }: { kind: "mentor" | "host"; year: number | null; mentorType?: "company"|"independent" }) {
   const qc = useQueryClient();
   const config = TABLES.find((entry) => entry.id === "companies")!;
   const data = useQuery({ queryKey: ["admin", "companies", false], queryFn: () => fetchAllRows(async (from, to) => { const result = await supabase.from("companies").select("*").order("id", { ascending: false }).range(from, to); if (result.error) throw result.error; return result.data ?? []; }) });
@@ -1342,7 +1350,7 @@ function ProviderDirectory({ kind, year }: { kind: "mentor" | "host"; year: numb
   const all = (data.data ?? []).filter((row) => year === null || row["year"] === year);
   const mentors = mentorGroups(all);
   const hostKeys = new Set(providerGroups(all).filter((group) => group.kind === 'host').map((group) => group.key));
-  const groups = (kind === 'mentor' ? mentors.filter((m) => !hostKeys.has(companyKey(m.company))) : providerGroups(all).filter((group) => group.kind === 'host')).sort((a, b) => (kind === 'mentor' ? a.names[0] || a.company : a.company).localeCompare(kind === 'mentor' ? b.names[0] || b.company : b.company));
+  const groups = (kind === 'mentor' ? mentors.filter((m) => mentorType === 'company' ? hostKeys.has(companyKey(m.company)) : !hostKeys.has(companyKey(m.company))) : providerGroups(all).filter((group) => group.kind === 'host')).sort((a, b) => (kind === 'mentor' ? a.names[0] || a.company : a.company).localeCompare(kind === 'mentor' ? b.names[0] || b.company : b.company));
   const initial = (group: typeof groups[number]) => alphabetInitial(kind === 'mentor' ? group.names[0] || group.company : group.company);
   const matches = groups.filter((group) => (!letter || initial(group) === letter) && (!search.trim() || [group.company, ...group.names, ...group.emails, ...group.careers].join(' ').toLowerCase().includes(search.trim().toLowerCase())));
   const detail = groups.find((group) => group.key === selected);
@@ -1355,7 +1363,7 @@ function ProviderDirectory({ kind, year }: { kind: "mentor" | "host"; year: numb
   if (editing) return <EditRecord title="Companies" table="companies" cols={config.cols} row={editing} onDone={refresh} onCancel={() => setEditing(null)} />;
   if (creating) return <CreateRole onDone={refresh} onCancel={() => setCreating(false)} />;
   return <section className="bg-ivory">
-    <div className="flex flex-wrap items-center justify-between gap-3 bg-ivory px-6 py-6 text-foreground"><h1 className="font-display text-2xl uppercase">{kind === 'mentor' ? 'Mentors' : 'Hosts'}</h1></div>
+    <div className="flex flex-wrap items-center justify-between gap-3 bg-ivory px-6 py-6 text-foreground"><h1 className="font-display text-2xl uppercase">{kind === 'mentor' ? mentorType === 'company' ? 'Company Mentors' : 'Independent Mentors' : 'Hosts'}</h1></div>
     <div className="space-y-3 px-4 py-3"><div className="flex flex-wrap gap-1.5" aria-label="Filter providers alphabetically">{['All', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')].map((ch) => <button key={ch} disabled={ch !== 'All' && !groups.some((group) => initial(group) === ch)} aria-pressed={ch === 'All' ? !letter : letter === ch} onClick={() => { setLetter(ch === 'All' ? null : ch); setOpen(ch === 'All' ? [] : [ch]); }} className={'rounded-full px-2.5 py-1.5 text-xs font-medium uppercase transition disabled:opacity-30 ' + ((ch === 'All' ? !letter : letter === ch) ? 'bg-primary text-primary-foreground' : 'bg-muted/70 text-foreground hover:bg-teal/20')}>{ch}</button>)}</div>
     <div className="flex flex-wrap items-end gap-4"><label className="block max-w-sm flex-1 text-sm">Search<input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name, company, email or career" className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></label><div className="ml-auto flex flex-wrap gap-2"><Button onClick={() => setCreating(true)}>Add placement</Button><Button variant="outline" disabled={data.isPending || !!data.error} onClick={() => exportCsv('Company contacts full', completeExportColumns(config.cols, all), all)}>Export all</Button></div></div>
     {err && <p role="alert" className="text-sm text-destructive">{err}</p>}

@@ -106,6 +106,9 @@ describe("User alphabet chips", () => {
     const client = mount([school]);
     expect(screen.getByRole("heading", { name: "Users" })).toBeVisible();
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Mentors (2)" }), { button: 0 });
+    expect(screen.getByRole("tab", {name:"Company"})).toBeVisible();
+    expect(screen.getByRole("tab", {name:"Independent"})).toBeVisible();
+    fireEvent.click(screen.getByText("Registered mentor accounts (2)"));
     fireEvent.click(screen.getAllByRole("button", { name: "A" }).at(-1)!);
     expect(screen.getByRole("button", { name: "View details for Alice Brown" })).toBeVisible();
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Schools (0)" }), { button: 0 });
@@ -176,6 +179,8 @@ describe("Visible provider directories and career wizard", () => {
     const solo = { ...account("solo", "Solo Person"), email: "solo@example.com", role: null, roles: [] as AccountRow["roles"] };
     const client = mount([solo]);
     fireEvent.mouseDown(screen.getByRole('tab', { name: 'Mentors (3)' }), { button: 0 });
+    fireEvent.mouseDown(screen.getByRole('tab', {name:'Independent'}), {button:0});
+    fireEvent.click(screen.getByText('Registered mentor accounts (1)'));
     fireEvent.click(screen.getAllByRole('button', { name: 'S' }).at(-1)!);
     expect(screen.getByRole('button', { name: 'View details for Solo Person' })).toBeVisible();
     expect(screen.queryByRole('tab', { name: /Unclassified/ })).not.toBeInTheDocument();
