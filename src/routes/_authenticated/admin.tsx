@@ -5738,6 +5738,22 @@ export function CareerDescriptionField({
       )}
       <fieldset disabled={busy}>
         <label className="mt-1 block text-sm">
+          Role Overview
+          <textarea
+            rows={3}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder="A brief description of this career"
+            className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary"
+          />
+        </label>
+        {value && (
+          <details className="mt-1 rounded bg-muted/40 p-2 text-sm">
+            <summary className="cursor-pointer">Preview description</summary>
+            <RichText text={value} />
+          </details>
+        )}
+        <label className="mt-1 block text-sm">
           Specialisations &amp; Roles
           <input
             value={guidance.specialisations.join(", ")}
@@ -5756,19 +5772,6 @@ export function CareerDescriptionField({
             className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary"
           />
         </label>
-        <textarea
-          rows={3}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="A brief description of this career"
-          className="mt-1 w-full rounded border border-input bg-transparent px-2 py-2 text-sm outline-none focus:border-primary"
-        />
-        {value && (
-          <details className="mt-1 rounded bg-muted/40 p-2 text-sm">
-            <summary className="cursor-pointer">Preview description</summary>
-            <RichText text={value} />
-          </details>
-        )}
         <fieldset className="mt-3 grid gap-3 rounded border border-border p-3 sm:grid-cols-3">
           <legend className="px-1 text-sm font-semibold">Skills Required</legend>
           <p className="text-xs text-muted-foreground sm:col-span-3">
