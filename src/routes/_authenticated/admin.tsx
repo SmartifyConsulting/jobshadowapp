@@ -876,8 +876,8 @@ export function AdminUsers() {
     const isSoleMentorEmail = soleMentors.has(email);
     if (tab === "unclassified") return a.roles.length === 0 && !isSoleMentorEmail;
     if (tab === "individual_mentor") return isSoleMentorEmail && (a.roles.length === 0 || a.roles.includes("mentor"));
-    if (tab === "mentor") return a.roles.includes("mentor") && !isSoleMentorEmail;
-    if (tab === "admin") return a.roles.includes("admin") || a.roles.includes("hr_admin");
+    if (tab === "mentor") return (a.roles.includes("mentor") && !isSoleMentorEmail) || a.roles.includes("hr_admin");
+    if (tab === "admin") return a.roles.includes("admin");
     return a.roles.includes(tab);
   };
   const [showSpam, setShowSpam] = useState(false);
