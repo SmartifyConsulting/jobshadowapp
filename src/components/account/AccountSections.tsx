@@ -1964,7 +1964,11 @@ export function NewBooking({
             onClick={() => setStep(step + 1)}
             disabled={!canContinue}
           >
-            {initialCareer ? `Continue to ${titles[step]}` : `Continue to Step ${step + 1}`}
+            {initialCareer
+              ? step === 3
+                ? "Continue to Payment"
+                : `Continue to ${titles[step]}`
+              : `Continue to Step ${step + 1}`}
           </Button>
         ) : (
           <button

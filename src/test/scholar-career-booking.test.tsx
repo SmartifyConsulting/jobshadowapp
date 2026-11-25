@@ -119,6 +119,6 @@ describe("guided career and host selection", () => {
     expect(screen.getAllByRole("radio")).toHaveLength(2);
     expect(screen.queryByText("London")).toBeNull();
     fireEvent.click(screen.getAllByRole("radio")[0]!);
-    expect(screen.getByRole("button", { name: "Continue to Placement Details" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Continue to Payment" })).toBeEnabled();
   });
 });
