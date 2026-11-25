@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ROLES } from "@/lib/data";
 import { getCareerDescription } from "@/lib/career-descriptions";
 import { careerKey } from "@/lib/career-skills";
+import { guessCareerField, guessCareerDivision } from "@/lib/career-field";
 import { CareerGuidance } from "@/components/CareerGuidance";
 import { supabase } from "@/integrations/supabase/client";
 import { YouTube } from "@/components/YouTube";
@@ -40,16 +41,18 @@ export function CareerStepBrowser({
         list.push({
           title: career.name,
           summary: career.description || "",
-          field: "Other Careers",
+          field: career.field?.trim() || guessCareerField(career.name, career.description),
           idealFor: "",
           video: null,
           slug: "other-" + careerKey(career.name),
         });
         known.add(careerKey(career.name));
       }
-    return list.sort((a, b) => a.title.localeCompare(b.title));
+    return list
+      .map((role) => ({ ...role, division: guessCareerDivision(role.title, role.field, role.summary) }))
+      .sort((a, b) => a.title.localeCompare(b.title));
   }, [catalogue.data]);
-  const groups = new Map<string, typeof roles>();
+  const groups = new Map<string, Map<string, typeof roles>>();
   const selectedRole = roles.find((role) => role.title === selected);
   const contentFor = (title: string) => ({
     ...catalogue.data?.find((row) => careerKey(row.name) === careerKey(title)),
@@ -58,8 +61,14 @@ export function CareerStepBrowser({
   for (const role of roles.filter((role) =>
     (role.title + " " + role.field).toLowerCase().includes(search.toLowerCase()),
   )) {
-    groups.set(role.field, [...(groups.get(role.field) ?? []), role]);
+    const byDivision = groups.get(role.field) ?? new Map<string, typeof roles>();
+    byDivision.set(role.division, [...(byDivision.get(role.division) ?? []), role]);
+    groups.set(role.field, byDivision);
   }
+  // Grouped by Sector, then Division within it - e.g. "Business & Finance — C-Suite".
+  const optionGroups = [...new Map(roles.map((role) => [role.field + " — " + role.division, [] as typeof roles])).keys()]
+    .sort()
+    .map((label) => [label, roles.filter((role) => role.field + " — " + role.division === label).sort((a, b) => a.title.localeCompare(b.title))] as const);
   return (
     <div className="space-y-4">
       <label className="block text-sm">
@@ -70,10 +79,14 @@ export function CareerStepBrowser({
           className="mt-1 block w-full rounded border border-input bg-background p-2"
         >
           <option value="">Choose a career</option>
-          {roles.map((role) => (
-            <option key={role.slug} value={role.title}>
-              {role.title}
-            </option>
+          {optionGroups.map(([label, items]) => (
+            <optgroup key={label} label={label}>
+              {items.map((role) => (
+                <option key={role.slug} value={role.title}>
+                  {role.title}
+                </option>
+              ))}
+            </optgroup>
           ))}
         </select>
       </label>
@@ -119,10 +132,13 @@ export function CareerStepBrowser({
               Saved updates could not be loaded; catalogue descriptions are shown below.
             </p>
           )}
-          {[...groups].map(([field, items]) => (
+          {[...groups].map(([field, byDivision]) => (
             <section key={field} className="overflow-hidden rounded border border-border">
               <h3 className="border-b border-border bg-muted/30 px-3 py-2 font-display">{field}</h3>
-              {items.map((role) => {
+              {[...byDivision].map(([division, items]) => (
+                <div key={division}>
+                  <h4 className="border-b border-border/70 bg-muted/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-muted-foreground">{division}</h4>
+                  {items.map((role) => {
                 const content = contentFor(role.title);
                 return (
                   <div key={role.slug} className="border-b border-border/50 p-3 last:border-b-0">
@@ -167,7 +183,9 @@ export function CareerStepBrowser({
                     </div>
                   </div>
                 );
-              })}
+                  })}
+                </div>
+              ))}
             </section>
           ))}
           {!groups.size && <p className="text-sm">No careers match your search.</p>}

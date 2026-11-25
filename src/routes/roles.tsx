@@ -9,7 +9,7 @@ import { SiteLayout, useSiteSession } from "@/components/SiteLayout";
 import { YouTube } from "@/components/YouTube";
 import { supabase } from "@/integrations/supabase/client";
 import { CONTACT_EMAIL, ROLES } from "@/lib/data";
-import { guessCareerField } from "@/lib/career-field";
+import { guessCareerField, guessCareerDivision } from "@/lib/career-field";
 import { notify } from "@/lib/dialogs";
 
 const CATEGORY_BANDS = [
@@ -137,7 +137,7 @@ function Roles() {
         idealFor: "",
         video: null,
       }));
-    return [...ROLES, ...extra];
+    return [...ROLES, ...extra].map((r) => ({ ...r, division: guessCareerDivision(r.title, r.field, r.summary) }));
   }, [adminCareers.data]);
   const [location, setLocation] = useState("");
   const placements = useQuery({
@@ -192,9 +192,14 @@ function Roles() {
   const grouped = useMemo(() => {
     const m = new Map<string, typeof allRoles>();
     filteredRoles.forEach((r) => m.set(r.field, [...(m.get(r.field) ?? []), r]));
-    return [...m.entries()].map(
-      ([f, roles]) => [f, [...roles].sort((a, b) => a.title.localeCompare(b.title))] as const,
-    );
+    return [...m.entries()].map(([f, roles]) => {
+      const byDivision = new Map<string, typeof allRoles>();
+      roles.forEach((r) => byDivision.set(r.division, [...(byDivision.get(r.division) ?? []), r]));
+      const divisions = [...byDivision.entries()]
+        .map(([d, items]) => [d, [...items].sort((a, b) => a.title.localeCompare(b.title))] as const)
+        .sort((a, b) => a[0].localeCompare(b[0]));
+      return [f, divisions] as const;
+    });
   }, [filteredRoles]);
 
   const isFieldOpen = (f: string) => (search.trim() ? true : openFields.has(f));
@@ -325,7 +330,7 @@ function Roles() {
           </p>
         )}
 
-        {grouped.map(([f, roles], index) => {
+        {grouped.map(([f, divisions], index) => {
           const fieldOpen = isFieldOpen(f);
           return (
             <div
@@ -342,8 +347,9 @@ function Roles() {
                   className={`h-6 w-6 shrink-0 transition ${fieldOpen ? "rotate-180" : ""}`}
                 />
               </button>
-              {fieldOpen && (
-                <div className="bg-ivory">
+              {fieldOpen && divisions.map(([division, roles]) => (
+                <div key={division} className="bg-ivory">
+                  <h3 className="border-y border-warm-divider bg-muted/30 px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-muted-foreground">{division}</h3>
                   <div className="divide-y divide-warm-divider">
                     {roles.map((r) => {
                       const description = descriptionFor(r.title, r.summary);
@@ -446,7 +452,7 @@ function Roles() {
                     })}
                   </div>
                 </div>
-              )}
+              ))}
             </div>
           );
         })}
