@@ -220,13 +220,7 @@ export function CareerCatalogue({
             </div>
           </div>
 
-          {!placements.isLoading && mentorCounts.size === 0 && noAvailabilityMessage.data && (
-            <div className="bg-accent px-5 py-4 text-center text-sm font-semibold text-accent-foreground">
-              {noAvailabilityMessage.data}
-            </div>
-          )}
-
-          <section className="bg-teal px-5 pb-10 pt-12 text-center text-teal-foreground">
+          <section className="bg-teal px-5 pb-4 pt-12 text-center text-teal-foreground">
             <h2 className="font-display text-2xl md:text-3xl">
               Already have an idea of your dream career?
             </h2>
@@ -246,20 +240,19 @@ export function CareerCatalogue({
             >
               Browse Careers
             </a>
-
           </section>
         </>
       )}
-      <div id="roles-list" className="bg-primary px-5 py-6">
+      <div id="roles-list" className="bg-teal px-5 pb-5 pt-2 text-teal-foreground">
         <div className="relative mx-auto max-w-xl">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary-foreground/60" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-teal-foreground/60" />
           <input
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             aria-label="Search careers"
             placeholder="Search for a career or category…"
-            className="w-full rounded-full border border-primary-foreground/30 bg-primary-foreground/10 py-2.5 pl-10 pr-4 text-sm text-primary-foreground placeholder:text-primary-foreground/60 outline-none focus:border-primary-foreground/60"
+            className="w-full rounded-full border border-teal-foreground/30 bg-background/60 py-2.5 pl-10 pr-4 text-sm text-teal-foreground placeholder:text-teal-foreground/60 outline-none focus:border-teal-foreground/60"
           />
         </div>
         {locations.length > 0 && (
@@ -268,7 +261,7 @@ export function CareerCatalogue({
               aria-label="Filter careers by location"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="w-full rounded-full border border-primary-foreground/30 bg-primary-foreground/10 py-2 px-4 text-sm text-primary-foreground outline-none focus:border-primary-foreground/60 [&>option]:text-foreground"
+              className="w-full rounded-full border border-teal-foreground/30 bg-background/60 py-2 px-4 text-sm text-teal-foreground outline-none focus:border-teal-foreground/60 [&>option]:text-foreground"
             >
               <option value="">All locations</option>
               {locations.map((l) => (
@@ -279,29 +272,34 @@ export function CareerCatalogue({
             </select>
           </div>
         )}
-        <p className="mx-auto mt-3 max-w-xl text-center text-xs text-primary-foreground/70">
+        <p className="mx-auto mt-3 max-w-xl text-center text-xs text-teal-foreground/70">
           Tap the notification icon on a career with no host to be notified when one becomes
           available.
         </p>
-        {session?.user && (
-          <div className="mt-3 flex justify-center">
-            <button
-              type="button"
-              onClick={() => setFavouritesOnly((v) => !v)}
-              aria-pressed={favouritesOnly}
-              className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide transition ${favouritesOnly ? "border-cta bg-cta text-cta-foreground" : "border-primary-foreground/40 text-primary-foreground hover:bg-primary-foreground/10"}`}
-            >
-              <Heart className={`h-3.5 w-3.5 ${favouritesOnly ? "fill-current" : ""}`} /> My
-              Favourites
-            </button>
-          </div>
-        )}
       </div>
 
       <div className="bg-ivory py-1">
-        <p className="mx-auto max-w-6xl px-4 py-2 text-xs text-muted-foreground">
-          Availability shows available mentors against each career’s mentor target.
-        </p>
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-2">
+          {!placements.isLoading && mentorCounts.size === 0 && noAvailabilityMessage.data && (
+            <p className="min-w-0 flex-1 text-xs text-muted-foreground">
+              {noAvailabilityMessage.data} Counts show available mentors out of each career’s
+              target.
+            </p>
+          )}
+          {session?.user && (
+            <div className="ml-auto shrink-0">
+              <button
+                type="button"
+                onClick={() => setFavouritesOnly((v) => !v)}
+                aria-pressed={favouritesOnly}
+                className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide transition ${favouritesOnly ? "border-primary bg-primary text-primary-foreground" : "border-border text-foreground hover:bg-muted"}`}
+              >
+                <Heart className={`h-3.5 w-3.5 ${favouritesOnly ? "fill-current" : ""}`} /> My
+                Favourites
+              </button>
+            </div>
+          )}
+        </div>
         {grouped.length === 0 && (
           <p className="px-5 py-4 text-center text-sm text-muted-foreground">
             No careers match “{search}”.
