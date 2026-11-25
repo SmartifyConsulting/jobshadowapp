@@ -210,6 +210,15 @@ function Roles() {
       return next;
     });
 
+  const [openDivisions, setOpenDivisions] = useState<Set<string>>(new Set());
+  const isDivisionOpen = (key: string) => (search.trim() ? true : openDivisions.has(key));
+  const toggleDivision = (key: string) =>
+    setOpenDivisions((prev) => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+
   return (
     <SiteLayout>
       <div className="bg-cta text-cta-foreground">
@@ -347,10 +356,20 @@ function Roles() {
                   className={`h-6 w-6 shrink-0 transition ${fieldOpen ? "rotate-180" : ""}`}
                 />
               </button>
-              {fieldOpen && divisions.map(([division, roles]) => (
+              {fieldOpen && divisions.map(([division, roles]) => {
+                const divisionKey = f + " — " + division;
+                const divisionOpen = isDivisionOpen(divisionKey);
+                return (
                 <div key={division} className="bg-ivory">
-                  <h3 className="border-y border-warm-divider bg-muted/30 px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-muted-foreground">{division}</h3>
-                  <div className="divide-y divide-warm-divider">
+                  <button
+                    onClick={() => toggleDivision(divisionKey)}
+                    aria-expanded={divisionOpen}
+                    className="flex min-h-9 w-full items-center justify-between gap-3 border-y border-warm-divider bg-muted/30 px-4 py-1.5 text-left"
+                  >
+                    <h3 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{division} ({roles.length})</h3>
+                    <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition ${divisionOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  {divisionOpen && <div className="divide-y divide-warm-divider">
                     {roles.map((r) => {
                       const description = descriptionFor(r.title, r.summary);
                       const count = mentorCounts.get(r.title.trim().toLowerCase()) ?? 0;
@@ -450,9 +469,10 @@ function Roles() {
                         </div>
                       );
                     })}
-                  </div>
+                  </div>}
                 </div>
-              ))}
+                );
+              })}
             </div>
           );
         })}

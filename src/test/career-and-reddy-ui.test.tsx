@@ -19,6 +19,7 @@ describe("Career guidance and chat placement", () => {
     render(<QueryClientProvider client={client}><Page /></QueryClientProvider>);
     expect(screen.queryByText("Ideal for:")).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Skills Required" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText(/Accounting & Audit/).closest("button")!);
     fireEvent.click(screen.getByText("Accountant").closest("button")!);
     expect(screen.getByText("Ideal for:")).toBeVisible();
     expect(screen.getByText("Saved admin description")).toBeVisible();
