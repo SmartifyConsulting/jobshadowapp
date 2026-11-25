@@ -1,31 +1,40 @@
 import { FIELDS } from "./data";
 
-/** Keyword cues for each curated sector, checked in order - first match wins. Covers common career
- * naming patterns so every admin-added career lands in a real sector accordion automatically,
- * without needing anyone to assign one by hand. */
-const CUES: { field: (typeof FIELDS)[number]; pattern: RegExp }[] = [
-  { field: "Medical, Health & Wellness", pattern: /doctor|nurse|physio|dentist|surgeon|medic|pharmac|psych|therap|health|wellness|paramedic|optometr|radiograph|dietic|nutrition|veterinar/i },
+/** The curated sectors, plus a few extra ones modelled on university degree/faculty groupings
+ * (Sciences, Humanities & Law) so careers that don't belong in Business & Finance - like an
+ * Astronomer - stop being dumped there as a default. */
+export const EXTRA_FIELDS = ["Sciences", "Humanities & Law"] as const;
+
+/** Keyword cues for each sector, checked in order - first match wins. Order matters: more
+ * specific sectors are checked before broad catch-alls like Business & Finance, so a career only
+ * lands there when it's genuinely a business/finance role, not just "didn't match anything else". */
+const CUES: { field: (typeof FIELDS)[number] | (typeof EXTRA_FIELDS)[number]; pattern: RegExp }[] = [
   { field: "Veterinary", pattern: /veterinar|animal health|zoo(?:keeper|logist)/i },
+  { field: "Medical, Health & Wellness", pattern: /doctor|nurse|physio|dentist|surgeon|medic|pharmac|psych|therap|health|wellness|paramedic|optometr|radiograph|dietic|nutrition/i },
+  { field: "Sciences", pattern: /astronom|physicist|\bphysics\b|chemist|biolog|geolog|statistician|mathematic|meteorolog|marine scien|environmental scien|forensic scien|research scientist|lab(?:oratory)? technician|botanist|microbiolog|zoolog|ecolog|geneticist/i },
   { field: "Architecture & Engineering", pattern: /engineer|architect|surveyor|construction|civil|mechanical|electrical|industrial design|draughts/i },
-  { field: "ICT & Network Technology", pattern: /software|developer|programmer|it\b|information technology|network|cyber|data scien|computer|web design|systems analy|app developer|game develop/i },
-  { field: "Design, Media & Marketing", pattern: /design|media|marketing|advertis|journalis|photograph|film|video|graphic|fashion|artist|writer|content creat|social media|pr\b|public relations/i },
+  { field: "ICT & Network Technology", pattern: /software|developer|programmer|\bit\b|information technology|network|cyber|data scien|data analy|computer|web design|systems analy|app developer|game develop/i },
+  { field: "Design, Media & Marketing", pattern: /design|media|marketing|advertis|journalis|photograph|film|video|graphic|fashion|artist|writer|content creat|social media|\bpr\b|public relations/i },
   { field: "Education", pattern: /teacher|educat|lectur|tutor|principal|curriculum|early childhood/i },
   { field: "Agriculture", pattern: /agricultur|farm|horticultur|agronom|livestock|forestry|fisher/i },
-  { field: "Business & Finance", pattern: /account|finance|bank|invest|audit|economist|actuar|business|entrepreneur|sales|insurance|tax|payroll|procurement|supply chain|logistic/i },
-  { field: "Admin", pattern: /admin|clerk|receptionist|secretar|office manager|hr\b|human resources|legal|lawyer|attorney|paralegal|law\b|government|public service|police|security|social work|counsel/i },
+  { field: "Humanities & Law", pattern: /lawyer|attorney|paralegal|advocate|\blaw\b|philosoph|histor(?:y|ian)|linguist|anthropolog|archaeolog|theolog|politic/i },
+  { field: "Business & Finance", pattern: /account|\bfinance\b|\bbank|invest|audit|economist|actuar|business|entrepreneur|\bsales\b|insurance|\btax\b|payroll|procurement|supply chain|logistic/i },
+  { field: "Admin", pattern: /admin|clerk|receptionist|secretar|office manager|\bhr\b|human resources|government|public service|police|security|social work|counsel/i },
 ];
 
-/** Classify a career into one of the curated sectors by its name/description, so every career
- * (including ones an admin adds directly) groups into a real sector accordion rather than a
- * catch-all "Other Careers" bucket. */
-export function guessCareerField(name: string, description?: string | null): (typeof FIELDS)[number] {
+/** Classify a career into a sector by its name/description, so every career (including ones an
+ * admin adds directly) groups into a real sector accordion. Falls back to Admin (the closest
+ * thing to a general-office catch-all) rather than Business & Finance, so that sector only ever
+ * contains genuinely business/finance-related careers. */
+export function guessCareerField(name: string, description?: string | null): (typeof FIELDS)[number] | (typeof EXTRA_FIELDS)[number] {
   const text = `${name} ${description ?? ""}`;
   for (const { field, pattern } of CUES) if (pattern.test(text)) return field;
-  return "Business & Finance";
+  return "Admin";
 }
 
 /** Sub-groups within each sector (e.g. "C-Suite" inside Business & Finance), checked in order -
- * first match wins. Each sector falls back to a "General <sector>" division. */
+ * first match wins. Each sector falls back to a "General <sector>" division. The Business &
+ * Finance fallback is deliberately scoped to backoffice/support functions, not a general catch-all. */
 const DIVISIONS: Record<string, { division: string; pattern: RegExp }[]> = {
   "Business & Finance": [
     { division: "C-Suite & Executive Leadership", pattern: /\bce[o]\b|\bcf[o]\b|\bci[o]\b|\bco[o]\b|\bct[o]\b|chief .*officer|managing director|company secretary|executive director/i },
@@ -36,6 +45,7 @@ const DIVISIONS: Record<string, { division: string; pattern: RegExp }[]> = {
     { division: "Insurance & Risk", pattern: /insuranc|underwrit|risk/i },
     { division: "Business Analysis & Strategy", pattern: /business analy|analytics|strateg|consult/i },
     { division: "Entrepreneurship & Management", pattern: /entrepreneur|general manag|operations manag|business owner/i },
+    { division: "Business Support & Operations", pattern: /payroll|procurement|supply chain|logistic|\bsales\b/i },
   ],
   "Admin": [
     { division: "Legal Services", pattern: /lawyer|attorney|paralegal|legal|law\b|advocate/i },
@@ -81,6 +91,17 @@ const DIVISIONS: Record<string, { division: string; pattern: RegExp }[]> = {
   "Agriculture": [
     { division: "Farming & Production", pattern: /farm|livestock|horticultur|fisher|forestry/i },
     { division: "Agribusiness & Economics", pattern: /agricultural econom|agribusiness|agronom/i },
+  ],
+  "Sciences": [
+    { division: "Physical & Earth Sciences", pattern: /astronom|physicist|\bphysics\b|geolog|meteorolog/i },
+    { division: "Chemical Sciences", pattern: /chemist/i },
+    { division: "Life Sciences", pattern: /biolog|botanist|microbiolog|zoolog|ecolog|geneticist|marine scien/i },
+    { division: "Mathematics & Statistics", pattern: /mathematic|statistician/i },
+    { division: "Research & Laboratory Services", pattern: /research scientist|lab(?:oratory)? technician|forensic scien|environmental scien/i },
+  ],
+  "Humanities & Law": [
+    { division: "Legal Services", pattern: /lawyer|attorney|paralegal|advocate|\blaw\b/i },
+    { division: "Humanities & Social Sciences", pattern: /philosoph|histor|linguist|anthropolog|archaeolog|theolog|politic/i },
   ],
 };
 
