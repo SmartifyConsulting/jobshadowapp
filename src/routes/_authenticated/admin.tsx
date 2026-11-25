@@ -77,7 +77,7 @@ import { getCareerSkills } from "@/lib/career-skills";
 import { draftCareerDescription } from "@/lib/career-ai.functions";
 import { accountInitial, alphabetInitial } from "@/lib/alphabet";
 import { withCareerDescriptions } from "@/lib/career-descriptions";
-import { ROLE_TITLES, FIELDS } from "@/lib/data";
+import { ROLE_TITLES } from "@/lib/data";
 import {
   Accordion,
   AccordionItem,
@@ -807,15 +807,6 @@ function DataTable({
     qc.invalidateQueries({ queryKey: ["admin", table] });
   }
 
-  async function setCareerField(row: Record<string, unknown>, field: string) {
-    const { error } = await (supabase.from("careers") as any)
-      .update({ field: field || null })
-      .eq("id", row["id"]);
-    if (error) return notify(error.message, "error");
-    qc.invalidateQueries({ queryKey: ["admin", table] });
-    void qc.invalidateQueries({ queryKey: ["public-careers-catalog"] });
-  }
-
   if (editing) {
     const onDone = () => {
       setCareerDrafts((current) => {
@@ -1059,19 +1050,6 @@ function DataTable({
                                     <span className="shrink-0 text-xs text-muted-foreground">
                                       {fmt(r["_student_count"])} scholars
                                     </span>
-                                    {table === "careers" && (
-                                      <label className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground" title="Sector this career belongs to on the public Careers page">
-                                        Sector:
-                                        <select
-                                          value={(r["field"] as string | null) ?? ""}
-                                          onChange={(e) => void setCareerField(r, e.target.value)}
-                                          className="rounded border border-warm-divider bg-background px-1 py-0.5 text-xs"
-                                        >
-                                          <option value="">Other Careers</option>
-                                          {FIELDS.map((f) => <option key={f} value={f}>{f}</option>)}
-                                        </select>
-                                      </label>
-                                    )}
                                   </div>
                                   <div className="flex shrink-0 flex-wrap items-center gap-1.5">
                                     <span

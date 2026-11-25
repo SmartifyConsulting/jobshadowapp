@@ -9,6 +9,7 @@ import { SiteLayout, useSiteSession } from "@/components/SiteLayout";
 import { YouTube } from "@/components/YouTube";
 import { supabase } from "@/integrations/supabase/client";
 import { CONTACT_EMAIL, ROLES } from "@/lib/data";
+import { guessCareerField } from "@/lib/career-field";
 import { notify } from "@/lib/dialogs";
 
 const CATEGORY_BANDS = [
@@ -129,7 +130,7 @@ function Roles() {
       .map((c) => ({
         slug: "other-careers--" + careerKey(c.name),
         title: c.name,
-        field: c.field?.trim() || "Other Careers",
+        field: c.field?.trim() || guessCareerField(c.name, c.description),
         summary:
           c.description ||
           "Ask us for more detail on this career and the job shadow experience we can arrange.",
