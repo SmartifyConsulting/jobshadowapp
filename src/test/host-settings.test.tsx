@@ -91,6 +91,8 @@ describe("Host availability settings", () => {
     expect(screen.queryByRole("button", { name: "Edit Professional Details" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Save Personal Details" })).toBeNull();
     expect(screen.queryByRole("tab", { name: "Personal Details" })).toBeNull();
+    expect(screen.queryByRole("tab", { name: "Professional Details" })).toBeNull();
+    expect(screen.getByRole("group", { name: "Profile Summary" })).toBeVisible();
     expect(screen.getByRole("tab", { name: "Overview" })).toHaveAttribute("data-state", "active");
     expect(screen.queryByText("Mentor Portal")).toBeNull();
     fireEvent.mouseDown(await screen.findByRole("tab", { name: "Preferences" }), {
@@ -232,11 +234,7 @@ it("reviews CV drafts, preserves populated fields and keeps edits made while AI 
       data: { storagePath: expect.stringMatching(/mentor@example.com\/cv-.*-test-cv\.pdf$/) },
     }),
   );
-  fireEvent.mouseDown(screen.getByRole("tab", { name: "Professional Details" }), {
-    button: 0,
-    ctrlKey: false,
-  });
-  const specialties = screen.getByLabelText("Specialties (comma separated)");
+  const specialties = screen.getByRole("textbox", { name: "Skills & Expertise" });
   fireEvent.change(specialties, { target: { value: "Manually entered while waiting" } });
   finish({
     bio: "AI replacement",
@@ -245,9 +243,9 @@ it("reviews CV drafts, preserves populated fields and keeps edits made while AI 
     linkedin_url: "https://www.linkedin.com/in/example",
   });
   await screen.findByText(/CV draft added to empty fields. Review the details below/);
-  expect(screen.getByLabelText("Experience / Bio")).toHaveValue("My original bio");
+  expect(screen.getByRole("textbox", { name: /^Experience$/ })).toHaveValue("My original bio");
   expect(specialties).toHaveValue("Manually entered while waiting");
-  expect(screen.getByLabelText("Certifications / qualifications")).toHaveValue("BSc Computing");
+  expect(screen.getByLabelText("Qualifications")).toHaveValue("BSc Computing");
   expect(rpc.mock.calls.some((call) => call[0] === "update_my_host_profile")).toBe(false);
   fireEvent.mouseDown(screen.getByRole("tab", { name: "Preferences" }), {
     button: 0,
