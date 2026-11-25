@@ -87,7 +87,7 @@ function DevAccountSwitcher() {
       const { error } = await supabase.auth.setSession(session);
       if (error) throw error;
       qc.clear();
-      window.location.href = "/";
+      window.location.href = "/my-account";
     } catch {
       setSwitchError("Could not switch profiles. Please try again.");
     } finally {
