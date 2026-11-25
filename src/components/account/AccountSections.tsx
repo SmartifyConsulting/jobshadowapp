@@ -1123,7 +1123,7 @@ function StudentJourney({
           setActive(step);
         }}
       />
-      <div className="min-w-0 rounded-lg border border-border bg-ivory p-4 text-foreground sm:p-6">
+      <div className={`min-w-0 overflow-hidden rounded-lg border border-border text-foreground ${active === "request" ? "bg-teal p-0" : "bg-ivory p-4 sm:p-6"}`}>
         {active === "profile" &&
           (!profile || editingProfile ? (
             <ProfileForm
@@ -1602,7 +1602,7 @@ export function NewBooking({
   }
 
   return (
-    <div className="-mx-6">
+    <div className={initialCareer ? "min-w-0" : "-mx-6"}>
       <div className={`${STEP_BG[step - 1]} px-6 py-5`}>
         <div className="flex items-center gap-3">
           <ChevronDown className="h-6 w-6 shrink-0" />
@@ -1939,15 +1939,15 @@ export function NewBooking({
           )}
         </div>
       </div>
-      <div className="flex gap-2 bg-primary px-6 py-5">
+      <div className={`flex flex-wrap gap-2 px-6 pb-5 ${initialCareer ? STEP_BG[step - 1] : "bg-primary pt-5"}`}>
         {initialCareer && step === 3 && (
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={onBackToCareers}
-            className="bg-primary-foreground/20 px-5 py-2.5 text-sm font-bold text-primary-foreground"
           >
             Back to Careers
-          </button>
+          </Button>
         )}
         {step > (initialCareer ? 3 : 1) && (
           <button
@@ -1959,14 +1959,13 @@ export function NewBooking({
           </button>
         )}
         {step < 5 ? (
-          <button
+          <Button
             type="button"
             onClick={() => setStep(step + 1)}
             disabled={!canContinue}
-            className="rounded-full bg-cta px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-cta-foreground disabled:opacity-50"
           >
             {initialCareer ? `Continue to ${titles[step]}` : `Continue to Step ${step + 1}`}
-          </button>
+          </Button>
         ) : (
           <button
             type="button"
