@@ -1,14 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  UserRound,
-  Mail,
-  Linkedin,
-  ContactRound,
-  BookOpen,
-  Building2,
-  ShieldCheck,
-} from "lucide-react";
+import { UserRound, Linkedin, ContactRound, BookOpen, Building2, ShieldCheck } from "lucide-react";
 import { JourneyStepper } from "@/components/JourneyStepper";
 import { PhoneInput } from "@/components/PhoneInput";
 import { useOwnIdentity } from "@/components/account/AccountProfile";
@@ -30,7 +22,7 @@ import { useMentorOnboarding, openMentorEvidence } from "./OnboardingData";
 
 const details = {
   profile: { title: "Complete Profile", icon: UserRound },
-  email: { title: "Verify Email", icon: Mail },
+  email: { title: "Verify Identity", icon: ShieldCheck },
   linkedin: { title: "LinkedIn", icon: Linkedin },
   references: { title: "References", icon: ContactRound },
   training: { title: "Safeguarding Training", icon: BookOpen },
@@ -289,7 +281,7 @@ export function MentorOnboardingWizard({
       !!identity.profile.data?.last_name?.trim() &&
       !!hostProfile.bio?.trim() &&
       !!hostProfile.specialties.length,
-    email: !!identity.user.data?.email_confirmed_at,
+    email: false, // Email confirmation does not establish a verified identity.
     linkedin: !!hostProfile.linkedin_url || data.linkedin_unavailable,
     references: review?.references_status === "approved",
     training: review?.training_status === "approved",
@@ -343,12 +335,15 @@ export function MentorOnboardingWizard({
                   : "space-y-2"
               }
             >
-              <p className="text-sm">{identity.user.data?.email}</p>
               <p className="text-sm">
-                {identity.user.data?.email_confirmed_at
-                  ? "Your email address is verified."
-                  : "Email verification is paused during testing. No verification email will be sent."}
+                Identity verification (KYC) is pending connection to a verification provider. Email
+                verification is handled during sign-up.
               </p>
+              {hostProfile.via_company && (
+                <p className="mt-2 text-sm">
+                  Company verification requires both identity (KYC) and business (KYB) checks.
+                </p>
+              )}
             </div>
           )}
           {step === "linkedin" && (

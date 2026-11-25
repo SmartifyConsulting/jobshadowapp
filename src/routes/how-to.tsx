@@ -17,9 +17,8 @@ import {
   Bell,
   ArrowRight,
   CreditCard,
-  Mail,
-  Linkedin,
   ShieldCheck,
+  Linkedin,
   ContactRound,
   BookOpen,
   Building2,
@@ -57,7 +56,7 @@ const MENTOR_STEPS: Step[] = [
 const MENTOR_ONBOARDING_STEPS: Step[] = [
   { icon: UserPlus, label: "Register\nas a mentor" },
   { icon: User, label: "Create & verify\nyour profile" },
-  { icon: Mail, label: "Email OTP" },
+  { icon: ShieldCheck, label: "Verify\nIdentity" },
   { icon: Linkedin, label: "LinkedIn\nprofile" },
   { icon: ContactRound, label: "Reference\nchecks" },
   { icon: BookOpen, label: "Safeguarding\ntraining" },
@@ -241,13 +240,11 @@ function HowTo() {
       ? selectedView.view
       : defaultView;
   const onboarding = progress.data?.mentorOnboarding
-    ? progress.data.mentorOnboarding.map((done, index) =>
-        index === 2 ? !!session?.user?.email_confirmed_at : done,
-      )
+    ? progress.data.mentorOnboarding.map((done, index) => (index === 2 ? false : done))
     : [
         !!progress.data?.mentor[0],
         !!progress.data?.mentor[1],
-        !!session?.user?.email_confirmed_at,
+        false,
         !!progress.data?.mentorLinkedin,
         false,
         false,
@@ -323,7 +320,7 @@ function HowTo() {
         ? [
             "Register to begin mentoring.",
             "Add your professional experience and CV.",
-            "Check your account email verification with Job Shadow.",
+            "Verify your identity through KYC. The verification provider is not connected yet.",
             "Add your LinkedIn profile in Professional Details.",
             "Arrange your reference checks with Job Shadow.",
             "Arrange safeguarding training with Job Shadow.",
