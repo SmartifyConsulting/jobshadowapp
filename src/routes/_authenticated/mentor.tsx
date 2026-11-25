@@ -12,7 +12,18 @@ import { CountrySelect } from "@/components/CountrySelect";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, X, Award, Upload } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Award,
+  Upload,
+  Camera,
+  Mail,
+  Phone,
+  MapPin,
+  Briefcase,
+} from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
 import { PortalLoading } from "@/components/PortalLoading";
 import { bookingDayKey, countByDay, filterHostBookings } from "@/lib/host-bookings";
@@ -158,7 +169,7 @@ function MentorPortal() {
                     ? "availability"
                     : requestedSection === "calendar" || requestedSection === "shadows"
                       ? "shadows"
-                      : "personal"
+                      : "overview"
               }
               bookings={bookings.data ?? []}
               placements={placements.data ?? []}
@@ -463,7 +474,7 @@ function HostProfile({
   loadingBookings: boolean;
 }) {
   const qc = useQueryClient();
-  const ownIdentity = useOwnIdentity(wizard);
+  const ownIdentity = useOwnIdentity();
   const [wizardErrors, setWizardErrors] = useState<string[]>([]);
   const draftCv = useServerFn(draftMentorProfileFromCv);
   const initialized = useRef(false);
@@ -499,6 +510,20 @@ function HostProfile({
   const [err, setErr] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [contactSaved, setContactSaved] = useState(false);
+  const identity = ownIdentity.profile.data;
+  const mentorName =
+    [identity?.first_name, identity?.last_name].filter(Boolean).join(" ") ||
+    identity?.display_name ||
+    "My Profile";
+  const initials = mentorName
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("");
+  const avatar = identity?.avatar_path
+    ? supabase.storage.from("avatars").getPublicUrl(identity.avatar_path).data.publicUrl
+    : null;
+  const locations = [...new Set(placements.map((placement) => placement.location).filter(Boolean))];
 
   useEffect(() => {
     if (!profile.data || initialized.current) return;
@@ -650,12 +675,65 @@ function HostProfile({
 
   return (
     <section className="w-full space-y-4 bg-ivory p-4">
-      {!wizard && <h1 className="text-2xl font-bold">Profile</h1>}
+      {!wizard && (
+        <header aria-label="Mentor profile summary" className="space-y-3">
+          <div className="flex items-start gap-4">
+            <button
+              type="button"
+              onClick={() => setProfileTab("personal")}
+              aria-label="Edit profile photo"
+              className="relative grid h-20 w-20 shrink-0 place-items-center rounded-full border border-input bg-muted text-xl font-bold"
+            >
+              {avatar ? (
+                <img
+                  src={avatar}
+                  alt="Profile photo"
+                  className="h-full w-full rounded-full object-cover"
+                />
+              ) : (
+                initials
+              )}
+              <Camera className="absolute bottom-0 right-0 h-6 w-6 rounded-full bg-background p-1" />
+            </button>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl font-bold">{mentorName}</h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {profile.data?.via_company ? "Company Mentor" : "Independent Mentor"}
+              </p>
+              {!!profile.data?.specialties?.length && (
+                <p className="mt-1 text-sm">{profile.data.specialties.join(" · ")}</p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setProfileTab("personal")}
+              className="shrink-0 text-sm font-medium text-primary"
+            >
+              Edit Profile
+            </button>
+          </div>
+          <ul className="space-y-1.5 text-sm">
+            <li className="flex items-center gap-2 break-all">
+              <Mail className="h-4 w-4 shrink-0" />
+              {ownIdentity.user.data?.email || "Email not recorded"}
+            </li>
+            <li className="flex items-center gap-2">
+              <Phone className="h-4 w-4 shrink-0" />
+              {ownIdentity.user.data?.phone || "Phone not recorded"}
+            </li>
+            <li className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 shrink-0" />
+              {locations.join(" · ") || "Location not recorded"}
+            </li>
+          </ul>
+        </header>
+      )}
       <Tabs value={profileTab} onValueChange={setProfileTab}>
         <TabsList
           className="flex h-auto w-full flex-wrap justify-start"
           aria-label="Mentor profile details"
         >
+          {!wizard && <TabsTrigger value="overview">Overview</TabsTrigger>}
           <TabsTrigger value="personal">Personal Details</TabsTrigger>
           <TabsTrigger value="professional">Professional Details</TabsTrigger>
           {!wizard && (
@@ -665,6 +743,81 @@ function HostProfile({
             </>
           )}
         </TabsList>
+        {!wizard && (
+          <TabsContent value="overview" className="mt-4 space-y-4">
+            <ProfessionalFrame title="Skills & Expertise">
+              {profile.data?.specialties?.length ? (
+                <div className="flex flex-wrap gap-2">
+                  {profile.data.specialties.map((skill) => (
+                    <span key={skill} className="rounded-full border px-3 py-1 text-sm">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No skills added yet.</p>
+              )}
+            </ProfessionalFrame>
+            <ProfessionalFrame title="Experience">
+              <p className="whitespace-pre-line text-sm">
+                {profile.data?.bio || "No experience added yet."}
+              </p>
+            </ProfessionalFrame>
+            <dl
+              aria-label="Mentoring activity"
+              className="grid grid-cols-2 gap-4 py-2 sm:grid-cols-4"
+            >
+              {[
+                ["Mentor Sessions", loadingPlacements ? "—" : placements.length],
+                ["Total Bookings", loadingBookings ? "—" : bookings.length],
+                [
+                  "Confirmed Bookings",
+                  loadingBookings
+                    ? "—"
+                    : bookings.filter((booking) => booking.status === "confirmed").length,
+                ],
+                [
+                  "Completed Bookings",
+                  loadingBookings
+                    ? "—"
+                    : bookings.filter((booking) => booking.status === "completed").length,
+                ],
+              ].map(([label, value]) => (
+                <div key={label}>
+                  <dd className="text-2xl font-bold tabular-nums">{value}</dd>
+                  <dt className="text-xs text-muted-foreground">{label}</dt>
+                </div>
+              ))}
+            </dl>
+            <ProfessionalFrame title="Qualifications & Professional Links">
+              <p className="whitespace-pre-line text-sm">
+                {profile.data?.certifications || "No qualifications added yet."}
+              </p>
+              {profile.data?.linkedin_url && /^https?:\/\//i.test(profile.data.linkedin_url) ? (
+                <a
+                  href={profile.data.linkedin_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center gap-2 text-sm text-primary underline"
+                >
+                  <Briefcase className="h-4 w-4" />
+                  Professional Profile
+                </a>
+              ) : (
+                <p className="mt-2 text-sm text-muted-foreground">
+                  No professional links added yet.
+                </p>
+              )}
+            </ProfessionalFrame>
+            <button
+              type="button"
+              onClick={() => setProfileTab("professional")}
+              className="rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+            >
+              Edit Professional Details
+            </button>
+          </TabsContent>
+        )}
         <TabsContent forceMount value="personal" className="mt-4 data-[state=inactive]:hidden">
           <AccountPersonalDetails
             onSaved={

@@ -67,7 +67,14 @@ describe("Host availability settings", () => {
       </QueryClientProvider>,
     );
     expect(screen.queryByRole("navigation", { name: "Mentor navigation" })).toBeNull();
-    expect(await screen.findByRole("heading", { name: "Profile" })).toBeVisible();
+    expect(await screen.findByRole("heading", { name: "Alex" })).toBeVisible();
+    expect(screen.getByRole("tab", { name: "Overview" })).toHaveAttribute("data-state", "active");
+    expect(screen.getByRole("group", { name: "Skills & Expertise" })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: /^Edit Profile$/ }));
+    expect(screen.getByRole("tab", { name: "Personal Details" })).toHaveAttribute(
+      "data-state",
+      "active",
+    );
     expect(screen.queryByText("Mentor Portal")).toBeNull();
     fireEvent.mouseDown(await screen.findByRole("tab", { name: "Preferences" }), {
       button: 0,
@@ -139,7 +146,7 @@ it("lands directly on profile after its data is ready without showing a sidebar"
   expect(screen.getByRole("status")).toHaveTextContent("Loading your portal");
   expect(screen.queryByRole("navigation", { name: "Mentor navigation" })).toBeNull();
   finish({ data: [], error: null });
-  expect(await screen.findByRole("heading", { name: "Profile" })).toBeVisible();
+  expect(await screen.findByRole("heading", { name: "Alex" })).toBeVisible();
   expect(screen.queryByRole("navigation", { name: "Mentor navigation" })).toBeNull();
   expect(screen.queryByRole("status")).toBeNull();
   client.clear();
