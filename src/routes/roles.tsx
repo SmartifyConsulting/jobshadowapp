@@ -1,10 +1,10 @@
 import { hasPlacementTimes } from "@/lib/mentor-availability";
-import { CareerGuidance } from "@/components/CareerGuidance";
+import { CareerDetailDialog } from "@/components/CareerDetailDialog";
 import { getCareerDescription } from "@/lib/career-descriptions";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { PlayCircle, ChevronDown, Search, BellRing, Plus, Minus, Heart } from "lucide-react";
+import { PlayCircle, ChevronDown, Search, BellRing, Heart } from "lucide-react";
 import { SiteLayout, useSiteSession } from "@/components/SiteLayout";
 import { YouTube } from "@/components/YouTube";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,14 +50,8 @@ function Roles() {
     new Set(ROLES[0] ? [ROLES[0].field] : []),
   );
   const [search, setSearch] = useState("");
-  const [openRoles, setOpenRoles] = useState<Set<string>>(new Set());
+  const [viewingSlug, setViewingSlug] = useState<string | null>(null);
   const [favouritesOnly, setFavouritesOnly] = useState(false);
-  const toggleRole = (slug: string) =>
-    setOpenRoles((prev) => {
-      const n = new Set(prev);
-      n.has(slug) ? n.delete(slug) : n.add(slug);
-      return n;
-    });
 
   const favourites = useQuery({
     queryKey: ["career-favourites", session?.user?.id],
@@ -376,7 +370,6 @@ function Roles() {
                       const reported = availability.data?.find(
                         (row) => careerKey(row.name) === careerKey(r.title),
                       );
-                      const open = openRoles.has(r.slug);
                       return (
                         <div
                           key={r.slug}
@@ -385,16 +378,11 @@ function Roles() {
                           <div className="flex items-start justify-between gap-3">
                             <button
                               type="button"
-                              onClick={() => toggleRole(r.slug)}
-                              aria-expanded={open}
-                              className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                              onClick={() => setViewingSlug(r.slug)}
+                              className="flex min-w-0 flex-1 items-center gap-3 rounded-md px-1 py-1 text-left outline-none transition hover:bg-pale-lime focus-visible:ring-2 focus-visible:ring-primary"
                             >
-                              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-warm-divider bg-card text-charcoal">
-                                {open ? (
-                                  <Minus className="h-3.5 w-3.5" />
-                                ) : (
-                                  <Plus className="h-3.5 w-3.5" />
-                                )}
+                              <span className="rounded-full border border-warm-divider bg-card px-3 py-1 text-xs font-semibold uppercase tracking-wide text-charcoal">
+                                View
                               </span>
                               <span className="min-w-0">
                                 <span className="flex items-center gap-2 text-sm font-semibold leading-tight text-charcoal">
@@ -437,35 +425,6 @@ function Roles() {
                               </span>
                             </div>
                           </div>
-                          {open && (
-                            <div className="mt-2 pl-9">
-                              <CareerGuidance
-                                name={r.title}
-                                description={description}
-                                saved={{
-                                  ...(adminCareers.data?.find(
-                                    (row) => careerKey(row.name) === careerKey(r.title),
-                                  ) ?? {}),
-                                  ...(savedContent.data?.find(
-                                    (row) => careerKey(row.name) === careerKey(r.title),
-                                  ) ?? {}),
-                                }}
-                              />
-                              {r.video && (
-                                <div className="mt-3 max-w-xl">
-                                  <YouTube id={r.video} title={r.title} />
-                                </div>
-                              )}
-                              {count > 0 && (
-                                <Link
-                                  to="/auth"
-                                  className="mt-3 inline-block rounded-full bg-cta px-5 py-2 text-xs font-semibold uppercase tracking-wider text-cta-foreground"
-                                >
-                                  Book this Job Shadow
-                                </Link>
-                              )}
-                            </div>
-                          )}
                         </div>
                       );
                     })}
@@ -477,6 +436,35 @@ function Roles() {
           );
         })}
       </div>
+      {(() => {
+        const viewing = allRoles.find((r) => r.slug === viewingSlug);
+        if (!viewing) return null;
+        const description = descriptionFor(viewing.title, viewing.summary);
+        const count = mentorCounts.get(viewing.title.trim().toLowerCase()) ?? 0;
+        const reported = availability.data?.find((row) => careerKey(row.name) === careerKey(viewing.title));
+        const availabilityLabel = availability.isError
+          ? "Availability unavailable"
+          : availability.isPending
+            ? "Checking availability…"
+            : `${reported?.mentor_available_count ?? count} of ${reported?.mentor_target_count ?? Math.max(count, 1)} mentors available`;
+        return (
+          <CareerDetailDialog
+            open={!!viewingSlug}
+            onOpenChange={(open) => !open && setViewingSlug(null)}
+            title={viewing.title}
+            category={viewing.division}
+            description={description}
+            saved={{
+              ...(adminCareers.data?.find((row) => careerKey(row.name) === careerKey(viewing.title)) ?? {}),
+              ...(savedContent.data?.find((row) => careerKey(row.name) === careerKey(viewing.title)) ?? {}),
+            }}
+            video={viewing.video}
+            availabilityLabel={availabilityLabel}
+            isFavourite={favourites.data?.has(viewing.slug) ?? false}
+            onToggleFavourite={() => toggleFavourite(viewing.slug)}
+          />
+        );
+      })()}
     </SiteLayout>
   );
 }
