@@ -566,6 +566,11 @@ function HostProfile({
   }
 
   async function uploadCv(file: File) {
+    if (cvBusy || cvAiBusy) return;
+    if (!/\.(pdf|docx?)$/i.test(file.name)) {
+      setErr("Choose a PDF or Word CV. PDF files can fill your professional fields automatically.");
+      return;
+    }
     if (file.size > 10 * 1024 * 1024) {
       setErr("Choose a CV smaller than 10 MB.");
       return;
@@ -624,7 +629,7 @@ function HostProfile({
     setErr(null);
     setSaved(false);
     setContactSaved(false);
-    const saveProfessional = profileTab === "professional";
+    const saveProfessional = profileTab === "professional" || profileTab === "overview";
     const { error } = await supabase.rpc("update_my_host_profile", {
       _bio: saveProfessional ? bio || null : (profile.data?.bio ?? null),
       _specialties: saveProfessional
@@ -772,15 +777,74 @@ function HostProfile({
                         : undefined
                     }
                   />
+                  <ProfessionalFrame title="CV">
+                    <div
+                      aria-label="CV upload area"
+                      onDragOver={(event) => event.preventDefault()}
+                      onDrop={(event) => {
+                        event.preventDefault();
+                        if (cvBusy || cvAiBusy) return;
+                        const file = event.dataTransfer.files[0];
+                        if (file) void uploadCv(file);
+                      }}
+                      className="rounded border border-dashed border-teal bg-teal/10 px-3 py-2"
+                    >
+                      <p className="text-xs font-medium">
+                        Drop your PDF CV here, or choose Upload CV. Private — never shown to
+                        scholars.
+                      </p>
+                      <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded bg-primary px-3 py-2 text-xs font-bold text-primary-foreground">
+                        <Upload className="h-3.5 w-3.5" />{" "}
+                        {cvAiBusy
+                          ? "Reading CV…"
+                          : cvBusy
+                            ? "Uploading…"
+                            : cvPath
+                              ? "Replace CV"
+                              : "Upload CV"}
+                        <input
+                          aria-label="Upload CV"
+                          type="file"
+                          accept=".pdf,.doc,.docx"
+                          hidden
+                          disabled={cvBusy || cvAiBusy}
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            e.target.accept = ".pdf,.doc,.docx";
+                            if (f) void uploadCv(f);
+                            e.target.value = "";
+                          }}
+                        />
+                      </label>
+                      {cvPath && (
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          {cvPath.split("/").pop()}
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Uploading a PDF sends it to OpenAI to fill empty professional fields
+                      automatically. Review the draft before saving.
+                    </p>
+                    {cvDraftNote && (
+                      <p role="status" className="mt-2 text-sm">
+                        {cvDraftNote}
+                      </p>
+                    )}
+                  </ProfessionalFrame>
 
                   <ProfessionalFrame title="Skills & Expertise">
-                    {profile.data?.specialties?.length ? (
+                    {specialties.split(",").some((skill) => skill.trim()) ? (
                       <div className="flex flex-wrap gap-2">
-                        {profile.data.specialties.map((skill) => (
-                          <span key={skill} className="rounded-full border px-3 py-1 text-sm">
-                            {skill}
-                          </span>
-                        ))}
+                        {specialties
+                          .split(",")
+                          .map((skill) => skill.trim())
+                          .filter(Boolean)
+                          .map((skill) => (
+                            <span key={skill} className="rounded-full border px-3 py-1 text-sm">
+                              {skill}
+                            </span>
+                          ))}
                       </div>
                     ) : (
                       <p className="text-sm text-muted-foreground">No skills added yet.</p>
@@ -788,7 +852,7 @@ function HostProfile({
                   </ProfessionalFrame>
                   <ProfessionalFrame title="Experience">
                     <p className="whitespace-pre-line text-sm">
-                      {profile.data?.bio || "No experience added yet."}
+                      {bio || "No experience added yet."}
                     </p>
                   </ProfessionalFrame>
                   <dl
@@ -819,12 +883,11 @@ function HostProfile({
                   </dl>
                   <ProfessionalFrame title="Qualifications & Professional Links">
                     <p className="whitespace-pre-line text-sm">
-                      {profile.data?.certifications || "No qualifications added yet."}
+                      {certifications || "No qualifications added yet."}
                     </p>
-                    {profile.data?.linkedin_url &&
-                    /^https?:\/\//i.test(profile.data.linkedin_url) ? (
+                    {linkedinUrl && /^https?:\/\//i.test(linkedinUrl) ? (
                       <a
-                        href={profile.data.linkedin_url}
+                        href={linkedinUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="mt-2 inline-flex items-center gap-2 text-sm text-primary underline"
@@ -841,51 +904,6 @@ function HostProfile({
                 </TabsContent>
               )}
               <TabsContent value="professional" className="mt-4 grid gap-3 lg:grid-cols-2">
-                <ProfessionalFrame title="CV" className="lg:col-span-2">
-                  {" "}
-                  <div className="mt-3">
-                    <p className="text-xs font-medium">
-                      CV (private — admin only, never shown to scholars)
-                    </p>
-                    <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded bg-primary px-3 py-2 text-xs font-bold text-primary-foreground">
-                      <Upload className="h-3.5 w-3.5" />{" "}
-                      {cvAiBusy
-                        ? "Reading CV…"
-                        : cvBusy
-                          ? "Uploading…"
-                          : cvPath
-                            ? "Replace CV"
-                            : "Upload CV"}
-                      <input
-                        aria-label="Upload CV"
-                        type="file"
-                        accept=".pdf,.doc,.docx"
-                        hidden
-                        disabled={cvBusy || cvAiBusy}
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          e.target.accept = ".pdf,.doc,.docx";
-                          if (f) void uploadCv(f);
-                          e.target.value = "";
-                        }}
-                      />
-                    </label>
-                    {cvPath && (
-                      <span className="ml-2 text-xs text-muted-foreground">
-                        {cvPath.split("/").pop()}
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    Uploading a PDF sends it to OpenAI to fill empty professional fields
-                    automatically. Review the draft before saving.
-                  </p>
-                  {cvDraftNote && (
-                    <p role="status" className="mt-2 text-sm">
-                      {cvDraftNote}
-                    </p>
-                  )}
-                </ProfessionalFrame>
                 <p className="text-sm text-muted-foreground lg:col-span-2">
                   Shown to scholars and HR before your identity is revealed — it's what gives them
                   confidence to book, without naming you. Your name, email and phone are never shown
@@ -1087,7 +1105,7 @@ function HostProfile({
                 {err || "Unable to load your profile. Please refresh before saving."}
               </p>
             )}
-            {profileTab === "professional" && (
+            {(profileTab === "professional" || (profileTab === "overview" && !!cvPath)) && (
               <button
                 onClick={save}
                 disabled={busy || profile.isPending || cvAiBusy || cvBusy}

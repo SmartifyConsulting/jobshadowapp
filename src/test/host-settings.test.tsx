@@ -182,11 +182,8 @@ it.each([null, "mentor@example.com/cv.docx"])(
         <Page />
       </QueryClientProvider>,
     );
-    fireEvent.mouseDown(screen.getByRole("tab", { name: "Professional Details" }), {
-      button: 0,
-      ctrlKey: false,
-    });
     const input = screen.getByLabelText("Upload CV") as HTMLInputElement;
+    expect(screen.getByRole("group", { name: "CV" })).toBeVisible();
     expect(input.closest("label")).toHaveClass("bg-primary");
     expect(screen.queryByRole("button", { name: "Fill From My CV" })).toBeNull();
     expect(cvDraft).not.toHaveBeenCalled();
@@ -220,20 +217,22 @@ it("reviews CV drafts, preserves populated fields and keeps edits made while AI 
       <Page />
     </QueryClientProvider>,
   );
-  fireEvent.mouseDown(screen.getByRole("tab", { name: "Professional Details" }), {
-    button: 0,
-    ctrlKey: false,
-  });
   const groups = screen.getAllByRole("group");
   expect(groups.find((group) => group.getAttribute("aria-label") === "CV")).toBeVisible();
-  fireEvent.change(screen.getByLabelText("Upload CV"), {
-    target: { files: [new File(["%PDF-synthetic"], "test-cv.pdf", { type: "application/pdf" })] },
+  fireEvent.drop(screen.getByLabelText("CV upload area"), {
+    dataTransfer: {
+      files: [new File(["%PDF-synthetic"], "test-cv.pdf", { type: "application/pdf" })],
+    },
   });
   await waitFor(() =>
     expect(cvDraft).toHaveBeenCalledWith({
       data: { storagePath: expect.stringMatching(/mentor@example.com\/cv-.*-test-cv\.pdf$/) },
     }),
   );
+  fireEvent.mouseDown(screen.getByRole("tab", { name: "Professional Details" }), {
+    button: 0,
+    ctrlKey: false,
+  });
   const specialties = screen.getByLabelText("Specialties (comma separated)");
   fireEvent.change(specialties, { target: { value: "Manually entered while waiting" } });
   finish({
@@ -258,11 +257,12 @@ it("reviews CV drafts, preserves populated fields and keeps edits made while AI 
       expect.objectContaining({ _bio: "My original bio", _specialties: [], _certifications: null }),
     ),
   );
-  fireEvent.mouseDown(screen.getByRole("tab", { name: "Professional Details" }), {
+  fireEvent.mouseDown(screen.getByRole("tab", { name: "Overview" }), {
     button: 0,
     ctrlKey: false,
   });
-  expect(screen.getByLabelText("Certifications / qualifications")).toHaveValue("BSc Computing");
+  expect(screen.getByText("BSc Computing")).toBeVisible();
+  expect(screen.getByText("Manually entered while waiting")).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "Save profile" }));
   await waitFor(() =>
     expect(rpc).toHaveBeenCalledWith(
