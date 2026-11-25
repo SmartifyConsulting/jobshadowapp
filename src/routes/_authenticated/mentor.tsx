@@ -684,7 +684,7 @@ function HostProfile({
             </button>
             <div className="min-w-0 flex-1">
               <h1 className="text-2xl font-bold">My Profile</h1>
-              <h2 className="text-2xl font-bold">{mentorName}</h2>
+              <h2 className="text-2xl font-bold text-teal">{mentorName}</h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 {profile.data?.via_company ? "Company Mentor" : "Independent Mentor"}
               </p>
