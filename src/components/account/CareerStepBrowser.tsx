@@ -95,6 +95,7 @@ export function CareerStepBrowser({
           <h3 className="text-sm font-semibold">{selectedRole.title}</h3>
           <CareerGuidance
             framed
+            compact
             name={selectedRole.title}
             description={
               getCareerDescription(
