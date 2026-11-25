@@ -1,6 +1,14 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+const auth = vi.hoisted(() => ({
+  user: { id: "test-scholar", user_metadata: {} as Record<string, string> },
+  save: vi.fn(),
+}));
+vi.mock("@/components/SiteLayout", () => ({
+  SiteLayout: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  useSiteSession: () => ({ data: null }),
+}));
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children, to }: { children: React.ReactNode; to: string }) => (
     <a href={to}>{children}</a>
@@ -8,15 +16,26 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
+    auth: {
+      getUser: async () => ({ data: { user: auth.user }, error: null }),
+      updateUser: auth.save,
+    },
     rpc: vi.fn().mockImplementation(async (name: string) => ({
       data: name === "get_placement_country" ? "ZA" : [],
       error: null,
     })),
   },
 }));
-import { NewBooking } from "@/components/account/AccountSections";
+import { AccountPanel, NewBooking } from "@/components/account/AccountSections";
 import { CareerStepBrowser } from "@/components/account/CareerStepBrowser";
 afterEach(cleanup);
+beforeEach(() => {
+  auth.user = { id: "test-scholar", user_metadata: {} };
+  auth.save.mockReset().mockImplementation(async ({ data }) => {
+    auth.user = { ...auth.user, user_metadata: { ...auth.user.user_metadata, ...data } };
+    return { data: { user: auth.user }, error: null };
+  });
+});
 const client = () =>
   new QueryClient({ defaultOptions: { queries: { staleTime: Infinity, retry: false } } });
 describe("guided career and host selection", () => {
@@ -62,12 +81,74 @@ describe("guided career and host selection", () => {
       </QueryClientProvider>,
     );
     fireEvent.click(screen.getByRole("button", { name: "Browse all career descriptions" }));
-    fireEvent.change(screen.getByRole("textbox", { name: "Search careers" }), {
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search careers" }), {
       target: { value: "Accountant" },
     });
-    fireEvent.click(screen.getByRole("radio", { name: "Select Accountant" }));
+    fireEvent.click(screen.getByRole("button", { name: "Select Accountant" }));
     expect(select).toHaveBeenCalledWith("Accountant");
     expect(screen.queryByRole("link", { name: "Browse all career descriptions" })).toBeNull();
+  });
+  it("restores the saved career after remount and opens Step 3 directly", async () => {
+    const mount = (step: string) => {
+      const cache = client();
+      cache.setQueryData(["me"], auth.user);
+      cache.setQueryData(["scholar-profile", auth.user.id], {});
+      cache.setQueryData(["bookings", auth.user.id], []);
+      cache.setQueryData(["public-career-content"], []);
+      cache.setQueryData(["public-careers-catalog"], []);
+      cache.setQueryData(["placements"], []);
+      return render(
+        <QueryClientProvider client={cache}>
+          <AccountPanel withBookings initialStep={step} />
+        </QueryClientProvider>,
+      );
+    };
+    const first = mount("careers");
+    fireEvent.change(screen.getByRole("combobox", { name: "Career" }), {
+      target: { value: "Accountant" },
+    });
+    await waitFor(() =>
+      expect(auth.save).toHaveBeenCalledWith({ data: { selected_career: "Accountant" } }),
+    );
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Continue to Find a Host" })).toBeEnabled(),
+    );
+    first.unmount();
+    const second = mount("request");
+    expect(screen.getByRole("heading", { name: "Host" })).toBeVisible();
+    expect(screen.getByText("Accountant", { exact: true })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Back to Careers" }));
+    expect(screen.getByRole("combobox", { name: "Career" })).toHaveValue("Accountant");
+    second.unmount();
+    auth.user = { id: "other-scholar", user_metadata: {} };
+    mount("request");
+    expect(screen.getByRole("combobox", { name: "Career" })).toHaveValue("");
+    expect(screen.queryByRole("heading", { name: "Host" })).toBeNull();
+  });
+  it("shows a failed preference save and lets the scholar retry", async () => {
+    auth.save.mockResolvedValueOnce({
+      data: { user: null },
+      error: { message: "Network unavailable" },
+    });
+    const cache = client();
+    cache.setQueryData(["me"], auth.user);
+    cache.setQueryData(["scholar-profile", auth.user.id], {});
+    cache.setQueryData(["bookings", auth.user.id], []);
+    cache.setQueryData(["public-career-content"], []);
+    cache.setQueryData(["public-careers-catalog"], []);
+    render(
+      <QueryClientProvider client={cache}>
+        <AccountPanel withBookings initialStep="careers" />
+      </QueryClientProvider>,
+    );
+    fireEvent.change(screen.getByRole("combobox", { name: "Career" }), {
+      target: { value: "Accountant" },
+    });
+    expect(await screen.findByRole("alert")).toHaveTextContent("could not be saved");
+    expect(auth.user.user_metadata["selected_career"]).toBeUndefined();
+    fireEvent.click(screen.getByRole("button", { name: "Retry saving" }));
+    await waitFor(() => expect(auth.user.user_metadata["selected_career"]).toBe("Accountant"));
+    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
   });
   it("skips sector selection and lists every host matching the selected career and date range", () => {
     const cache = client();

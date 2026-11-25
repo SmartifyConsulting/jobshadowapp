@@ -24,7 +24,7 @@ import {
   Briefcase,
   Star,
 } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { confirmAction } from "@/lib/dialogs";
@@ -109,7 +109,13 @@ export function AccountPanel({
   if (withBookings)
     return (
       <StudentJourney
+        key={user.id}
         userId={user.id}
+        savedCareer={
+          typeof user.user_metadata?.["selected_career"] === "string"
+            ? user.user_metadata["selected_career"]
+            : ""
+        }
         profile={profile.data as Record<string, unknown> | null}
         initialStep={initialStep}
       />
@@ -1008,10 +1014,12 @@ export function Bookings({ selectedId }: { selectedId?: string | undefined } = {
 
 function StudentJourney({
   userId,
+  savedCareer,
   profile,
   initialStep,
 }: {
   userId: string;
+  savedCareer: string;
   profile: Record<string, unknown> | null;
   initialStep?: string | undefined;
 }) {
@@ -1020,7 +1028,38 @@ function StudentJourney({
     if (initialStep) setActive(initialStep);
   }, [initialStep]);
   const [editingProfile, setEditingProfile] = useState(false);
-  const [career, setCareer] = useState("");
+  const qc = useQueryClient();
+  const [selection, setSelection] = useState<string | null>(null);
+  const career = selection ?? savedCareer;
+  const saveCareer = useMutation({
+    scope: { id: "scholar-career-preference" },
+    mutationFn: async (value: string) => {
+      const current = await supabase.auth.getUser();
+      if (current.error || current.data.user?.id !== userId)
+        throw new Error("Sign in to save your career selection.");
+      const result = await supabase.auth.updateUser({ data: { selected_career: value } });
+      if (result.error || result.data.user?.id !== userId)
+        throw result.error ?? new Error("Career selection could not be saved.");
+      return result.data.user;
+    },
+    onSuccess: (updated) => {
+      qc.setQueryData(["me"], (cached: typeof updated | undefined) =>
+        cached?.id === userId
+          ? {
+              ...cached,
+              user_metadata: {
+                ...cached.user_metadata,
+                selected_career: updated.user_metadata["selected_career"],
+              },
+            }
+          : cached,
+      );
+    },
+  });
+  const setCareer = (value: string) => {
+    setSelection(value);
+    saveCareer.mutate(value);
+  };
   const [selectedId, setSelectedId] = useState("");
   const bookings = useQuery({
     queryKey: ["bookings", userId],
@@ -1056,7 +1095,7 @@ function StudentJourney({
       id: "careers",
       title: "Explore Careers",
       icon: Search,
-      complete: !!current,
+      complete: !!career || !!current,
       locked: !profile,
     },
     {
@@ -1109,6 +1148,19 @@ function StudentJourney({
 
   return (
     <section className="min-w-0 space-y-5" aria-label="Scholar step wizard">
+      {saveCareer.isPending && (
+        <p role="status" className="text-sm">
+          Saving your career selection…
+        </p>
+      )}
+      {saveCareer.isError && (
+        <p role="alert" className="text-sm text-destructive">
+          Your career is selected, but could not be saved for your next visit.{" "}
+          <button type="button" className="underline" onClick={() => saveCareer.mutate(career)}>
+            Retry saving
+          </button>
+        </p>
+      )}
       {active !== requestedActive && (
         <p className="text-sm">
           Complete the current step before continuing to the step you selected.
@@ -1123,7 +1175,9 @@ function StudentJourney({
           setActive(step);
         }}
       />
-      <div className={`min-w-0 overflow-hidden rounded-lg border border-border text-foreground ${active === "request" ? "bg-teal p-0" : "bg-ivory p-4 sm:p-6"}`}>
+      <div
+        className={`min-w-0 overflow-hidden rounded-lg border border-border text-foreground ${active === "request" ? "bg-teal p-0" : "bg-ivory p-4 sm:p-6"}`}
+      >
         {active === "profile" &&
           (!profile || editingProfile ? (
             <ProfileForm
@@ -1158,7 +1212,7 @@ function StudentJourney({
               Choose a career that interests you, then find a host offering that experience.
             </p>
             <CareerStepBrowser selected={career} onSelect={setCareer} />
-            <Button disabled={!career} onClick={() => setActive("request")}>
+            <Button disabled={!career || saveCareer.isPending} onClick={() => setActive("request")}>
               Continue to Find a Host
             </Button>
           </div>
@@ -1939,13 +1993,11 @@ export function NewBooking({
           )}
         </div>
       </div>
-      <div className={`flex flex-wrap gap-2 px-6 pb-5 ${initialCareer ? STEP_BG[step - 1] : "bg-primary pt-5"}`}>
+      <div
+        className={`flex flex-wrap gap-2 px-6 pb-5 ${initialCareer ? STEP_BG[step - 1] : "bg-primary pt-5"}`}
+      >
         {initialCareer && step === 3 && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onBackToCareers}
-          >
+          <Button type="button" variant="outline" onClick={onBackToCareers}>
             Back to Careers
           </Button>
         )}
@@ -1959,11 +2011,7 @@ export function NewBooking({
           </button>
         )}
         {step < 5 ? (
-          <Button
-            type="button"
-            onClick={() => setStep(step + 1)}
-            disabled={!canContinue}
-          >
+          <Button type="button" onClick={() => setStep(step + 1)} disabled={!canContinue}>
             {initialCareer
               ? step === 3
                 ? "Continue to Payment"
