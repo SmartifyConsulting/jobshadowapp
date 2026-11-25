@@ -133,51 +133,32 @@ function MentorPortal() {
     },
   });
   if (ownIdentity.pending || profile.isPending) return <PortalLoading portal={false} />;
+  if (profile.error || !profile.data || !ownIdentity.user.data)
+    return (
+      <p role="alert" className="p-6">
+        Your profile could not be loaded. Please refresh before editing.
+      </p>
+    );
   return (
     <div className="flex min-h-screen flex-col bg-ivory">
       <SiteHeader />
       <main className="min-w-0 flex-1 p-4 md:p-6">
-        {search.entry === "onboarding" && ownIdentity.user.data && profile.data ? (
-          <MentorOnboardingWizard
-            userId={ownIdentity.user.data.id}
-            hostProfile={profile.data}
-            initialStep={search.step}
-            renderProfile={(onDone) => (
-              <HostProfile
-                wizard
-                onProfileCompleted={onDone}
-                bookings={[]}
-                placements={[]}
-                loadingPlacements={false}
-                loadingBookings={false}
-              />
-            )}
-          />
-        ) : (
-          <>
-            <a
-              href="/mentor?entry=onboarding"
-              className="mb-4 inline-block rounded bg-primary px-4 py-2 text-sm text-primary-foreground"
-            >
-              Continue Mentor Onboarding
-            </a>
-            <HostProfile
-              initialTab={
-                requestedSection === "professional"
-                  ? "professional"
-                  : requestedSection === "settings"
-                    ? "availability"
-                    : requestedSection === "calendar" || requestedSection === "shadows"
-                      ? "shadows"
-                      : "overview"
-              }
-              bookings={bookings.data ?? []}
-              placements={placements.data ?? []}
-              loadingPlacements={placements.isPending}
-              loadingBookings={bookings.isPending}
-            />
-          </>
-        )}
+        <HostProfile
+          initialStep={search.step}
+          initialTab={
+            requestedSection === "professional"
+              ? "professional"
+              : requestedSection === "settings"
+                ? "availability"
+                : requestedSection === "calendar" || requestedSection === "shadows"
+                  ? "shadows"
+                  : "overview"
+          }
+          bookings={bookings.data ?? []}
+          placements={placements.data ?? []}
+          loadingPlacements={placements.isPending}
+          loadingBookings={bookings.isPending}
+        />
       </main>
       <SiteFooter />
     </div>
@@ -458,6 +439,7 @@ function ProfessionalFrame({
 
 function HostProfile({
   initialTab = "personal",
+  initialStep,
   wizard = false,
   onProfileCompleted,
   bookings,
@@ -466,6 +448,7 @@ function HostProfile({
   loadingBookings,
 }: {
   initialTab?: string;
+  initialStep?: MentorOnboardingStep | undefined;
   wizard?: boolean;
   onProfileCompleted?: () => void;
   bookings: MentorBooking[];
@@ -474,12 +457,14 @@ function HostProfile({
   loadingBookings: boolean;
 }) {
   const qc = useQueryClient();
+  const [onboardingStep, setOnboardingStep] = useState<MentorOnboardingStep>(
+    initialStep === "linkedin" ? "profile" : (initialStep ?? "profile"),
+  );
   const ownIdentity = useOwnIdentity();
   const [wizardErrors, setWizardErrors] = useState<string[]>([]);
   const draftCv = useServerFn(draftMentorProfileFromCv);
   const initialized = useRef(false);
   const [cvAiBusy, setCvAiBusy] = useState(false);
-  const cvInput = useRef<HTMLInputElement>(null);
   const [cvDraftNote, setCvDraftNote] = useState("");
   const [profileTab, setProfileTab] = useState(initialTab);
   const profile = useQuery({
@@ -545,29 +530,19 @@ function HostProfile({
     setEngagementNotes(p.engagement_notes ?? "");
   }, [profile.data]);
 
-  async function fillFromCv() {
-    if (cvBusy || cvAiBusy) return;
+  async function fillFromCv(path: string) {
+    if (cvAiBusy) return;
     if (bio.trim() && specialties.trim() && certifications.trim() && linkedinUrl.trim()) {
       setCvDraftNote(
-        "Your professional fields are already filled. Clear a field you want to fill from your CV, then try again.",
+        "CV uploaded. Your professional fields are already filled and have been preserved.",
       );
-      return;
-    }
-    if (!cvPath || !/\.pdf$/i.test(cvPath)) {
-      setCvDraftNote(
-        "Choose a PDF CV, then click Fill From My CV. Word documents can be stored but cannot be used for autofill.",
-      );
-      if (cvInput.current) {
-        cvInput.current.accept = ".pdf";
-        cvInput.current.click();
-      }
       return;
     }
     setCvAiBusy(true);
     setErr(null);
     setCvDraftNote("");
     try {
-      const draft = await draftCv({ data: { storagePath: cvPath } });
+      const draft = await draftCv({ data: { storagePath: path } });
       setBio((current) => (current.trim() ? current : (draft.bio ?? "")));
       setSpecialties((current) =>
         current.trim() ? current : (draft.specialties ?? []).join(", "),
@@ -606,6 +581,11 @@ function HostProfile({
         .upload(path, file, { upsert: true });
       if (error) throw error;
       setCvPath(path);
+      if (/\.pdf$/i.test(file.name)) await fillFromCv(path);
+      else
+        setCvDraftNote(
+          "CV uploaded. To fill your professional fields automatically, upload a PDF version.",
+        );
     } catch (e) {
       setErr((e as Error).message);
     } finally {
@@ -677,10 +657,13 @@ function HostProfile({
     <section className="w-full space-y-4 bg-ivory p-4">
       {!wizard && (
         <header aria-label="Mentor profile summary" className="space-y-3">
-          <div className="flex items-start gap-4">
+          <div className="flex flex-wrap items-start gap-4">
             <button
               type="button"
-              onClick={() => setProfileTab("personal")}
+              onClick={() => {
+                setOnboardingStep("profile");
+                setProfileTab("personal");
+              }}
               aria-label="Edit profile photo"
               className="relative grid h-20 w-20 shrink-0 place-items-center rounded-full border border-input bg-muted text-xl font-bold"
             >
@@ -696,6 +679,7 @@ function HostProfile({
               <Camera className="absolute bottom-0 right-0 h-6 w-6 rounded-full bg-background p-1" />
             </button>
             <div className="min-w-0 flex-1">
+              <p className="text-xs text-muted-foreground">My Profile</p>
               <h1 className="text-2xl font-bold">{mentorName}</h1>
               <p className="mt-1 text-sm text-muted-foreground">
                 {profile.data?.via_company ? "Company Mentor" : "Independent Mentor"}
@@ -706,10 +690,23 @@ function HostProfile({
             </div>
             <button
               type="button"
-              onClick={() => setProfileTab("personal")}
+              onClick={() => {
+                setOnboardingStep("profile");
+                setProfileTab("personal");
+              }}
               className="shrink-0 text-sm font-medium text-primary"
             >
               Edit Profile
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setOnboardingStep("profile");
+                setProfileTab("professional");
+              }}
+              className="shrink-0 text-sm font-medium text-primary"
+            >
+              Edit Professional Details
             </button>
           </div>
           <ul className="space-y-1.5 text-sm">
@@ -728,382 +725,387 @@ function HostProfile({
           </ul>
         </header>
       )}
-      <Tabs value={profileTab} onValueChange={setProfileTab}>
-        <TabsList
-          className="flex h-auto w-full flex-wrap justify-start"
-          aria-label="Mentor profile details"
-        >
-          {!wizard && <TabsTrigger value="overview">Overview</TabsTrigger>}
-          <TabsTrigger value="personal">Personal Details</TabsTrigger>
-          <TabsTrigger value="professional">Professional Details</TabsTrigger>
-          {!wizard && (
-            <>
-              <TabsTrigger value="availability">Preferences</TabsTrigger>
-              <TabsTrigger value="shadows">Bookings</TabsTrigger>
-            </>
-          )}
-        </TabsList>
-        {!wizard && (
-          <TabsContent value="overview" className="mt-4 space-y-4">
-            <ProfessionalFrame title="Skills & Expertise">
-              {profile.data?.specialties?.length ? (
-                <div className="flex flex-wrap gap-2">
-                  {profile.data.specialties.map((skill) => (
-                    <span key={skill} className="rounded-full border px-3 py-1 text-sm">
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">No skills added yet.</p>
-              )}
-            </ProfessionalFrame>
-            <ProfessionalFrame title="Experience">
-              <p className="whitespace-pre-line text-sm">
-                {profile.data?.bio || "No experience added yet."}
-              </p>
-            </ProfessionalFrame>
-            <dl
-              aria-label="Mentoring activity"
-              className="grid grid-cols-2 gap-4 py-2 sm:grid-cols-4"
-            >
-              {[
-                ["Mentor Sessions", loadingPlacements ? "—" : placements.length],
-                ["Total Bookings", loadingBookings ? "—" : bookings.length],
-                [
-                  "Confirmed Bookings",
-                  loadingBookings
-                    ? "—"
-                    : bookings.filter((booking) => booking.status === "confirmed").length,
-                ],
-                [
-                  "Completed Bookings",
-                  loadingBookings
-                    ? "—"
-                    : bookings.filter((booking) => booking.status === "completed").length,
-                ],
-              ].map(([label, value]) => (
-                <div key={label}>
-                  <dd className="text-2xl font-bold tabular-nums">{value}</dd>
-                  <dt className="text-xs text-muted-foreground">{label}</dt>
-                </div>
-              ))}
-            </dl>
-            <ProfessionalFrame title="Qualifications & Professional Links">
-              <p className="whitespace-pre-line text-sm">
-                {profile.data?.certifications || "No qualifications added yet."}
-              </p>
-              {profile.data?.linkedin_url && /^https?:\/\//i.test(profile.data.linkedin_url) ? (
-                <a
-                  href={profile.data.linkedin_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-2 inline-flex items-center gap-2 text-sm text-primary underline"
-                >
-                  <Briefcase className="h-4 w-4" />
-                  Professional Profile
-                </a>
-              ) : (
-                <p className="mt-2 text-sm text-muted-foreground">
-                  No professional links added yet.
-                </p>
-              )}
-            </ProfessionalFrame>
-            <button
-              type="button"
-              onClick={() => setProfileTab("professional")}
-              className="rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-            >
-              Edit Professional Details
-            </button>
-          </TabsContent>
-        )}
-        <TabsContent forceMount value="personal" className="mt-4 data-[state=inactive]:hidden">
-          <AccountPersonalDetails
-            onSaved={
-              wizard
-                ? () => {
-                    setWizardErrors([]);
-                    setProfileTab("professional");
-                  }
-                : undefined
-            }
-          />
-        </TabsContent>
-        <TabsContent value="professional" className="mt-4 grid gap-3 lg:grid-cols-2">
-          <ProfessionalFrame title="CV" className="lg:col-span-2">
-            {" "}
-            <div className="mt-3">
-              <p className="text-xs font-medium">
-                CV (private — admin only, never shown to scholars)
-              </p>
-              <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded bg-muted px-3 py-2 text-xs font-medium">
-                <Upload className="h-3.5 w-3.5" />{" "}
-                {cvBusy ? "Uploading…" : cvPath ? "Replace CV" : "Upload CV"}
-                <input
-                  ref={cvInput}
-                  aria-label="Upload CV"
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  hidden
-                  disabled={cvBusy || cvAiBusy}
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    e.target.accept = ".pdf,.doc,.docx";
-                    if (f) void uploadCv(f);
-                    e.target.value = "";
-                  }}
-                />
-              </label>
-              {cvPath && (
-                <span className="ml-2 text-xs text-muted-foreground">
-                  {cvPath.split("/").pop()}
-                </span>
-              )}
-            </div>
-            <div className="mt-3 flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={fillFromCv}
-                disabled={cvBusy || cvAiBusy}
-                className="rounded bg-primary px-3 py-2 text-xs font-bold text-primary-foreground disabled:opacity-50"
+      <MentorOnboardingWizard
+        userId={ownIdentity.user.data?.id ?? ""}
+        hostProfile={profile.data!}
+        initialStep={initialStep ?? "profile"}
+        activeStep={onboardingStep}
+        onStepChange={setOnboardingStep}
+        embedded
+        renderProfile={() => (
+          <>
+            <Tabs value={profileTab} onValueChange={setProfileTab}>
+              <TabsList
+                className="flex h-auto w-full flex-wrap justify-start"
+                aria-label="Mentor profile details"
               >
-                {cvAiBusy ? "Reading CV…" : "Fill From My CV"}
-              </button>
-              <p className="text-xs text-muted-foreground">
-                {!cvPath
-                  ? "Upload a PDF CV to fill your empty professional fields."
-                  : !/\.pdf$/i.test(cvPath)
-                    ? "Autofill needs a PDF. Click Fill From My CV to choose one."
-                    : "Fills empty fields from your PDF CV. Review before saving."}
-              </p>
-            </div>
-            {cvDraftNote && (
-              <p role="status" className="mt-2 text-sm">
-                {cvDraftNote}
+                {!wizard && <TabsTrigger value="overview">Overview</TabsTrigger>}
+                <TabsTrigger value="personal">Personal Details</TabsTrigger>
+                <TabsTrigger value="professional">Professional Details</TabsTrigger>
+                {!wizard && (
+                  <>
+                    <TabsTrigger value="availability">Preferences</TabsTrigger>
+                    <TabsTrigger value="shadows">Bookings</TabsTrigger>
+                  </>
+                )}
+              </TabsList>
+              {!wizard && (
+                <TabsContent value="overview" className="mt-4 space-y-4">
+                  <ProfessionalFrame title="Skills & Expertise">
+                    {profile.data?.specialties?.length ? (
+                      <div className="flex flex-wrap gap-2">
+                        {profile.data.specialties.map((skill) => (
+                          <span key={skill} className="rounded-full border px-3 py-1 text-sm">
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No skills added yet.</p>
+                    )}
+                  </ProfessionalFrame>
+                  <ProfessionalFrame title="Experience">
+                    <p className="whitespace-pre-line text-sm">
+                      {profile.data?.bio || "No experience added yet."}
+                    </p>
+                  </ProfessionalFrame>
+                  <dl
+                    aria-label="Mentoring activity"
+                    className="grid grid-cols-2 gap-4 py-2 sm:grid-cols-4"
+                  >
+                    {[
+                      ["Mentor Sessions", loadingPlacements ? "—" : placements.length],
+                      ["Total Bookings", loadingBookings ? "—" : bookings.length],
+                      [
+                        "Confirmed Bookings",
+                        loadingBookings
+                          ? "—"
+                          : bookings.filter((booking) => booking.status === "confirmed").length,
+                      ],
+                      [
+                        "Completed Bookings",
+                        loadingBookings
+                          ? "—"
+                          : bookings.filter((booking) => booking.status === "completed").length,
+                      ],
+                    ].map(([label, value]) => (
+                      <div key={label}>
+                        <dd className="text-2xl font-bold tabular-nums">{value}</dd>
+                        <dt className="text-xs text-muted-foreground">{label}</dt>
+                      </div>
+                    ))}
+                  </dl>
+                  <ProfessionalFrame title="Qualifications & Professional Links">
+                    <p className="whitespace-pre-line text-sm">
+                      {profile.data?.certifications || "No qualifications added yet."}
+                    </p>
+                    {profile.data?.linkedin_url &&
+                    /^https?:\/\//i.test(profile.data.linkedin_url) ? (
+                      <a
+                        href={profile.data.linkedin_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 inline-flex items-center gap-2 text-sm text-primary underline"
+                      >
+                        <Briefcase className="h-4 w-4" />
+                        Professional Profile
+                      </a>
+                    ) : (
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        No professional links added yet.
+                      </p>
+                    )}
+                  </ProfessionalFrame>
+                </TabsContent>
+              )}
+              <TabsContent
+                forceMount
+                value="personal"
+                className="mt-4 data-[state=inactive]:hidden"
+              >
+                <AccountPersonalDetails
+                  onSaved={
+                    wizard
+                      ? () => {
+                          setWizardErrors([]);
+                          setProfileTab("professional");
+                        }
+                      : undefined
+                  }
+                />
+              </TabsContent>
+              <TabsContent value="professional" className="mt-4 grid gap-3 lg:grid-cols-2">
+                <ProfessionalFrame title="CV" className="lg:col-span-2">
+                  {" "}
+                  <div className="mt-3">
+                    <p className="text-xs font-medium">
+                      CV (private — admin only, never shown to scholars)
+                    </p>
+                    <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded bg-primary px-3 py-2 text-xs font-bold text-primary-foreground">
+                      <Upload className="h-3.5 w-3.5" />{" "}
+                      {cvAiBusy
+                        ? "Reading CV…"
+                        : cvBusy
+                          ? "Uploading…"
+                          : cvPath
+                            ? "Replace CV"
+                            : "Upload CV"}
+                      <input
+                        aria-label="Upload CV"
+                        type="file"
+                        accept=".pdf,.doc,.docx"
+                        hidden
+                        disabled={cvBusy || cvAiBusy}
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          e.target.accept = ".pdf,.doc,.docx";
+                          if (f) void uploadCv(f);
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                    {cvPath && (
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        {cvPath.split("/").pop()}
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Uploading a PDF sends it to OpenAI to fill empty professional fields
+                    automatically. Review the draft before saving.
+                  </p>
+                  {cvDraftNote && (
+                    <p role="status" className="mt-2 text-sm">
+                      {cvDraftNote}
+                    </p>
+                  )}
+                </ProfessionalFrame>
+                <p className="text-sm text-muted-foreground lg:col-span-2">
+                  Shown to scholars and HR before your identity is revealed — it's what gives them
+                  confidence to book, without naming you. Your name, email and phone are never shown
+                  here.
+                </p>
+                <ProfessionalFrame title="Experience & Bio">
+                  <label className="block text-xs font-medium">
+                    <span className="sr-only">Experience / Bio</span>
+                    <textarea
+                      rows={4}
+                      aria-invalid={wizardErrors.includes("Experience / Bio")}
+                      style={
+                        wizardErrors.includes("Experience / Bio")
+                          ? {
+                              borderColor: "var(--destructive)",
+                              boxShadow: "0 0 0 1px var(--destructive)",
+                            }
+                          : undefined
+                      }
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      placeholder="A few sentences about your role and experience."
+                      className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm font-normal placeholder:font-normal outline-none"
+                    />
+                  </label>
+                </ProfessionalFrame>
+                <ProfessionalFrame title="Expertise & Qualifications">
+                  <label className="block text-xs font-medium">
+                    <span className="flex items-center gap-1.5">
+                      <Award className="h-4 w-4" /> Specialties (comma separated)
+                    </span>
+                    <input
+                      aria-invalid={wizardErrors.includes("Specialties")}
+                      style={
+                        wizardErrors.includes("Specialties")
+                          ? {
+                              borderColor: "var(--destructive)",
+                              boxShadow: "0 0 0 1px var(--destructive)",
+                            }
+                          : undefined
+                      }
+                      value={specialties}
+                      onChange={(e) => setSpecialties(e.target.value)}
+                      placeholder="e.g. Corporate law, Contract negotiation"
+                      className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm font-normal placeholder:font-normal outline-none"
+                    />
+                  </label>
+                  <label className="mt-3 block text-xs font-medium">
+                    Certifications / qualifications
+                    <textarea
+                      rows={2}
+                      value={certifications}
+                      onChange={(e) => setCertifications(e.target.value)}
+                      className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm font-normal placeholder:font-normal outline-none"
+                    />
+                  </label>
+                </ProfessionalFrame>
+                <ProfessionalFrame title="Professional Links" className="lg:col-span-2">
+                  <label className="block text-xs font-medium">
+                    LinkedIn / professional profile URL (optional)
+                    <input
+                      type="url"
+                      value={linkedinUrl}
+                      onChange={(e) => setLinkedinUrl(e.target.value)}
+                      placeholder="https://linkedin.com/in/..."
+                      className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm font-normal placeholder:font-normal outline-none"
+                    />
+                  </label>
+                </ProfessionalFrame>
+              </TabsContent>
+              <TabsContent
+                forceMount
+                value="availability"
+                className="mt-4 space-y-4 data-[state=inactive]:hidden"
+              >
+                <div className="grid gap-3 lg:grid-cols-2">
+                  {" "}
+                  <div className="rounded-lg border bg-card p-4 space-y-3">
+                    <p className="text-sm font-semibold">Company Contact</p>
+                    <p className="text-sm">
+                      {viaCompany ? "Company Mentor" : "Independent Mentor"}
+                    </p>
+                    {viaCompany && (
+                      <label className="ml-6 flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={hasHrAdmin}
+                          onChange={(e) => setHasHrAdmin(e.target.checked)}
+                        />
+                        Do you have an HR admin you report results to?
+                      </label>
+                    )}
+                    {viaCompany && hasHrAdmin && (
+                      <div className="ml-6 grid gap-3 sm:grid-cols-2">
+                        <label className="block text-sm">
+                          HR first name
+                          <input
+                            value={hrFirstName}
+                            onChange={(e) => setHrFirstName(e.target.value)}
+                            className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                          />
+                        </label>
+                        <label className="block text-sm">
+                          HR last name
+                          <input
+                            value={hrLastName}
+                            onChange={(e) => setHrLastName(e.target.value)}
+                            className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                          />
+                        </label>
+                        <label className="block text-sm sm:col-span-2">
+                          HR email
+                          <input
+                            type="email"
+                            value={hrEmail}
+                            onChange={(e) => setHrEmail(e.target.value)}
+                            className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                          />
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                  <div className="rounded-lg border bg-card p-4 space-y-3">
+                    <p className="text-sm font-semibold">Rules of Engagement</p>
+                    <p className="text-xs text-muted-foreground">
+                      Help admin know how best to reach you.
+                    </p>
+                    <label className="block text-sm">
+                      Preferred contact method
+                      <select
+                        value={preferredContact}
+                        onChange={(e) => setPreferredContact(e.target.value)}
+                        className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                      >
+                        <option value="email">Email</option>
+                        <option value="whatsapp">WhatsApp</option>
+                        <option value="phone">Phone call</option>
+                        <option value="sms">SMS</option>
+                      </select>
+                    </label>
+                    <label className="block text-sm">
+                      Best times to contact you (optional)
+                      <input
+                        value={contactHoursNote}
+                        onChange={(e) => setContactHoursNote(e.target.value)}
+                        placeholder="e.g. Weekdays 9am-5pm only"
+                        className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                      />
+                    </label>
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={avoidWeekends}
+                        onChange={(e) => setAvoidWeekends(e.target.checked)}
+                      />
+                      Please don't contact me on weekends
+                    </label>
+                    <label className="block text-sm">
+                      Anything else admin should know (optional)
+                      <textarea
+                        rows={2}
+                        value={engagementNotes}
+                        onChange={(e) => setEngagementNotes(e.target.value)}
+                        placeholder="e.g. prefers written briefs before a call, out of office in December"
+                        className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                      />
+                    </label>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={save}
+                  disabled={busy || profile.isPending || !!profile.error}
+                  className="rounded bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-50"
+                >
+                  {contactSaved ? "Saved" : "Save Contact Preferences"}
+                </button>
+                {(err || profile.error) && (
+                  <p role="alert" className="text-sm text-destructive">
+                    {err || "Unable to load your preferences. Please refresh."}
+                  </p>
+                )}
+                {!wizard && <HostSettings />}
+              </TabsContent>
+              <TabsContent value="shadows" className="mt-4">
+                {loadingBookings ? (
+                  <p role="status">Loading job shadows…</p>
+                ) : (
+                  <JobShadows
+                    bookings={bookings}
+                    placements={placements}
+                    loadingPlacements={loadingPlacements}
+                  />
+                )}
+              </TabsContent>
+            </Tabs>
+            {profileTab !== "availability" && (err || profile.error) && (
+              <p role="alert" className="text-sm text-destructive">
+                {err || "Unable to load your profile. Please refresh before saving."}
               </p>
             )}
-          </ProfessionalFrame>
-          <p className="text-sm text-muted-foreground lg:col-span-2">
-            Shown to scholars and HR before your identity is revealed — it's what gives them
-            confidence to book, without naming you. Your name, email and phone are never shown here.
-          </p>
-          <ProfessionalFrame title="Experience & Bio">
-            <label className="block text-xs font-medium">
-              <span className="sr-only">Experience / Bio</span>
-              <textarea
-                rows={4}
-                aria-invalid={wizardErrors.includes("Experience / Bio")}
-                style={
-                  wizardErrors.includes("Experience / Bio")
-                    ? {
-                        borderColor: "var(--destructive)",
-                        boxShadow: "0 0 0 1px var(--destructive)",
-                      }
-                    : undefined
+            {profileTab === "professional" && (
+              <button
+                onClick={save}
+                disabled={busy || profile.isPending || cvAiBusy || cvBusy}
+                className={
+                  "rounded bg-primary px-5 py-2.5 text-sm font-bold uppercase text-primary-foreground disabled:opacity-50" +
+                  (wizard ? " ml-auto block" : "")
                 }
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                placeholder="A few sentences about your role and experience."
-                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm font-normal placeholder:font-normal outline-none"
-              />
-            </label>
-          </ProfessionalFrame>
-          <ProfessionalFrame title="Expertise & Qualifications">
-            <label className="block text-xs font-medium">
-              <span className="flex items-center gap-1.5">
-                <Award className="h-4 w-4" /> Specialties (comma separated)
-              </span>
-              <input
-                aria-invalid={wizardErrors.includes("Specialties")}
-                style={
-                  wizardErrors.includes("Specialties")
-                    ? {
-                        borderColor: "var(--destructive)",
-                        boxShadow: "0 0 0 1px var(--destructive)",
-                      }
-                    : undefined
-                }
-                value={specialties}
-                onChange={(e) => setSpecialties(e.target.value)}
-                placeholder="e.g. Corporate law, Contract negotiation"
-                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm font-normal placeholder:font-normal outline-none"
-              />
-            </label>
-            <label className="mt-3 block text-xs font-medium">
-              Certifications / qualifications
-              <textarea
-                rows={2}
-                value={certifications}
-                onChange={(e) => setCertifications(e.target.value)}
-                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm font-normal placeholder:font-normal outline-none"
-              />
-            </label>
-          </ProfessionalFrame>
-          <ProfessionalFrame title="Professional Links" className="lg:col-span-2">
-            <label className="block text-xs font-medium">
-              LinkedIn / professional profile URL (optional)
-              <input
-                type="url"
-                value={linkedinUrl}
-                onChange={(e) => setLinkedinUrl(e.target.value)}
-                placeholder="https://linkedin.com/in/..."
-                className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm font-normal placeholder:font-normal outline-none"
-              />
-            </label>
-          </ProfessionalFrame>
-        </TabsContent>
-        <TabsContent
-          forceMount
-          value="availability"
-          className="mt-4 space-y-4 data-[state=inactive]:hidden"
-        >
-          <div className="grid gap-3 lg:grid-cols-2">
-            {" "}
-            <div className="rounded-lg border bg-card p-4 space-y-3">
-              <p className="text-sm font-semibold">Company Contact</p>
-              <p className="text-sm">{viaCompany ? "Company Mentor" : "Independent Mentor"}</p>
-              {viaCompany && (
-                <label className="ml-6 flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={hasHrAdmin}
-                    onChange={(e) => setHasHrAdmin(e.target.checked)}
-                  />
-                  Do you have an HR admin you report results to?
-                </label>
-              )}
-              {viaCompany && hasHrAdmin && (
-                <div className="ml-6 grid gap-3 sm:grid-cols-2">
-                  <label className="block text-sm">
-                    HR first name
-                    <input
-                      value={hrFirstName}
-                      onChange={(e) => setHrFirstName(e.target.value)}
-                      className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-                    />
-                  </label>
-                  <label className="block text-sm">
-                    HR last name
-                    <input
-                      value={hrLastName}
-                      onChange={(e) => setHrLastName(e.target.value)}
-                      className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-                    />
-                  </label>
-                  <label className="block text-sm sm:col-span-2">
-                    HR email
-                    <input
-                      type="email"
-                      value={hrEmail}
-                      onChange={(e) => setHrEmail(e.target.value)}
-                      className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-                    />
-                  </label>
-                </div>
-              )}
-            </div>
-            <div className="rounded-lg border bg-card p-4 space-y-3">
-              <p className="text-sm font-semibold">Rules of Engagement</p>
-              <p className="text-xs text-muted-foreground">
-                Help admin know how best to reach you.
-              </p>
-              <label className="block text-sm">
-                Preferred contact method
-                <select
-                  value={preferredContact}
-                  onChange={(e) => setPreferredContact(e.target.value)}
-                  className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-                >
-                  <option value="email">Email</option>
-                  <option value="whatsapp">WhatsApp</option>
-                  <option value="phone">Phone call</option>
-                  <option value="sms">SMS</option>
-                </select>
-              </label>
-              <label className="block text-sm">
-                Best times to contact you (optional)
-                <input
-                  value={contactHoursNote}
-                  onChange={(e) => setContactHoursNote(e.target.value)}
-                  placeholder="e.g. Weekdays 9am-5pm only"
-                  className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-                />
-              </label>
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={avoidWeekends}
-                  onChange={(e) => setAvoidWeekends(e.target.checked)}
-                />
-                Please don't contact me on weekends
-              </label>
-              <label className="block text-sm">
-                Anything else admin should know (optional)
-                <textarea
-                  rows={2}
-                  value={engagementNotes}
-                  onChange={(e) => setEngagementNotes(e.target.value)}
-                  placeholder="e.g. prefers written briefs before a call, out of office in December"
-                  className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-                />
-              </label>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={save}
-            disabled={busy || profile.isPending || !!profile.error}
-            className="rounded bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-50"
-          >
-            {contactSaved ? "Saved" : "Save Contact Preferences"}
-          </button>
-          {(err || profile.error) && (
-            <p role="alert" className="text-sm text-destructive">
-              {err || "Unable to load your preferences. Please refresh."}
-            </p>
-          )}
-          {!wizard && <HostSettings />}
-        </TabsContent>
-        <TabsContent value="shadows" className="mt-4">
-          {loadingBookings ? (
-            <p role="status">Loading job shadows…</p>
-          ) : (
-            <JobShadows
-              bookings={bookings}
-              placements={placements}
-              loadingPlacements={loadingPlacements}
-            />
-          )}
-        </TabsContent>
-      </Tabs>
-      {profileTab !== "availability" && (err || profile.error) && (
-        <p role="alert" className="text-sm text-destructive">
-          {err || "Unable to load your profile. Please refresh before saving."}
-        </p>
-      )}
-      {profileTab === "professional" && (
-        <button
-          onClick={save}
-          disabled={busy || profile.isPending || cvAiBusy || cvBusy}
-          className={
-            "rounded bg-primary px-5 py-2.5 text-sm font-bold uppercase text-primary-foreground disabled:opacity-50" +
-            (wizard ? " ml-auto block" : "")
-          }
-        >
-          {wizard ? "Next" : saved ? "Saved" : "Save profile"}
-        </button>
-      )}
-      {wizardErrors.length > 0 && (
-        <div role="alert" className="text-sm text-destructive">
-          <p className="font-bold">Please complete the following required fields:</p>
-          <ul className="list-disc pl-5">
-            {wizardErrors.map((name) => (
-              <li key={name}>Enter {name}.</li>
-            ))}
-          </ul>
-        </div>
-      )}
+              >
+                {wizard ? "Next" : saved ? "Saved" : "Save profile"}
+              </button>
+            )}
+            {wizardErrors.length > 0 && (
+              <div role="alert" className="text-sm text-destructive">
+                <p className="font-bold">Please complete the following required fields:</p>
+                <ul className="list-disc pl-5">
+                  {wizardErrors.map((name) => (
+                    <li key={name}>Enter {name}.</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </>
+        )}
+      />
     </section>
   );
 }

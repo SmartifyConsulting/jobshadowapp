@@ -1,4 +1,12 @@
 const cvDraft = vi.hoisted(() => vi.fn());
+const upload = vi.hoisted(() => vi.fn().mockResolvedValue({ error: null }));
+vi.mock("@/components/mentor/MentorOnboardingWizard", () => ({
+  MentorOnboardingWizard: ({
+    renderProfile,
+  }: {
+    renderProfile: (done: () => void) => React.ReactNode;
+  }) => renderProfile(() => {}),
+}));
 vi.mock("@/lib/mentor-cv.functions", () => ({ draftMentorProfileFromCv: cvDraft }));
 vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
 vi.mock("@/lib/public-holidays.functions", () => ({
@@ -12,7 +20,15 @@ vi.mock("@tanstack/react-router", () => ({
   createFileRoute: () => (options: unknown) => ({ options, useSearch: () => ({}) }),
 }));
 vi.mock("@/components/SiteLayout", () => ({ SiteHeader: () => null, SiteFooter: () => null }));
-vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc } }));
+vi.mock("@/integrations/supabase/client", () => ({
+  supabase: {
+    rpc,
+    auth: {
+      getUser: vi.fn().mockResolvedValue({ data: { user: { email: "mentor@example.com" } } }),
+    },
+    storage: { from: () => ({ upload }) },
+  },
+}));
 vi.mock("@/components/ui/calendar", () => ({
   Calendar: ({ onSelect }: { onSelect: (dates: Date[]) => void }) => (
     <button onClick={() => onSelect([new Date(2030, 5, 10)])}>Choose available date</button>
@@ -152,7 +168,7 @@ it("lands directly on profile after its data is ready without showing a sidebar"
   client.clear();
 });
 it.each([null, "mentor@example.com/cv.docx"])(
-  "offers a PDF picker instead of an inactive autofill button for %s",
+  "offers a red upload control without a separate autofill button for %s",
   async (cvPath) => {
     const client = new QueryClient({
       defaultOptions: { queries: { staleTime: Infinity, retry: false } },
@@ -173,13 +189,8 @@ it.each([null, "mentor@example.com/cv.docx"])(
       ctrlKey: false,
     });
     const input = screen.getByLabelText("Upload CV") as HTMLInputElement;
-    const picker = vi.spyOn(input, "click").mockImplementation(() => {});
-    const button = screen.getByRole("button", { name: "Fill From My CV" });
-    expect(button).toBeEnabled();
-    fireEvent.click(button);
-    expect(picker).toHaveBeenCalledOnce();
-    expect(input.accept).toBe(".pdf");
-    expect(screen.getByRole("status")).toHaveTextContent("Choose a PDF CV");
+    expect(input.closest("label")).toHaveClass("bg-primary");
+    expect(screen.queryByRole("button", { name: "Fill From My CV" })).toBeNull();
     expect(cvDraft).not.toHaveBeenCalled();
     client.clear();
   },
@@ -217,7 +228,14 @@ it("reviews CV drafts, preserves populated fields and keeps edits made while AI 
   });
   const groups = screen.getAllByRole("group");
   expect(groups.find((group) => group.getAttribute("aria-label") === "CV")).toBeVisible();
-  fireEvent.click(screen.getByRole("button", { name: "Fill From My CV" }));
+  fireEvent.change(screen.getByLabelText("Upload CV"), {
+    target: { files: [new File(["%PDF-synthetic"], "test-cv.pdf", { type: "application/pdf" })] },
+  });
+  await waitFor(() =>
+    expect(cvDraft).toHaveBeenCalledWith({
+      data: { storagePath: expect.stringMatching(/mentor@example.com\/cv-.*-test-cv\.pdf$/) },
+    }),
+  );
   const specialties = screen.getByLabelText("Specialties (comma separated)");
   fireEvent.change(specialties, { target: { value: "Manually entered while waiting" } });
   finish({

@@ -35,16 +35,22 @@ export function MentorOnboardingWizard({
   hostProfile,
   initialStep,
   renderProfile,
+  activeStep,
+  onStepChange,
+  embedded = false,
 }: {
   userId: string;
   hostProfile: HostProfile;
   initialStep?: MentorOnboardingStep | undefined;
   renderProfile: (onDone: () => void) => ReactNode;
+  activeStep?: MentorOnboardingStep;
+  onStepChange?: (step: MentorOnboardingStep) => void;
+  embedded?: boolean;
 }) {
   const saved = useMentorOnboarding(userId),
     identity = useOwnIdentity(),
     client = useQueryClient();
-  const [step, setStep] = useState<MentorOnboardingStep>(
+  const [internalStep, setInternalStep] = useState<MentorOnboardingStep>(
       initialStep === "linkedin" ? "profile" : (initialStep ?? "profile"),
     ),
     [data, setData] = useState(() => onboardingData(null)),
@@ -53,6 +59,11 @@ export function MentorOnboardingWizard({
     [errors, setErrors] = useState<WizardError[]>([]),
     [failure, setFailure] = useState(""),
     [savedNote, setSavedNote] = useState("");
+  const step = activeStep ?? internalStep;
+  function setStep(next: MentorOnboardingStep) {
+    setInternalStep(next);
+    onStepChange?.(next);
+  }
   const linkedinTouched = useRef(false);
   useEffect(() => {
     if (!linkedinTouched.current) setLinkedin(hostProfile.linkedin_url ?? "");
@@ -310,9 +321,11 @@ export function MentorOnboardingWizard({
     );
   return (
     <section className="space-y-4 bg-ivory p-3">
-      <a href="/mentor?section=profile" className="text-xs underline">
-        Back to Profile
-      </a>
+      {!embedded && (
+        <a href="/mentor?section=profile" className="text-xs underline">
+          Back to Profile
+        </a>
+      )}
       <JourneyStepper
         title="Mentor Onboarding"
         steps={steps.map((id) => ({
@@ -329,7 +342,7 @@ export function MentorOnboardingWizard({
       <p className="text-sm">Phase 1: Vetting &amp; Onboarding</p>
       {step === "profile" ? (
         renderProfile(() => {
-          void go("email");
+          void go("email", true);
         })
       ) : (
         <fieldset className="min-w-0 rounded border border-charcoal/25 p-3">
@@ -595,7 +608,7 @@ export function MentorOnboardingWizard({
         ) : (
           <span />
         )}
-        {step !== "profile" && (
+        {(step !== "profile" || embedded) && (
           <div className="ml-auto flex gap-2">
             <button
               type="button"

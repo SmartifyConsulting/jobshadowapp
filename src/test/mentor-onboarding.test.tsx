@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
+import { useState } from "react";
 import { onboardingData, mentorSteps, validateMentorStep } from "@/lib/mentor-onboarding";
 const state = vi.hoisted(() => ({
   draft: null as any,
@@ -79,6 +80,34 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 afterEach(cleanup);
+it("keeps onboarding inside the profile and returns to profile editing without navigation", async () => {
+  function UnifiedProfile() {
+    const [active, setActive] = useState<
+      "profile" | "email" | "linkedin" | "references" | "training" | "employer" | "review"
+    >("profile");
+    return (
+      <>
+        <button onClick={() => setActive("profile")}>Edit Profile</button>
+        <MentorOnboardingWizard
+          userId="self"
+          hostProfile={host}
+          initialStep="profile"
+          activeStep={active}
+          onStepChange={setActive}
+          embedded
+          renderProfile={() => <p>My profile fields</p>}
+        />
+      </>
+    );
+  }
+  mount(<UnifiedProfile />);
+  await screen.findByText("My profile fields");
+  expect(screen.queryByRole("link", { name: "Back to Profile" })).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: /^Next$/ }));
+  expect(await screen.findByText(/Identity verification \(KYC\) is pending/)).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "Edit Profile" }));
+  expect(await screen.findByText("My profile fields")).toBeVisible();
+});
 it("resumes legacy LinkedIn drafts on the profile without showing a separate LinkedIn step", async () => {
   state.draft.current_step = "linkedin";
   mount(wizard());
