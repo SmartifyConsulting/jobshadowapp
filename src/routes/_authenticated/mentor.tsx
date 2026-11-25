@@ -468,6 +468,7 @@ function HostProfile({
   const draftCv = useServerFn(draftMentorProfileFromCv);
   const initialized = useRef(false);
   const [cvAiBusy, setCvAiBusy] = useState(false);
+  const cvInput = useRef<HTMLInputElement>(null);
   const [cvDraftNote, setCvDraftNote] = useState("");
   const [profileTab, setProfileTab] = useState(initialTab);
   const profile = useQuery({
@@ -520,7 +521,23 @@ function HostProfile({
   }, [profile.data]);
 
   async function fillFromCv() {
-    if (!cvPath || cvAiBusy) return;
+    if (cvBusy || cvAiBusy) return;
+    if (bio.trim() && specialties.trim() && certifications.trim() && linkedinUrl.trim()) {
+      setCvDraftNote(
+        "Your professional fields are already filled. Clear a field you want to fill from your CV, then try again.",
+      );
+      return;
+    }
+    if (!cvPath || !/\.pdf$/i.test(cvPath)) {
+      setCvDraftNote(
+        "Choose a PDF CV, then click Fill From My CV. Word documents can be stored but cannot be used for autofill.",
+      );
+      if (cvInput.current) {
+        cvInput.current.accept = ".pdf";
+        cvInput.current.click();
+      }
+      return;
+    }
     setCvAiBusy(true);
     setErr(null);
     setCvDraftNote("");
@@ -671,13 +688,17 @@ function HostProfile({
                 <Upload className="h-3.5 w-3.5" />{" "}
                 {cvBusy ? "Uploading…" : cvPath ? "Replace CV" : "Upload CV"}
                 <input
+                  ref={cvInput}
+                  aria-label="Upload CV"
                   type="file"
                   accept=".pdf,.doc,.docx"
                   hidden
                   disabled={cvBusy || cvAiBusy}
                   onChange={(e) => {
                     const f = e.target.files?.[0];
+                    e.target.accept = ".pdf,.doc,.docx";
                     if (f) void uploadCv(f);
+                    e.target.value = "";
                   }}
                 />
               </label>
@@ -691,24 +712,17 @@ function HostProfile({
               <button
                 type="button"
                 onClick={fillFromCv}
-                disabled={
-                  !cvPath ||
-                  !/\.pdf$/i.test(cvPath) ||
-                  cvBusy ||
-                  cvAiBusy ||
-                  !!(
-                    bio.trim() &&
-                    specialties.trim() &&
-                    certifications.trim() &&
-                    linkedinUrl.trim()
-                  )
-                }
+                disabled={cvBusy || cvAiBusy}
                 className="rounded bg-primary px-3 py-2 text-xs font-bold text-primary-foreground disabled:opacity-50"
               >
                 {cvAiBusy ? "Reading CV…" : "Fill From My CV"}
               </button>
               <p className="text-xs text-muted-foreground">
-                Uses OpenAI to fill empty fields from your PDF CV. Review before saving.
+                {!cvPath
+                  ? "Upload a PDF CV to fill your empty professional fields."
+                  : !/\.pdf$/i.test(cvPath)
+                    ? "Autofill needs a PDF. Click Fill From My CV to choose one."
+                    : "Fills empty fields from your PDF CV. Review before saving."}
               </p>
             </div>
             {cvDraftNote && (

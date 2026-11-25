@@ -144,6 +144,39 @@ it("lands directly on profile after its data is ready without showing a sidebar"
   expect(screen.queryByRole("status")).toBeNull();
   client.clear();
 });
+it.each([null, "mentor@example.com/cv.docx"])(
+  "offers a PDF picker instead of an inactive autofill button for %s",
+  async (cvPath) => {
+    const client = new QueryClient({
+      defaultOptions: { queries: { staleTime: Infinity, retry: false } },
+    });
+    client.setQueryData(["me"], { id: "mentor" });
+    client.setQueryData(["profile", "mentor"], { first_name: "Alex" });
+    client.setQueryData(["mentor-bookings"], []);
+    client.setQueryData(["mentor-placements"], []);
+    client.setQueryData(["host-profile"], { cv_path: cvPath });
+    const Page = Route.options.component as () => React.JSX.Element;
+    render(
+      <QueryClientProvider client={client}>
+        <Page />
+      </QueryClientProvider>,
+    );
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Professional Details" }), {
+      button: 0,
+      ctrlKey: false,
+    });
+    const input = screen.getByLabelText("Upload CV") as HTMLInputElement;
+    const picker = vi.spyOn(input, "click").mockImplementation(() => {});
+    const button = screen.getByRole("button", { name: "Fill From My CV" });
+    expect(button).toBeEnabled();
+    fireEvent.click(button);
+    expect(picker).toHaveBeenCalledOnce();
+    expect(input.accept).toBe(".pdf");
+    expect(screen.getByRole("status")).toHaveTextContent("Choose a PDF CV");
+    expect(cvDraft).not.toHaveBeenCalled();
+    client.clear();
+  },
+);
 it("reviews CV drafts, preserves populated fields and keeps edits made while AI is running", async () => {
   const client = new QueryClient({
     defaultOptions: { queries: { staleTime: Infinity, retry: false } },
