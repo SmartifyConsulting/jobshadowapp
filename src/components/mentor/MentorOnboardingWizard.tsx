@@ -325,7 +325,6 @@ export function MentorOnboardingWizard({
         onChange={(id) => {
           if (isMentorStep(id)) void go(id, steps.indexOf(id) > position);
         }}
-        fit
       />
       <p className="text-sm">Phase 1: Vetting &amp; Onboarding</p>
       {step === "profile" ? (

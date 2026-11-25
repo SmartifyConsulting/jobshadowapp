@@ -11,13 +11,11 @@ export function JourneyStepper({
   steps,
   active,
   onChange,
-  fit = false,
 }: {
   title: string;
   steps: JourneyStep[];
   active: string;
   onChange: (step: string) => void;
-  fit?: boolean;
 }) {
   const position = steps.findIndex((step) => step.id === active);
   return (
@@ -28,14 +26,7 @@ export function JourneyStepper({
           Step {position + 1} of {steps.length}
         </p>
       </div>
-      <nav
-        aria-label={title + " steps"}
-        className={
-          fit
-            ? "grid grid-cols-2 gap-2 pb-2 sm:grid-cols-3 lg:grid-cols-4"
-            : "flex gap-2 overflow-x-auto pb-2"
-        }
-      >
+      <nav aria-label={title + " steps"} className="flex gap-2 overflow-x-auto pb-2">
         {steps.map((step, index) => (
           <button
             key={step.id}
@@ -44,8 +35,7 @@ export function JourneyStepper({
             aria-current={active === step.id ? "step" : undefined}
             onClick={() => onChange(step.id)}
             className={
-              (fit ? "min-w-0 min-h-12 flex-row px-2 py-1.5 " : "min-w-[8.5rem] min-h-24 flex-col px-3 py-3 ") +
-              "flex flex-1 items-center gap-2 rounded-lg border text-center disabled:opacity-40 " +
+              "flex min-w-[8.5rem] min-h-24 flex-1 flex-col items-center gap-2 rounded-lg border px-3 py-3 text-center disabled:opacity-40 " +
               (active === step.id
                 ? "border-primary bg-accent text-accent-foreground"
                 : "border-border bg-ivory text-foreground")
