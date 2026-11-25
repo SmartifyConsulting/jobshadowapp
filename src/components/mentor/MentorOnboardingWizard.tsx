@@ -586,7 +586,7 @@ export function MentorOnboardingWizard({
                   className="rounded bg-primary px-4 py-2 text-sm text-primary-foreground"
                   href="/mentor?section=settings"
                 >
-                  Phase 2: Preferences &amp; Availability
+                  Step 2: Preferences &amp; Availability
                 </a>
                 <a className="rounded border px-4 py-2 text-sm" href="/mentor?section=shadows">
                   Bookings
