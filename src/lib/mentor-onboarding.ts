@@ -92,7 +92,10 @@ export function onboardingData(raw: unknown): MentorOnboardingData {
   };
 }
 export function mentorSteps(company: boolean) {
-  return MENTOR_ONBOARDING_STEPS.filter((step) => company || step !== "employer");
+  // Retain the legacy ID for saved drafts, but LinkedIn belongs to the optional profile fields.
+  return MENTOR_ONBOARDING_STEPS.filter(
+    (step) => step !== "linkedin" && (company || step !== "employer"),
+  );
 }
 export function isMentorStep(value: unknown): value is MentorOnboardingStep {
   return (

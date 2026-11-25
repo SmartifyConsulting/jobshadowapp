@@ -942,7 +942,7 @@ function HostProfile({
           </ProfessionalFrame>
           <ProfessionalFrame title="Professional Links" className="lg:col-span-2">
             <label className="block text-xs font-medium">
-              LinkedIn / professional profile URL
+              LinkedIn / professional profile URL (optional)
               <input
                 type="url"
                 value={linkedinUrl}

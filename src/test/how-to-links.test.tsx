@@ -44,7 +44,7 @@ describe("How To links", () => {
       within(screen.getByRole("navigation", { name: "Vetting and onboarding steps" })).getAllByRole(
         "link",
       ),
-    ).toHaveLength(8);
+    ).toHaveLength(7);
     expect(
       within(screen.getByRole("navigation", { name: "Hosting and feedback steps" })).getAllByRole(
         "link",

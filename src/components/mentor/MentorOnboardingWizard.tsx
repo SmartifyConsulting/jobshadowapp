@@ -44,7 +44,9 @@ export function MentorOnboardingWizard({
   const saved = useMentorOnboarding(userId),
     identity = useOwnIdentity(),
     client = useQueryClient();
-  const [step, setStep] = useState<MentorOnboardingStep>(initialStep ?? "profile"),
+  const [step, setStep] = useState<MentorOnboardingStep>(
+      initialStep === "linkedin" ? "profile" : (initialStep ?? "profile"),
+    ),
     [data, setData] = useState(() => onboardingData(null)),
     [linkedin, setLinkedin] = useState(hostProfile.linkedin_url ?? ""),
     [busy, setBusy] = useState(false),
@@ -64,7 +66,13 @@ export function MentorOnboardingWizard({
     setData(onboardingData(saved.data?.draft?.data));
     const wanted = initialStep ?? saved.data?.draft?.current_step;
     if (isMentorStep(wanted))
-      setStep(wanted === "employer" && !hostProfile.via_company ? "review" : wanted);
+      setStep(
+        wanted === "linkedin"
+          ? "profile"
+          : wanted === "employer" && !hostProfile.via_company
+            ? "review"
+            : wanted,
+      );
   }, [saved.isSuccess, saved.data, initialStep, hostProfile.via_company]);
   function change(next: MentorOnboardingData) {
     setData(next);
