@@ -90,7 +90,9 @@ export function CareerDetailDialog({
                 }
                 className={`rounded-full p-1.5 text-primary transition hover:bg-primary/10 ${isFavourite ? "bg-primary/10 ring-1 ring-primary/30" : ""}`}
               >
-                <Heart className="h-5 w-5 fill-primary text-primary" />
+                <Heart
+                  className={`h-5 w-5 text-primary ${isFavourite ? "fill-primary" : "fill-none"}`}
+                />
               </button>
               <span className="rounded-full bg-cta/20 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-foreground">
                 {availabilityLabel}

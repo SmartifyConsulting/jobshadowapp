@@ -40,12 +40,15 @@ export function CareerCatalogue({
   const favourites = useQuery({
     queryKey: ["career-favourites", session?.user?.id],
     enabled: !!session?.user,
-    queryFn: async () =>
-      new Set(
-        ((await supabase.from("career_favourites").select("career_slug")).data ?? []).map(
-          (r) => r.career_slug,
-        ),
-      ),
+    queryFn: async () => {
+      if (!session?.user) return new Set<string>();
+      const result = await supabase
+        .from("career_favourites")
+        .select("career_slug")
+        .eq("user_id", session.user.id);
+      if (result.error) throw result.error;
+      return new Set((result.data ?? []).map((row) => row.career_slug));
+    },
   });
 
   async function toggleFavourite(slug: string) {
@@ -173,16 +176,20 @@ export function CareerCatalogue({
   const grouped = useMemo(() => {
     const m = new Map<string, typeof allRoles>();
     filteredRoles.forEach((r) => m.set(r.field, [...(m.get(r.field) ?? []), r]));
-    return [...m.entries()].map(([f, roles]) => {
-      const byDivision = new Map<string, typeof allRoles>();
-      roles.forEach((r) => byDivision.set(r.division, [...(byDivision.get(r.division) ?? []), r]));
-      const divisions = [...byDivision.entries()]
-        .map(
-          ([d, items]) => [d, [...items].sort((a, b) => a.title.localeCompare(b.title))] as const,
-        )
-        .sort((a, b) => a[0].localeCompare(b[0]));
-      return [f, divisions] as const;
-    });
+    return [...m.entries()]
+      .sort(([a], [b]) => a.localeCompare(b, undefined, { sensitivity: "base" }))
+      .map(([f, roles]) => {
+        const byDivision = new Map<string, typeof allRoles>();
+        roles.forEach((r) =>
+          byDivision.set(r.division, [...(byDivision.get(r.division) ?? []), r]),
+        );
+        const divisions = [...byDivision.entries()]
+          .map(
+            ([d, items]) => [d, [...items].sort((a, b) => a.title.localeCompare(b.title))] as const,
+          )
+          .sort((a, b) => a[0].localeCompare(b[0]));
+        return [f, divisions] as const;
+      });
   }, [filteredRoles]);
 
   const isFieldOpen = (f: string) => (search.trim() ? true : openFields.has(f));
@@ -420,7 +427,9 @@ export function CareerCatalogue({
                                       }
                                       className={`rounded-full p-1 text-primary transition hover:bg-primary/10 ${favourites.data?.has(r.slug) ? "bg-primary/10 ring-1 ring-primary/30" : ""}`}
                                     >
-                                      <Heart className="h-4 w-4 fill-primary text-primary" />
+                                      <Heart
+                                        className={`h-4 w-4 text-primary ${favourites.data?.has(r.slug) ? "fill-primary" : "fill-none"}`}
+                                      />
                                     </button>
                                     <span
                                       className={
