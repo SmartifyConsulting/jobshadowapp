@@ -87,10 +87,8 @@ describe("Host availability settings", () => {
     expect(screen.getByRole("tab", { name: "Overview" })).toHaveAttribute("data-state", "active");
     expect(screen.getByRole("group", { name: "Skills & Expertise" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: /^Edit Profile$/ }));
-    expect(screen.getByRole("tab", { name: "Personal Details" })).toHaveAttribute(
-      "data-state",
-      "active",
-    );
+    expect(screen.queryByRole("tab", { name: "Personal Details" })).toBeNull();
+    expect(screen.getByRole("tab", { name: "Overview" })).toHaveAttribute("data-state", "active");
     expect(screen.queryByText("Mentor Portal")).toBeNull();
     fireEvent.mouseDown(await screen.findByRole("tab", { name: "Preferences" }), {
       button: 0,

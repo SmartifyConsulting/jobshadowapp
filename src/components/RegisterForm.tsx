@@ -1,3 +1,8 @@
+import {
+  LocationFields,
+  readUserLocation,
+  locationText,
+} from "@/components/account/LocationFields";
 import { SIGNUP_AUDIENCES } from "@/lib/audiences";
 import { EMAIL_DELIVERY_PAUSED, EMAIL_PAUSED_MESSAGE } from "@/lib/development-email";
 import { useState } from "react";
@@ -9,6 +14,7 @@ import { WHERE_HEAR_OPTIONS } from "@/lib/data";
 export function RegisterForm({ compact }: { compact?: boolean }) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [location, setLocation] = useState(() => readUserLocation());
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -43,6 +49,8 @@ export function RegisterForm({ compact }: { compact?: boolean }) {
           name: `${firstName.trim()} ${lastName.trim()}`,
           first_name: firstName.trim(),
           last_name: lastName.trim(),
+          ...location,
+          location: locationText(location),
           where_hear: whereHear,
           account_type: accountType,
           ...(accountType === "host" ? { mentoring_type: mentoringType } : {}),
@@ -124,6 +132,8 @@ export function RegisterForm({ compact }: { compact?: boolean }) {
             onChange={(e) => setEmail(e.target.value)}
             className={input}
           />
+          <LocationFields value={location} onChange={setLocation} inputClassName={input} />
+
           <PasswordInput
             required
             placeholder="Password"
@@ -252,6 +262,8 @@ export function RegisterForm({ compact }: { compact?: boolean }) {
           className={input}
         />
       </label>
+      <LocationFields value={location} onChange={setLocation} inputClassName={input} />
+
       <label>
         <span className="font-semibold text-foreground">
           Password <span className="text-accent">*</span>

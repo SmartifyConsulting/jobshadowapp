@@ -2,8 +2,16 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, expect, it, vi } from "vitest";
 const upsert = vi.hoisted(() => vi.fn().mockResolvedValue({ error: null }));
+const updateUser = vi.hoisted(() =>
+  vi
+    .fn()
+    .mockImplementation(async ({ data }) => ({
+      error: null,
+      data: { user: { id: "self", email: "self@example.com", user_metadata: data } },
+    })),
+);
 vi.mock("@/integrations/supabase/client", () => ({
-  supabase: { from: vi.fn(() => ({ upsert })) },
+  supabase: { from: vi.fn(() => ({ upsert })), auth: { updateUser } },
 }));
 import { AccountProfile, AccountPersonalDetails } from "@/components/account/AccountProfile";
 afterEach(() => {
@@ -14,7 +22,11 @@ it("keeps unsaved own names across profile tabs and saves only the signed-in acc
   const cache = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: Infinity } },
   });
-  cache.setQueryData(["me"], { id: "self", email: "self@example.com" });
+  cache.setQueryData(["me"], {
+    id: "self",
+    email: "self@example.com",
+    user_metadata: { country_code: "ZA", city: "Johannesburg", suburb: "Sandton" },
+  });
   cache.setQueryData(["profile", "self"], { first_name: "Alex", last_name: "Example" });
   render(
     <QueryClientProvider client={cache}>
@@ -22,6 +34,9 @@ it("keeps unsaved own names across profile tabs and saves only the signed-in acc
     </QueryClientProvider>,
   );
   fireEvent.change(screen.getByLabelText("First Name"), { target: { value: "Edited" } });
+  expect(screen.getByLabelText("Country")).toHaveValue("ZA");
+  expect(screen.getByLabelText("City")).toHaveValue("Johannesburg");
+  fireEvent.change(screen.getByLabelText("Suburb"), { target: { value: "Rosebank" } });
   fireEvent.mouseDown(screen.getByRole("tab", { name: "Secondary Information" }), {
     button: 0,
     ctrlKey: false,
@@ -42,6 +57,16 @@ it("keeps unsaved own names across profile tabs and saves only the signed-in acc
     expect(upsert).toHaveBeenCalledWith(
       expect.objectContaining({ user_id: "self", first_name: "Edited", last_name: "Example" }),
     ),
+  );
+  await waitFor(() =>
+    expect(updateUser).toHaveBeenCalledWith({
+      data: {
+        country_code: "ZA",
+        city: "Johannesburg",
+        suburb: "Rosebank",
+        location: "Rosebank, Johannesburg, South Africa",
+      },
+    }),
   );
   cache.clear();
 });

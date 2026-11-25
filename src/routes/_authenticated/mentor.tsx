@@ -1,3 +1,4 @@
+import { readUserLocation, locationText } from "@/components/account/LocationFields";
 import { MentorOnboardingWizard } from "@/components/mentor/MentorOnboardingWizard";
 import { isMentorStep, type MentorOnboardingStep } from "@/lib/mentor-onboarding";
 import { draftMentorProfileFromCv } from "@/lib/mentor-cv.functions";
@@ -438,7 +439,7 @@ function ProfessionalFrame({
 }
 
 function HostProfile({
-  initialTab = "personal",
+  initialTab = "overview",
   initialStep,
   wizard = false,
   onProfileCompleted,
@@ -508,7 +509,9 @@ function HostProfile({
   const avatar = identity?.avatar_path
     ? supabase.storage.from("avatars").getPublicUrl(identity.avatar_path).data.publicUrl
     : null;
-  const locations = [...new Set(placements.map((placement) => placement.location).filter(Boolean))];
+  const personalLocation =
+    locationText(readUserLocation(ownIdentity.user.data?.user_metadata)) ||
+    ownIdentity.user.data?.user_metadata?.["location"];
 
   useEffect(() => {
     if (!profile.data || initialized.current) return;
@@ -603,7 +606,7 @@ function HostProfile({
       ];
       setWizardErrors(missing);
       if (missing.length) {
-        if (missing.some((name) => name.includes("Name"))) setProfileTab("personal");
+        if (missing.some((name) => name.includes("Name"))) setProfileTab("overview");
         return;
       }
     }
@@ -662,7 +665,8 @@ function HostProfile({
               type="button"
               onClick={() => {
                 setOnboardingStep("profile");
-                setProfileTab("personal");
+                setProfileTab("overview");
+                setTimeout(() => document.getElementById("mentor-profile-photo")?.click(), 0);
               }}
               aria-label="Edit profile photo"
               className="relative grid h-20 w-20 shrink-0 place-items-center rounded-full border border-input bg-muted text-xl font-bold"
@@ -692,7 +696,7 @@ function HostProfile({
               type="button"
               onClick={() => {
                 setOnboardingStep("profile");
-                setProfileTab("personal");
+                setProfileTab("overview");
               }}
               className="shrink-0 text-sm font-medium text-primary"
             >
@@ -720,7 +724,9 @@ function HostProfile({
             </li>
             <li className="flex items-center gap-2">
               <MapPin className="h-4 w-4 shrink-0" />
-              {locations.join(" · ") || "Location not recorded"}
+              {typeof personalLocation === "string" && personalLocation.trim()
+                ? personalLocation
+                : "Location not recorded"}
             </li>
           </ul>
         </header>
@@ -740,7 +746,6 @@ function HostProfile({
                 aria-label="Mentor profile details"
               >
                 {!wizard && <TabsTrigger value="overview">Overview</TabsTrigger>}
-                <TabsTrigger value="personal">Personal Details</TabsTrigger>
                 <TabsTrigger value="professional">Professional Details</TabsTrigger>
                 {!wizard && (
                   <>
@@ -750,7 +755,24 @@ function HostProfile({
                 )}
               </TabsList>
               {!wizard && (
-                <TabsContent value="overview" className="mt-4 space-y-4">
+                <TabsContent
+                  forceMount
+                  value="overview"
+                  className="mt-4 space-y-4 data-[state=inactive]:hidden"
+                >
+                  <AccountPersonalDetails
+                    hidePhoto
+                    photoInputId="mentor-profile-photo"
+                    onSaved={
+                      wizard
+                        ? () => {
+                            setWizardErrors([]);
+                            setProfileTab("professional");
+                          }
+                        : undefined
+                    }
+                  />
+
                   <ProfessionalFrame title="Skills & Expertise">
                     {profile.data?.specialties?.length ? (
                       <div className="flex flex-wrap gap-2">
@@ -818,22 +840,6 @@ function HostProfile({
                   </ProfessionalFrame>
                 </TabsContent>
               )}
-              <TabsContent
-                forceMount
-                value="personal"
-                className="mt-4 data-[state=inactive]:hidden"
-              >
-                <AccountPersonalDetails
-                  onSaved={
-                    wizard
-                      ? () => {
-                          setWizardErrors([]);
-                          setProfileTab("professional");
-                        }
-                      : undefined
-                  }
-                />
-              </TabsContent>
               <TabsContent value="professional" className="mt-4 grid gap-3 lg:grid-cols-2">
                 <ProfessionalFrame title="CV" className="lg:col-span-2">
                   {" "}

@@ -1,3 +1,9 @@
+import {
+  LocationFields,
+  readUserLocation,
+  locationText,
+  type UserLocation,
+} from "./LocationFields";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,10 +40,17 @@ export function useOwnIdentity(enabled = true) {
 }
 
 /** Uses the existing own-account update and avatar storage paths. No role or permission edits. */
-export function AccountPersonalDetails({ onSaved }: { onSaved?: (() => void) | undefined } = {}) {
+export function AccountPersonalDetails({
+  onSaved,
+  hidePhoto = false,
+  photoInputId,
+}: { onSaved?: (() => void) | undefined; hidePhoto?: boolean; photoInputId?: string } = {}) {
   const { user, profile, pending } = useOwnIdentity();
   const qc = useQueryClient();
   const [names, setNames] = useState<{ first: string; last: string } | null>(null);
+  const [locationEdit, setLocationEdit] = useState<UserLocation | null>(null);
+  const savedLocation = readUserLocation(user.data?.user_metadata);
+  const location = locationEdit ?? savedLocation;
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -78,6 +91,13 @@ export function AccountPersonalDetails({ onSaved }: { onSaved?: (() => void) | u
         updated_at: new Date().toISOString(),
       });
       if (result.error) throw result.error;
+      if (!avatarBlob && JSON.stringify(location) !== JSON.stringify(savedLocation)) {
+        const updated = await supabase.auth.updateUser({
+          data: { ...location, location: locationText(location) },
+        });
+        if (updated.error) throw updated.error;
+        if (updated.data.user) qc.setQueryData(["me"], updated.data.user);
+      }
       setSaved(true);
       await qc.invalidateQueries({ queryKey: ["profile", user.data.id] });
       void qc.invalidateQueries({ queryKey: ["site-session"] });
@@ -97,24 +117,33 @@ export function AccountPersonalDetails({ onSaved }: { onSaved?: (() => void) | u
   return (
     <div className="space-y-4">
       <label
-        className="relative grid h-20 w-20 cursor-pointer place-items-center rounded-full border border-input bg-muted"
-        style={{ width: 80, height: 80 }}
+        className={
+          hidePhoto
+            ? "sr-only"
+            : "relative grid h-20 w-20 cursor-pointer place-items-center rounded-full border border-input bg-muted"
+        }
+        style={hidePhoto ? undefined : { width: 80, height: 80 }}
       >
-        <span className="absolute inset-0 grid place-items-center overflow-hidden rounded-full">
-          {avatar ? (
-            <img
-              src={avatar}
-              alt="Profile photo"
-              width={80}
-              height={80}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <UserRound className="h-9 w-9" />
-          )}
-        </span>
-        <Camera className="absolute bottom-0 right-0 h-6 w-6 rounded-full bg-background p-1" />
+        {!hidePhoto && (
+          <span className="absolute inset-0 grid place-items-center overflow-hidden rounded-full">
+            {avatar ? (
+              <img
+                src={avatar}
+                alt="Profile photo"
+                width={80}
+                height={80}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <UserRound className="h-9 w-9" />
+            )}
+          </span>
+        )}
+        {!hidePhoto && (
+          <Camera className="absolute bottom-0 right-0 h-6 w-6 rounded-full bg-background p-1" />
+        )}
         <input
+          id={photoInputId}
           type="file"
           accept="image/*"
           aria-label="Change profile photo"
@@ -145,6 +174,15 @@ export function AccountPersonalDetails({ onSaved }: { onSaved?: (() => void) | u
         <span className="block text-xs text-muted-foreground">Email Address</span>
         {user.data.email ?? "Not recorded"}
       </div>
+      <LocationFields
+        value={location}
+        disabled={busy}
+        onChange={(value) => {
+          setLocationEdit(value);
+          setSaved(false);
+        }}
+      />
+
       {error && (
         <p role="alert" className="text-sm text-destructive">
           {error}
