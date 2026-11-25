@@ -72,6 +72,24 @@ const SCHOOL_STEPS: Step[] = [
   { icon: Bell, label: "Get feedback\n& reports" },
 ];
 
+const COMPANY_STEPS: Step[] = [
+  { icon: Building2, label: "Register\nyour company" },
+  { icon: ShieldCheck, label: "Verify your\nbusiness (KYB)" },
+  { icon: Users, label: "Enlist\nemployees" },
+  { icon: ClipboardCheck, label: "Employees complete\nmentor verification" },
+  { icon: Handshake, label: "Active mentors\nwelcome scholars" },
+  { icon: BookOpen, label: "Report mentoring\nhours for CSI" },
+];
+
+const COMPANY_DESCRIPTIONS = [
+  "Register your company and add the details of the person coordinating your job-shadow programme.",
+  "Complete Know Your Business (KYB) verification so Job Shadow can verify your company. Contact Job Shadow to arrange this step.",
+  "Enlist the employees your company nominates to mentor scholars. Manage your nominated employees in your company’s Mentors list.",
+  "Each enlisted employee follows the Mentor process: complete their profile, verify their identity, provide references, complete safeguarding training and obtain employer sign-off. They must be verified and active before mentoring scholars.",
+  "Verified, active employees offer mentor sessions, set available dates and times, and welcome scholars for their job-shadow experience.",
+  "Job shadowing completed with your enlisted employees contributes mentoring hours to your company’s CSI reporting. Record completed sessions and their actual duration so those hours can be reported accurately.",
+];
+
 function StepRow({
   steps,
   links,
@@ -201,32 +219,39 @@ function HowTo() {
   const provider = roles.includes("mentor") || roles.includes("hr_admin");
   const [selectedView, setSelectedView] = useState<{
     userId?: string | undefined;
-    view: "mentor" | "host" | "school" | "scholar";
+    view: "mentor" | "company" | "school" | "scholar";
   } | null>(null);
   const isAdmin = session?.isAdmin || roles.includes("admin");
   const guides = isAdmin
     ? ([
         ["scholar", "Scholars"],
         ["mentor", "Mentors"],
+        ["company", "Companies"],
         ["school", "Schools"],
       ] as const)
     : provider
-      ? roles.includes("mentor")
-        ? ([["mentor", "Mentors"]] as const)
-        : ([["host", "Mentors"]] as const)
+      ? roles.includes("hr_admin")
+        ? ([
+            ["company", "Companies"],
+            ["mentor", "Mentors"],
+          ] as const)
+        : roles.includes("mentor")
+          ? ([["mentor", "Mentors"]] as const)
+          : ([["company", "Companies"]] as const)
       : roles.includes("school")
         ? ([["school", "Schools"]] as const)
         : ([
             ["scholar", "Scholars"],
             ["mentor", "Mentors"],
+            ["company", "Companies"],
           ] as const);
   const defaultView =
     isAdmin && scholar
       ? "scholar"
       : provider
-        ? roles.includes("mentor")
-          ? "mentor"
-          : "host"
+        ? roles.includes("hr_admin")
+          ? "company"
+          : "mentor"
         : roles.includes("school")
           ? "school"
           : "scholar";
@@ -280,12 +305,19 @@ function HowTo() {
       complete: [...onboarding, ...(progress.data?.mentor ?? []).slice(2)],
       links: [...onboardingLinks, ...providerLinks("mentor").slice(2)],
     },
-    host: {
-      steps: MENTOR_STEPS.map((step, index) =>
-        index === 0 ? { ...step, label: "Register\nas a mentor" } : step,
-      ),
-      complete: progress.data?.host ?? [],
-      links: providerLinks("host"),
+    company: {
+      steps: COMPANY_STEPS,
+      complete: [roles.includes("hr_admin"), false, false, false, false, false],
+      links: [
+        session?.user && roles.includes("hr_admin")
+          ? "/company-report?section=profile"
+          : "/register",
+        "#company-step-2",
+        "/company-report?section=mentors",
+        "#company-step-4",
+        "/company-report?section=mentors",
+        "/company-report?section=csi",
+      ],
     },
     school: {
       steps: SCHOOL_STEPS,
@@ -295,53 +327,55 @@ function HowTo() {
   }[view];
   const nextStep = content.steps.findIndex((_, index) => !content.complete[index]);
   const descriptions =
-    view === "school"
-      ? [
-          "Register your school with JobShadow.",
-          "Add your school contact details.",
-          "Discuss your school’s needs with JobShadow.",
-          "Arrange visits for your scholars with JobShadow.",
-          "Check the progress of your school’s requests.",
-          "Help your scholars prepare for their visits.",
-          "Review feedback with JobShadow.",
-        ]
-      : view === "mentor"
+    view === "company"
+      ? COMPANY_DESCRIPTIONS
+      : view === "school"
         ? [
-            "Register to begin mentoring.",
-            "Add your professional experience and CV.",
-            "Verify your identity through KYC. The verification provider is not connected yet.",
-            "Arrange your reference checks with Job Shadow.",
-            "Arrange safeguarding training with Job Shadow.",
-            "Coordinate employer sign-off with Job Shadow where needed.",
-            "Contact Job Shadow to confirm your vetting outcome.",
-            "Choose the days and times you can host.",
-            "Complete your hosting forms with Job Shadow.",
-            "Review incoming student bookings.",
-            "Confirm your booking arrangements.",
-            "Welcome your scholar and host the session.",
-            "Read feedback and keep your profile up to date.",
+            "Register your school with JobShadow.",
+            "Add your school contact details.",
+            "Discuss your school’s needs with JobShadow.",
+            "Arrange visits for your scholars with JobShadow.",
+            "Check the progress of your school’s requests.",
+            "Help your scholars prepare for their visits.",
+            "Review feedback with JobShadow.",
           ]
-        : view === "scholar"
+        : view === "mentor"
           ? [
-              "Create an account to start your job shadow journey.",
-              "Add your details so we can arrange your visit.",
-              "Explore careers and find a mentor near you.",
-              "Choose a mentor and request a date that suits you.",
-              "Make payment once your booking is ready.",
-              "Complete the required forms with your parent or guardian.",
-              "Check your arrangements and enjoy your job shadow.",
-              "Tell us what you learned from your visit.",
-            ]
-          : [
-              "Apply to become a mentor.",
-              "Introduce yourself and your experience.",
-              "Choose the dates and times you can host.",
-              "Complete the forms needed for hosting.",
-              "Review the scholars who have requested a visit.",
-              "Confirm the booking details.",
-              "Welcome your scholar and host the experience.",
+              "Register to begin mentoring.",
+              "Add your professional experience and CV.",
+              "Verify your identity through KYC. The verification provider is not connected yet.",
+              "Arrange your reference checks with Job Shadow.",
+              "Arrange safeguarding training with Job Shadow.",
+              "Coordinate employer sign-off with Job Shadow where needed.",
+              "Contact Job Shadow to confirm your vetting outcome.",
+              "Choose the days and times you can host.",
+              "Complete your hosting forms with Job Shadow.",
+              "Review incoming student bookings.",
+              "Confirm your booking arrangements.",
+              "Welcome your scholar and host the session.",
               "Read feedback and keep your profile up to date.",
-            ];
+            ]
+          : view === "scholar"
+            ? [
+                "Create an account to start your job shadow journey.",
+                "Add your details so we can arrange your visit.",
+                "Explore careers and find a mentor near you.",
+                "Choose a mentor and request a date that suits you.",
+                "Make payment once your booking is ready.",
+                "Complete the required forms with your parent or guardian.",
+                "Check your arrangements and enjoy your job shadow.",
+                "Tell us what you learned from your visit.",
+              ]
+            : [
+                "Apply to become a mentor.",
+                "Introduce yourself and your experience.",
+                "Choose the dates and times you can host.",
+                "Complete the forms needed for hosting.",
+                "Review the scholars who have requested a visit.",
+                "Confirm the booking details.",
+                "Welcome your scholar and host the experience.",
+                "Read feedback and keep your profile up to date.",
+              ];
   return (
     <SiteLayout className="lg:[&>footer>div:first-child]:py-3">
       <div className="bg-cta text-cta-foreground">
@@ -373,11 +407,13 @@ function HowTo() {
             <span className="rounded-full border border-border bg-muted/40 px-2.5 py-1 text-xs text-muted-foreground">
               {view === "school"
                 ? "School guide"
-                : progress.data
-                  ? "✓ Progress saved"
-                  : session?.user
-                    ? "Loading progress…"
-                    : "Sign in to save progress"}
+                : view === "company"
+                  ? "Company guide"
+                  : progress.data
+                    ? "✓ Progress saved"
+                    : session?.user
+                      ? "Loading progress…"
+                      : "Sign in to save progress"}
             </span>
           </div>
           <p className="sr-only">Click on each step to complete it.</p>
@@ -408,6 +444,31 @@ function HowTo() {
           ) : (
             <StepRow steps={content.steps} complete={content.complete} links={content.links} />
           )}
+          {view === "company" && (
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {COMPANY_STEPS.map((step, index) => (
+                <section
+                  key={step.label}
+                  id={`company-step-${index + 1}`}
+                  className="scroll-mt-5 rounded border border-border p-3"
+                >
+                  <h3 className="text-sm font-bold">
+                    {index + 1}. {step.label.replace(/\n/g, " ")}
+                  </h3>
+                  <p className="mt-1 text-sm">{COMPANY_DESCRIPTIONS[index]}</p>
+                  {index === 3 && (
+                    <button
+                      type="button"
+                      className="mt-2 text-sm font-semibold text-primary underline"
+                      onClick={() => setSelectedView({ userId: session?.user?.id, view: "mentor" })}
+                    >
+                      View the Mentor process
+                    </button>
+                  )}
+                </section>
+              ))}
+            </div>
+          )}
           {nextStep >= 0 ? (
             <div className="mt-2 flex flex-wrap items-center justify-between gap-4 rounded-lg bg-muted/50 px-5 py-4">
               <div>
@@ -437,8 +498,10 @@ function HowTo() {
           <p className="mt-3 text-xs text-muted-foreground">
             {view === "school"
               ? "School arrangements are managed with JobShadow; completion is not tracked here yet."
-              : "Green ticks show your own saved progress."}
-            {(view === "mentor" || view === "host") &&
+              : view === "company"
+                ? "Company registration is shown when your company account is linked. KYB, employee verification and CSI hours are not marked complete automatically."
+                : "Green ticks show your own saved progress."}
+            {view === "mentor" &&
               " Contact Job Shadow to complete vetting, training and hosting forms."}
           </p>
         </div>

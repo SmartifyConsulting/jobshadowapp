@@ -26,6 +26,43 @@ afterEach(() => {
 });
 
 describe("How To links", () => {
+  it("explains the company journey and keeps KYB separate from mentor verification", () => {
+    state.user = { id: "company" };
+    state.roles = ["hr_admin"];
+    const Page = Route.options.component as () => React.JSX.Element;
+    render(<Page />);
+    expect(screen.getByRole("button", { name: "Companies" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    const links = within(screen.getByRole("navigation", { name: "How-to steps" })).getAllByRole(
+      "link",
+    );
+    expect(links).toHaveLength(6);
+    expect(links[0]).toHaveAccessibleName(/completed/);
+    expect(links[1]).toHaveAccessibleName("Verify your business (KYB)");
+    expect(links[1]).not.toHaveAccessibleName(/completed/);
+    expect(links[2]).toHaveAttribute("href", "/company-report?section=mentors");
+    expect(links[5]).toHaveAttribute("href", "/company-report?section=csi");
+    expect(screen.getByText(/Each enlisted employee follows the Mentor process/)).toBeVisible();
+    expect(
+      screen.getByText(/contributes mentoring hours to your company’s CSI reporting/),
+    ).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "View the Mentor process" }));
+    expect(screen.getByRole("navigation", { name: "Vetting and onboarding steps" })).toBeVisible();
+  });
+
+  it("offers the company explanation before registration", () => {
+    const Page = Route.options.component as () => React.JSX.Element;
+    render(<Page />);
+    fireEvent.click(screen.getByRole("button", { name: "Companies" }));
+    expect(screen.getByRole("link", { name: "Register your company" })).toHaveAttribute(
+      "href",
+      "/register",
+    );
+    expect(screen.queryByRole("link", { name: /completed/ })).toBeNull();
+  });
+
   it("prioritises an existing scholar profile for an Admin/HR user and allows switching guides", () => {
     state.user = { id: "elena-test" };
     state.roles = ["admin", "hr_admin"];
