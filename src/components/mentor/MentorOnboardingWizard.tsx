@@ -340,7 +340,7 @@ export function MentorOnboardingWizard({
           if (isMentorStep(id)) void go(id, steps.indexOf(id) > position);
         }}
       />
-      <p className="text-sm">Phase 1: Vetting &amp; Onboarding</p>
+      <p className="text-sm">Step 1: Vetting &amp; Onboarding</p>
       {step === "profile" ? (
         renderProfile(() => {
           void go("email", true);

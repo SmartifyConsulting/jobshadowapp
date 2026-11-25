@@ -386,7 +386,7 @@ function HowTo() {
             <div className="mt-4 grid gap-4 xl:grid-cols-2">
               <fieldset className="min-w-0 rounded border border-charcoal/25 p-3">
                 <legend className="px-1 text-sm font-bold">
-                  Phase 1: Vetting &amp; Onboarding
+                  Step 1: Vetting &amp; Onboarding
                 </legend>
                 <StepRow
                   fitColumns={4}
@@ -397,7 +397,7 @@ function HowTo() {
                 />
               </fieldset>
               <fieldset className="min-w-0 rounded border border-charcoal/25 p-3">
-                <legend className="px-1 text-sm font-bold">Phase 2: Hosting &amp; Feedback</legend>
+                <legend className="px-1 text-sm font-bold">Step 2: Hosting &amp; Feedback</legend>
                 <StepRow
                   fitColumns={3}
                   label="Hosting and feedback steps"
