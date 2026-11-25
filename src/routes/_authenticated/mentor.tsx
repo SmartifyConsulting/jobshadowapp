@@ -683,8 +683,8 @@ function HostProfile({
               <Camera className="absolute bottom-0 right-0 h-6 w-6 rounded-full bg-background p-1" />
             </button>
             <div className="min-w-0 flex-1">
-              <p className="text-xs text-muted-foreground">My Profile</p>
-              <h1 className="text-2xl font-bold">{mentorName}</h1>
+              <h1 className="text-2xl font-bold">My Profile</h1>
+              <h2 className="text-2xl font-bold">{mentorName}</h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 {profile.data?.via_company ? "Company Mentor" : "Independent Mentor"}
               </p>

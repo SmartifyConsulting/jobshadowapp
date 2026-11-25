@@ -11,17 +11,19 @@ export function JourneyStepper({
   steps,
   active,
   onChange,
+  titleClassName,
 }: {
   title: string;
   steps: JourneyStep[];
   active: string;
   onChange: (step: string) => void;
+  titleClassName?: string;
 }) {
   const position = steps.findIndex((step) => step.id === active);
   return (
     <div className="min-w-0 space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="font-display text-2xl">{title}</h1>
+        <h1 className={titleClassName ?? "font-display text-2xl"}>{title}</h1>
         <p className="text-xs text-muted-foreground">
           Step {position + 1} of {steps.length}
         </p>

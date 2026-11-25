@@ -328,6 +328,7 @@ export function MentorOnboardingWizard({
       )}
       <JourneyStepper
         title="Mentor Onboarding"
+        titleClassName="font-sans text-lg font-bold"
         steps={steps.map((id) => ({
           id,
           title: details[id].title,
