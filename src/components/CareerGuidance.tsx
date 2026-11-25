@@ -11,6 +11,7 @@ export function CareerGuidance({
   showEmptySections = false,
   adminLayout = false,
   framed = false,
+  compact = false,
 }: {
   name: string;
   description: string;
@@ -18,20 +19,21 @@ export function CareerGuidance({
   showEmptySections?: boolean;
   adminLayout?: boolean;
   framed?: boolean;
+  compact?: boolean;
 }) {
   const guidance = getCareerGuidance(name, description, saved);
-  if (adminLayout || framed) return <AdminCareerGuidance guidance={guidance} />;
+  if (adminLayout || framed) return <AdminCareerGuidance guidance={guidance} compact={compact} />;
   return (
     <div className="space-y-5 py-3 text-foreground">
       <section>
-        <h3 className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">
+        <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
           Role Description
         </h3>
         <RichText text={guidance.overview} className="block text-sm leading-relaxed" />
       </section>
       {guidance.specialisations.length > 0 && (
         <section>
-          <h3 className="mb-2 flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+          <h3 className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
             <Briefcase className="h-3.5 w-3.5" />
             Specialisations &amp; Roles ({guidance.specialisations.length})
           </h3>
@@ -51,7 +53,7 @@ export function CareerGuidance({
         <section className="flex gap-3 rounded-lg border border-accent/50 bg-accent/10 p-4">
           <UserRound className="mt-0.5 h-4 w-4 shrink-0" />
           <div>
-            <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide">Ideal for:</h3>
+            <h3 className="mb-1 text-xs font-bold uppercase tracking-wide">Ideal for:</h3>
             <p className="text-sm leading-relaxed">{guidance.idealFor}</p>
           </div>
         </section>
@@ -59,7 +61,7 @@ export function CareerGuidance({
       <CareerSkills {...guidance.skills} />
       {guidance.subjects.length > 0 && (
         <section className="rounded-lg border border-border p-4">
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide">Suggested Subjects</h3>
+          <h3 className="mb-2 text-xs font-bold uppercase tracking-wide">Suggested Subjects</h3>
           <ul className="flex flex-wrap gap-2">
             {guidance.subjects.map((subject) => (
               <li
@@ -77,9 +79,7 @@ export function CareerGuidance({
       )}
       {(showEmptySections || guidance.interpersonalSkills.length > 0) && (
         <section className="rounded-lg border border-border p-4">
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide">
-            Interpersonal Skills
-          </h3>
+          <h3 className="mb-2 text-xs font-bold uppercase tracking-wide">Interpersonal Skills</h3>
           <ul className="flex flex-wrap gap-2">
             {guidance.interpersonalSkills.length === 0 && (
               <li className="text-sm text-muted-foreground">
@@ -99,9 +99,7 @@ export function CareerGuidance({
       )}
       {(showEmptySections || guidance.recommendedCourses.length > 0) && (
         <section className="rounded-lg border border-border p-4">
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide">
-            Recommended Training
-          </h3>
+          <h3 className="mb-2 text-xs font-bold uppercase tracking-wide">Recommended Training</h3>
           <ul className="flex flex-wrap gap-2">
             {guidance.recommendedCourses.length === 0 && (
               <li className="text-sm text-muted-foreground">
@@ -121,9 +119,7 @@ export function CareerGuidance({
       )}
       {guidance.selfDirectedLearning.length > 0 && (
         <section className="rounded-lg border border-border p-4">
-          <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide">
-            Explore On Your Own
-          </h3>
+          <h3 className="mb-1 text-xs font-bold uppercase tracking-wide">Explore On Your Own</h3>
           <p className="mb-2 text-xs text-muted-foreground">
             Formal courses don't always keep up with a career like this — here's what you can start
             exploring yourself right now.
@@ -142,9 +138,7 @@ export function CareerGuidance({
       )}
       {guidance.futureOutlook && (
         <section className="rounded-lg border border-border p-4">
-          <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide">
-            Future of this Career
-          </h3>
+          <h3 className="mb-1 text-xs font-bold uppercase tracking-wide">Future of this Career</h3>
           <p className="text-sm leading-relaxed">{guidance.futureOutlook}</p>
         </section>
       )}
@@ -152,7 +146,7 @@ export function CareerGuidance({
         <section className="flex gap-3 rounded-lg border border-border p-4">
           <Bot className="mt-0.5 h-4 w-4 shrink-0" />
           <div>
-            <h3 className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide">
+            <h3 className="mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wide">
               AI Exposure:{" "}
               <span
                 className={

@@ -131,7 +131,10 @@ function Roles() {
         idealFor: "",
         video: null,
       }));
-    return [...ROLES, ...extra].map((r) => ({ ...r, division: guessCareerDivision(r.title, r.field, r.summary) }));
+    return [...ROLES, ...extra].map((r) => ({
+      ...r,
+      division: guessCareerDivision(r.title, r.field, r.summary),
+    }));
   }, [adminCareers.data]);
   const [location, setLocation] = useState("");
   const placements = useQuery({
@@ -190,7 +193,9 @@ function Roles() {
       const byDivision = new Map<string, typeof allRoles>();
       roles.forEach((r) => byDivision.set(r.division, [...(byDivision.get(r.division) ?? []), r]));
       const divisions = [...byDivision.entries()]
-        .map(([d, items]) => [d, [...items].sort((a, b) => a.title.localeCompare(b.title))] as const)
+        .map(
+          ([d, items]) => [d, [...items].sort((a, b) => a.title.localeCompare(b.title))] as const,
+        )
         .sort((a, b) => a[0].localeCompare(b[0]));
       return [f, divisions] as const;
     });
@@ -350,88 +355,97 @@ function Roles() {
                   className={`h-6 w-6 shrink-0 transition ${fieldOpen ? "rotate-180" : ""}`}
                 />
               </button>
-              {fieldOpen && divisions.map(([division, roles]) => {
-                const divisionKey = f + " — " + division;
-                const divisionOpen = isDivisionOpen(divisionKey);
-                return (
-                <div key={division} className="bg-ivory">
-                  <button
-                    onClick={() => toggleDivision(divisionKey)}
-                    aria-expanded={divisionOpen}
-                    className="flex min-h-9 w-full items-center justify-between gap-3 border-y border-warm-divider bg-muted/30 px-4 py-1.5 text-left"
-                  >
-                    <h3 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{division} ({roles.length})</h3>
-                    <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition ${divisionOpen ? "rotate-180" : ""}`} />
-                  </button>
-                  {divisionOpen && <div className="divide-y divide-warm-divider">
-                    {roles.map((r) => {
-                      const description = descriptionFor(r.title, r.summary);
-                      const count = mentorCounts.get(r.title.trim().toLowerCase()) ?? 0;
-                      const reported = availability.data?.find(
-                        (row) => careerKey(row.name) === careerKey(r.title),
-                      );
-                      return (
-                        <div
-                          key={r.slug}
-                          className="px-4 py-1.5 transition-colors odd:bg-ivory even:bg-pale-lime/40 hover:bg-pale-lime"
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <button
-                              type="button"
-                              onClick={() => setViewingSlug(r.slug)}
-                              className="flex min-w-0 flex-1 items-center gap-3 rounded-md px-1 py-1 text-left outline-none transition hover:bg-pale-lime focus-visible:ring-2 focus-visible:ring-primary"
-                            >
-                              <span className="rounded-full border border-warm-divider bg-card px-3 py-1 text-xs font-semibold uppercase tracking-wide text-charcoal">
-                                View
-                              </span>
-                              <span className="min-w-0">
-                                <span className="flex items-center gap-2 text-sm font-semibold leading-tight text-charcoal">
-                                  {r.title}
-                                  {r.video && (
-                                    <PlayCircle className="h-4 w-4" aria-label="Has video" />
-                                  )}
-                                </span>
-                              </span>
-                            </button>
-                            <div className="flex shrink-0 items-center gap-2 self-start sm:self-center">
-                              <button
-                                type="button"
-                                onClick={() => toggleFavourite(r.slug)}
-                                aria-pressed={favourites.data?.has(r.slug) ?? false}
-                                aria-label={
-                                  favourites.data?.has(r.slug)
-                                    ? `Remove ${r.title} from favourites`
-                                    : `Save ${r.title} to favourites`
-                                }
-                                className="text-charcoal/60 transition hover:text-cta"
+              {fieldOpen &&
+                divisions.map(([division, roles]) => {
+                  const divisionKey = f + " — " + division;
+                  const divisionOpen = isDivisionOpen(divisionKey);
+                  return (
+                    <div key={division} className="bg-ivory">
+                      <button
+                        onClick={() => toggleDivision(divisionKey)}
+                        aria-expanded={divisionOpen}
+                        className="flex min-h-9 w-full items-center justify-between gap-3 border-y border-warm-divider bg-muted/30 px-4 py-1.5 text-left"
+                      >
+                        <h3 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                          {division} ({roles.length})
+                        </h3>
+                        <ChevronDown
+                          className={`h-4 w-4 shrink-0 text-muted-foreground transition ${divisionOpen ? "rotate-180" : ""}`}
+                        />
+                      </button>
+                      {divisionOpen && (
+                        <div className="divide-y divide-warm-divider">
+                          {roles.map((r) => {
+                            const description = descriptionFor(r.title, r.summary);
+                            const count = mentorCounts.get(r.title.trim().toLowerCase()) ?? 0;
+                            const reported = availability.data?.find(
+                              (row) => careerKey(row.name) === careerKey(r.title),
+                            );
+                            return (
+                              <div
+                                key={r.slug}
+                                className="px-4 py-1.5 transition-colors odd:bg-ivory even:bg-pale-lime/40 hover:bg-pale-lime"
                               >
-                                <Heart
-                                  className={`h-4 w-4 ${favourites.data?.has(r.slug) ? "fill-cta text-cta" : ""}`}
-                                />
-                              </button>
-                              <span
-                                className={
-                                  "rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide " +
-                                  (count > 0
-                                    ? "bg-cta text-cta-foreground"
-                                    : "bg-muted text-foreground")
-                                }
-                              >
-                                {availability.isError
-                                  ? "Availability unavailable"
-                                  : availability.isPending
-                                    ? "Checking availability…"
-                                    : `${reported?.mentor_available_count ?? count} of ${reported?.mentor_target_count ?? Math.max(count, 1)} mentors available`}
-                              </span>
-                            </div>
-                          </div>
+                                <div className="flex items-start justify-between gap-3">
+                                  <button
+                                    type="button"
+                                    onClick={() => setViewingSlug(r.slug)}
+                                    className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-1 py-1 text-left outline-none transition hover:bg-pale-lime focus-visible:ring-2 focus-visible:ring-primary"
+                                  >
+                                    <span className="min-w-0">
+                                      <span className="flex items-center gap-2 text-sm font-semibold leading-tight text-charcoal">
+                                        {r.title}
+                                        {r.video && (
+                                          <PlayCircle className="h-4 w-4" aria-label="Has video" />
+                                        )}
+                                      </span>
+                                    </span>
+                                  </button>
+                                  <div className="flex shrink-0 items-center gap-2 self-start sm:self-center">
+                                    <button
+                                      type="button"
+                                      onClick={() => setViewingSlug(r.slug)}
+                                      className="rounded-full border border-warm-divider bg-card px-3 py-1 text-xs font-semibold uppercase tracking-wide text-charcoal transition hover:border-primary hover:text-primary"
+                                    >
+                                      View
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleFavourite(r.slug)}
+                                      aria-pressed={favourites.data?.has(r.slug) ?? false}
+                                      aria-label={
+                                        favourites.data?.has(r.slug)
+                                          ? `Remove ${r.title} from favourites`
+                                          : `Save ${r.title} to favourites`
+                                      }
+                                      className={`rounded-full p-1 text-primary transition hover:bg-primary/10 ${favourites.data?.has(r.slug) ? "bg-primary/10 ring-1 ring-primary/30" : ""}`}
+                                    >
+                                      <Heart className="h-4 w-4 fill-primary text-primary" />
+                                    </button>
+                                    <span
+                                      className={
+                                        "rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide " +
+                                        (count > 0
+                                          ? "bg-cta text-cta-foreground"
+                                          : "bg-muted text-foreground")
+                                      }
+                                    >
+                                      {availability.isError
+                                        ? "Availability unavailable"
+                                        : availability.isPending
+                                          ? "Checking availability…"
+                                          : `${reported?.mentor_available_count ?? count} of ${reported?.mentor_target_count ?? Math.max(count, 1)} mentors available`}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
-                      );
-                    })}
-                  </div>}
-                </div>
-                );
-              })}
+                      )}
+                    </div>
+                  );
+                })}
             </div>
           );
         })}
@@ -441,7 +455,9 @@ function Roles() {
         if (!viewing) return null;
         const description = descriptionFor(viewing.title, viewing.summary);
         const count = mentorCounts.get(viewing.title.trim().toLowerCase()) ?? 0;
-        const reported = availability.data?.find((row) => careerKey(row.name) === careerKey(viewing.title));
+        const reported = availability.data?.find(
+          (row) => careerKey(row.name) === careerKey(viewing.title),
+        );
         const availabilityLabel = availability.isError
           ? "Availability unavailable"
           : availability.isPending
@@ -455,8 +471,12 @@ function Roles() {
             category={viewing.division}
             description={description}
             saved={{
-              ...(adminCareers.data?.find((row) => careerKey(row.name) === careerKey(viewing.title)) ?? {}),
-              ...(savedContent.data?.find((row) => careerKey(row.name) === careerKey(viewing.title)) ?? {}),
+              ...(adminCareers.data?.find(
+                (row) => careerKey(row.name) === careerKey(viewing.title),
+              ) ?? {}),
+              ...(savedContent.data?.find(
+                (row) => careerKey(row.name) === careerKey(viewing.title),
+              ) ?? {}),
             }}
             video={viewing.video}
             availabilityLabel={availabilityLabel}
