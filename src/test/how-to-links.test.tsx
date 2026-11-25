@@ -50,11 +50,7 @@ describe("How To links", () => {
         "link",
       ),
     ).toHaveLength(6);
-    fireEvent.click(screen.getByRole("button", { name: "Hosts" }));
-    expect(screen.getByRole("link", { name: "Register as a host" })).toHaveAttribute(
-      "href",
-      "/contact?type=host",
-    );
+    expect(screen.queryByRole("button", { name: /Hosts/ })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Schools" }));
     expect(
       within(screen.getByRole("navigation", { name: "How-to steps" })).getAllByRole("link"),

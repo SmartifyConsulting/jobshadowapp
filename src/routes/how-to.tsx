@@ -208,18 +208,17 @@ function HowTo() {
     ? ([
         ["scholar", "Scholars"],
         ["mentor", "Mentors"],
-        ["host", "Hosts"],
         ["school", "Schools"],
       ] as const)
     : provider
       ? roles.includes("mentor")
         ? ([["mentor", "Mentors"]] as const)
-        : ([["host", "Hosts"]] as const)
+        : ([["host", "Mentors"]] as const)
       : roles.includes("school")
         ? ([["school", "Schools"]] as const)
         : ([
             ["scholar", "Scholars"],
-            ["mentor", "Mentors / Hosts"],
+            ["mentor", "Mentors"],
           ] as const);
   const defaultView =
     isAdmin && scholar
@@ -283,7 +282,7 @@ function HowTo() {
     },
     host: {
       steps: MENTOR_STEPS.map((step, index) =>
-        index === 0 ? { ...step, label: "Register\nas a host" } : step,
+        index === 0 ? { ...step, label: "Register\nas a mentor" } : step,
       ),
       complete: progress.data?.host ?? [],
       links: providerLinks("host"),
@@ -326,15 +325,15 @@ function HowTo() {
           ? [
               "Create an account to start your job shadow journey.",
               "Add your details so we can arrange your visit.",
-              "Explore careers and find a host near you.",
-              "Choose a host and request a date that suits you.",
+              "Explore careers and find a mentor near you.",
+              "Choose a mentor and request a date that suits you.",
               "Make payment once your booking is ready.",
               "Complete the required forms with your parent or guardian.",
               "Check your arrangements and enjoy your job shadow.",
               "Tell us what you learned from your visit.",
             ]
           : [
-              "Apply to become a mentor or host.",
+              "Apply to become a mentor.",
               "Introduce yourself and your experience.",
               "Choose the dates and times you can host.",
               "Complete the forms needed for hosting.",
