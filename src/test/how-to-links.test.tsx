@@ -97,7 +97,7 @@ describe("How To links", () => {
     const Page = Route.options.component as () => React.JSX.Element;
     render(<Page />);
     expect(screen.queryByRole("button", { name: "Scholars" })).toBeNull();
-    expect(screen.getByText("Step 1: Vetting & Onboarding")).toBeVisible();
+    expect(screen.getByText("Onboarding")).toBeVisible();
     expect(screen.getByText("Step 2: Hosting & Feedback")).toBeVisible();
     const links = within(
       screen.getByRole("navigation", { name: "Hosting and feedback steps" }),

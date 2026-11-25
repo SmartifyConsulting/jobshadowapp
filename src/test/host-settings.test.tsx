@@ -12,7 +12,7 @@ vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
 vi.mock("@/lib/public-holidays.functions", () => ({
   syncAutomaticHolidays: vi.fn().mockResolvedValue({ updated: 0, failures: [] }),
 }));
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
 const rpc = vi.hoisted(() => vi.fn().mockResolvedValue({ data: [], error: null }));
@@ -38,6 +38,7 @@ import { Route } from "@/routes/_authenticated/mentor";
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  vi.useRealTimers();
 });
 describe("Host availability settings", () => {
   it("offers available dates and times and saves separate hours for each selected day", async () => {
@@ -86,7 +87,9 @@ describe("Host availability settings", () => {
     expect(await screen.findByRole("heading", { name: "Alex" })).toBeVisible();
     expect(screen.getByRole("tab", { name: "Overview" })).toHaveAttribute("data-state", "active");
     expect(screen.getByRole("group", { name: "Skills & Expertise" })).toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: /^Edit Profile$/ }));
+    expect(screen.queryByRole("button", { name: /^Edit Profile$/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Edit Professional Details" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Save Personal Details" })).toBeNull();
     expect(screen.queryByRole("tab", { name: "Personal Details" })).toBeNull();
     expect(screen.getByRole("tab", { name: "Overview" })).toHaveAttribute("data-state", "active");
     expect(screen.queryByText("Mentor Portal")).toBeNull();
@@ -241,7 +244,7 @@ it("reviews CV drafts, preserves populated fields and keeps edits made while AI 
     certifications: "BSc Computing",
     linkedin_url: "https://www.linkedin.com/in/example",
   });
-  await screen.findByText("CV draft added to empty fields. Please review, then Save Profile.");
+  await screen.findByText(/CV draft added to empty fields. Review the details below/);
   expect(screen.getByLabelText("Experience / Bio")).toHaveValue("My original bio");
   expect(specialties).toHaveValue("Manually entered while waiting");
   expect(screen.getByLabelText("Certifications / qualifications")).toHaveValue("BSc Computing");
@@ -261,18 +264,43 @@ it("reviews CV drafts, preserves populated fields and keeps edits made while AI 
     button: 0,
     ctrlKey: false,
   });
-  expect(screen.getByText("BSc Computing")).toBeVisible();
-  expect(screen.getByText("Manually entered while waiting")).toBeVisible();
-  fireEvent.click(screen.getByRole("button", { name: "Save profile" }));
-  await waitFor(() =>
-    expect(rpc).toHaveBeenCalledWith(
-      "update_my_host_profile",
-      expect.objectContaining({
-        _bio: "My original bio",
-        _specialties: ["Manually entered while waiting"],
-        _certifications: "BSc Computing",
-      }),
-    ),
+  expect(screen.getByLabelText("Qualifications")).toHaveValue("BSc Computing");
+  expect(screen.getByRole("textbox", { name: "Skills & Expertise" })).toHaveValue("Manually entered while waiting");
+  expect(screen.queryByRole("button", { name: "Save profile" })).toBeNull();
+  client.clear();
+});
+it("autosaves changed professional fields after 40 seconds without repeating unchanged saves", async () => {
+  vi.useFakeTimers();
+  const client = new QueryClient({
+    defaultOptions: { queries: { staleTime: Infinity, retry: false } },
+  });
+  client.setQueryData(["me"], { id: "mentor" });
+  client.setQueryData(["profile", "mentor"], { first_name: "Alex", last_name: "Example" });
+  client.setQueryData(["mentor-bookings"], []);
+  client.setQueryData(["mentor-placements"], []);
+  client.setQueryData(["host-profile"], { bio: "Original bio", specialties: ["Engineering"] });
+  const Page = Route.options.component as () => React.JSX.Element;
+  render(
+    <QueryClientProvider client={client}>
+      <Page />
+    </QueryClientProvider>,
   );
+  fireEvent.change(screen.getByRole("textbox", { name: /^Experience$/ }), { target: { value: "Updated bio" } });
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(39_999);
+  });
+  expect(rpc.mock.calls.filter(([name]) => name === "update_my_host_profile")).toHaveLength(0);
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(1);
+  });
+  expect(rpc).toHaveBeenCalledWith(
+    "update_my_host_profile",
+    expect.objectContaining({ _bio: "Updated bio", _specialties: ["Engineering"] }),
+  );
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(40_000);
+  });
+  expect(rpc.mock.calls.filter(([name]) => name === "update_my_host_profile")).toHaveLength(1);
+  cleanup();
   client.clear();
 });

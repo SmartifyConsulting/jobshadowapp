@@ -4,7 +4,7 @@ import {
   locationText,
   type UserLocation,
 } from "./LocationFields";
-import { useState } from "react";
+import { useImperativeHandle, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ImageCropModal } from "@/components/ImageCropModal";
@@ -40,11 +40,25 @@ export function useOwnIdentity(enabled = true) {
 }
 
 /** Uses the existing own-account update and avatar storage paths. No role or permission edits. */
+export type AccountPersonalDetailsHandle = {
+  save: (options?: { validate?: boolean }) => Promise<boolean>;
+  isDirty: () => boolean;
+};
 export function AccountPersonalDetails({
   onSaved,
   hidePhoto = false,
   photoInputId,
-}: { onSaved?: (() => void) | undefined; hidePhoto?: boolean; photoInputId?: string } = {}) {
+  hideSaveButton = false,
+  saveRef,
+  validateNames = false,
+}: {
+  onSaved?: (() => void) | undefined;
+  hidePhoto?: boolean;
+  photoInputId?: string;
+  hideSaveButton?: boolean;
+  saveRef?: React.Ref<AccountPersonalDetailsHandle>;
+  validateNames?: boolean;
+} = {}) {
   const { user, profile, pending } = useOwnIdentity();
   const qc = useQueryClient();
   const [names, setNames] = useState<{ first: string; last: string } | null>(null);
@@ -62,14 +76,14 @@ export function AccountPersonalDetails({
   const avatar = profile.data?.avatar_path
     ? supabase.storage.from("avatars").getPublicUrl(profile.data.avatar_path).data.publicUrl
     : null;
-  async function save(avatarBlob?: Blob) {
-    if (!user.data || busy) return;
+  async function save(avatarBlob?: Blob, validate = !!onSaved || validateNames) {
+    if (!user.data || busy) return false;
     const missing =
-      onSaved && !avatarBlob
+      validate && !avatarBlob
         ? [!first.trim() ? "First Name" : "", !last.trim() ? "Last Name" : ""].filter(Boolean)
         : [];
-    setNameErrors(missing);
-    if (missing.length) return;
+    if (validate) setNameErrors(missing);
+    if (missing.length) return false;
     setBusy(true);
     setError("");
     setSaved(false);
@@ -103,14 +117,23 @@ export function AccountPersonalDetails({
       void qc.invalidateQueries({ queryKey: ["site-session"] });
       void qc.invalidateQueries({ queryKey: ["school-account", user.data.id] });
       if (!avatarBlob) onSaved?.();
+      return true;
     } catch (e) {
       setError(
         e instanceof Error ? e.message : "Your details could not be saved. Please try again.",
       );
+      return false;
     } finally {
       setBusy(false);
     }
   }
+  useImperativeHandle(saveRef, () => ({
+    save: (options) => save(undefined, options?.validate ?? true),
+    isDirty: () =>
+      first.trim() !== (profile.data?.first_name ?? legacy[0] ?? "").trim() ||
+      last.trim() !== (profile.data?.last_name ?? legacy.slice(1).join(" ")).trim() ||
+      JSON.stringify(location) !== JSON.stringify(savedLocation),
+  }));
   if (pending) return <p role="status">Loading your details…</p>;
   if (user.error || profile.error || !user.data)
     return <p role="alert">Your details could not be loaded. Please refresh before editing.</p>;
@@ -188,17 +211,19 @@ export function AccountPersonalDetails({
           {error}
         </p>
       )}
-      <button
-        type="button"
-        disabled={busy}
-        onClick={() => void save()}
-        className={
-          "rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50" +
-          (onSaved ? " ml-auto block" : "")
-        }
-      >
-        {busy ? "Saving…" : onSaved ? "Next" : saved ? "Saved" : "Save Personal Details"}
-      </button>
+      {!hideSaveButton && (
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => void save()}
+          className={
+            "rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50" +
+            (onSaved ? " ml-auto block" : "")
+          }
+        >
+          {busy ? "Saving…" : onSaved ? "Next" : saved ? "Saved" : "Save Personal Details"}
+        </button>
+      )}
       {nameErrors.length > 0 && (
         <div role="alert" className="text-sm text-destructive">
           <p className="font-bold">Please complete the following required fields:</p>

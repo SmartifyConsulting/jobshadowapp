@@ -5,7 +5,11 @@ import { draftMentorProfileFromCv } from "@/lib/mentor-cv.functions";
 import { TimePicker } from "@/components/TimePicker";
 import { displayTime } from "@/lib/time-entry";
 import { selectedDaySlots, validDaySlot, type DaySlot } from "@/lib/placement-day-times";
-import { AccountPersonalDetails, useOwnIdentity } from "@/components/account/AccountProfile";
+import {
+  AccountPersonalDetails,
+  type AccountPersonalDetailsHandle,
+  useOwnIdentity,
+} from "@/components/account/AccountProfile";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useServerFn } from "@tanstack/react-start";
 import { syncAutomaticHolidays } from "@/lib/public-holidays.functions";
@@ -458,6 +462,7 @@ function HostProfile({
   loadingBookings: boolean;
 }) {
   const qc = useQueryClient();
+  const personalSave = useRef<AccountPersonalDetailsHandle>(null);
   const [onboardingStep, setOnboardingStep] = useState<MentorOnboardingStep>(
     initialStep === "linkedin" ? "profile" : (initialStep ?? "profile"),
   );
@@ -494,7 +499,10 @@ function HostProfile({
   const [engagementNotes, setEngagementNotes] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
+  const [autosaveStatus, setAutosaveStatus] = useState("");
+  const lastProfessional = useRef("");
+  const lastContact = useRef("");
+  const savingSnapshot = useRef(false);
   const [contactSaved, setContactSaved] = useState(false);
   const identity = ownIdentity.profile.data;
   const mentorName =
@@ -513,10 +521,49 @@ function HostProfile({
     locationText(readUserLocation(ownIdentity.user.data?.user_metadata)) ||
     ownIdentity.user.data?.user_metadata?.["location"];
 
+  const professionalSnapshot = JSON.stringify([
+    bio,
+    specialties
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean),
+    certifications,
+    linkedinUrl,
+    cvPath,
+  ]);
+  const contactSnapshot = JSON.stringify([
+    viaCompany,
+    hasHrAdmin,
+    hrFirstName,
+    hrLastName,
+    hrEmail,
+    preferredContact,
+    contactHoursNote,
+    avoidWeekends,
+    engagementNotes,
+  ]);
   useEffect(() => {
     if (!profile.data || initialized.current) return;
     initialized.current = true;
     const p = profile.data;
+    lastProfessional.current = JSON.stringify([
+      p.bio ?? "",
+      p.specialties ?? [],
+      p.certifications ?? "",
+      p.linkedin_url ?? "",
+      p.cv_path ?? null,
+    ]);
+    lastContact.current = JSON.stringify([
+      p.via_company ?? false,
+      p.has_hr_admin ?? false,
+      p.hr_first_name ?? "",
+      p.hr_last_name ?? "",
+      p.hr_email ?? "",
+      p.preferred_contact ?? "email",
+      p.contact_hours_note ?? "",
+      p.avoid_weekends ?? false,
+      p.engagement_notes ?? "",
+    ]);
     setBio(p.bio ?? "");
     setSpecialties((p.specialties ?? []).join(", "));
     setCertifications(p.certifications ?? "");
@@ -552,8 +599,9 @@ function HostProfile({
       );
       setCertifications((current) => (current.trim() ? current : (draft.certifications ?? "")));
       setLinkedinUrl((current) => (current.trim() ? current : (draft.linkedin_url ?? "")));
-      setSaved(false);
-      setCvDraftNote("CV draft added to empty fields. Please review, then Save Profile.");
+      setCvDraftNote(
+        "CV draft added to empty fields. Review the details below; changes save automatically or when you click Next.",
+      );
     } catch (error) {
       setErr(
         error instanceof Error
@@ -576,7 +624,6 @@ function HostProfile({
       return;
     }
     setCvDraftNote("");
-    setSaved(false);
     setCvBusy(true);
     setErr(null);
     try {
@@ -601,7 +648,7 @@ function HostProfile({
     }
   }
 
-  async function save() {
+  async function save(forceProfessional = false) {
     if (wizard) {
       const missing = [
         ...(!ownIdentity.profile.data?.first_name?.trim() ? ["First Name"] : []),
@@ -612,7 +659,7 @@ function HostProfile({
       setWizardErrors(missing);
       if (missing.length) {
         if (missing.some((name) => name.includes("Name"))) setProfileTab("overview");
-        return;
+        return false;
       }
     }
     if (
@@ -623,43 +670,124 @@ function HostProfile({
     ) {
       setProfileTab("availability");
       setErr("Please provide your HR admin's first name, last name and email.");
-      return;
+      return false;
     }
     setBusy(true);
     setErr(null);
-    setSaved(false);
     setContactSaved(false);
-    const saveProfessional = profileTab === "professional" || profileTab === "overview";
-    const { error } = await supabase.rpc("update_my_host_profile", {
-      _bio: saveProfessional ? bio || null : (profile.data?.bio ?? null),
-      _specialties: saveProfessional
-        ? specialties
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean)
-        : (profile.data?.specialties ?? []),
-      _certifications: saveProfessional
-        ? certifications || null
-        : (profile.data?.certifications ?? null),
-      _linkedin_url: saveProfessional ? linkedinUrl || null : (profile.data?.linkedin_url ?? null),
-      _cv_path: saveProfessional ? cvPath : (profile.data?.cv_path ?? null),
-      _via_company: viaCompany,
-      _has_hr_admin: viaCompany && hasHrAdmin,
-      _hr_first_name: viaCompany && hasHrAdmin ? hrFirstName.trim() : null,
-      _hr_last_name: viaCompany && hasHrAdmin ? hrLastName.trim() : null,
-      _hr_email: viaCompany && hasHrAdmin ? hrEmail.trim() : null,
-      _preferred_contact: preferredContact,
-      _contact_hours_note: contactHoursNote || null,
-      _avoid_weekends: avoidWeekends,
-      _engagement_notes: engagementNotes || null,
-    } as never);
-    setBusy(false);
-    if (error) return setErr(error.message);
-    setSaved(saveProfessional);
-    setContactSaved(!saveProfessional);
-    await qc.invalidateQueries({ queryKey: ["host-profile"] });
-    if (wizard) onProfileCompleted?.();
+    const saveProfessional =
+      forceProfessional || profileTab === "professional" || profileTab === "overview";
+    try {
+      const { error } = await supabase.rpc("update_my_host_profile", {
+        _bio: saveProfessional ? bio || null : (profile.data?.bio ?? null),
+        _specialties: saveProfessional
+          ? specialties
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : (profile.data?.specialties ?? []),
+        _certifications: saveProfessional
+          ? certifications || null
+          : (profile.data?.certifications ?? null),
+        _linkedin_url: saveProfessional
+          ? linkedinUrl || null
+          : (profile.data?.linkedin_url ?? null),
+        _cv_path: saveProfessional ? cvPath : (profile.data?.cv_path ?? null),
+        _via_company: viaCompany,
+        _has_hr_admin: viaCompany && hasHrAdmin,
+        _hr_first_name: viaCompany && hasHrAdmin ? hrFirstName.trim() : null,
+        _hr_last_name: viaCompany && hasHrAdmin ? hrLastName.trim() : null,
+        _hr_email: viaCompany && hasHrAdmin ? hrEmail.trim() : null,
+        _preferred_contact: preferredContact,
+        _contact_hours_note: contactHoursNote || null,
+        _avoid_weekends: avoidWeekends,
+        _engagement_notes: engagementNotes || null,
+      } as never);
+      if (error) {
+        setErr(error.message);
+        return false;
+      }
+      if (saveProfessional) lastProfessional.current = professionalSnapshot;
+      lastContact.current = contactSnapshot;
+      setContactSaved(!saveProfessional);
+      await qc.invalidateQueries({ queryKey: ["host-profile"] });
+      if (wizard) onProfileCompleted?.();
+      return true;
+    } catch (error) {
+      setErr(
+        error instanceof Error
+          ? error.message
+          : "Your profile could not be saved. Please try again.",
+      );
+      return false;
+    } finally {
+      setBusy(false);
+    }
   }
+
+  async function saveProfileStep() {
+    if (busy || cvBusy || cvAiBusy) {
+      setErr("Please wait for your changes to finish saving or processing before continuing.");
+      return false;
+    }
+    const missing = [
+      ...(!bio.trim() ? ["Experience / Bio"] : []),
+      ...(!specialties.split(",").some((item) => item.trim()) ? ["Specialties"] : []),
+    ];
+    setWizardErrors(missing);
+    const personalSaved = personalSave.current ? await personalSave.current.save() : false;
+    if (missing.length || !personalSaved) {
+      setProfileTab("overview");
+      return false;
+    }
+    return save(true);
+  }
+
+  const autosave = useRef<() => Promise<void>>(async () => {});
+  autosave.current = async () => {
+    if (
+      !initialized.current ||
+      onboardingStep !== "profile" ||
+      busy ||
+      cvBusy ||
+      cvAiBusy ||
+      savingSnapshot.current
+    )
+      return;
+    const personalDirty = personalSave.current?.isDirty() ?? false;
+    const professionalDirty =
+      professionalSnapshot !== lastProfessional.current || contactSnapshot !== lastContact.current;
+    if (!personalDirty && !professionalDirty) return;
+    savingSnapshot.current = true;
+    setAutosaveStatus("Saving changes…");
+    try {
+      if (personalDirty && !(await personalSave.current!.save({ validate: false }))) {
+        setAutosaveStatus(
+          "Changes could not be saved. Your edits are still here; autosave will retry.",
+        );
+        return;
+      }
+      if (professionalDirty && !(await save(true))) {
+        setAutosaveStatus(
+          "Changes could not be saved. Your edits are still here; autosave will retry.",
+        );
+        return;
+      }
+      setAutosaveStatus("Changes saved automatically.");
+    } catch {
+      setAutosaveStatus(
+        "Changes could not be saved. Your edits are still here; autosave will retry.",
+      );
+    } finally {
+      savingSnapshot.current = false;
+    }
+  };
+  useEffect(() => {
+    const timer = setInterval(() => {
+      void autosave.current();
+    }, 40_000);
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <section className="w-full space-y-4 bg-ivory p-4">
@@ -697,26 +825,6 @@ function HostProfile({
                 <p className="mt-1 text-sm">{profile.data.specialties.join(" · ")}</p>
               )}
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                setOnboardingStep("profile");
-                setProfileTab("overview");
-              }}
-              className="shrink-0 text-sm font-medium text-primary"
-            >
-              Edit Profile
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setOnboardingStep("profile");
-                setProfileTab("professional");
-              }}
-              className="shrink-0 text-sm font-medium text-primary"
-            >
-              Edit Professional Details
-            </button>
           </div>
           <ul className="space-y-1.5 text-sm">
             <li className="flex items-center gap-2 break-all">
@@ -743,6 +851,7 @@ function HostProfile({
         activeStep={onboardingStep}
         onStepChange={setOnboardingStep}
         embedded
+        beforeProfileNext={saveProfileStep}
         renderProfile={() => (
           <>
             <Tabs value={profileTab} onValueChange={setProfileTab}>
@@ -767,6 +876,9 @@ function HostProfile({
                 >
                   <AccountPersonalDetails
                     hidePhoto
+                    hideSaveButton
+                    validateNames
+                    saveRef={personalSave}
                     photoInputId="mentor-profile-photo"
                     onSaved={
                       wizard
@@ -834,26 +946,45 @@ function HostProfile({
                   </ProfessionalFrame>
 
                   <ProfessionalFrame title="Skills & Expertise">
-                    {specialties.split(",").some((skill) => skill.trim()) ? (
-                      <div className="flex flex-wrap gap-2">
-                        {specialties
-                          .split(",")
-                          .map((skill) => skill.trim())
-                          .filter(Boolean)
-                          .map((skill) => (
-                            <span key={skill} className="rounded-full border px-3 py-1 text-sm">
-                              {skill}
-                            </span>
-                          ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">No skills added yet.</p>
-                    )}
+                    <label className="block text-sm">
+                      Skills & Expertise
+                      <input
+                        value={specialties}
+                        onChange={(event) => setSpecialties(event.target.value)}
+                        aria-invalid={wizardErrors.includes("Specialties")}
+                        style={
+                          wizardErrors.includes("Specialties")
+                            ? {
+                                borderColor: "var(--destructive)",
+                                boxShadow: "0 0 0 1px var(--destructive)",
+                              }
+                            : undefined
+                        }
+                        placeholder="Add skills, separated by commas"
+                        className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                      />
+                    </label>
                   </ProfessionalFrame>
                   <ProfessionalFrame title="Experience">
-                    <p className="whitespace-pre-line text-sm">
-                      {bio || "No experience added yet."}
-                    </p>
+                    <label className="block text-sm">
+                      Experience
+                      <textarea
+                        value={bio}
+                        onChange={(event) => setBio(event.target.value)}
+                        aria-invalid={wizardErrors.includes("Experience / Bio")}
+                        style={
+                          wizardErrors.includes("Experience / Bio")
+                            ? {
+                                borderColor: "var(--destructive)",
+                                boxShadow: "0 0 0 1px var(--destructive)",
+                              }
+                            : undefined
+                        }
+                        rows={3}
+                        placeholder="Describe your experience"
+                        className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                      />
+                    </label>
                   </ProfessionalFrame>
                   <dl
                     aria-label="Mentoring activity"
@@ -882,24 +1013,25 @@ function HostProfile({
                     ))}
                   </dl>
                   <ProfessionalFrame title="Qualifications & Professional Links">
-                    <p className="whitespace-pre-line text-sm">
-                      {certifications || "No qualifications added yet."}
-                    </p>
-                    {linkedinUrl && /^https?:\/\//i.test(linkedinUrl) ? (
-                      <a
-                        href={linkedinUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-2 inline-flex items-center gap-2 text-sm text-primary underline"
-                      >
-                        <Briefcase className="h-4 w-4" />
-                        Professional Profile
-                      </a>
-                    ) : (
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        No professional links added yet.
-                      </p>
-                    )}
+                    <label className="block text-sm">
+                      Qualifications
+                      <textarea
+                        value={certifications}
+                        onChange={(event) => setCertifications(event.target.value)}
+                        rows={2}
+                        className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                      />
+                    </label>
+                    <label className="mt-3 block text-sm">
+                      Professional Profile URL
+                      <input
+                        type="url"
+                        value={linkedinUrl}
+                        onChange={(event) => setLinkedinUrl(event.target.value)}
+                        placeholder="https://linkedin.com/in/..."
+                        className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                      />
+                    </label>
                   </ProfessionalFrame>
                 </TabsContent>
               )}
@@ -1075,7 +1207,7 @@ function HostProfile({
                 </div>
                 <button
                   type="button"
-                  onClick={save}
+                  onClick={() => void save()}
                   disabled={busy || profile.isPending || !!profile.error}
                   className="rounded bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-50"
                 >
@@ -1105,17 +1237,10 @@ function HostProfile({
                 {err || "Unable to load your profile. Please refresh before saving."}
               </p>
             )}
-            {(profileTab === "professional" || (profileTab === "overview" && !!cvPath)) && (
-              <button
-                onClick={save}
-                disabled={busy || profile.isPending || cvAiBusy || cvBusy}
-                className={
-                  "rounded bg-primary px-5 py-2.5 text-sm font-bold uppercase text-primary-foreground disabled:opacity-50" +
-                  (wizard ? " ml-auto block" : "")
-                }
-              >
-                {wizard ? "Next" : saved ? "Saved" : "Save profile"}
-              </button>
+            {autosaveStatus && (
+              <p role="status" className="text-xs text-muted-foreground">
+                {autosaveStatus}
+              </p>
             )}
             {wizardErrors.length > 0 && (
               <div role="alert" className="text-sm text-destructive">

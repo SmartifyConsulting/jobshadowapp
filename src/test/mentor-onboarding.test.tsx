@@ -105,8 +105,33 @@ it("keeps onboarding inside the profile and returns to profile editing without n
   expect(screen.queryByRole("link", { name: "Back to Profile" })).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: /^Next$/ }));
   expect(await screen.findByText(/Identity verification \(KYC\) is pending/)).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: /Review/ }));
+  expect(await screen.findByRole("alert")).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "Edit Profile" }));
   expect(await screen.findByText("My profile fields")).toBeVisible();
+  expect(screen.queryByRole("alert")).toBeNull();
+});
+it("saves profile edits before advancing and remains on the page when saving fails", async () => {
+  const save = vi.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+  mount(
+    <MentorOnboardingWizard
+      userId="self"
+      hostProfile={{ ...host, bio: "", specialties: [] }}
+      initialStep="profile"
+      embedded
+      beforeProfileNext={save}
+      renderProfile={() => <p>Editable profile</p>}
+    />,
+  );
+  await screen.findByText("Editable profile");
+  fireEvent.click(screen.getByRole("button", { name: /^Next$/ }));
+  await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+  expect(state.save).not.toHaveBeenCalled();
+  expect(screen.getByText("Editable profile")).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: /^Next$/ }));
+  await screen.findByText(/Identity verification \(KYC\) is pending/);
+  expect(save).toHaveBeenCalledTimes(2);
+  expect(state.save).toHaveBeenCalledWith(expect.objectContaining({ current_step: "email" }));
 });
 it("resumes legacy LinkedIn drafts on the profile without showing a separate LinkedIn step", async () => {
   state.draft.current_step = "linkedin";
@@ -188,7 +213,7 @@ it("does not let a forward stepper jump bypass incomplete submissions", async ()
   mount(wizard());
   await screen.findByLabelText("First Name");
   fireEvent.click(screen.getByRole("button", { name: /Review/ }));
-  expect(await screen.findByRole("alert")).toHaveTextContent("Safeguarding Training");
+  expect(await screen.findByRole("alert")).toHaveTextContent("referee’s First Name");
   expect(state.save).not.toHaveBeenCalled();
 });
 it("requires reviewers to reload changed submissions before saving", async () => {

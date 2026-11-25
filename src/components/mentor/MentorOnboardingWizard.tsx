@@ -38,6 +38,7 @@ export function MentorOnboardingWizard({
   activeStep,
   onStepChange,
   embedded = false,
+  beforeProfileNext,
 }: {
   userId: string;
   hostProfile: HostProfile;
@@ -46,6 +47,7 @@ export function MentorOnboardingWizard({
   activeStep?: MentorOnboardingStep;
   onStepChange?: (step: MentorOnboardingStep) => void;
   embedded?: boolean;
+  beforeProfileNext?: () => Promise<boolean>;
 }) {
   const saved = useMentorOnboarding(userId),
     identity = useOwnIdentity(),
@@ -60,6 +62,10 @@ export function MentorOnboardingWizard({
     [failure, setFailure] = useState(""),
     [savedNote, setSavedNote] = useState("");
   const step = activeStep ?? internalStep;
+  useEffect(() => {
+    setErrors([]);
+    setFailure("");
+  }, [step]);
   function setStep(next: MentorOnboardingStep) {
     setInternalStep(next);
     onStepChange?.(next);
@@ -101,11 +107,25 @@ export function MentorOnboardingWizard({
   }
   async function go(target: MentorOnboardingStep, validate = false) {
     if (busy) return;
+    let profileSaved = false;
+    if (validate && step === "profile" && beforeProfileNext) {
+      setBusy(true);
+      try {
+        if (!(await beforeProfileNext())) return;
+        profileSaved = true;
+      } catch {
+        setFailure("Your profile could not be saved. Please try again.");
+        return;
+      } finally {
+        setBusy(false);
+      }
+    }
     const profileReady =
-      !!identity.profile.data?.first_name?.trim() &&
-      !!identity.profile.data?.last_name?.trim() &&
-      !!hostProfile.bio?.trim() &&
-      !!hostProfile.specialties.length;
+      profileSaved ||
+      (!!identity.profile.data?.first_name?.trim() &&
+        !!identity.profile.data?.last_name?.trim() &&
+        !!hostProfile.bio?.trim() &&
+        !!hostProfile.specialties.length);
     const problems: WizardError[] =
       validate && step === "profile" && !profileReady
         ? [
@@ -121,7 +141,7 @@ export function MentorOnboardingWizard({
               linkedin,
             })
           : [];
-    if (validate) {
+    if (validate && problems.length === 0) {
       const requiredBefore = steps.slice(0, steps.indexOf(target)).filter((id) => id !== step);
       const unmet = requiredBefore.find((id) =>
         id === "profile"
@@ -340,7 +360,7 @@ export function MentorOnboardingWizard({
           if (isMentorStep(id)) void go(id, steps.indexOf(id) > position);
         }}
       />
-      <p className="text-sm">Step 1: Vetting &amp; Onboarding</p>
+      <p className="text-sm font-bold">Onboarding</p>
       {step === "profile" ? (
         renderProfile(() => {
           void go("email", true);
@@ -611,25 +631,27 @@ export function MentorOnboardingWizard({
         )}
         {(step !== "profile" || embedded) && (
           <div className="ml-auto flex gap-2">
-            <button
-              type="button"
-              disabled={busy}
-              className="rounded border px-4 py-2 text-sm"
-              onClick={async () => {
-                setBusy(true);
-                setFailure("");
-                try {
-                  await persist(step);
-                  setSavedNote("Draft saved.");
-                } catch (error) {
-                  setFailure(error instanceof Error ? error.message : "Could not save.");
-                } finally {
-                  setBusy(false);
-                }
-              }}
-            >
-              Save Draft
-            </button>
+            {step !== "profile" && (
+              <button
+                type="button"
+                disabled={busy}
+                className="rounded border px-4 py-2 text-sm"
+                onClick={async () => {
+                  setBusy(true);
+                  setFailure("");
+                  try {
+                    await persist(step);
+                    setSavedNote("Draft saved.");
+                  } catch (error) {
+                    setFailure(error instanceof Error ? error.message : "Could not save.");
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              >
+                Save Draft
+              </button>
+            )}
             {next && (
               <button
                 disabled={busy}
