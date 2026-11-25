@@ -30,9 +30,7 @@ export function CareerCatalogue({
   const Layout = embedded ? Fragment : SiteLayout;
   const qc = useQueryClient();
   const { data: session } = useSiteSession();
-  const [openFields, setOpenFields] = useState<Set<string>>(
-    new Set(ROLES[0] ? [ROLES[0].field] : []),
-  );
+  const [openFields, setOpenFields] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
   const [viewingSlug, setViewingSlug] = useState<string | null>(null);
   const [favouritesOnly, setFavouritesOnly] = useState(false);

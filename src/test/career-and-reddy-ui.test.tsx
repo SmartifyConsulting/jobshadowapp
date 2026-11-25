@@ -19,6 +19,9 @@ describe("Career guidance and chat placement", () => {
     render(<QueryClientProvider client={client}><Page /></QueryClientProvider>);
     expect(screen.queryByText("Ideal For")).not.toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    const business = screen.getByRole("button", { name: "Business & Finance" });
+    expect(business).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(business);
     fireEvent.click(screen.getByText(/Accounting & Audit/).closest("button")!);
     fireEvent.click(screen.getByText("Accountant").closest("button")!);
     const dialog = screen.getByRole("dialog");
