@@ -561,6 +561,13 @@
       "when": 1794964800000,
       "tag": "0079_self_directed_learning",
       "breakpoints": true
+    },
+    {
+      "idx": 79,
+      "version": "7",
+      "when": 1794964900000,
+      "tag": "0080_career_sector_field",
+      "breakpoints": true
     }
   ]
 }

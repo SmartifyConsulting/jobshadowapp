@@ -392,6 +392,7 @@ export type Database = {
           ai_exposure_note: string | null;
           archived: boolean;
           description: string | null;
+          field: string | null;
           future_outlook: string | null;
           id: number;
           ideal_for: string | null;
@@ -412,6 +413,7 @@ export type Database = {
           ai_exposure_note?: string | null;
           archived?: boolean;
           description?: string | null;
+          field?: string | null;
           future_outlook?: string | null;
           id: number;
           ideal_for?: string | null;
@@ -432,6 +434,7 @@ export type Database = {
           ai_exposure_note?: string | null;
           archived?: boolean;
           description?: string | null;
+          field?: string | null;
           future_outlook?: string | null;
           id?: number;
           ideal_for?: string | null;
@@ -1667,6 +1670,7 @@ export type Database = {
           ai_exposure_level: string;
           ai_exposure_note: string;
           description: string;
+          field: string | null;
           future_outlook: string;
           id: number;
           interpersonal_skills: string[];

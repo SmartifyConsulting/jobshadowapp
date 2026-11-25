@@ -129,7 +129,7 @@ function Roles() {
       .map((c) => ({
         slug: "other-careers--" + careerKey(c.name),
         title: c.name,
-        field: "Other Careers",
+        field: c.field?.trim() || "Other Careers",
         summary:
           c.description ||
           "Ask us for more detail on this career and the job shadow experience we can arrange.",
