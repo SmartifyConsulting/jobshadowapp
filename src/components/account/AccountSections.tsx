@@ -244,7 +244,7 @@ function ScholarDetails({ p: source }: { p: Record<string, unknown> }) {
         <TabsContent key={t.id} value={t.id} className="mt-4">
           <dl className="grid gap-4 sm:grid-cols-2">
             {t.rows.map(([l, k]) => (
-              <div key={k} className="rounded-lg border bg-card p-3 text-card-foreground">
+              <div key={k} className="min-w-0 space-y-1 border-b border-border py-3 text-card-foreground">
                 <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   {l}
                 </dt>

@@ -1,3 +1,4 @@
+import { ProfileSummaryCard } from "@/components/account/ProfileSummaryCard";
 import { AccountProfile, useOwnIdentity } from "@/components/account/AccountProfile";
 import { PortalLoading } from "@/components/PortalLoading";
 import { createFileRoute } from "@tanstack/react-router";
@@ -191,41 +192,27 @@ function ProfileSettings() {
                 </TabsTrigger>
               </TabsList>
             )}
-            <TabsContent value="profile" className="mt-4">
-              <div className="rounded-xl border border-primary bg-card p-4 shadow-sm space-y-6">
-                <div className="flex items-center gap-3">
-                  <UserCircle className="h-4 w-4 text-primary" />
-                  <h2 className="text-sm font-semibold">Profile</h2>
-                </div>
-
-                <div className="flex items-center gap-5">
-                  {avatarUrl ? (
-                    <img src={avatarUrl} alt="" className="h-20 w-20 rounded-full object-cover" />
-                  ) : (
-                    <div className="grid h-20 w-20 place-items-center rounded-full bg-muted text-2xl font-semibold uppercase text-muted-foreground">
-                      {(displayName || user?.email || "?").slice(0, 1)}
-                    </div>
-                  )}
-                  <div>
-                    <label className="inline-block cursor-pointer rounded-full bg-cta px-5 py-2 text-xs font-bold uppercase tracking-wide text-cta-foreground">
-                      {busy ? "Uploading…" : "Change photo"}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        disabled={busy}
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          if (f) setCropFile(f);
-                          e.target.value = "";
-                        }}
-                      />
-                    </label>
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      Any image file, up to 5MB. You'll be able to crop and zoom before saving.
-                    </p>
-                  </div>
-                </div>
+            <TabsContent value="profile" className="mt-4 space-y-4">
+              <ProfileSummaryCard
+                name={displayName || "My Profile"}
+                avatarUrl={avatarUrl}
+                subtitle={user?.email}
+                onPhoto={() => document.getElementById("scholar-profile-photo")?.click()}
+              />
+              <div className="rounded-xl border border-border bg-card p-4 shadow-sm space-y-4 sm:p-5">
+                <input
+                  id="scholar-profile-photo"
+                  type="file"
+                  accept="image/*"
+                  aria-label="Change profile photo"
+                  className="sr-only"
+                  disabled={busy}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) setCropFile(file);
+                    e.target.value = "";
+                  }}
+                />
                 {cropFile && (
                   <ImageCropModal
                     file={cropFile}
@@ -270,9 +257,9 @@ function ProfileSettings() {
                     {saved ? "Saved" : "Save"}
                   </button>
                 </div>
-              </div>
-              <div className="mt-4 rounded-xl border border-primary bg-card p-4 shadow-sm space-y-4">
-                <AccountPanel />
+                <div className="border-t border-border pt-4">
+                  <AccountPanel />
+                </div>
               </div>
             </TabsContent>
             <TabsContent value="bookings" className="mt-4 space-y-4">

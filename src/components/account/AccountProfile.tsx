@@ -11,6 +11,7 @@ import { ImageCropModal } from "@/components/ImageCropModal";
 import { PersonNameFields, joinPersonName } from "@/components/PersonNameFields";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { UserRound, Camera } from "lucide-react";
+import { ProfileSummaryCard } from "./ProfileSummaryCard";
 
 export function useOwnIdentity(enabled = true) {
   const user = useQuery({
@@ -249,11 +250,24 @@ export function AccountPersonalDetails({
 }
 
 export function AccountProfile() {
-  const { user } = useOwnIdentity();
+  const { user, profile } = useOwnIdentity();
+  const avatar = profile.data?.avatar_path
+    ? supabase.storage.from("avatars").getPublicUrl(profile.data.avatar_path).data.publicUrl
+    : null;
+  const name =
+    joinPersonName(profile.data?.first_name ?? "", profile.data?.last_name ?? "") ||
+    profile.data?.display_name ||
+    "My Profile";
   return (
     <section className="space-y-4 bg-ivory p-4 text-foreground">
       <h1 className="font-display text-2xl">My Profile</h1>
-      <Tabs defaultValue="personal">
+      <ProfileSummaryCard
+        name={name}
+        avatarUrl={avatar}
+        subtitle={user.data?.email}
+        onPhoto={() => document.getElementById("own-account-photo")?.click()}
+      />
+      <Tabs defaultValue="personal" className="rounded-xl border border-border bg-card p-4 sm:p-5">
         <TabsList
           className="flex h-auto w-full flex-wrap justify-start"
           aria-label="Profile details"
@@ -262,7 +276,7 @@ export function AccountProfile() {
           <TabsTrigger value="secondary">Secondary Information</TabsTrigger>
         </TabsList>
         <TabsContent forceMount value="personal" className="mt-4 data-[state=inactive]:hidden">
-          <AccountPersonalDetails />
+          <AccountPersonalDetails hidePhoto photoInputId="own-account-photo" />
         </TabsContent>
         <TabsContent value="secondary" className="mt-4">
           <dl className="grid gap-4 text-sm sm:grid-cols-2">

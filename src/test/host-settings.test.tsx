@@ -85,15 +85,27 @@ describe("Host availability settings", () => {
     );
     expect(screen.queryByRole("navigation", { name: "Mentor navigation" })).toBeNull();
     expect(await screen.findByRole("heading", { name: "Alex" })).toBeVisible();
-    expect(screen.getByRole("tab", { name: "Overview" })).toHaveAttribute("data-state", "active");
+    expect(screen.getByRole("tab", { name: "Profile" })).toHaveAttribute("data-state", "active");
+    expect(screen.getByRole("tabpanel", { name: "Qualifications" })).toHaveAttribute(
+      "data-state",
+      "inactive",
+    );
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Qualifications" }), {
+      button: 0,
+      ctrlKey: false,
+    });
     expect(screen.getByRole("group", { name: "Skills & Expertise" })).toBeVisible();
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Profile" }), {
+      button: 0,
+      ctrlKey: false,
+    });
     expect(screen.queryByRole("button", { name: /^Edit Profile$/ })).toBeNull();
     expect(screen.queryByRole("button", { name: "Edit Professional Details" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Save Personal Details" })).toBeNull();
     expect(screen.queryByRole("tab", { name: "Personal Details" })).toBeNull();
     expect(screen.queryByRole("tab", { name: "Professional Details" })).toBeNull();
     expect(screen.getByRole("group", { name: "Profile Summary" })).toBeVisible();
-    expect(screen.getByRole("tab", { name: "Overview" })).toHaveAttribute("data-state", "active");
+    expect(screen.getByRole("tab", { name: "Profile" })).toHaveAttribute("data-state", "active");
     expect(screen.queryByText("Mentor Portal")).toBeNull();
     fireEvent.mouseDown(await screen.findByRole("tab", { name: "Preferences" }), {
       button: 0,
@@ -234,6 +246,10 @@ it("reviews CV drafts, preserves populated fields and keeps edits made while AI 
       data: { storagePath: expect.stringMatching(/mentor@example.com\/cv-.*-test-cv\.pdf$/) },
     }),
   );
+  fireEvent.mouseDown(screen.getByRole("tab", { name: "Qualifications" }), {
+    button: 0,
+    ctrlKey: false,
+  });
   const specialties = screen.getByRole("textbox", { name: "Skills & Expertise" });
   fireEvent.change(specialties, { target: { value: "Manually entered while waiting" } });
   finish({
@@ -242,10 +258,14 @@ it("reviews CV drafts, preserves populated fields and keeps edits made while AI 
     certifications: "BSc Computing",
     linkedin_url: "https://www.linkedin.com/in/example",
   });
-  await screen.findByText(/CV draft added to empty fields. Review the details below/);
+  await waitFor(() =>
+    expect(screen.getByRole("tabpanel", { name: "Qualifications" })).toHaveTextContent(
+      "CV draft added to empty fields. Review the Qualifications tab",
+    ),
+  );
   expect(screen.getByRole("textbox", { name: /^Experience$/ })).toHaveValue("My original bio");
   expect(specialties).toHaveValue("Manually entered while waiting");
-  expect(screen.getByLabelText("Qualifications")).toHaveValue("BSc Computing");
+  expect(screen.getByRole("textbox", { name: /^Qualifications$/ })).toHaveValue("BSc Computing");
   expect(rpc.mock.calls.some((call) => call[0] === "update_my_host_profile")).toBe(false);
   fireEvent.mouseDown(screen.getByRole("tab", { name: "Preferences" }), {
     button: 0,
@@ -258,12 +278,14 @@ it("reviews CV drafts, preserves populated fields and keeps edits made while AI 
       expect.objectContaining({ _bio: "My original bio", _specialties: [], _certifications: null }),
     ),
   );
-  fireEvent.mouseDown(screen.getByRole("tab", { name: "Overview" }), {
+  fireEvent.mouseDown(screen.getByRole("tab", { name: "Profile" }), {
     button: 0,
     ctrlKey: false,
   });
-  expect(screen.getByLabelText("Qualifications")).toHaveValue("BSc Computing");
-  expect(screen.getByRole("textbox", { name: "Skills & Expertise" })).toHaveValue("Manually entered while waiting");
+  expect(screen.getByRole("textbox", { name: /^Qualifications$/ })).toHaveValue("BSc Computing");
+  expect(screen.getByRole("textbox", { name: "Skills & Expertise" })).toHaveValue(
+    "Manually entered while waiting",
+  );
   expect(screen.queryByRole("button", { name: "Save profile" })).toBeNull();
   client.clear();
 });
@@ -283,7 +305,13 @@ it("autosaves changed professional fields after 40 seconds without repeating unc
       <Page />
     </QueryClientProvider>,
   );
-  fireEvent.change(screen.getByRole("textbox", { name: /^Experience$/ }), { target: { value: "Updated bio" } });
+  fireEvent.mouseDown(screen.getByRole("tab", { name: "Qualifications" }), {
+    button: 0,
+    ctrlKey: false,
+  });
+  fireEvent.change(screen.getByRole("textbox", { name: /^Experience$/ }), {
+    target: { value: "Updated bio" },
+  });
   await act(async () => {
     await vi.advanceTimersByTimeAsync(39_999);
   });
