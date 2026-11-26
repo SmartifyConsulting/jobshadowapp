@@ -180,7 +180,7 @@ function AccountMenu({
             Profile
           </Link>
         </DropdownMenuItem>
-        {(isAdmin || roles.some((role) => ["hr_admin", "school"].includes(role))) && (
+        {(!isAdmin && roles.some((role) => ["hr_admin", "school"].includes(role))) && (
           <DropdownMenuItem asChild>
             <Link to="/my-account">Admin</Link>
           </DropdownMenuItem>
@@ -262,7 +262,7 @@ export function SiteHeader({
           {SITE_NAV.map((n) => (
             <Link
               key={n.to}
-              to={n.to}
+              to={isAdmin && n.to === "/" ? "/admin" : n.to}
               activeOptions={{ exact: n.to === "/" }}
               className="border-b-4 border-transparent py-2 text-sm font-semibold transition hover:border-accent"
               activeProps={{ className: "border-cta" }}
@@ -345,7 +345,7 @@ export function SiteHeader({
       {open && (
         <nav className="flex flex-col gap-3 border-t border-primary-foreground/20 px-5 py-4 font-semibold lg:hidden">
           {SITE_NAV.map((n) => (
-            <Link key={n.to} to={n.to} onClick={() => setOpen(false)}>
+            <Link key={n.to} to={isAdmin && n.to === "/" ? "/admin" : n.to} onClick={() => setOpen(false)}>
               {n.label}
             </Link>
           ))}

@@ -53,7 +53,7 @@ function InlineSignIn() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setBusy(false);
     if (error) return setMsg(/email.*not.*confirmed/i.test(error.message) ? "Please confirm your email first — check your inbox." : "Email or password is incorrect.");
-    navigate({ to: "/profile", search: { tab: "bookings", step: "profile" } });
+    navigate({ to: "/my-account" });
   }
 
   const input = "w-full rounded-full border border-primary-foreground/40 bg-primary-foreground/10 px-4 py-2 text-sm text-primary-foreground placeholder:text-primary-foreground/60 outline-none focus:border-primary-foreground/70";
