@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ChevronDown } from "lucide-react";
 import { SiteLayout } from "@/components/SiteLayout";
 
-const TITLE = "What if your child's future career isn't what they think it is?";
+const TITLE = "Before They Choose a Career, Let Them Experience It";
 
 export const Route = createFileRoute("/blogs")({
   head: () => ({
@@ -57,10 +57,9 @@ function Blogs() {
           className="mx-auto max-w-4xl rounded-xl border border-border bg-background p-5 shadow-warm md:p-8"
         >
           <header className="mb-6">
-            <p className="mb-2 text-sm font-bold text-primary">Blog 1</p>
             <h1 className="font-display text-3xl leading-tight md:text-4xl">{TITLE}</h1>
             <p className="mt-4 text-sm">
-              Written by: <strong>Elena Nicolettis</strong>
+              <span rel="author" className="font-semibold">Elena Nicolettis</span>
             </p>
           </header>
           <div className="space-y-5 text-[15px] leading-relaxed">
