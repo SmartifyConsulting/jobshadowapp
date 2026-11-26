@@ -24,8 +24,6 @@ import {
   Award,
 } from "lucide-react";
 import { SiteLayout, useSiteSession } from "@/components/SiteLayout";
-import { YouTube } from "@/components/YouTube";
-import { VIDEOS } from "@/lib/content";
 import { useState } from "react";
 
 type Step = { icon: typeof User; label: string };
@@ -183,14 +181,14 @@ function StepRow({
 export const Route = createFileRoute("/how-to")({
   head: () => ({
     meta: [
-      { title: "How To — Book, register and reschedule | Job Shadow" },
+      { title: "How To — Your Job Shadow journey" },
       {
         name: "description",
         content:
-          "Short videos on how to register, book a Job Shadow online, and cancel or reschedule a booking.",
+          "Step-by-step guides for scholars, mentors, companies and schools using Job Shadow.",
       },
       { property: "og:title", content: "How To — Job Shadow" },
-      { property: "og:description", content: "Video guides for booking a Job Shadow." },
+      { property: "og:description", content: "Follow your step-by-step Job Shadow guide." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -504,13 +502,6 @@ function HowTo() {
             {view === "mentor" &&
               " Contact Job Shadow to complete vetting, training and hosting forms."}
           </p>
-        </div>
-      </section>
-      <section className="bg-primary">
-        <div className="mx-auto grid max-w-5xl gap-3 px-5 py-6 md:grid-cols-3 md:py-[calc(min(4.6875vw,3rem)+15px)]">
-          {VIDEOS.map((v) => (
-            <YouTube key={v.id} {...v} />
-          ))}
         </div>
       </section>
     </SiteLayout>
