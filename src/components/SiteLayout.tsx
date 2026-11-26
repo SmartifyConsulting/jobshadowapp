@@ -3,7 +3,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Menu, X, Facebook, Instagram } from "lucide-react";
+import { Menu, X, Facebook, Instagram, Share2 } from "lucide-react";
 import { HeaderLogo } from "@/components/BrandLogo";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -283,6 +283,16 @@ export function SiteHeader({
                 <s.icon className="h-4 w-4" />
               </a>
             ))}
+            <Link
+              to="/contact"
+              search={{ view: "friend" }}
+              hash="contact-form"
+              aria-label="Share Job Shadow"
+              title="Send To A Friend"
+              className="grid h-8 w-8 place-items-center rounded-full bg-primary-foreground text-primary transition hover:bg-accent"
+            >
+              <Share2 className="h-4 w-4" aria-hidden />
+            </Link>
             {user && <NotificationInbox userId={user.id} />}
           </div>
           {user && roles.includes("user") && <WalletBadge userId={user.id} />}
@@ -299,6 +309,16 @@ export function SiteHeader({
           )}
         </nav>
         <div className="absolute right-5 flex items-center gap-3 lg:hidden">
+          <Link
+            to="/contact"
+            search={{ view: "friend" }}
+            hash="contact-form"
+            aria-label="Share Job Shadow"
+            title="Send To A Friend"
+            className="grid h-8 w-8 place-items-center rounded-full bg-primary-foreground text-primary transition hover:bg-accent"
+          >
+            <Share2 className="h-4 w-4" aria-hidden />
+          </Link>
           {user && <NotificationInbox userId={user.id} />}
           {user && roles.includes("user") && <WalletBadge userId={user.id} />}
           {user && (
