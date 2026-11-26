@@ -1,3 +1,4 @@
+import { publicSeo } from "@/lib/seo";
 import { createFileRoute } from "@tanstack/react-router";
 import { ChevronDown } from "lucide-react";
 import { SiteLayout } from "@/components/SiteLayout";
@@ -7,7 +8,9 @@ import { STORIES, STORIES_VIDEO } from "@/lib/content";
 
 export const Route = createFileRoute("/real-stories")({
   head: () => ({
+    links: publicSeo("/real-stories").links,
     meta: [
+      ...publicSeo("/real-stories").meta,
       { title: "Real stories — Job Shadow" },
       { name: "description", content: "Scholars share how job shadowing helped them choose engineering, architecture and more." },
       { property: "og:title", content: "Real stories — Job Shadow" },

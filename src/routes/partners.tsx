@@ -1,3 +1,4 @@
+import { publicSeo } from "@/lib/seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Check } from "lucide-react";
@@ -7,7 +8,9 @@ import { PARTNER_BLOCKS, PARTNER_HERO } from "@/lib/content";
 
 export const Route = createFileRoute("/partners")({
   head: () => ({
+    links: publicSeo("/partners").links,
     meta: [
+      ...publicSeo("/partners").meta,
       { title: "Partner with JobShadow — Schools, hosts & sponsors" },
       { name: "description", content: "Host scholars, partner as a school, or sponsor a learner's job shadow." },
       { property: "og:title", content: "Partner with JobShadow" },

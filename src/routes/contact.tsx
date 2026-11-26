@@ -1,3 +1,4 @@
+import { publicSeo } from "@/lib/seo";
 import { PartnerApplicationForm } from "@/components/PartnerApplicationForm";
 import { CONTACT_AUDIENCES } from "@/lib/audiences";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -15,7 +16,9 @@ export const Route = createFileRoute("/contact")({
     type: s["type"] === "host" || s["type"] === "school" || s["type"] === "mentor" ? s["type"] : undefined,
   }),
   head: () => ({
+    links: publicSeo("/contact").links,
     meta: [
+      ...publicSeo("/contact").meta,
       { title: "Contact JobShadow — Host, mentor or partner" },
       { name: "description", content: "Get in touch to mentor a scholar, become a host or partner your school." },
       { property: "og:title", content: "Contact JobShadow" },

@@ -1,9 +1,12 @@
+import { publicSeo } from "@/lib/seo";
 import { createFileRoute } from "@tanstack/react-router";
 import { SharingPage } from "@/components/SharingPage";
 
 export const Route = createFileRoute("/share-experience")({
   head: () => ({
+    links: publicSeo("/send-to-a-friend").links,
     meta: [
+      ...publicSeo("/send-to-a-friend").meta,
       { title: "Share Your Story & Send To A Friend — Job Shadow" },
       { name: "description", content: "Tell us about your Job Shadow day. Your story helps other scholars choose their career." },
       { property: "og:title", content: "Share Your Story & Send To A Friend — Job Shadow" },

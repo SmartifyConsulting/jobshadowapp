@@ -1,3 +1,4 @@
+import { publicSeo } from "@/lib/seo";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { SiteLayout } from "@/components/SiteLayout";
@@ -5,7 +6,9 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/legal")({
   head: () => ({
+    links: publicSeo("/legal").links,
     meta: [
+      ...publicSeo("/legal").meta,
       { title: "Legal, Privacy & Consent | Job Shadow" },
       { name: "description", content: "Job Shadow's data protection policy, digital indemnity agreements and terms of service." },
       { property: "og:title", content: "Legal, Privacy & Consent | Job Shadow" },

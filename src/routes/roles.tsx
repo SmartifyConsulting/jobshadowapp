@@ -1,3 +1,4 @@
+import { publicSeo } from "@/lib/seo";
 import { createFileRoute } from "@tanstack/react-router";
 import { CareerCatalogue } from "@/components/CareerCatalogue";
 
@@ -6,7 +7,9 @@ export const Route = createFileRoute("/roles")({
     q: typeof s["q"] === "string" ? (s["q"] as string) : undefined,
   }),
   head: () => ({
+    links: publicSeo("/roles").links,
     meta: [
+      ...publicSeo("/roles").meta,
       { title: "Careers — See the job shadows you can book | Job Shadow" },
       {
         name: "description",

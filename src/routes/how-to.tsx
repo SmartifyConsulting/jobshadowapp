@@ -1,3 +1,4 @@
+import { publicSeo } from "@/lib/seo";
 import { useHowToProgress } from "@/components/HowToProgress";
 import { HOW_TO_DESTINATIONS } from "@/lib/journey-progress";
 import { createFileRoute } from "@tanstack/react-router";
@@ -180,7 +181,9 @@ function StepRow({
 
 export const Route = createFileRoute("/how-to")({
   head: () => ({
+    links: publicSeo("/how-to").links,
     meta: [
+      ...publicSeo("/how-to").meta,
       { title: "How To — Your Job Shadow journey" },
       {
         name: "description",

@@ -1,3 +1,4 @@
+import { publicSeo } from "@/lib/seo";
 import { createFileRoute } from "@tanstack/react-router";
 import { ChevronDown } from "lucide-react";
 import { SiteLayout } from "@/components/SiteLayout";
@@ -6,7 +7,9 @@ const TITLE = "What if your child's future career isn't what they think it is?";
 
 export const Route = createFileRoute("/blogs")({
   head: () => ({
+    links: publicSeo("/blogs").links,
     meta: [
+      ...publicSeo("/blogs").meta,
       { title: `${TITLE} | Job Shadow Blogs` },
       {
         name: "description",
@@ -30,6 +33,18 @@ export const Route = createFileRoute("/blogs")({
 function Blogs() {
   return (
     <SiteLayout>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "@id": "https://jobshadow.co.za/blogs#blog-1",
+        headline: TITLE,
+        description: "Elena Nicolettis shares a parent's perspective on career choices, subject selection and the value of spending a day with a mentor.",
+        author: { "@type": "Person", name: "Elena Nicolettis" },
+        publisher: { "@type": "Organization", "@id": "https://jobshadow.co.za/#organization", name: "Job Shadow" },
+        mainEntityOfPage: "https://jobshadow.co.za/blogs",
+        image: "https://jobshadow.co.za/assets/about-jobshadow-desk.jpeg",
+        inLanguage: "en-ZA",
+      }) }} />
       <div className="bg-cta text-cta-foreground">
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-5 py-4">
           <ChevronDown className="h-6 w-6" aria-hidden />

@@ -1,3 +1,4 @@
+import { publicSeo } from "@/lib/seo";
 import { CONTACT_EMAIL } from "@/lib/data";
 import { HEADER_LOGO_URL } from "@/components/BrandLogo";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
@@ -11,8 +12,10 @@ import headline from "@/assets/hero-headline.png.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
+    links: publicSeo("/").links,
     meta: [
-      { title: "Job Shadow — Be sure about the career and life you choose" },
+      ...publicSeo("/").meta,
+      { title: "Job Shadow South Africa | Career Exploration for Scholars" },
       { name: "description", content: "Job Shadow facilitates job shadowing for South African high school students: a day with a mentor, or a one-hour digital interview, before committing to study." },
       { property: "og:title", content: "Job Shadow — Be sure about the career and life you choose" },
       { property: "og:description", content: "Job shadowing for high school students, before committing to tertiary study." },
@@ -26,7 +29,9 @@ export const Route = createFileRoute("/")({
 const ORG_JSON_LD = JSON.stringify({
   "@context": "https://schema.org",
   "@type": "Organization",
+  "@id": "https://jobshadow.co.za/#organization",
   name: "Job Shadow",
+  legalName: "Job Shadow (Pty) Ltd",
   url: "https://jobshadow.co.za",
   logo: "https://jobshadow.co.za" + HEADER_LOGO_URL,
   email: "info@jobshadow.co.za",
@@ -89,6 +94,15 @@ function Home() {
   return (
     <SiteLayout className="home-reference" headerLogo={<img src="/assets/jobshadow-logo-shadow-yellow.png" alt="JobShadow" className="h-[82px] w-auto object-contain lg:h-[95px]" />}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ORG_JSON_LD }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "@id": "https://jobshadow.co.za/#website",
+        name: "Job Shadow",
+        url: "https://jobshadow.co.za/",
+        inLanguage: "en-ZA",
+        publisher: { "@id": "https://jobshadow.co.za/#organization" },
+      }) }} />
       <section
         className="relative overflow-hidden text-primary-foreground"
       >

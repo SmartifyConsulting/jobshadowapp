@@ -1,16 +1,17 @@
+import { publicSeo } from "@/lib/seo";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
 import { SiteLayout } from "@/components/SiteLayout";
-import { YouTube } from "@/components/YouTube";
-import { CORPORATE_VIDEO } from "@/lib/content";
 import { supabase } from "@/integrations/supabase/client";
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 export const Route = createFileRoute("/about")({
   head: () => ({
+    links: publicSeo("/about").links,
     meta: [
+      ...publicSeo("/about").meta,
       { title: "About Job Shadow — Giving the youth opportunity and guidance" },
       { name: "description", content: "Job Shadow facilitates job shadowing for high school students at R350 per Job Shadow, or R200 for a one-hour Digital Interview." },
       { property: "og:title", content: "About Job Shadow" },
@@ -50,7 +51,16 @@ function About() {
           <p><strong>It’s a practical way of getting to know a job face-to-face with a mentor, before committing to study for it,</strong> at a cost of R350 per Job Shadow. In addition, we also offer a <strong>remote, one-hour, Digital Interview</strong> for an initial insight at a cost of R200 per Job Shadow Interview. Our platform offers bookings from {seasonText} every year.</p>
           <p className="mt-4">A Job Shadow opportunity will potentially minimize students changing direction during their tertiary studies eliminating wasted time, money and frustration for both Parents and students.</p>
         </div>
-        <div className="mx-auto mt-10 max-w-3xl"><YouTube {...CORPORATE_VIDEO} /></div>
+        <div className="mx-auto mt-10 max-w-5xl">
+          <img
+            src="/assets/about-jobshadow-desk.jpeg"
+            alt="Job Shadow branded desk with laptops, tablets, notebooks and creative tools in yellow, teal and green."
+            width={1600}
+            height={901}
+            loading="lazy"
+            className="h-auto w-full rounded-xl"
+          />
+        </div>
       </section>
     </SiteLayout>
   );
