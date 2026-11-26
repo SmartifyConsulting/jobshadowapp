@@ -1,19 +1,12 @@
-import { publicSeo } from "@/lib/seo";
-import { createFileRoute } from "@tanstack/react-router";
-import { SharingPage } from "@/components/SharingPage";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/send-to-a-friend")({
-  head: () => ({
-    links: publicSeo("/send-to-a-friend").links,
-    meta: [
-      ...publicSeo("/send-to-a-friend").meta,
-      { title: "Share Your Story & Send To A Friend — Job Shadow" },
-      { name: "description", content: "Share Job Shadow with a friend by email or WhatsApp." },
-      { property: "og:title", content: "Share Your Story & Send To A Friend — Job Shadow" },
-      { property: "og:description", content: "Tell a friend about Job Shadow." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
-  component: SharingPage,
+  beforeLoad: () => {
+    throw redirect({
+      to: "/contact",
+      search: { view: "friend" },
+      hash: "contact-form",
+      statusCode: 301,
+    });
+  },
 });

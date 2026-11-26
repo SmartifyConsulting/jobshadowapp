@@ -2,7 +2,7 @@
 
 The canonical website is https://jobshadow.co.za. Public information pages explicitly allow indexing. Account, sign-in, password and unknown pages inherit `noindex, follow`. These directives are search hints, not access controls; existing authentication is unchanged.
 
-Public URLs are listed in https://jobshadow.co.za/sitemap.xml and advertised in robots.txt. `/share-experience` points to `/send-to-a-friend` as its canonical because both display the same content. Query variants use the public page's clean canonical URL.
+Public URLs are listed in https://jobshadow.co.za/sitemap.xml and advertised in robots.txt. `/share-experience` and `/send-to-a-friend` permanently redirect to the corresponding section on `/contact`, which combines contact and sharing content. Query variants use the public page's clean canonical URL.
 
 ## Google Search Console
 

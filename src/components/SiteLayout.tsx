@@ -22,10 +22,9 @@ export const SITE_NAV = [
   { to: "/", label: "Home" },
   { to: "/about", label: "About" },
   { to: "/real-stories", label: "Stories" },
-  { to: "/blogs", label: "Insights" },
   { to: "/how-to", label: "How To" },
   { to: "/roles", label: "Careers" },
-  { to: "/send-to-a-friend", label: "Share" },
+  { to: "/blogs", label: "Insights" },
   { to: "/faq", label: "FAQ" },
   { to: "/contact", label: "Contact" },
 ] as const;
@@ -414,7 +413,7 @@ export function SiteFooter() {
               <Link to="/how-to">How To</Link>
             </li>
             <li>
-              <Link to="/send-to-a-friend">Share</Link>
+              <Link to="/contact" search={{ view: "friend" }} hash="contact-form">Send To A Friend</Link>
             </li>
             <li>
               <Link to="/faq">FAQ</Link>
