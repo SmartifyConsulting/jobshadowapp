@@ -11,6 +11,7 @@ export function ProfileSummaryCard({
   children,
   aside,
   previewSections,
+  layout = "default",
   label = "Profile summary",
 }: {
   name: string;
@@ -20,6 +21,7 @@ export function ProfileSummaryCard({
   children?: ReactNode;
   aside?: ReactNode;
   previewSections?: ProfilePreviewSection[];
+  layout?: "default" | "mentor";
   label?: string;
 }) {
   const photo = (
@@ -47,7 +49,13 @@ export function ProfileSummaryCard({
     "relative grid h-20 w-20 shrink-0 place-items-center rounded-full border border-input bg-muted";
   return (
     <header aria-label={label} className="rounded-xl border border-border bg-card p-4 sm:p-5">
-      <div className="flex flex-wrap items-center gap-4 sm:gap-5">
+      <div
+        className={
+          layout === "mentor"
+            ? "grid grid-cols-[auto_minmax(0,1fr)] items-center gap-4 sm:gap-5 xl:grid-cols-[auto_minmax(0,1fr)_auto]"
+            : "flex flex-wrap items-center gap-4 sm:gap-5"
+        }
+      >
         {onPhoto ? (
           <button
             type="button"
@@ -64,14 +72,39 @@ export function ProfileSummaryCard({
           <h2 className="break-words text-2xl font-bold text-teal">{name}</h2>
           {subtitle && <div className="mt-1 text-sm text-muted-foreground">{subtitle}</div>}
         </div>
-        {aside && <div className="w-full min-w-0 lg:ml-auto lg:w-auto lg:max-w-[60%]">{aside}</div>}
+        {aside && (
+          <div
+            className={
+              layout === "mentor"
+                ? "col-span-2 min-w-0 xl:col-span-1 xl:max-w-md"
+                : "w-full min-w-0 lg:ml-auto lg:w-auto lg:max-w-[60%]"
+            }
+          >
+            {aside}
+          </div>
+        )}
       </div>
-      {previewSections && (
-        <div className="mt-3 flex justify-end">
-          <ProfilePreview name={name} avatarUrl={avatarUrl ?? null} sections={previewSections} />
+      {layout === "mentor" ? (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
+          {children && <div className="min-w-0 flex-1">{children}</div>}
+          {previewSections && (
+            <ProfilePreview name={name} avatarUrl={avatarUrl ?? null} sections={previewSections} />
+          )}
         </div>
+      ) : (
+        <>
+          {previewSections && (
+            <div className="mt-3 flex justify-end">
+              <ProfilePreview
+                name={name}
+                avatarUrl={avatarUrl ?? null}
+                sections={previewSections}
+              />
+            </div>
+          )}
+          {children && <div className="mt-4 min-w-0 border-t border-border pt-3">{children}</div>}
+        </>
       )}
-      {children && <div className="mt-4 min-w-0 border-t border-border pt-3">{children}</div>}
     </header>
   );
 }

@@ -52,6 +52,7 @@ export function AccountPersonalDetails({
   hideSaveButton = false,
   saveRef,
   validateNames = false,
+  rowLayout = false,
 }: {
   onSaved?: (() => void) | undefined;
   hidePhoto?: boolean;
@@ -59,6 +60,7 @@ export function AccountPersonalDetails({
   hideSaveButton?: boolean;
   saveRef?: React.Ref<AccountPersonalDetailsHandle>;
   validateNames?: boolean;
+  rowLayout?: boolean;
 } = {}) {
   const { user, profile, pending } = useOwnIdentity();
   const qc = useQueryClient();
@@ -180,33 +182,58 @@ export function AccountPersonalDetails({
           }}
         />
       </label>
-      <PersonNameFields
-        id="own-account-name"
-        label="Name"
-        firstName={first}
-        lastName={last}
-        originalName={profile.data?.display_name ?? ""}
-        disabled={busy}
-        firstNameInvalid={nameErrors.includes("First Name")}
-        lastNameInvalid={nameErrors.includes("Last Name")}
-        onChange={(first, last) => {
-          setNames({ first, last });
-          setSaved(false);
-        }}
-      />
-      <div className="text-sm">
-        <span className="block text-xs text-muted-foreground">Email Address</span>
-        {user.data.email ?? "Not recorded"}
+      <div
+        className={
+          rowLayout
+            ? "grid gap-3 border-b border-border pb-4 sm:grid-cols-[160px_minmax(0,1fr)] sm:items-start"
+            : ""
+        }
+      >
+        {rowLayout && <span className="text-sm font-semibold">Name</span>}
+        <PersonNameFields
+          id="own-account-name"
+          label={rowLayout ? "" : "Name"}
+          firstName={first}
+          lastName={last}
+          originalName={profile.data?.display_name ?? ""}
+          disabled={busy}
+          firstNameInvalid={nameErrors.includes("First Name")}
+          lastNameInvalid={nameErrors.includes("Last Name")}
+          onChange={(first, last) => {
+            setNames({ first, last });
+            setSaved(false);
+          }}
+        />
       </div>
-      <LocationFields
-        value={location}
-        disabled={busy}
-        onChange={(value) => {
-          setLocationEdit(value);
-          setSaved(false);
-        }}
-      />
-
+      <div
+        className={
+          rowLayout
+            ? "grid gap-3 border-b border-border pb-4 text-sm sm:grid-cols-[160px_minmax(0,1fr)]"
+            : "text-sm"
+        }
+      >
+        <span className="block text-xs text-muted-foreground">Email Address</span>
+        <span className="break-all">{user.data.email ?? "Not recorded"}</span>
+      </div>
+      {rowLayout && (
+        <div className="grid gap-3 border-b border-border pb-4 text-sm sm:grid-cols-[160px_minmax(0,1fr)]">
+          <span className="text-xs text-muted-foreground">Phone</span>
+          <span>{user.data.phone || "Not recorded"}</span>
+        </div>
+      )}
+      <div
+        className={rowLayout ? "grid gap-3 sm:grid-cols-[160px_minmax(0,1fr)] sm:items-start" : ""}
+      >
+        {rowLayout && <span className="text-sm font-semibold">Location</span>}
+        <LocationFields
+          value={location}
+          disabled={busy}
+          onChange={(value) => {
+            setLocationEdit(value);
+            setSaved(false);
+          }}
+        />
+      </div>
       {error && (
         <p role="alert" className="text-sm text-destructive">
           {error}

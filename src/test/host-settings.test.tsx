@@ -92,27 +92,27 @@ describe("Host availability settings", () => {
     );
     expect(screen.queryByRole("navigation", { name: "Mentor navigation" })).toBeNull();
     expect(await screen.findByRole("heading", { name: "Alex" })).toBeVisible();
-    expect(screen.getByRole("tab", { name: "Profile" })).toHaveAttribute("data-state", "active");
-    expect(screen.getByRole("tabpanel", { name: "Qualifications" })).toHaveAttribute(
+    expect(screen.getByRole("tab", { name: "Personal Details" })).toHaveAttribute("data-state", "active");
+    expect(screen.getByRole("tabpanel", { name: "Professional Profile" })).toHaveAttribute(
       "data-state",
       "inactive",
     );
-    fireEvent.mouseDown(screen.getByRole("tab", { name: "Qualifications" }), {
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Professional Profile" }), {
       button: 0,
       ctrlKey: false,
     });
     expect(screen.getByRole("group", { name: "Skills & Expertise" })).toBeVisible();
-    fireEvent.mouseDown(screen.getByRole("tab", { name: "Profile" }), {
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Personal Details" }), {
       button: 0,
       ctrlKey: false,
     });
     expect(screen.queryByRole("button", { name: /^Edit Profile$/ })).toBeNull();
     expect(screen.queryByRole("button", { name: "Edit Professional Details" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Save Personal Details" })).toBeNull();
-    expect(screen.queryByRole("tab", { name: "Personal Details" })).toBeNull();
+    expect(screen.getByRole("tab", { name: "Personal Details" })).toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: "Professional Details" })).toBeNull();
     expect(screen.getByRole("group", { name: "Profile Summary" })).toBeVisible();
-    expect(screen.getByRole("tab", { name: "Profile" })).toHaveAttribute("data-state", "active");
+    expect(screen.getByRole("tab", { name: "Personal Details" })).toHaveAttribute("data-state", "active");
     expect(screen.queryByText("Mentor Portal")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /Set Availability/ }));
     expect(screen.getByRole("heading", { name: "Available Dates and Times" })).toBeVisible();
@@ -247,7 +247,7 @@ it("reviews CV drafts, preserves populated fields and keeps edits made while AI 
       data: { storagePath: expect.stringMatching(/mentor@example.com\/cv-.*-test-cv\.pdf$/) },
     }),
   );
-  fireEvent.mouseDown(screen.getByRole("tab", { name: "Qualifications" }), {
+  fireEvent.mouseDown(screen.getByRole("tab", { name: "Professional Profile" }), {
     button: 0,
     ctrlKey: false,
   });
@@ -260,8 +260,8 @@ it("reviews CV drafts, preserves populated fields and keeps edits made while AI 
     linkedin_url: "https://www.linkedin.com/in/example",
   });
   await waitFor(() =>
-    expect(screen.getByRole("tabpanel", { name: "Qualifications" })).toHaveTextContent(
-      "CV draft added to empty fields. Review the Qualifications tab",
+    expect(screen.getByRole("tabpanel", { name: "Professional Profile" })).toHaveTextContent(
+      "CV draft added to empty fields. Review the Professional Profile tab",
     ),
   );
   expect(screen.getByRole("textbox", { name: /^Experience$/ })).toHaveValue("My original bio");
@@ -276,7 +276,7 @@ it("reviews CV drafts, preserves populated fields and keeps edits made while AI 
       expect.objectContaining({ _bio: "My original bio", _specialties: [], _certifications: null }),
     ),
   );
-  fireEvent.mouseDown(screen.getByRole("tab", { name: "Profile" }), {
+  fireEvent.mouseDown(screen.getByRole("tab", { name: "Personal Details" }), {
     button: 0,
     ctrlKey: false,
   });
@@ -303,7 +303,7 @@ it("autosaves changed professional fields after 40 seconds without repeating unc
       <Page />
     </QueryClientProvider>,
   );
-  fireEvent.mouseDown(screen.getByRole("tab", { name: "Qualifications" }), {
+  fireEvent.mouseDown(screen.getByRole("tab", { name: "Professional Profile" }), {
     button: 0,
     ctrlKey: false,
   });

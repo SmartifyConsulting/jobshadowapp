@@ -433,6 +433,19 @@ function ProfessionalFrame({
   );
 }
 
+function ProfessionalRow({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div
+      role="group"
+      aria-label={title}
+      className="grid min-w-0 gap-3 border-b border-border pb-4 last:border-b-0 last:pb-0 sm:grid-cols-[150px_minmax(0,1fr)]"
+    >
+      <p className="text-sm font-bold">{title}</p>
+      <div className="min-w-0">{children}</div>
+    </div>
+  );
+}
+
 function HostProfile({
   initialTab = "overview",
   initialStep,
@@ -592,7 +605,7 @@ function HostProfile({
       setCertifications((current) => (current.trim() ? current : (draft.certifications ?? "")));
       setLinkedinUrl((current) => (current.trim() ? current : (draft.linkedin_url ?? "")));
       setCvDraftNote(
-        "CV draft added to empty fields. Review the Qualifications tab; changes save automatically or when you click Next.",
+        "CV draft added to empty fields. Review the Professional Profile tab; changes save automatically or when you click Next.",
       );
     } catch (error) {
       setErr(
@@ -941,21 +954,22 @@ function HostProfile({
                 className="flex h-auto w-full flex-wrap justify-start"
                 aria-label="Mentor profile details"
               >
-                {!wizard && <TabsTrigger value="overview">Profile</TabsTrigger>}
+                {!wizard && <TabsTrigger value="overview">Personal Details</TabsTrigger>}
                 {!wizard && (
                   <>
-                    <TabsTrigger value="qualifications">Qualifications</TabsTrigger>
+                    <TabsTrigger value="qualifications">Professional Profile</TabsTrigger>
                   </>
                 )}
               </TabsList>
               {!wizard && (
                 <ProfileSummaryCard
+                  layout="mentor"
                   aside={
                     <section role="group" aria-label="Profile Summary">
-                      <h3 className="text-sm font-bold">Profile Summary</h3>
+                      <h3 className="sr-only">Profile Summary</h3>
                       <dl
                         aria-label="Mentoring activity"
-                        className="grid grid-cols-2 gap-4 py-2 sm:grid-cols-4"
+                        className="grid grid-cols-2 gap-y-4 py-2 sm:grid-cols-4"
                       >
                         {[
                           ["Mentor Sessions", loadingPlacements ? "—" : placements.length],
@@ -973,7 +987,10 @@ function HostProfile({
                               : bookings.filter((booking) => booking.status === "completed").length,
                           ],
                         ].map(([label, value]) => (
-                          <div key={label}>
+                          <div
+                            key={label}
+                            className="px-3 text-center sm:border-l sm:border-border"
+                          >
                             <dd className="text-2xl font-bold tabular-nums">{value}</dd>
                             <dt className="text-xs text-muted-foreground">{label}</dt>
                           </div>
@@ -1051,7 +1068,7 @@ function HostProfile({
                       <Mail className="h-4 w-4 shrink-0" />
                       {ownIdentity.user.data?.email || "Email not recorded"}
                     </li>
-                    <li className="flex items-center gap-2">
+                    <li className="flex items-center gap-2 sm:border-l sm:border-border sm:pl-5">
                       <Phone className="h-4 w-4 shrink-0" />
                       {ownIdentity.user.data?.phone || "Phone not recorded"}
                     </li>
@@ -1074,6 +1091,7 @@ function HostProfile({
                     <ProfessionalFrame title="Personal Details">
                       <AccountPersonalDetails
                         hidePhoto
+                        rowLayout
                         hideSaveButton
                         validateNames
                         saveRef={personalSave}
@@ -1094,155 +1112,157 @@ function HostProfile({
                     value="qualifications"
                     className="mt-4 space-y-4 rounded-xl border border-border bg-card p-4 sm:p-5 data-[state=inactive]:hidden"
                   >
-                    <ProfessionalFrame title="CV">
-                      <div
-                        aria-label="CV upload area"
-                        onDragOver={(event) => event.preventDefault()}
-                        onDrop={(event) => {
-                          event.preventDefault();
-                          if (cvBusy || cvAiBusy) return;
-                          const file = event.dataTransfer.files[0];
-                          if (file) void uploadCv(file);
-                        }}
-                        className="rounded border border-dashed border-teal bg-teal/10 px-3 py-2"
-                      >
-                        <p className="text-xs font-medium">
-                          Drop your PDF CV here, or choose Upload CV. Private — never shown to
-                          scholars.
-                        </p>
-                        <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded bg-primary px-3 py-2 text-xs font-bold text-primary-foreground">
-                          <Upload className="h-3.5 w-3.5" />{" "}
-                          {cvAiBusy
-                            ? "Reading CV…"
-                            : cvBusy
-                              ? "Uploading…"
-                              : cvPath
-                                ? "Replace CV"
-                                : "Upload CV"}
-                          <input
-                            aria-label="Upload CV"
-                            type="file"
-                            accept=".pdf,.doc,.docx"
-                            hidden
-                            disabled={cvBusy || cvAiBusy}
-                            onChange={(e) => {
-                              const f = e.target.files?.[0];
-                              e.target.accept = ".pdf,.doc,.docx";
-                              if (f) void uploadCv(f);
-                              e.target.value = "";
-                            }}
-                          />
-                        </label>
-                        {cvPath && (
-                          <span className="ml-2 break-all text-xs text-muted-foreground">
-                            {cvPath.split("/").pop()}
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        Uploading a PDF sends it to OpenAI to fill empty professional fields
-                        automatically. Review the draft before saving.
-                      </p>
-                      {cvDraftNote && (
-                        <p role="status" className="mt-2 text-sm">
-                          {cvDraftNote}
-                        </p>
-                      )}
-                    </ProfessionalFrame>
-                    <ProfessionalFrame title="Skills & Expertise">
-                      <div className="mb-2 flex flex-wrap gap-2">
-                        {specialties
-                          .split(",")
-                          .map((skill) => skill.trim())
-                          .filter(Boolean)
-                          .map((skill, index) => (
-                            <span
-                              key={index}
-                              className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-sm"
-                            >
-                              {skill}
-                              <button
-                                type="button"
-                                aria-label={"Remove skill " + skill}
-                                onClick={() =>
-                                  setSpecialties(
-                                    specialties
-                                      .split(",")
-                                      .map((item) => item.trim())
-                                      .filter(Boolean)
-                                      .filter((_, current) => current !== index)
-                                      .join(", "),
-                                  )
-                                }
-                                className="rounded-full p-0.5 hover:bg-muted"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
+                    <div className="grid items-start gap-4 lg:grid-cols-[minmax(220px,1fr)_minmax(0,2fr)]">
+                      <ProfessionalFrame title="CV">
+                        <div
+                          aria-label="CV upload area"
+                          onDragOver={(event) => event.preventDefault()}
+                          onDrop={(event) => {
+                            event.preventDefault();
+                            if (cvBusy || cvAiBusy) return;
+                            const file = event.dataTransfer.files[0];
+                            if (file) void uploadCv(file);
+                          }}
+                          className="rounded border border-dashed border-teal bg-teal/10 px-3 py-2"
+                        >
+                          <p className="text-xs font-medium">
+                            Drop your PDF CV here, or choose Upload CV. Private — never shown to
+                            scholars.
+                          </p>
+                          <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded bg-primary px-3 py-2 text-xs font-bold text-primary-foreground">
+                            <Upload className="h-3.5 w-3.5" />{" "}
+                            {cvAiBusy
+                              ? "Reading CV…"
+                              : cvBusy
+                                ? "Uploading…"
+                                : cvPath
+                                  ? "Replace CV"
+                                  : "Upload CV"}
+                            <input
+                              aria-label="Upload CV"
+                              type="file"
+                              accept=".pdf,.doc,.docx"
+                              hidden
+                              disabled={cvBusy || cvAiBusy}
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                e.target.accept = ".pdf,.doc,.docx";
+                                if (f) void uploadCv(f);
+                                e.target.value = "";
+                              }}
+                            />
+                          </label>
+                          {cvPath && (
+                            <span className="ml-2 break-all text-xs text-muted-foreground">
+                              {cvPath.split("/").pop()}
                             </span>
-                          ))}
+                          )}
+                        </div>
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          Uploading a PDF sends it to OpenAI to fill empty professional fields
+                          automatically. Review the draft before saving.
+                        </p>
+                        {cvDraftNote && (
+                          <p role="status" className="mt-2 text-sm">
+                            {cvDraftNote}
+                          </p>
+                        )}
+                      </ProfessionalFrame>
+                      <div className="min-w-0 rounded border border-charcoal/25 p-3 space-y-4">
+                        <ProfessionalRow title="Experience">
+                          <label className="block text-sm">
+                            <span className="sr-only">Experience</span>
+                            <textarea
+                              value={bio}
+                              onChange={(event) => setBio(event.target.value)}
+                              aria-invalid={wizardErrors.includes("Experience / Bio")}
+                              style={
+                                wizardErrors.includes("Experience / Bio")
+                                  ? {
+                                      borderColor: "var(--destructive)",
+                                      boxShadow: "0 0 0 1px var(--destructive)",
+                                    }
+                                  : undefined
+                              }
+                              rows={3}
+                              placeholder="Describe your experience"
+                              className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                            />
+                          </label>
+                        </ProfessionalRow>
+                        <ProfessionalRow title="Qualifications & Professional Links">
+                          <label className="block text-sm">
+                            Qualifications
+                            <textarea
+                              value={certifications}
+                              onChange={(event) => setCertifications(event.target.value)}
+                              rows={2}
+                              className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                            />
+                          </label>
+                          <label className="mt-3 block text-sm">
+                            Professional Profile URL
+                            <input
+                              type="url"
+                              value={linkedinUrl}
+                              onChange={(event) => setLinkedinUrl(event.target.value)}
+                              placeholder="https://linkedin.com/in/..."
+                              className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                            />
+                          </label>
+                        </ProfessionalRow>
+                        <ProfessionalRow title="Skills & Expertise">
+                          <div className="mb-2 flex flex-wrap gap-2">
+                            {specialties
+                              .split(",")
+                              .map((skill) => skill.trim())
+                              .filter(Boolean)
+                              .map((skill, index) => (
+                                <span
+                                  key={index}
+                                  className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-sm"
+                                >
+                                  {skill}
+                                  <button
+                                    type="button"
+                                    aria-label={"Remove skill " + skill}
+                                    onClick={() =>
+                                      setSpecialties(
+                                        specialties
+                                          .split(",")
+                                          .map((item) => item.trim())
+                                          .filter(Boolean)
+                                          .filter((_, current) => current !== index)
+                                          .join(", "),
+                                      )
+                                    }
+                                    className="rounded-full p-0.5 hover:bg-muted"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </button>
+                                </span>
+                              ))}
+                          </div>
+                          <label className="block text-sm">
+                            <span className="sr-only">Skills &amp; Expertise</span>
+                            <input
+                              value={specialties}
+                              onChange={(event) => setSpecialties(event.target.value)}
+                              aria-invalid={wizardErrors.includes("Specialties")}
+                              style={
+                                wizardErrors.includes("Specialties")
+                                  ? {
+                                      borderColor: "var(--destructive)",
+                                      boxShadow: "0 0 0 1px var(--destructive)",
+                                    }
+                                  : undefined
+                              }
+                              placeholder="Add skills, separated by commas"
+                              className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                            />
+                          </label>
+                        </ProfessionalRow>
                       </div>
-                      <label className="block text-sm">
-                        <span className="sr-only">Skills &amp; Expertise</span>
-                        <input
-                          value={specialties}
-                          onChange={(event) => setSpecialties(event.target.value)}
-                          aria-invalid={wizardErrors.includes("Specialties")}
-                          style={
-                            wizardErrors.includes("Specialties")
-                              ? {
-                                  borderColor: "var(--destructive)",
-                                  boxShadow: "0 0 0 1px var(--destructive)",
-                                }
-                              : undefined
-                          }
-                          placeholder="Add skills, separated by commas"
-                          className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-                        />
-                      </label>
-                    </ProfessionalFrame>
-                    <div className="grid items-stretch gap-4 lg:grid-cols-2">
-                      <ProfessionalFrame title="Experience">
-                        <label className="block text-sm">
-                          <span className="sr-only">Experience</span>
-                          <textarea
-                            value={bio}
-                            onChange={(event) => setBio(event.target.value)}
-                            aria-invalid={wizardErrors.includes("Experience / Bio")}
-                            style={
-                              wizardErrors.includes("Experience / Bio")
-                                ? {
-                                    borderColor: "var(--destructive)",
-                                    boxShadow: "0 0 0 1px var(--destructive)",
-                                  }
-                                : undefined
-                            }
-                            rows={3}
-                            placeholder="Describe your experience"
-                            className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-                          />
-                        </label>
-                      </ProfessionalFrame>
-                      <ProfessionalFrame title="Qualifications & Professional Links">
-                        <label className="block text-sm">
-                          Qualifications
-                          <textarea
-                            value={certifications}
-                            onChange={(event) => setCertifications(event.target.value)}
-                            rows={2}
-                            className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-                          />
-                        </label>
-                        <label className="mt-3 block text-sm">
-                          Professional Profile URL
-                          <input
-                            type="url"
-                            value={linkedinUrl}
-                            onChange={(event) => setLinkedinUrl(event.target.value)}
-                            placeholder="https://linkedin.com/in/..."
-                            className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-                          />
-                        </label>
-                      </ProfessionalFrame>
                     </div>
                   </TabsContent>
                 </>
