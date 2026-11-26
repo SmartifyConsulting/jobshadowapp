@@ -13,6 +13,7 @@ import {
 export const ADMIN_NAV = [
   { key: "users", label: "Users", icon: Users },
   { key: "careers", label: "Sectors and Careers", icon: Briefcase },
+  { key: "insights", label: "Insights", icon: FileText },
   { key: "reports", label: "Reports", icon: FileText },
   { key: "settings", label: "Booking Settings", icon: Settings },
   { key: "emails", label: "Email Archive", icon: Archive },

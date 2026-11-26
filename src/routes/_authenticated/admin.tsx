@@ -1,4 +1,5 @@
 import { MentorOnboardingReview } from "@/components/mentor/MentorOnboardingReview";
+import { AdminInsights } from "@/components/AdminInsights";
 import { AccountProfile, useOwnIdentity } from "@/components/account/AccountProfile";
 import type { Database } from "@/integrations/supabase/types";
 import { useCareerAutosave } from "@/lib/use-career-autosave";
@@ -108,7 +109,7 @@ import {
 
 export const Route = createFileRoute("/_authenticated/admin")({
   validateSearch: (s: Record<string, unknown>): { section?: string | undefined } => ({
-    section: ["users", "careers", "reports", "settings", "emails", "legal", "profile"].includes(
+    section: ["users", "careers", "insights", "reports", "settings", "emails", "legal", "profile"].includes(
       String(s["section"]),
     )
       ? String(s["section"])
@@ -296,6 +297,7 @@ const TABLES: {
     custom: true,
     cols: [],
   },
+  { id: "insights", label: "Insights", icon: FileText, table: "insights", singular: "Insights", custom: true, cols: [] },
   {
     id: "evaluations",
     label: "Evaluations",
@@ -404,6 +406,8 @@ function AdminPage() {
               <AdminUsers key={section.id} />
             ) : section.id === "careers" ? (
               <CareersAndSectors />
+            ) : section.id === "insights" ? (
+              <AdminInsights />
             ) : section.id === "apps" ? (
               <ApplicationsScreen />
             ) : section.id === "reports" ? (

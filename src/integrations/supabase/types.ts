@@ -8,6 +8,12 @@ export type Database = {
   };
   public: {
     Tables: {
+      insights: {
+        Row: { id: string; slug: string; title: string; kind: string; excerpt: string; author_name: string; body: string; cover_image_url: string; status: string; published_at: string | null; created_at: string; updated_at: string };
+        Insert: { id?: string; slug: string; title: string; kind?: string; excerpt?: string; author_name?: string; body: string; cover_image_url?: string; status?: string; published_at?: string | null; created_at?: string; updated_at?: string };
+        Update: { id?: string; slug?: string; title?: string; kind?: string; excerpt?: string; author_name?: string; body?: string; cover_image_url?: string; status?: string; published_at?: string | null; created_at?: string; updated_at?: string };
+        Relationships: [];
+      };
       mentor_onboarding_drafts: {
         Row: { user_id: string; current_step: string; data: Json; updated_at: string };
         Insert: { user_id: string; current_step?: string; data?: Json; updated_at?: string };

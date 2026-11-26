@@ -27,6 +27,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RolesRouteImport } from './routes/roles'
 import { Route as SendToAFriendRouteImport } from './routes/send-to-a-friend'
 import { Route as ShareExperienceRouteImport } from './routes/share-experience'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedCompanyReportRouteImport } from './routes/_authenticated/company-report'
 import { Route as AuthenticatedMentorRouteImport } from './routes/_authenticated/mentor'
@@ -34,6 +35,7 @@ import { Route as AuthenticatedMyAccountRouteImport } from './routes/_authentica
 import { Route as AuthenticatedParentRouteImport } from './routes/_authenticated/parent'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedSchoolRouteImport } from './routes/_authenticated/school'
+import { Route as InsightsSlugRouteImport } from './routes/insights/$slug'
 import { Route as AuthenticatedEvaluationBookingIdRouteImport } from './routes/_authenticated/evaluation.$bookingId'
 import { Route as AuthenticatedIndemnityBookingIdRouteImport } from './routes/_authenticated/indemnity.$bookingId'
 import { Route as ApiPublicEmailDispatchRouteImport } from './routes/api/public/email-dispatch'
@@ -127,6 +129,11 @@ const ShareExperienceRoute = ShareExperienceRouteImport.update({
   path: '/share-experience',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -162,6 +169,11 @@ const AuthenticatedSchoolRoute = AuthenticatedSchoolRouteImport.update({
   id: '/school',
   path: '/school',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const InsightsSlugRoute = InsightsSlugRouteImport.update({
+  id: '/insights/$slug',
+  path: '/insights/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedEvaluationBookingIdRoute =
   AuthenticatedEvaluationBookingIdRouteImport.update({
@@ -199,6 +211,7 @@ export interface FileRoutesByFullPath {
   '/roles': typeof RolesRoute
   '/send-to-a-friend': typeof SendToAFriendRoute
   '/share-experience': typeof ShareExperienceRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/company-report': typeof AuthenticatedCompanyReportRoute
   '/mentor': typeof AuthenticatedMentorRoute
@@ -206,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/parent': typeof AuthenticatedParentRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/school': typeof AuthenticatedSchoolRoute
+  '/insights/$slug': typeof InsightsSlugRoute
   '/evaluation/$bookingId': typeof AuthenticatedEvaluationBookingIdRoute
   '/indemnity/$bookingId': typeof AuthenticatedIndemnityBookingIdRoute
   '/api/public/email-dispatch': typeof ApiPublicEmailDispatchRoute
@@ -228,6 +242,7 @@ export interface FileRoutesByTo {
   '/roles': typeof RolesRoute
   '/send-to-a-friend': typeof SendToAFriendRoute
   '/share-experience': typeof ShareExperienceRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/company-report': typeof AuthenticatedCompanyReportRoute
   '/mentor': typeof AuthenticatedMentorRoute
@@ -235,6 +250,7 @@ export interface FileRoutesByTo {
   '/parent': typeof AuthenticatedParentRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/school': typeof AuthenticatedSchoolRoute
+  '/insights/$slug': typeof InsightsSlugRoute
   '/evaluation/$bookingId': typeof AuthenticatedEvaluationBookingIdRoute
   '/indemnity/$bookingId': typeof AuthenticatedIndemnityBookingIdRoute
   '/api/public/email-dispatch': typeof ApiPublicEmailDispatchRoute
@@ -259,6 +275,7 @@ export interface FileRoutesById {
   '/roles': typeof RolesRoute
   '/send-to-a-friend': typeof SendToAFriendRoute
   '/share-experience': typeof ShareExperienceRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/company-report': typeof AuthenticatedCompanyReportRoute
   '/_authenticated/mentor': typeof AuthenticatedMentorRoute
@@ -266,6 +283,7 @@ export interface FileRoutesById {
   '/_authenticated/parent': typeof AuthenticatedParentRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/school': typeof AuthenticatedSchoolRoute
+  '/insights/$slug': typeof InsightsSlugRoute
   '/_authenticated/evaluation/$bookingId': typeof AuthenticatedEvaluationBookingIdRoute
   '/_authenticated/indemnity/$bookingId': typeof AuthenticatedIndemnityBookingIdRoute
   '/api/public/email-dispatch': typeof ApiPublicEmailDispatchRoute
@@ -290,6 +308,7 @@ export interface FileRouteTypes {
     | '/roles'
     | '/send-to-a-friend'
     | '/share-experience'
+    | '/sitemap.xml'
     | '/admin'
     | '/company-report'
     | '/mentor'
@@ -297,6 +316,7 @@ export interface FileRouteTypes {
     | '/parent'
     | '/profile'
     | '/school'
+    | '/insights/$slug'
     | '/evaluation/$bookingId'
     | '/indemnity/$bookingId'
     | '/api/public/email-dispatch'
@@ -319,6 +339,7 @@ export interface FileRouteTypes {
     | '/roles'
     | '/send-to-a-friend'
     | '/share-experience'
+    | '/sitemap.xml'
     | '/admin'
     | '/company-report'
     | '/mentor'
@@ -326,6 +347,7 @@ export interface FileRouteTypes {
     | '/parent'
     | '/profile'
     | '/school'
+    | '/insights/$slug'
     | '/evaluation/$bookingId'
     | '/indemnity/$bookingId'
     | '/api/public/email-dispatch'
@@ -349,6 +371,7 @@ export interface FileRouteTypes {
     | '/roles'
     | '/send-to-a-friend'
     | '/share-experience'
+    | '/sitemap.xml'
     | '/_authenticated/admin'
     | '/_authenticated/company-report'
     | '/_authenticated/mentor'
@@ -356,6 +379,7 @@ export interface FileRouteTypes {
     | '/_authenticated/parent'
     | '/_authenticated/profile'
     | '/_authenticated/school'
+    | '/insights/$slug'
     | '/_authenticated/evaluation/$bookingId'
     | '/_authenticated/indemnity/$bookingId'
     | '/api/public/email-dispatch'
@@ -380,6 +404,8 @@ export interface RootRouteChildren {
   RolesRoute: typeof RolesRoute
   SendToAFriendRoute: typeof SendToAFriendRoute
   ShareExperienceRoute: typeof ShareExperienceRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  InsightsSlugRoute: typeof InsightsSlugRoute
   ApiPublicEmailDispatchRoute: typeof ApiPublicEmailDispatchRoute
 }
 
@@ -511,6 +537,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShareExperienceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
@@ -559,6 +592,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/school'
       preLoaderRoute: typeof AuthenticatedSchoolRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/insights/$slug': {
+      id: '/insights/$slug'
+      path: '/insights/$slug'
+      fullPath: '/insights/$slug'
+      preLoaderRoute: typeof InsightsSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/evaluation/$bookingId': {
       id: '/_authenticated/evaluation/$bookingId'
@@ -630,6 +670,8 @@ const rootRouteChildren: RootRouteChildren = {
   RolesRoute: RolesRoute,
   SendToAFriendRoute: SendToAFriendRoute,
   ShareExperienceRoute: ShareExperienceRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
+  InsightsSlugRoute: InsightsSlugRoute,
   ApiPublicEmailDispatchRoute: ApiPublicEmailDispatchRoute,
 }
 export const routeTree = rootRouteImport
