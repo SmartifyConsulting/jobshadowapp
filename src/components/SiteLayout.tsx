@@ -22,6 +22,7 @@ export const SITE_NAV = [
   { to: "/", label: "Home" },
   { to: "/about", label: "About" },
   { to: "/real-stories", label: "Stories" },
+  { to: "/blogs", label: "Blogs" },
   { to: "/how-to", label: "How To" },
   { to: "/roles", label: "Careers" },
   { to: "/send-to-a-friend", label: "Share" },
@@ -416,6 +417,9 @@ export function SiteFooter() {
             </li>
             <li>
               <Link to="/real-stories">Real Stories</Link>
+            </li>
+            <li>
+              <Link to="/blogs">Blogs</Link>
             </li>
           </ul>
         </div>
