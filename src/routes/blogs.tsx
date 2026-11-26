@@ -10,7 +10,7 @@ export const Route = createFileRoute("/blogs")({
     links: publicSeo("/blogs").links,
     meta: [
       ...publicSeo("/blogs").meta,
-      { title: `${TITLE} | Job Shadow Blogs` },
+      { title: `${TITLE} | Job Shadow Insights` },
       {
         name: "description",
         content:
@@ -48,7 +48,7 @@ function Blogs() {
       <div className="bg-cta text-cta-foreground">
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-5 py-4">
           <ChevronDown className="h-6 w-6" aria-hidden />
-          <span className="font-display text-2xl uppercase">Blogs</span>
+          <span className="font-display text-2xl uppercase">Insights</span>
         </div>
       </div>
       <section className="flex-1 bg-[#7CCCC8] px-5 py-6 md:py-10">
