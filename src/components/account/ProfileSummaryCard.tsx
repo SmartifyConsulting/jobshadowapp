@@ -8,6 +8,7 @@ export function ProfileSummaryCard({
   subtitle,
   onPhoto,
   children,
+  aside,
   label = "Profile summary",
 }: {
   name: string;
@@ -15,6 +16,7 @@ export function ProfileSummaryCard({
   subtitle?: ReactNode;
   onPhoto?: () => void;
   children?: ReactNode;
+  aside?: ReactNode;
   label?: string;
 }) {
   const photo = (
@@ -42,7 +44,7 @@ export function ProfileSummaryCard({
     "relative grid h-20 w-20 shrink-0 place-items-center rounded-full border border-input bg-muted";
   return (
     <header aria-label={label} className="rounded-xl border border-border bg-card p-4 sm:p-5">
-      <div className="flex items-center gap-4 sm:gap-5">
+      <div className="flex flex-wrap items-center gap-4 sm:gap-5">
         {onPhoto ? (
           <button
             type="button"
@@ -55,10 +57,11 @@ export function ProfileSummaryCard({
         ) : (
           <div className={avatarClass}>{photo}</div>
         )}
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 basis-40">
           <h2 className="break-words text-2xl font-bold text-teal">{name}</h2>
           {subtitle && <div className="mt-1 text-sm text-muted-foreground">{subtitle}</div>}
         </div>
+        {aside && <div className="w-full min-w-0 lg:ml-auto lg:w-auto lg:max-w-[60%]">{aside}</div>}
       </div>
       {children && <div className="mt-4 min-w-0 border-t border-border pt-3">{children}</div>}
     </header>

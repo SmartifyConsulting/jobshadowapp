@@ -808,19 +808,65 @@ function HostProfile({
               </TabsList>
               {!wizard && (
                 <ProfileSummaryCard
+                  aside={
+                    <section role="group" aria-label="Profile Summary">
+                      <h3 className="text-sm font-bold">Profile Summary</h3>
+                      <dl
+                        aria-label="Mentoring activity"
+                        className="grid grid-cols-2 gap-4 py-2 sm:grid-cols-4"
+                      >
+                        {[
+                          ["Mentor Sessions", loadingPlacements ? "—" : placements.length],
+                          ["Total Bookings", loadingBookings ? "—" : bookings.length],
+                          [
+                            "Confirmed Bookings",
+                            loadingBookings
+                              ? "—"
+                              : bookings.filter((booking) => booking.status === "confirmed").length,
+                          ],
+                          [
+                            "Completed Bookings",
+                            loadingBookings
+                              ? "—"
+                              : bookings.filter((booking) => booking.status === "completed").length,
+                          ],
+                        ].map(([label, value]) => (
+                          <div key={label}>
+                            <dd className="text-2xl font-bold tabular-nums">{value}</dd>
+                            <dt className="text-xs text-muted-foreground">{label}</dt>
+                          </div>
+                        ))}
+                      </dl>
+                    </section>
+                  }
                   label="Mentor profile summary"
                   name={mentorName}
                   avatarUrl={avatar}
-                  subtitle={profile.data?.via_company ? "Company Mentor" : "Independent Mentor"}
+                  subtitle={
+                    <>
+                      <p>{profile.data?.via_company ? "Company Mentor" : "Independent Mentor"}</p>
+                      <ul aria-label="Mentor skills" className="mt-2 flex flex-wrap gap-1.5">
+                        {specialties
+                          .split(",")
+                          .map((skill) => skill.trim())
+                          .filter(Boolean)
+                          .map((skill, index) => (
+                            <li
+                              key={index}
+                              className="rounded-full border border-border bg-ivory px-2.5 py-1 text-xs text-foreground"
+                            >
+                              {skill}
+                            </li>
+                          ))}
+                      </ul>
+                    </>
+                  }
                   onPhoto={() => {
                     setOnboardingStep("profile");
                     setProfileTab("overview");
                     setTimeout(() => document.getElementById("mentor-profile-photo")?.click(), 0);
                   }}
                 >
-                  {!!profile.data?.specialties?.length && (
-                    <p className="mb-3 text-sm">{profile.data.specialties.join(" · ")}</p>
-                  )}
                   <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
                     <li className="flex items-center gap-2 break-all">
                       <Mail className="h-4 w-4 shrink-0" />
@@ -863,104 +909,67 @@ function HostProfile({
                         }
                       />
                     </ProfessionalFrame>
-                    <div className="grid items-stretch gap-4 lg:grid-cols-2">
-                      <ProfessionalFrame title="CV">
-                        <div
-                          aria-label="CV upload area"
-                          onDragOver={(event) => event.preventDefault()}
-                          onDrop={(event) => {
-                            event.preventDefault();
-                            if (cvBusy || cvAiBusy) return;
-                            const file = event.dataTransfer.files[0];
-                            if (file) void uploadCv(file);
-                          }}
-                          className="rounded border border-dashed border-teal bg-teal/10 px-3 py-2"
-                        >
-                          <p className="text-xs font-medium">
-                            Drop your PDF CV here, or choose Upload CV. Private — never shown to
-                            scholars.
-                          </p>
-                          <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded bg-primary px-3 py-2 text-xs font-bold text-primary-foreground">
-                            <Upload className="h-3.5 w-3.5" />{" "}
-                            {cvAiBusy
-                              ? "Reading CV…"
-                              : cvBusy
-                                ? "Uploading…"
-                                : cvPath
-                                  ? "Replace CV"
-                                  : "Upload CV"}
-                            <input
-                              aria-label="Upload CV"
-                              type="file"
-                              accept=".pdf,.doc,.docx"
-                              hidden
-                              disabled={cvBusy || cvAiBusy}
-                              onChange={(e) => {
-                                const f = e.target.files?.[0];
-                                e.target.accept = ".pdf,.doc,.docx";
-                                if (f) void uploadCv(f);
-                                e.target.value = "";
-                              }}
-                            />
-                          </label>
-                          {cvPath && (
-                            <span className="ml-2 break-all text-xs text-muted-foreground">
-                              {cvPath.split("/").pop()}
-                            </span>
-                          )}
-                        </div>
-                        <p className="mt-2 text-xs text-muted-foreground">
-                          Uploading a PDF sends it to OpenAI to fill empty professional fields
-                          automatically. Review the draft before saving.
-                        </p>
-                        {cvDraftNote && (
-                          <p role="status" className="mt-2 text-sm">
-                            {cvDraftNote}
-                          </p>
-                        )}
-                      </ProfessionalFrame>
-                      <ProfessionalFrame title="Profile Summary">
-                        <dl
-                          aria-label="Mentoring activity"
-                          className="grid grid-cols-2 gap-4 py-2 sm:grid-cols-4"
-                        >
-                          {[
-                            ["Mentor Sessions", loadingPlacements ? "—" : placements.length],
-                            ["Total Bookings", loadingBookings ? "—" : bookings.length],
-                            [
-                              "Confirmed Bookings",
-                              loadingBookings
-                                ? "—"
-                                : bookings.filter((booking) => booking.status === "confirmed")
-                                    .length,
-                            ],
-                            [
-                              "Completed Bookings",
-                              loadingBookings
-                                ? "—"
-                                : bookings.filter((booking) => booking.status === "completed")
-                                    .length,
-                            ],
-                          ].map(([label, value]) => (
-                            <div key={label}>
-                              <dd className="text-2xl font-bold tabular-nums">{value}</dd>
-                              <dt className="text-xs text-muted-foreground">{label}</dt>
-                            </div>
-                          ))}
-                        </dl>
-                      </ProfessionalFrame>
-                    </div>
                   </TabsContent>
                   <TabsContent
                     forceMount
                     value="qualifications"
                     className="mt-4 space-y-4 rounded-xl border border-border bg-card p-4 sm:p-5 data-[state=inactive]:hidden"
                   >
-                    {cvDraftNote && (
-                      <p role="status" className="text-sm">
-                        {cvDraftNote}
+                    <ProfessionalFrame title="CV">
+                      <div
+                        aria-label="CV upload area"
+                        onDragOver={(event) => event.preventDefault()}
+                        onDrop={(event) => {
+                          event.preventDefault();
+                          if (cvBusy || cvAiBusy) return;
+                          const file = event.dataTransfer.files[0];
+                          if (file) void uploadCv(file);
+                        }}
+                        className="rounded border border-dashed border-teal bg-teal/10 px-3 py-2"
+                      >
+                        <p className="text-xs font-medium">
+                          Drop your PDF CV here, or choose Upload CV. Private — never shown to
+                          scholars.
+                        </p>
+                        <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded bg-primary px-3 py-2 text-xs font-bold text-primary-foreground">
+                          <Upload className="h-3.5 w-3.5" />{" "}
+                          {cvAiBusy
+                            ? "Reading CV…"
+                            : cvBusy
+                              ? "Uploading…"
+                              : cvPath
+                                ? "Replace CV"
+                                : "Upload CV"}
+                          <input
+                            aria-label="Upload CV"
+                            type="file"
+                            accept=".pdf,.doc,.docx"
+                            hidden
+                            disabled={cvBusy || cvAiBusy}
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              e.target.accept = ".pdf,.doc,.docx";
+                              if (f) void uploadCv(f);
+                              e.target.value = "";
+                            }}
+                          />
+                        </label>
+                        {cvPath && (
+                          <span className="ml-2 break-all text-xs text-muted-foreground">
+                            {cvPath.split("/").pop()}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Uploading a PDF sends it to OpenAI to fill empty professional fields
+                        automatically. Review the draft before saving.
                       </p>
-                    )}
+                      {cvDraftNote && (
+                        <p role="status" className="mt-2 text-sm">
+                          {cvDraftNote}
+                        </p>
+                      )}
+                    </ProfessionalFrame>
                     <ProfessionalFrame title="Skills & Expertise">
                       <div className="mb-2 flex flex-wrap gap-2">
                         {specialties
