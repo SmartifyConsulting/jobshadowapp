@@ -1,3 +1,4 @@
+import { MentorHostingGuide } from "@/components/mentor/MentorHostingGuide";
 import { ProfileSummaryCard } from "@/components/account/ProfileSummaryCard";
 import { readUserLocation, locationText } from "@/components/account/LocationFields";
 import { MentorOnboardingWizard } from "@/components/mentor/MentorOnboardingWizard";
@@ -463,7 +464,11 @@ function HostProfile({
   const [cvAiBusy, setCvAiBusy] = useState(false);
   const [cvDraftNote, setCvDraftNote] = useState("");
   const [profileTab, setProfileTab] = useState(
-    initialTab === "professional" ? "qualifications" : initialTab,
+    initialTab === "professional"
+      ? "qualifications"
+      : ["availability", "shadows"].includes(initialTab)
+        ? "overview"
+        : initialTab,
   );
   const profile = useQuery({
     queryKey: ["host-profile"],
@@ -635,7 +640,7 @@ function HostProfile({
     }
   }
 
-  async function save(forceProfessional = false) {
+  async function save(forceProfessional = false, contactOnly = false) {
     if (wizard) {
       const missing = [
         ...(!ownIdentity.profile.data?.first_name?.trim() ? ["First Name"] : []),
@@ -655,7 +660,6 @@ function HostProfile({
       hasHrAdmin &&
       (!hrFirstName.trim() || !hrLastName.trim() || !hrEmail.trim())
     ) {
-      setProfileTab("availability");
       setErr("Please provide your HR admin's first name, last name and email.");
       return false;
     }
@@ -663,10 +667,11 @@ function HostProfile({
     setErr(null);
     setContactSaved(false);
     const saveProfessional =
-      forceProfessional ||
-      profileTab === "professional" ||
-      profileTab === "overview" ||
-      profileTab === "qualifications";
+      !contactOnly &&
+      (forceProfessional ||
+        profileTab === "professional" ||
+        profileTab === "overview" ||
+        profileTab === "qualifications");
     try {
       const { error } = await supabase.rpc("update_my_host_profile", {
         _bio: saveProfessional ? bio || null : (profile.data?.bio ?? null),
@@ -790,6 +795,145 @@ function HostProfile({
         onStepChange={setOnboardingStep}
         embedded
         beforeProfileNext={saveProfileStep}
+        initialPhase={
+          initialTab === "availability" || initialTab === "shadows" ? "hosting" : "onboarding"
+        }
+        renderHosting={() => (
+          <MentorHostingGuide
+            initialStep={initialTab === "shadows" ? "requests" : "availability"}
+            complete={[
+              placements.some((placement) => placement.active && !!placement.dates),
+              false,
+              bookings.length > 0,
+              bookings.some((booking) => ["confirmed", "completed"].includes(booking.status)),
+              bookings.some((booking) => booking.status === "completed"),
+              false,
+            ]}
+            preferences={
+              <>
+                <div className="grid gap-3 lg:grid-cols-2">
+                  {" "}
+                  <div className="rounded-lg border bg-card p-4 space-y-3">
+                    <p className="text-sm font-semibold">Company Contact</p>
+                    <p className="text-sm">
+                      {viaCompany ? "Company Mentor" : "Independent Mentor"}
+                    </p>
+                    {viaCompany && (
+                      <label className="ml-6 flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={hasHrAdmin}
+                          onChange={(e) => setHasHrAdmin(e.target.checked)}
+                        />
+                        Do you have an HR admin you report results to?
+                      </label>
+                    )}
+                    {viaCompany && hasHrAdmin && (
+                      <div className="ml-6 grid gap-3 sm:grid-cols-2">
+                        <label className="block text-sm">
+                          HR first name
+                          <input
+                            value={hrFirstName}
+                            onChange={(e) => setHrFirstName(e.target.value)}
+                            className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                          />
+                        </label>
+                        <label className="block text-sm">
+                          HR last name
+                          <input
+                            value={hrLastName}
+                            onChange={(e) => setHrLastName(e.target.value)}
+                            className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                          />
+                        </label>
+                        <label className="block text-sm sm:col-span-2">
+                          HR email
+                          <input
+                            type="email"
+                            value={hrEmail}
+                            onChange={(e) => setHrEmail(e.target.value)}
+                            className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                          />
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                  <div className="rounded-lg border bg-card p-4 space-y-3">
+                    <p className="text-sm font-semibold">Rules of Engagement</p>
+                    <p className="text-xs text-muted-foreground">
+                      Help admin know how best to reach you.
+                    </p>
+                    <label className="block text-sm">
+                      Preferred contact method
+                      <select
+                        value={preferredContact}
+                        onChange={(e) => setPreferredContact(e.target.value)}
+                        className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                      >
+                        <option value="email">Email</option>
+                        <option value="whatsapp">WhatsApp</option>
+                        <option value="phone">Phone call</option>
+                        <option value="sms">SMS</option>
+                      </select>
+                    </label>
+                    <label className="block text-sm">
+                      Best times to contact you (optional)
+                      <input
+                        value={contactHoursNote}
+                        onChange={(e) => setContactHoursNote(e.target.value)}
+                        placeholder="e.g. Weekdays 9am-5pm only"
+                        className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                      />
+                    </label>
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={avoidWeekends}
+                        onChange={(e) => setAvoidWeekends(e.target.checked)}
+                      />
+                      Please don't contact me on weekends
+                    </label>
+                    <label className="block text-sm">
+                      Anything else admin should know (optional)
+                      <textarea
+                        rows={2}
+                        value={engagementNotes}
+                        onChange={(e) => setEngagementNotes(e.target.value)}
+                        placeholder="e.g. prefers written briefs before a call, out of office in December"
+                        className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
+                      />
+                    </label>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void save(false, true)}
+                  disabled={busy || profile.isPending || !!profile.error}
+                  className="rounded bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-50"
+                >
+                  {contactSaved ? "Saved" : "Save Contact Preferences"}
+                </button>
+                {(err || profile.error) && (
+                  <p role="alert" className="text-sm text-destructive">
+                    {err || "Unable to load your preferences. Please refresh."}
+                  </p>
+                )}
+                <HostSettings />
+              </>
+            }
+            bookings={
+              loadingBookings ? (
+                <p role="status">Loading bookings…</p>
+              ) : (
+                <JobShadows
+                  bookings={bookings}
+                  placements={placements}
+                  loadingPlacements={loadingPlacements}
+                />
+              )
+            }
+          />
+        )}
         renderProfile={() => (
           <>
             <Tabs value={profileTab} onValueChange={setProfileTab} className="space-y-4">
@@ -801,8 +945,6 @@ function HostProfile({
                 {!wizard && (
                   <>
                     <TabsTrigger value="qualifications">Qualifications</TabsTrigger>
-                    <TabsTrigger value="availability">Preferences</TabsTrigger>
-                    <TabsTrigger value="shadows">Bookings</TabsTrigger>
                   </>
                 )}
               </TabsList>
@@ -1068,131 +1210,6 @@ function HostProfile({
                   </TabsContent>
                 </>
               )}
-              <TabsContent
-                forceMount
-                value="availability"
-                className="mt-4 space-y-4 data-[state=inactive]:hidden"
-              >
-                <div className="grid gap-3 lg:grid-cols-2">
-                  {" "}
-                  <div className="rounded-lg border bg-card p-4 space-y-3">
-                    <p className="text-sm font-semibold">Company Contact</p>
-                    <p className="text-sm">
-                      {viaCompany ? "Company Mentor" : "Independent Mentor"}
-                    </p>
-                    {viaCompany && (
-                      <label className="ml-6 flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={hasHrAdmin}
-                          onChange={(e) => setHasHrAdmin(e.target.checked)}
-                        />
-                        Do you have an HR admin you report results to?
-                      </label>
-                    )}
-                    {viaCompany && hasHrAdmin && (
-                      <div className="ml-6 grid gap-3 sm:grid-cols-2">
-                        <label className="block text-sm">
-                          HR first name
-                          <input
-                            value={hrFirstName}
-                            onChange={(e) => setHrFirstName(e.target.value)}
-                            className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-                          />
-                        </label>
-                        <label className="block text-sm">
-                          HR last name
-                          <input
-                            value={hrLastName}
-                            onChange={(e) => setHrLastName(e.target.value)}
-                            className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-                          />
-                        </label>
-                        <label className="block text-sm sm:col-span-2">
-                          HR email
-                          <input
-                            type="email"
-                            value={hrEmail}
-                            onChange={(e) => setHrEmail(e.target.value)}
-                            className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-                          />
-                        </label>
-                      </div>
-                    )}
-                  </div>
-                  <div className="rounded-lg border bg-card p-4 space-y-3">
-                    <p className="text-sm font-semibold">Rules of Engagement</p>
-                    <p className="text-xs text-muted-foreground">
-                      Help admin know how best to reach you.
-                    </p>
-                    <label className="block text-sm">
-                      Preferred contact method
-                      <select
-                        value={preferredContact}
-                        onChange={(e) => setPreferredContact(e.target.value)}
-                        className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-                      >
-                        <option value="email">Email</option>
-                        <option value="whatsapp">WhatsApp</option>
-                        <option value="phone">Phone call</option>
-                        <option value="sms">SMS</option>
-                      </select>
-                    </label>
-                    <label className="block text-sm">
-                      Best times to contact you (optional)
-                      <input
-                        value={contactHoursNote}
-                        onChange={(e) => setContactHoursNote(e.target.value)}
-                        placeholder="e.g. Weekdays 9am-5pm only"
-                        className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-                      />
-                    </label>
-                    <label className="flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={avoidWeekends}
-                        onChange={(e) => setAvoidWeekends(e.target.checked)}
-                      />
-                      Please don't contact me on weekends
-                    </label>
-                    <label className="block text-sm">
-                      Anything else admin should know (optional)
-                      <textarea
-                        rows={2}
-                        value={engagementNotes}
-                        onChange={(e) => setEngagementNotes(e.target.value)}
-                        placeholder="e.g. prefers written briefs before a call, out of office in December"
-                        className="mt-1 block w-full border-b border-foreground/30 bg-transparent px-1 py-1 text-sm outline-none"
-                      />
-                    </label>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => void save()}
-                  disabled={busy || profile.isPending || !!profile.error}
-                  className="rounded bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-50"
-                >
-                  {contactSaved ? "Saved" : "Save Contact Preferences"}
-                </button>
-                {(err || profile.error) && (
-                  <p role="alert" className="text-sm text-destructive">
-                    {err || "Unable to load your preferences. Please refresh."}
-                  </p>
-                )}
-                {!wizard && <HostSettings />}
-              </TabsContent>
-              <TabsContent value="shadows" className="mt-4">
-                {loadingBookings ? (
-                  <p role="status">Loading job shadows…</p>
-                ) : (
-                  <JobShadows
-                    bookings={bookings}
-                    placements={placements}
-                    loadingPlacements={loadingPlacements}
-                  />
-                )}
-              </TabsContent>
             </Tabs>
             {profileTab !== "availability" && (err || profile.error) && (
               <p role="alert" className="text-sm text-destructive">

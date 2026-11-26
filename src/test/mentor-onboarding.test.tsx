@@ -105,7 +105,7 @@ it("keeps onboarding inside the profile and returns to profile editing without n
   expect(screen.queryByRole("link", { name: "Back to Profile" })).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: /^Next$/ }));
   expect(await screen.findByText(/Identity verification \(KYC\) is pending/)).toBeVisible();
-  fireEvent.click(screen.getByRole("button", { name: /Review/ }));
+  fireEvent.click(screen.getByRole("button", { name: /Verified & Active/ }));
   expect(await screen.findByRole("alert")).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "Edit Profile" }));
   expect(await screen.findByText("My profile fields")).toBeVisible();
@@ -138,7 +138,7 @@ it("resumes legacy LinkedIn drafts on the profile without showing a separate Lin
   mount(wizard());
   expect(await screen.findByRole("button", { name: "Save Profile Test Fixture" })).toBeVisible();
   expect(screen.queryByRole("button", { name: /LinkedIn/ })).toBeNull();
-  expect(screen.getByRole("button", { name: /References/ })).toHaveTextContent("3");
+  expect(screen.getByRole("button", { name: /Reference Checks/ })).toHaveTextContent("4");
 });
 it("resumes, validates required fields in red and submits before advancing", async () => {
   const { client, unmount } = mount(wizard());
@@ -161,7 +161,9 @@ it("resumes, validates required fields in red and submits before advancing", asy
   expect(state.draft.current_step).toBe("training");
   expect(state.draft.data.references_submitted).toBe(true);
   expect(
-    screen.getByRole("button", { name: /References/ }).querySelector('[aria-label="Completed"]'),
+    screen
+      .getByRole("button", { name: /Reference Checks/ })
+      .querySelector('[aria-label="Completed"]'),
   ).toBeNull();
   unmount();
   mount(wizard());
@@ -212,7 +214,7 @@ it("skips employer sign-off for independent mentors and retains it for company m
 it("does not let a forward stepper jump bypass incomplete submissions", async () => {
   mount(wizard());
   await screen.findByLabelText("First Name");
-  fireEvent.click(screen.getByRole("button", { name: /Review/ }));
+  fireEvent.click(screen.getByRole("button", { name: /Verified & Active/ }));
   expect(await screen.findByRole("alert")).toHaveTextContent("referee’s First Name");
   expect(state.save).not.toHaveBeenCalled();
 });
@@ -265,4 +267,32 @@ it("submits training, skips the independent employer step and allows returning t
   expect(screen.queryByRole("button", { name: /Employer Sign-Off/ })).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Back" }));
   expect(await screen.findByLabelText("Training Name")).toHaveValue("Synthetic safeguarding");
+});
+
+it("switches between onboarding and hosting without losing referee edits or saving", async () => {
+  mount(
+    <MentorOnboardingWizard
+      userId="self"
+      hostProfile={host}
+      embedded
+      renderProfile={() => <p>Profile fields</p>}
+      renderHosting={() => <p>Hosting tools</p>}
+    />,
+  );
+  await screen.findByLabelText("First Name");
+  fireEvent.change(screen.getByLabelText("First Name"), { target: { value: "Unsaved referee" } });
+  fireEvent.mouseDown(screen.getByRole("tab", { name: "Hosting & Feedback" }), {
+    button: 0,
+    ctrlKey: false,
+  });
+  expect(screen.getByRole("tab", { name: "Hosting & Feedback" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  fireEvent.mouseDown(screen.getByRole("tab", { name: "Onboarding" }), {
+    button: 0,
+    ctrlKey: false,
+  });
+  expect(screen.getByLabelText("First Name")).toHaveValue("Unsaved referee");
+  expect(state.save).not.toHaveBeenCalled();
 });

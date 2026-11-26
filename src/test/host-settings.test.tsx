@@ -3,9 +3,16 @@ const upload = vi.hoisted(() => vi.fn().mockResolvedValue({ error: null }));
 vi.mock("@/components/mentor/MentorOnboardingWizard", () => ({
   MentorOnboardingWizard: ({
     renderProfile,
+    renderHosting,
   }: {
     renderProfile: (done: () => void) => React.ReactNode;
-  }) => renderProfile(() => {}),
+    renderHosting: () => React.ReactNode;
+  }) => (
+    <>
+      {renderProfile(() => {})}
+      {renderHosting()}
+    </>
+  ),
 }));
 vi.mock("@/lib/mentor-cv.functions", () => ({ draftMentorProfileFromCv: cvDraft }));
 vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
@@ -107,10 +114,7 @@ describe("Host availability settings", () => {
     expect(screen.getByRole("group", { name: "Profile Summary" })).toBeVisible();
     expect(screen.getByRole("tab", { name: "Profile" })).toHaveAttribute("data-state", "active");
     expect(screen.queryByText("Mentor Portal")).toBeNull();
-    fireEvent.mouseDown(await screen.findByRole("tab", { name: "Preferences" }), {
-      button: 0,
-      ctrlKey: false,
-    });
+    fireEvent.click(screen.getByRole("button", { name: /Set Availability/ }));
     expect(screen.getByRole("heading", { name: "Available Dates and Times" })).toBeVisible();
     expect(screen.queryByText("Personal blackout dates")).not.toBeInTheDocument();
     await screen.findByRole("combobox", { name: "2030-06-11 From" });
@@ -144,10 +148,7 @@ describe("Host availability settings", () => {
         _collection_time: "14:00",
       }),
     );
-    fireEvent.mouseDown(screen.getByRole("tab", { name: "Bookings" }), {
-      button: 0,
-      ctrlKey: false,
-    });
+    fireEvent.click(screen.getByRole("button", { name: /Receive Booking Requests/ }));
     expect(screen.getByRole("region", { name: "Job Shadows Calendar" })).toHaveClass("lg:w-1/2");
     expect(screen.getByRole("heading", { name: "Calendar" })).toBeVisible();
     client.clear();
@@ -267,10 +268,7 @@ it("reviews CV drafts, preserves populated fields and keeps edits made while AI 
   expect(specialties).toHaveValue("Manually entered while waiting");
   expect(screen.getByRole("textbox", { name: /^Qualifications$/ })).toHaveValue("BSc Computing");
   expect(rpc.mock.calls.some((call) => call[0] === "update_my_host_profile")).toBe(false);
-  fireEvent.mouseDown(screen.getByRole("tab", { name: "Preferences" }), {
-    button: 0,
-    ctrlKey: false,
-  });
+  fireEvent.click(screen.getByRole("button", { name: /Set Availability/ }));
   fireEvent.click(screen.getByRole("button", { name: "Save Contact Preferences" }));
   await waitFor(() =>
     expect(rpc).toHaveBeenCalledWith(

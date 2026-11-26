@@ -1,6 +1,15 @@
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { UserRound, Linkedin, ContactRound, BookOpen, Building2, ShieldCheck } from "lucide-react";
+import {
+  UserRound,
+  UserPlus,
+  Linkedin,
+  ContactRound,
+  BookOpen,
+  Building2,
+  ShieldCheck,
+} from "lucide-react";
 import { JourneyStepper } from "@/components/JourneyStepper";
 import { PhoneInput } from "@/components/PhoneInput";
 import { useOwnIdentity } from "@/components/account/AccountProfile";
@@ -21,13 +30,13 @@ import {
 import { useMentorOnboarding, openMentorEvidence } from "./OnboardingData";
 
 const details = {
-  profile: { title: "Complete Profile", icon: UserRound },
+  profile: { title: "Create & Verify Your Profile", icon: UserRound },
   email: { title: "Verify Identity", icon: ShieldCheck },
   linkedin: { title: "LinkedIn", icon: Linkedin },
-  references: { title: "References", icon: ContactRound },
+  references: { title: "Reference Checks", icon: ContactRound },
   training: { title: "Safeguarding Training", icon: BookOpen },
   employer: { title: "Employer Sign-Off", icon: Building2 },
-  review: { title: "Review", icon: ShieldCheck },
+  review: { title: "Verified & Active", icon: ShieldCheck },
 };
 type HostProfile = Database["public"]["Tables"]["host_profiles"]["Row"];
 export function MentorOnboardingWizard({
@@ -39,6 +48,8 @@ export function MentorOnboardingWizard({
   onStepChange,
   embedded = false,
   beforeProfileNext,
+  renderHosting,
+  initialPhase = "onboarding",
 }: {
   userId: string;
   hostProfile: HostProfile;
@@ -48,6 +59,8 @@ export function MentorOnboardingWizard({
   onStepChange?: (step: MentorOnboardingStep) => void;
   embedded?: boolean;
   beforeProfileNext?: () => Promise<boolean>;
+  renderHosting?: () => ReactNode;
+  initialPhase?: "onboarding" | "hosting";
 }) {
   const saved = useMentorOnboarding(userId),
     identity = useOwnIdentity(),
@@ -341,358 +354,403 @@ export function MentorOnboardingWizard({
     );
   return (
     <section className="space-y-4 bg-ivory p-3">
-      {!embedded && (
-        <a href="/mentor?section=profile" className="text-xs underline">
-          Back to Profile
-        </a>
-      )}
-      <JourneyStepper
-        title="Mentor Onboarding"
-        titleClassName="font-sans text-lg font-bold"
-        steps={steps.map((id) => ({
-          id,
-          title: details[id].title,
-          icon: details[id].icon,
-          complete: !!statuses[id],
-        }))}
-        active={step}
-        onChange={(id) => {
-          if (isMentorStep(id)) void go(id, steps.indexOf(id) > position);
-        }}
-      />
-      <p className="text-sm font-bold">Onboarding</p>
-      {step === "profile" ? (
-        renderProfile(() => {
-          void go("email", true);
-        })
-      ) : (
-        <fieldset className="min-w-0 rounded border border-charcoal/25 p-3">
-          <legend className="px-1 text-sm font-bold">{details[step].title}</legend>
-          {step === "email" && (
-            <div
-              id="email-verification"
-              className={
-                invalid("email-verification")
-                  ? "rounded border border-destructive p-3"
-                  : "space-y-2"
-              }
-            >
-              <p className="text-sm">
-                Identity verification (KYC) is pending connection to a verification provider. Email
-                verification is handled during sign-up.
-              </p>
-              {hostProfile.via_company && (
-                <p className="mt-2 text-sm">
-                  Company verification requires both identity (KYC) and business (KYB) checks.
-                </p>
-              )}
-            </div>
+      <Tabs defaultValue={initialPhase}>
+        {renderHosting && (
+          <TabsList
+            aria-label="Mentor journey"
+            className="flex h-auto w-full flex-wrap justify-start"
+          >
+            <TabsTrigger value="onboarding">Onboarding</TabsTrigger>
+            <TabsTrigger value="hosting">Hosting &amp; Feedback</TabsTrigger>
+          </TabsList>
+        )}
+        <TabsContent
+          value="onboarding"
+          forceMount
+          className="space-y-4 data-[state=inactive]:hidden"
+        >
+          {!embedded && (
+            <a href="/mentor?section=profile" className="text-xs underline">
+              Back to Profile
+            </a>
           )}
-          {step === "linkedin" && (
-            <div className="space-y-3">
-              {field(
-                "LinkedIn Profile URL",
-                "linkedin",
-                linkedin,
-                (value) => {
-                  linkedinTouched.current = true;
-                  setLinkedin(value);
-                },
-                "url",
-              )}
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={data.linkedin_unavailable}
-                  onChange={(e) => change({ ...data, linkedin_unavailable: e.target.checked })}
-                />
-                I Do Not Have a LinkedIn Profile
-              </label>
-            </div>
-          )}
-          {step === "references" && (
-            <div className="space-y-4">
-              <p className="text-sm">
-                Provide professional referees for Job Shadow to review. Nobody is contacted
-                automatically.
-              </p>
-              {data.references.map((r, i) => (
-                <fieldset key={i} className="grid gap-3 rounded border p-3 sm:grid-cols-2">
-                  <legend className="px-1 text-xs font-bold">Referee {i + 1}</legend>
-                  {(
-                    [
-                      ["First Name", "first_name"],
-                      ["Last Name", "last_name"],
-                      ["Role", "role"],
-                      ["Email Address", "email"],
-                    ] as const
-                  ).map(([label, key]) =>
-                    field(
-                      label,
-                      `ref-${i}-${key}`,
-                      r[key],
-                      (value) =>
-                        change({
-                          ...data,
-                          references: data.references.map((ref, n) =>
-                            n === i ? { ...ref, [key]: value } : ref,
-                          ),
-                          references_submitted: false,
-                        }),
-                      key === "email" ? "email" : "text",
-                    ),
+          <JourneyStepper
+            title="Step 1: Onboarding"
+            titleClassName="font-sans text-lg font-bold"
+            steps={[
+              {
+                id: "registered",
+                title: "Register as a Mentor",
+                icon: UserPlus,
+                complete: true,
+                locked: true,
+              },
+              ...steps.map((id) => ({
+                id,
+                title: details[id].title,
+                icon: details[id].icon,
+                complete: !!statuses[id],
+              })),
+            ]}
+            active={step}
+            onChange={(id) => {
+              if (isMentorStep(id)) void go(id, steps.indexOf(id) > position);
+            }}
+          />
+          {step === "profile" ? (
+            renderProfile(() => {
+              void go("email", true);
+            })
+          ) : (
+            <fieldset className="min-w-0 rounded border border-charcoal/25 p-3">
+              <legend className="px-1 text-sm font-bold">{details[step].title}</legend>
+              {step === "email" && (
+                <div
+                  id="email-verification"
+                  className={
+                    invalid("email-verification")
+                      ? "rounded border border-destructive p-3"
+                      : "space-y-2"
+                  }
+                >
+                  <p className="text-sm">
+                    Identity verification (KYC) is pending connection to a verification provider.
+                    Email verification is handled during sign-up.
+                  </p>
+                  {hostProfile.via_company && (
+                    <p className="mt-2 text-sm">
+                      Company verification requires both identity (KYC) and business (KYB) checks.
+                    </p>
                   )}
-                  <div className="text-xs">
-                    <span>Mobile Number</span>
-                    <PhoneInput
-                      id={`ref-${i}-phone`}
-                      label={`Referee ${i + 1} Mobile Number`}
-                      value={r.phone}
-                      onChange={(phone) =>
-                        change({
-                          ...data,
-                          references: data.references.map((ref, n) =>
-                            n === i ? { ...ref, phone } : ref,
-                          ),
-                          references_submitted: false,
-                        })
-                      }
+                </div>
+              )}
+              {step === "linkedin" && (
+                <div className="space-y-3">
+                  {field(
+                    "LinkedIn Profile URL",
+                    "linkedin",
+                    linkedin,
+                    (value) => {
+                      linkedinTouched.current = true;
+                      setLinkedin(value);
+                    },
+                    "url",
+                  )}
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={data.linkedin_unavailable}
+                      onChange={(e) => change({ ...data, linkedin_unavailable: e.target.checked })}
                     />
-                  </div>
-                  {i > 0 && (
+                    I Do Not Have a LinkedIn Profile
+                  </label>
+                </div>
+              )}
+              {step === "references" && (
+                <div className="space-y-4">
+                  <p className="text-sm">
+                    Provide professional referees for Job Shadow to review. Nobody is contacted
+                    automatically.
+                  </p>
+                  {data.references.map((r, i) => (
+                    <fieldset key={i} className="grid gap-3 rounded border p-3 sm:grid-cols-2">
+                      <legend className="px-1 text-xs font-bold">Referee {i + 1}</legend>
+                      {(
+                        [
+                          ["First Name", "first_name"],
+                          ["Last Name", "last_name"],
+                          ["Role", "role"],
+                          ["Email Address", "email"],
+                        ] as const
+                      ).map(([label, key]) =>
+                        field(
+                          label,
+                          `ref-${i}-${key}`,
+                          r[key],
+                          (value) =>
+                            change({
+                              ...data,
+                              references: data.references.map((ref, n) =>
+                                n === i ? { ...ref, [key]: value } : ref,
+                              ),
+                              references_submitted: false,
+                            }),
+                          key === "email" ? "email" : "text",
+                        ),
+                      )}
+                      <div className="text-xs">
+                        <span>Mobile Number</span>
+                        <PhoneInput
+                          id={`ref-${i}-phone`}
+                          label={`Referee ${i + 1} Mobile Number`}
+                          value={r.phone}
+                          onChange={(phone) =>
+                            change({
+                              ...data,
+                              references: data.references.map((ref, n) =>
+                                n === i ? { ...ref, phone } : ref,
+                              ),
+                              references_submitted: false,
+                            })
+                          }
+                        />
+                      </div>
+                      {i > 0 && (
+                        <button
+                          type="button"
+                          className="text-xs underline"
+                          onClick={() =>
+                            change({
+                              ...data,
+                              references: data.references.filter((_, n) => n !== i),
+                              references_submitted: false,
+                            })
+                          }
+                        >
+                          Remove Referee
+                        </button>
+                      )}
+                    </fieldset>
+                  ))}
+                  {data.references.length < 2 && (
                     <button
                       type="button"
                       className="text-xs underline"
                       onClick={() =>
                         change({
                           ...data,
-                          references: data.references.filter((_, n) => n !== i),
+                          references: [...data.references, emptyReferee()],
                           references_submitted: false,
                         })
                       }
                     >
-                      Remove Referee
+                      Add Another Referee
                     </button>
                   )}
-                </fieldset>
-              ))}
-              {data.references.length < 2 && (
-                <button
-                  type="button"
-                  className="text-xs underline"
-                  onClick={() =>
-                    change({
-                      ...data,
-                      references: [...data.references, emptyReferee()],
-                      references_submitted: false,
-                    })
-                  }
-                >
-                  Add Another Referee
-                </button>
-              )}
-            </div>
-          )}
-          {step === "training" && (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {field("Training Name", "training-name", data.training.name, (name) =>
-                change({
-                  ...data,
-                  training: { ...data.training, name },
-                  training_submitted: false,
-                }),
-              )}
-              {field("Training Provider", "training-provider", data.training.provider, (provider) =>
-                change({
-                  ...data,
-                  training: { ...data.training, provider },
-                  training_submitted: false,
-                }),
-              )}
-              {field(
-                "Completion Date",
-                "training-completed",
-                data.training.completed_on,
-                (completed_on) =>
-                  change({
-                    ...data,
-                    training: { ...data.training, completed_on },
-                    training_submitted: false,
-                  }),
-                "date",
-              )}
-              {evidence("training")}
-            </div>
-          )}
-          {step === "employer" && (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {(
-                [
-                  ["First Name", "first_name"],
-                  ["Last Name", "last_name"],
-                  ["Role", "role"],
-                  ["Email Address", "email"],
-                  ["Company Name", "company"],
-                ] as const
-              ).map(([label, key]) =>
-                field(
-                  label,
-                  "employer-" + key,
-                  data.employer[key],
-                  (value) =>
-                    change({
-                      ...data,
-                      employer: { ...data.employer, [key]: value },
-                      employer_submitted: false,
-                    }),
-                  key === "email" ? "email" : "text",
-                ),
-              )}
-              {evidence("employer")}
-            </div>
-          )}
-          {step === "review" && (
-            <div className="space-y-4">
-              <p className="text-sm">
-                Job Shadow reviews your submissions. Green ticks show approved vetting steps.
-              </p>
-              <dl className="grid gap-3 text-sm sm:grid-cols-2">
-                {(
-                  [
-                    ["References", "references_status", data.references_submitted],
-                    ["Safeguarding Training", "training_status", data.training_submitted],
-                    ...(hostProfile.via_company
-                      ? [["Employer Sign-Off", "employer_status", data.employer_submitted] as const]
-                      : []),
-                    ["Final Review", "final_status", true],
-                  ] as const
-                ).map(([label, key, submitted]) => (
-                  <div key={key}>
-                    <dt className="font-medium">{label}</dt>
-                    <dd>
-                      {submitted
-                        ? REVIEW_LABELS[(review?.[key] ?? "pending") as ReviewStatus]
-                        : "Not Submitted"}
-                    </dd>
-                    {review?.notes &&
-                      typeof review.notes === "object" &&
-                      !Array.isArray(review.notes) &&
-                      typeof review.notes[key] === "string" && (
-                        <p className="text-xs">{review.notes[key]}</p>
-                      )}
-                  </div>
-                ))}
-              </dl>
-              <details className="text-sm">
-                <summary>Review My Submissions</summary>
-                <div className="mt-2 space-y-2">
-                  {data.references.map((r, i) => (
-                    <p key={i}>
-                      {r.first_name} {r.last_name} · {r.role} · {r.email || r.phone}
-                    </p>
-                  ))}
-                  <p>
-                    {data.training.name} · {data.training.provider}
-                  </p>
-                  {hostProfile.via_company && (
-                    <p>
-                      {data.employer.company} · {data.employer.first_name} {data.employer.last_name}
-                    </p>
-                  )}
                 </div>
-              </details>
-              <div className="flex flex-wrap gap-3">
-                <a
-                  className="rounded bg-primary px-4 py-2 text-sm text-primary-foreground"
-                  href="/mentor?section=settings"
-                >
-                  Step 2: Preferences &amp; Availability
-                </a>
-                <a className="rounded border px-4 py-2 text-sm" href="/mentor?section=shadows">
-                  Bookings
-                </a>
-              </div>
-            </div>
+              )}
+              {step === "training" && (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {field("Training Name", "training-name", data.training.name, (name) =>
+                    change({
+                      ...data,
+                      training: { ...data.training, name },
+                      training_submitted: false,
+                    }),
+                  )}
+                  {field(
+                    "Training Provider",
+                    "training-provider",
+                    data.training.provider,
+                    (provider) =>
+                      change({
+                        ...data,
+                        training: { ...data.training, provider },
+                        training_submitted: false,
+                      }),
+                  )}
+                  {field(
+                    "Completion Date",
+                    "training-completed",
+                    data.training.completed_on,
+                    (completed_on) =>
+                      change({
+                        ...data,
+                        training: { ...data.training, completed_on },
+                        training_submitted: false,
+                      }),
+                    "date",
+                  )}
+                  {evidence("training")}
+                </div>
+              )}
+              {step === "employer" && (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {(
+                    [
+                      ["First Name", "first_name"],
+                      ["Last Name", "last_name"],
+                      ["Role", "role"],
+                      ["Email Address", "email"],
+                      ["Company Name", "company"],
+                    ] as const
+                  ).map(([label, key]) =>
+                    field(
+                      label,
+                      "employer-" + key,
+                      data.employer[key],
+                      (value) =>
+                        change({
+                          ...data,
+                          employer: { ...data.employer, [key]: value },
+                          employer_submitted: false,
+                        }),
+                      key === "email" ? "email" : "text",
+                    ),
+                  )}
+                  {evidence("employer")}
+                </div>
+              )}
+              {step === "review" && (
+                <div className="space-y-4">
+                  <p className="text-sm">
+                    Job Shadow reviews your submissions. Green ticks show approved vetting steps.
+                  </p>
+                  <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                    {(
+                      [
+                        ["References", "references_status", data.references_submitted],
+                        ["Safeguarding Training", "training_status", data.training_submitted],
+                        ...(hostProfile.via_company
+                          ? [
+                              [
+                                "Employer Sign-Off",
+                                "employer_status",
+                                data.employer_submitted,
+                              ] as const,
+                            ]
+                          : []),
+                        ["Final Review", "final_status", true],
+                      ] as const
+                    ).map(([label, key, submitted]) => (
+                      <div key={key}>
+                        <dt className="font-medium">{label}</dt>
+                        <dd>
+                          {submitted
+                            ? REVIEW_LABELS[(review?.[key] ?? "pending") as ReviewStatus]
+                            : "Not Submitted"}
+                        </dd>
+                        {review?.notes &&
+                          typeof review.notes === "object" &&
+                          !Array.isArray(review.notes) &&
+                          typeof review.notes[key] === "string" && (
+                            <p className="text-xs">{review.notes[key]}</p>
+                          )}
+                      </div>
+                    ))}
+                  </dl>
+                  <details className="text-sm">
+                    <summary>Review My Submissions</summary>
+                    <div className="mt-2 space-y-2">
+                      {data.references.map((r, i) => (
+                        <p key={i}>
+                          {r.first_name} {r.last_name} · {r.role} · {r.email || r.phone}
+                        </p>
+                      ))}
+                      <p>
+                        {data.training.name} · {data.training.provider}
+                      </p>
+                      {hostProfile.via_company && (
+                        <p>
+                          {data.employer.company} · {data.employer.first_name}{" "}
+                          {data.employer.last_name}
+                        </p>
+                      )}
+                    </div>
+                  </details>
+                  <div className="flex flex-wrap gap-3">
+                    <a
+                      className="rounded bg-primary px-4 py-2 text-sm text-primary-foreground"
+                      href="/mentor?section=settings"
+                    >
+                      Step 2: Preferences &amp; Availability
+                    </a>
+                    <a className="rounded border px-4 py-2 text-sm" href="/mentor?section=shadows">
+                      Bookings
+                    </a>
+                  </div>
+                </div>
+              )}
+            </fieldset>
           )}
-        </fieldset>
-      )}
-      <div className="flex items-center justify-between gap-3">
-        {position > 0 ? (
-          <button
-            disabled={busy}
-            type="button"
-            className="rounded border px-4 py-2 text-sm"
-            onClick={() => go(steps[position - 1]!)}
-          >
-            Back
-          </button>
-        ) : (
-          <span />
-        )}
-        {(step !== "profile" || embedded) && (
-          <div className="ml-auto flex gap-2">
-            {step !== "profile" && (
+          <div className="flex items-center justify-between gap-3">
+            {position > 0 ? (
               <button
-                type="button"
                 disabled={busy}
+                type="button"
                 className="rounded border px-4 py-2 text-sm"
-                onClick={async () => {
-                  setBusy(true);
-                  setFailure("");
-                  try {
-                    await persist(step);
-                    setSavedNote("Draft saved.");
-                  } catch (error) {
-                    setFailure(error instanceof Error ? error.message : "Could not save.");
-                  } finally {
-                    setBusy(false);
-                  }
-                }}
+                onClick={() => go(steps[position - 1]!)}
               >
-                Save Draft
+                Back
               </button>
+            ) : (
+              <span />
             )}
-            {next && (
-              <button
-                disabled={busy}
-                type="button"
-                className="rounded bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50"
-                onClick={() => go(next, true)}
-              >
-                {busy
-                  ? "Saving…"
-                  : ["references", "training", "employer"].includes(step)
-                    ? "Submit & Next"
-                    : "Next"}
-              </button>
+            {(step !== "profile" || embedded) && (
+              <div className="ml-auto flex gap-2">
+                {step !== "profile" && (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    className="rounded border px-4 py-2 text-sm"
+                    onClick={async () => {
+                      setBusy(true);
+                      setFailure("");
+                      try {
+                        await persist(step);
+                        setSavedNote("Draft saved.");
+                      } catch (error) {
+                        setFailure(error instanceof Error ? error.message : "Could not save.");
+                      } finally {
+                        setBusy(false);
+                      }
+                    }}
+                  >
+                    Save Draft
+                  </button>
+                )}
+                {next && (
+                  <button
+                    disabled={busy}
+                    type="button"
+                    className="rounded bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50"
+                    onClick={() => go(next, true)}
+                  >
+                    {busy
+                      ? "Saving…"
+                      : ["references", "training", "employer"].includes(step)
+                        ? "Submit & Next"
+                        : "Next"}
+                  </button>
+                )}
+              </div>
             )}
           </div>
+          {errors.length > 0 && (
+            <div role="alert" className="text-sm text-destructive">
+              <p className="font-bold">Please complete the following required fields:</p>
+              <ul className="list-disc pl-5">
+                {errors.map((error) => (
+                  <li key={error.field}>
+                    <a href={"#" + error.field} className="underline">
+                      {error.message}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {failure && (
+            <p role="alert" className="text-sm text-destructive">
+              {failure}
+            </p>
+          )}
+          {savedNote && (
+            <p role="status" className="text-xs">
+              {savedNote}
+            </p>
+          )}
+        </TabsContent>
+        {renderHosting && (
+          <TabsContent
+            value="hosting"
+            forceMount
+            className="space-y-4 data-[state=inactive]:hidden"
+          >
+            {renderHosting()}
+          </TabsContent>
         )}
-      </div>
-      {errors.length > 0 && (
-        <div role="alert" className="text-sm text-destructive">
-          <p className="font-bold">Please complete the following required fields:</p>
-          <ul className="list-disc pl-5">
-            {errors.map((error) => (
-              <li key={error.field}>
-                <a href={"#" + error.field} className="underline">
-                  {error.message}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {failure && (
-        <p role="alert" className="text-sm text-destructive">
-          {failure}
-        </p>
-      )}
-      {savedNote && (
-        <p role="status" className="text-xs">
-          {savedNote}
-        </p>
-      )}
+      </Tabs>
     </section>
   );
 }

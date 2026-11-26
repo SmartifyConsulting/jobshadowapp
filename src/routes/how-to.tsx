@@ -421,7 +421,7 @@ function HowTo() {
           {view === "mentor" ? (
             <div className="mt-4 grid gap-4 xl:grid-cols-2">
               <fieldset className="min-w-0 rounded border border-charcoal/25 p-3">
-                <legend className="px-1 text-sm font-bold">Onboarding</legend>
+                <legend className="px-1 text-sm font-bold">Step 1: Onboarding</legend>
                 <StepRow
                   fitColumns={4}
                   label="Vetting and onboarding steps"
@@ -429,6 +429,7 @@ function HowTo() {
                   complete={onboarding}
                   links={onboardingLinks}
                 />
+                <p className="text-xs text-muted-foreground">Employer sign-off applies to company mentors.</p>
               </fieldset>
               <fieldset className="min-w-0 rounded border border-charcoal/25 p-3">
                 <legend className="px-1 text-sm font-bold">Step 2: Hosting &amp; Feedback</legend>
