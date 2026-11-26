@@ -181,8 +181,11 @@ function StepRow({
 }
 
 export const Route = createFileRoute("/how-to")({
-  validateSearch: (search: Record<string, unknown>): { guide?: "company" | undefined } => ({
-    guide: search["guide"] === "company" ? "company" : undefined,
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { guide?: "company" | "mentor" | undefined } => ({
+    guide:
+      search["guide"] === "company" || search["guide"] === "mentor" ? search["guide"] : undefined,
   }),
   head: () => ({
     links: publicSeo("/how-to").links,
@@ -266,8 +269,8 @@ function HowTo() {
     selectedView &&
     guides.some(([key]) => key === selectedView.view)
       ? selectedView.view
-      : guide === "company" && guides.some(([key]) => key === "company")
-        ? "company"
+      : guide && guides.some(([key]) => key === guide)
+        ? guide
         : defaultView;
   const onboarding = progress.data?.mentorOnboarding
     ? progress.data.mentorOnboarding
@@ -320,9 +323,9 @@ function HowTo() {
         session?.user && roles.includes("hr_admin")
           ? "/company-report?section=profile"
           : "/register",
-        "#company-step-2",
+        "/contact",
         "/company-report?section=mentors",
-        "#company-step-4",
+        "/how-to?guide=mentor",
         "/company-report?section=mentors",
         "/company-report?section=csi",
       ],
@@ -454,31 +457,6 @@ function HowTo() {
             </div>
           ) : (
             <StepRow steps={content.steps} complete={content.complete} links={content.links} />
-          )}
-          {view === "company" && (
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {COMPANY_STEPS.map((step, index) => (
-                <section
-                  key={step.label}
-                  id={`company-step-${index + 1}`}
-                  className="scroll-mt-5 rounded border border-border p-3"
-                >
-                  <h3 className="text-sm font-bold">
-                    {index + 1}. {step.label.replace(/\n/g, " ")}
-                  </h3>
-                  <p className="mt-1 text-sm">{COMPANY_DESCRIPTIONS[index]}</p>
-                  {index === 3 && (
-                    <button
-                      type="button"
-                      className="mt-2 text-sm font-semibold text-primary underline"
-                      onClick={() => setSelectedView({ userId: session?.user?.id, view: "mentor" })}
-                    >
-                      View the Mentor process
-                    </button>
-                  )}
-                </section>
-              ))}
-            </div>
           )}
           {view === "company" && <CompanyBenefits />}
           {nextStep >= 0 ? (

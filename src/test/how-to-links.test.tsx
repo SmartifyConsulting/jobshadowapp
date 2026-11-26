@@ -8,7 +8,10 @@ const state = vi.hoisted(() => ({
   guide: undefined as "company" | undefined,
 }));
 vi.mock("@tanstack/react-router", () => ({
-  createFileRoute: () => (options: unknown) => ({ options, useSearch: () => ({ guide: state.guide }) }),
+  createFileRoute: () => (options: unknown) => ({
+    options,
+    useSearch: () => ({ guide: state.guide }),
+  }),
 }));
 vi.mock("@/components/SiteLayout", () => ({
   SiteLayout: ({ children }: { children: ReactNode }) => <main>{children}</main>,
@@ -46,11 +49,10 @@ describe("How To links", () => {
     expect(links[1]).not.toHaveAccessibleName(/completed/);
     expect(links[2]).toHaveAttribute("href", "/company-report?section=mentors");
     expect(links[5]).toHaveAttribute("href", "/company-report?section=csi");
-    expect(screen.getByText(/Each enlisted employee follows the Mentor process/)).toBeVisible();
-    expect(
-      screen.getByText(/contributes mentoring hours to your company’s CSI reporting/),
-    ).toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: "View the Mentor process" }));
+    expect(links[1]).toHaveAttribute("href", "/contact");
+    expect(links[3]).toHaveAttribute("href", "/how-to?guide=mentor");
+    expect(screen.queryByRole("heading", { name: "1. Register your company" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Mentors" }));
     expect(screen.getByRole("navigation", { name: "Vetting and onboarding steps" })).toBeVisible();
   });
 
@@ -141,7 +143,6 @@ describe("How To links", () => {
   });
 });
 
-
 it("opens public company benefits directly without signing in and separates reach from mentor hours", () => {
   state.guide = "company";
   const Page = Route.options.component as () => React.JSX.Element;
@@ -151,7 +152,10 @@ it("opens public company benefits directly without signing in and separates reac
   expect(screen.getByText("R1,000")).toBeVisible();
   expect(screen.getByText("R10,000")).toBeVisible();
   expect(screen.getByText(/Figures are not cash reimbursements/)).toBeVisible();
-  expect(screen.getByRole("link", { name: "Discuss Company Participation" })).toHaveAttribute("href", "/contact?type=host#contact-form");
+  expect(screen.getByRole("link", { name: "Discuss Company Participation" })).toHaveAttribute(
+    "href",
+    "/contact?type=host#contact-form",
+  );
   fireEvent.click(screen.getByRole("button", { name: "Scholars" }));
   expect(screen.queryByRole("heading", { name: "Why Companies Participate" })).toBeNull();
 });
