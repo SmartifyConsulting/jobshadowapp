@@ -249,7 +249,7 @@ export function AccountPersonalDetails({
   );
 }
 
-export function AccountProfile() {
+export function AccountProfile({ admin = false }: { admin?: boolean } = {}) {
   const { user, profile } = useOwnIdentity();
   const avatar = profile.data?.avatar_path
     ? supabase.storage.from("avatars").getPublicUrl(profile.data.avatar_path).data.publicUrl
@@ -267,42 +267,51 @@ export function AccountProfile() {
         subtitle={user.data?.email}
         onPhoto={() => document.getElementById("own-account-photo")?.click()}
       />
-      <Tabs defaultValue="personal" className="rounded-xl border border-border bg-card p-4 sm:p-5">
-        <TabsList
-          className="flex h-auto w-full flex-wrap justify-start"
-          aria-label="Profile details"
-        >
-          <TabsTrigger value="personal">Personal Details</TabsTrigger>
-          <TabsTrigger value="secondary">Secondary Information</TabsTrigger>
-        </TabsList>
-        <TabsContent forceMount value="personal" className="mt-4 data-[state=inactive]:hidden">
+      {admin ? (
+        <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
           <AccountPersonalDetails hidePhoto photoInputId="own-account-photo" />
-        </TabsContent>
-        <TabsContent value="secondary" className="mt-4">
-          <dl className="grid gap-4 text-sm sm:grid-cols-2">
-            <div>
-              <dt className="text-xs text-muted-foreground">Email Address</dt>
-              <dd>{user.data?.email ?? "Not recorded"}</dd>
-            </div>
-            <div>
-              <dt className="text-xs text-muted-foreground">Account Created</dt>
-              <dd>
-                {user.data?.created_at
-                  ? new Date(user.data.created_at).toLocaleDateString()
-                  : "Unknown"}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs text-muted-foreground">Last Sign-In</dt>
-              <dd>
-                {user.data?.last_sign_in_at
-                  ? new Date(user.data.last_sign_in_at).toLocaleString()
-                  : "Unknown"}
-              </dd>
-            </div>
-          </dl>
-        </TabsContent>
-      </Tabs>
+        </div>
+      ) : (
+        <Tabs
+          defaultValue="personal"
+          className="rounded-xl border border-border bg-card p-4 sm:p-5"
+        >
+          <TabsList
+            className="flex h-auto w-full flex-wrap justify-start"
+            aria-label="Profile details"
+          >
+            <TabsTrigger value="personal">Personal Details</TabsTrigger>
+            <TabsTrigger value="secondary">Secondary Information</TabsTrigger>
+          </TabsList>
+          <TabsContent forceMount value="personal" className="mt-4 data-[state=inactive]:hidden">
+            <AccountPersonalDetails hidePhoto photoInputId="own-account-photo" />
+          </TabsContent>
+          <TabsContent value="secondary" className="mt-4">
+            <dl className="grid gap-4 text-sm sm:grid-cols-2">
+              <div>
+                <dt className="text-xs text-muted-foreground">Email Address</dt>
+                <dd>{user.data?.email ?? "Not recorded"}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">Account Created</dt>
+                <dd>
+                  {user.data?.created_at
+                    ? new Date(user.data.created_at).toLocaleDateString()
+                    : "Unknown"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">Last Sign-In</dt>
+                <dd>
+                  {user.data?.last_sign_in_at
+                    ? new Date(user.data.last_sign_in_at).toLocaleString()
+                    : "Unknown"}
+                </dd>
+              </div>
+            </dl>
+          </TabsContent>
+        </Tabs>
+      )}
     </section>
   );
 }

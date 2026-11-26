@@ -401,7 +401,7 @@ function AdminPage() {
                 Your account doesn't have admin access. Ask JobShadow to grant it.
               </p>
             ) : section.id === "profile" ? (
-              <AccountProfile />
+              <AccountProfile admin />
             ) : section.id === "users" ? (
               <AdminUsers key={section.id} />
             ) : section.id === "careers" ? (

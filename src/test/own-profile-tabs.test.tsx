@@ -96,3 +96,26 @@ it("requires saved first and last names before the mentor wizard advances", asyn
   );
   cache.clear();
 });
+
+
+it("shows an Admin account profile without scholar fields, tabs or workflow", () => {
+  const cache = new QueryClient({
+    defaultOptions: { queries: { retry: false, staleTime: Infinity } },
+  });
+  cache.setQueryData(["me"], { id: "self", email: "self@example.com" });
+  cache.setQueryData(["profile", "self"], { first_name: "Alex", last_name: "Admin" });
+  render(
+    <QueryClientProvider client={cache}>
+      <AccountProfile admin />
+    </QueryClientProvider>,
+  );
+  expect(screen.getByLabelText("First Name")).toHaveValue("Alex");
+  expect(screen.getByLabelText("Country")).toBeInTheDocument();
+  expect(screen.queryByRole("tab")).not.toBeInTheDocument();
+  expect(screen.queryByText("School Country")).not.toBeInTheDocument();
+  expect(screen.queryByText("Current School")).not.toBeInTheDocument();
+  expect(screen.queryByText("Parent / Guardian")).not.toBeInTheDocument();
+  expect(screen.queryByText("Secondary Information")).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Next" })).not.toBeInTheDocument();
+  cache.clear();
+});

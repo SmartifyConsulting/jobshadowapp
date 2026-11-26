@@ -69,7 +69,7 @@ function ProfileSettings() {
   const session = useSiteSession();
   const scholar = useQuery({
     queryKey: ["scholar-profile", user?.id],
-    enabled: !!user,
+    enabled: !!user && !session.data?.isAdmin,
     staleTime: 15_000,
     queryFn: async () => {
       const result = await supabase
@@ -147,14 +147,19 @@ function ProfileSettings() {
     qc.invalidateQueries({ queryKey: ["site-session"] });
   }
 
-  if (ownIdentity.pending || session.isPending || (!!user && scholar.isPending))
+  if (
+    ownIdentity.pending ||
+    session.isPending ||
+    (!!user && !session.data?.isAdmin && scholar.isPending)
+  )
     return <PortalLoading label="Loading your profile…" portal={false} />;
   const scholarView =
-    !!scholar.data || session.data?.roles.includes("user") || inWorkflow || tab === "bookings";
+    !session.data?.isAdmin &&
+    (!!scholar.data || session.data?.roles.includes("user") || inWorkflow || tab === "bookings");
   if (!scholarView)
     return (
       <SiteLayout>
-        <AccountProfile />
+        <AccountProfile admin={!!session.data?.isAdmin} />
       </SiteLayout>
     );
   return (
