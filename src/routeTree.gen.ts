@@ -15,6 +15,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BlogsRouteImport } from './routes/blogs'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as FaqRouteImport } from './routes/faq'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as HowToRouteImport } from './routes/how-to'
 import { Route as LegalRouteImport } from './routes/legal'
@@ -64,6 +65,11 @@ const BlogsRoute = BlogsRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -181,6 +187,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/blogs': typeof BlogsRoute
   '/contact': typeof ContactRoute
+  '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/how-to': typeof HowToRoute
   '/legal': typeof LegalRoute
@@ -209,6 +216,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/blogs': typeof BlogsRoute
   '/contact': typeof ContactRoute
+  '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/how-to': typeof HowToRoute
   '/legal': typeof LegalRoute
@@ -239,6 +247,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/blogs': typeof BlogsRoute
   '/contact': typeof ContactRoute
+  '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/how-to': typeof HowToRoute
   '/legal': typeof LegalRoute
@@ -269,6 +278,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/blogs'
     | '/contact'
+    | '/faq'
     | '/forgot-password'
     | '/how-to'
     | '/legal'
@@ -297,6 +307,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/blogs'
     | '/contact'
+    | '/faq'
     | '/forgot-password'
     | '/how-to'
     | '/legal'
@@ -326,6 +337,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/blogs'
     | '/contact'
+    | '/faq'
     | '/forgot-password'
     | '/how-to'
     | '/legal'
@@ -356,6 +368,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BlogsRoute: typeof BlogsRoute
   ContactRoute: typeof ContactRoute
+  FaqRoute: typeof FaqRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   HowToRoute: typeof HowToRoute
   LegalRoute: typeof LegalRoute
@@ -412,6 +425,13 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -598,6 +618,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   BlogsRoute: BlogsRoute,
   ContactRoute: ContactRoute,
+  FaqRoute: FaqRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   HowToRoute: HowToRoute,
   LegalRoute: LegalRoute,
