@@ -1,5 +1,4 @@
 import { publicSeo } from "@/lib/seo";
-import { CONTACT_EMAIL } from "@/lib/data";
 import { HEADER_LOGO_URL } from "@/components/BrandLogo";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
@@ -160,15 +159,6 @@ function Home() {
               <strong>best match your personality type</strong>, with{" "}
               <strong>immediate feedback</strong> via a report card to your inbox the moment you
               are done!
-            </p>
-            <p className="mt-3">
-              <a
-                href={`mailto:${CONTACT_EMAIL}?subject=Career%20Guidance%20Tool`}
-                className="font-bold underline"
-              >
-                Click here
-              </a>{" "}
-              to receive a promo code to access the <strong>Career Guidance Tool.</strong>
             </p>
           </div>
         </div>
