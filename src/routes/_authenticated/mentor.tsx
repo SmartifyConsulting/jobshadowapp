@@ -983,6 +983,43 @@ function HostProfile({
                   }
                   label="Mentor profile summary"
                   name={mentorName}
+                  previewSections={[
+                    {
+                      title: "Personal Details",
+                      fields: [
+                        { label: "Email Address", value: ownIdentity.user.data?.email },
+                        { label: "Contact Number", value: ownIdentity.user.data?.phone },
+                        { label: "Location", value: personalLocation },
+                        {
+                          label: "Mentoring Type",
+                          value: profile.data?.via_company
+                            ? "Company Mentor"
+                            : "Independent Mentor",
+                        },
+                      ],
+                    },
+                    {
+                      title: "Qualifications",
+                      fields: [
+                        { label: "Skills & Expertise", value: profile.data?.specialties },
+                        { label: "Experience", value: profile.data?.bio },
+                        { label: "Qualifications", value: profile.data?.certifications },
+                        { label: "Professional Profile URL", value: profile.data?.linkedin_url },
+                      ],
+                    },
+                    {
+                      title: "Preferences",
+                      fields: [
+                        {
+                          label: "Preferred Contact Method",
+                          value: profile.data?.preferred_contact,
+                        },
+                        { label: "Contact Hours", value: profile.data?.contact_hours_note },
+                        { label: "Avoid Weekend Contact", value: profile.data?.avoid_weekends },
+                        { label: "Rules of Engagement", value: profile.data?.engagement_notes },
+                      ],
+                    },
+                  ]}
                   avatarUrl={avatar}
                   subtitle={
                     <>

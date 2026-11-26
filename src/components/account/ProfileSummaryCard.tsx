@@ -1,3 +1,4 @@
+import { ProfilePreview, type ProfilePreviewSection } from "./ProfilePreview";
 import type { ReactNode } from "react";
 import { Camera, UserRound } from "lucide-react";
 
@@ -9,6 +10,7 @@ export function ProfileSummaryCard({
   onPhoto,
   children,
   aside,
+  previewSections,
   label = "Profile summary",
 }: {
   name: string;
@@ -17,6 +19,7 @@ export function ProfileSummaryCard({
   onPhoto?: () => void;
   children?: ReactNode;
   aside?: ReactNode;
+  previewSections?: ProfilePreviewSection[];
   label?: string;
 }) {
   const photo = (
@@ -63,6 +66,11 @@ export function ProfileSummaryCard({
         </div>
         {aside && <div className="w-full min-w-0 lg:ml-auto lg:w-auto lg:max-w-[60%]">{aside}</div>}
       </div>
+      {previewSections && (
+        <div className="mt-3 flex justify-end">
+          <ProfilePreview name={name} avatarUrl={avatarUrl ?? null} sections={previewSections} />
+        </div>
+      )}
       {children && <div className="mt-4 min-w-0 border-t border-border pt-3">{children}</div>}
     </header>
   );

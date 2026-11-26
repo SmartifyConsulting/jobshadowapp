@@ -263,6 +263,20 @@ export function AccountProfile({ admin = false }: { admin?: boolean } = {}) {
       <h1 className="font-display text-2xl">My Profile</h1>
       <ProfileSummaryCard
         name={name}
+        previewSections={[
+          {
+            title: "Personal Details",
+            fields: [
+              { label: "First Name", value: profile.data?.first_name },
+              { label: "Last Name", value: profile.data?.last_name },
+              { label: "Email Address", value: user.data?.email },
+              {
+                label: "Location",
+                value: locationText(readUserLocation(user.data?.user_metadata)),
+              },
+            ],
+          },
+        ]}
         avatarUrl={avatar}
         subtitle={user.data?.email}
         onPhoto={() => document.getElementById("own-account-photo")?.click()}

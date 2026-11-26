@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SiteLayout, useSiteSession } from "@/components/SiteLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserCircle, CalendarCheck } from "lucide-react";
-import { AccountPanel } from "@/components/account/AccountSections";
+import { AccountPanel, SCHOLAR_DETAIL_TABS } from "@/components/account/AccountSections";
 import { ImageCropModal } from "@/components/ImageCropModal";
 
 type Tab = "profile" | "bookings";
@@ -202,6 +202,16 @@ function ProfileSettings() {
                 name={displayName || "My Profile"}
                 avatarUrl={avatarUrl}
                 subtitle={user?.email}
+                previewSections={[
+                  { title: "Account", fields: [{ label: "Email Address", value: user?.email }] },
+                  ...SCHOLAR_DETAIL_TABS.map((section) => ({
+                    title: section.label,
+                    fields: section.rows.map(([label, key]) => ({
+                      label: label.replace(/\b\w/g, (c) => c.toUpperCase()),
+                      value: (scholar.data as Record<string, unknown> | null)?.[key],
+                    })),
+                  })),
+                ]}
                 onPhoto={() => document.getElementById("scholar-profile-photo")?.click()}
               />
               <div className="rounded-xl border border-border bg-card p-4 shadow-sm space-y-4 sm:p-5">
