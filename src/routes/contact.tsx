@@ -275,13 +275,25 @@ function Contact() {
                     </li>
                   ))}
                 </ul>
-                <Link
-                  to="/contact"
-                  search={{ type: b.type }}
-                  className="mt-2 inline-block rounded-full bg-primary px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-primary-foreground"
-                >
-                  {b.cta}
-                </Link>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Link
+                    to="/contact"
+                    search={{ type: b.type }}
+                    className="inline-block rounded-full bg-primary px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-primary-foreground"
+                  >
+                    {b.cta}
+                  </Link>
+                  {(b.type === "mentor" || b.type === "school") && (
+                    <Link
+                      to="/contact"
+                      search={{ view: "story" }}
+                      hash="contact-form"
+                      className="inline-block rounded-full bg-primary px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-primary-foreground"
+                    >
+                      Share Your Experience
+                    </Link>
+                  )}
+                </div>
               </div>
             ))}
           </div>
