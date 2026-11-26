@@ -251,7 +251,7 @@ function Contact() {
                 <Link
                   to="/contact"
                   search={{ view: "story" }}
-                  hash="contact-form"
+                  resetScroll={false}
                   className="inline-block rounded-full bg-primary px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-primary-foreground"
                 >
                   Share Your Experience
@@ -287,7 +287,7 @@ function Contact() {
                     <Link
                       to="/contact"
                       search={{ view: "story" }}
-                      hash="contact-form"
+                      resetScroll={false}
                       className="inline-block rounded-full bg-primary px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-primary-foreground"
                     >
                       Share Your Experience
