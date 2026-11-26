@@ -36,7 +36,7 @@ export function ProfilePreview({
       <DialogTrigger asChild>
         <button
           type="button"
-          className="inline-flex items-center gap-2 rounded border border-border bg-ivory px-3 py-1.5 text-sm font-medium"
+          className="inline-flex items-center gap-2 rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
         >
           <Eye className="h-4 w-4" aria-hidden />
           Preview Profile

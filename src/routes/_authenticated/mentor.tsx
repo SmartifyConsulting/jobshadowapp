@@ -989,7 +989,7 @@ function HostProfile({
                         ].map(([label, value]) => (
                           <div
                             key={label}
-                            className="px-3 text-center sm:border-l sm:border-border"
+                            className="px-3 text-center sm:border-l sm:border-border sm:first:border-l-0"
                           >
                             <dd className="text-2xl font-bold tabular-nums">{value}</dd>
                             <dt className="text-xs text-muted-foreground">{label}</dt>
@@ -1129,7 +1129,7 @@ function HostProfile({
                             Drop your PDF CV here, or choose Upload CV. Private — never shown to
                             scholars.
                           </p>
-                          <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded bg-primary px-3 py-2 text-xs font-bold text-primary-foreground">
+                          <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
                             <Upload className="h-3.5 w-3.5" />{" "}
                             {cvAiBusy
                               ? "Reading CV…"
