@@ -283,6 +283,14 @@ function Contact() {
                   >
                     {b.cta}
                   </Link>
+                  {b.type === "mentor" && (
+                    <a
+                      href="/how-to?guide=company#company-benefits"
+                      className="inline-block rounded-full bg-primary px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-primary-foreground"
+                    >
+                      Why Companies Participate
+                    </a>
+                  )}
                   {(b.type === "mentor" || b.type === "school") && (
                     <Link
                       to="/contact"

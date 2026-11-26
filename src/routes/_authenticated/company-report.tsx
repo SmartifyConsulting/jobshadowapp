@@ -160,9 +160,10 @@ function CompanyReportPage() {
               <div className="bg-primary px-5 py-6 text-primary-foreground">
                 <h1 className="mx-auto max-w-7xl text-xl font-bold md:text-2xl">CSI</h1>
                 <p className="mx-auto mt-2 max-w-7xl text-sm">
-                  Job shadows hosted at your company, with the demographic breakdown needed to claim
-                  CPD points and CSI spend credit. Demographic fields are self-declared by each
-                  scholar/parent.
+                  Job shadows hosted at your company, with self-declared participant demographics for
+                  your CSI records. Qualifying activities may support SED or Skills Development
+                  recognition, subject to the applicable code and verification. This report does not
+                  certify hours, award points or confirm a financial claim.
                 </p>
               </div>
               <section className="bg-muted/40 px-5 py-8">

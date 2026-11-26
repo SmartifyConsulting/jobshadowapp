@@ -113,6 +113,13 @@ export const FAQ_ITEMS = [
     ],
   },
   {
+    question: "Can Job Shadowing Support Skills Development?",
+    paragraphs: [
+      "Job shadowing offers scholars and tertiary students practical workplace exposure. Qualifying activities may support a company’s Skills Development reporting, depending on the programme, applicable B-BBEE code and verification requirements.",
+      "Some indicators count participants in specified qualifying programmes. Attendance alone does not guarantee points, and a job shadow is not automatically a qualifying learnership, apprenticeship or internship. Record learning activities, outcomes, actual mentor hours and supporting evidence separately from participant numbers.",
+    ],
+  },
+  {
     question: "How Can Schools Arrange Job Shadowing?",
     paragraphs: [
       "Schools can contact Job Shadow to discuss career exploration opportunities and the needs of their scholars.",

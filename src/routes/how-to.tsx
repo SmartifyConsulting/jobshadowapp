@@ -1,3 +1,4 @@
+import { CompanyBenefits } from "@/components/CompanyBenefits";
 import { publicSeo } from "@/lib/seo";
 import { useHowToProgress } from "@/components/HowToProgress";
 import { HOW_TO_DESTINATIONS } from "@/lib/journey-progress";
@@ -86,7 +87,7 @@ const COMPANY_DESCRIPTIONS = [
   "Enlist the employees your company nominates to mentor scholars. Manage your nominated employees in your company’s Mentors list.",
   "Each enlisted employee follows the Mentor process: complete their profile, verify their identity, provide references, complete safeguarding training and obtain employer sign-off. They must be verified and active before mentoring scholars.",
   "Verified, active employees offer mentor sessions, set available dates and times, and welcome scholars for their job-shadow experience.",
-  "Job shadowing completed with your enlisted employees contributes mentoring hours to your company’s CSI reporting. Record completed sessions and their actual duration so those hours can be reported accurately.",
+  "Job shadowing completed with your enlisted employees contributes mentoring hours to your company’s CSI reporting. Record completed experiences and actual mentor time accurately. Qualifying activities may support SED or Skills Development recognition, subject to the applicable code and verification.",
 ];
 
 function StepRow({
@@ -180,6 +181,9 @@ function StepRow({
 }
 
 export const Route = createFileRoute("/how-to")({
+  validateSearch: (search: Record<string, unknown>): { guide?: "company" | undefined } => ({
+    guide: search["guide"] === "company" ? "company" : undefined,
+  }),
   head: () => ({
     links: publicSeo("/how-to").links,
     meta: [
@@ -200,6 +204,7 @@ export const Route = createFileRoute("/how-to")({
 });
 
 function HowTo() {
+  const { guide } = Route.useSearch();
   const { data: session } = useSiteSession();
   const progress = useHowToProgress(session?.user?.id, session?.roles ?? []);
   const destination = (key: keyof typeof HOW_TO_DESTINATIONS) =>
@@ -261,7 +266,9 @@ function HowTo() {
     selectedView &&
     guides.some(([key]) => key === selectedView.view)
       ? selectedView.view
-      : defaultView;
+      : guide === "company" && guides.some(([key]) => key === "company")
+        ? "company"
+        : defaultView;
   const onboarding = progress.data?.mentorOnboarding
     ? progress.data.mentorOnboarding
         .map((done, index) => (index === 2 ? false : done))
@@ -429,7 +436,9 @@ function HowTo() {
                   complete={onboarding}
                   links={onboardingLinks}
                 />
-                <p className="text-xs text-muted-foreground">Employer sign-off applies to company mentors.</p>
+                <p className="text-xs text-muted-foreground">
+                  Employer sign-off applies to company mentors.
+                </p>
               </fieldset>
               <fieldset className="min-w-0 rounded border border-charcoal/25 p-3">
                 <legend className="px-1 text-sm font-bold">Step 2: Hosting &amp; Feedback</legend>
@@ -471,6 +480,7 @@ function HowTo() {
               ))}
             </div>
           )}
+          {view === "company" && <CompanyBenefits />}
           {nextStep >= 0 ? (
             <div className="mt-2 flex flex-wrap items-center justify-between gap-4 rounded-lg bg-muted/50 px-5 py-4">
               <div>
