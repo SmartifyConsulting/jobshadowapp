@@ -34,7 +34,7 @@ function Frame({
 function Items({ title, values }: { title: string; values: string[] }) {
   return (
     <section className="min-w-0">
-      <h3 className="mb-2 text-xs font-bold">{title}</h3>
+      <h3 className="mb-2 text-sm font-bold uppercase tracking-wide text-charcoal">{title}</h3>
       {values.length ? (
         <ul className="flex flex-wrap gap-1.5">
           {values.map((value) => (
@@ -72,7 +72,7 @@ export function AdminCareerGuidance({
       <Frame compact={compact} title="Career Overview">
         <div className="space-y-3">
           <section>
-            <h3 className="mb-2 text-xs font-bold">Role Description</h3>
+            <h3 className="mb-2 text-sm font-bold uppercase tracking-wide text-charcoal">Role Description</h3>
             <RichText text={guidance.overview} className="block text-sm leading-relaxed" />
           </section>
           <Items
@@ -80,7 +80,7 @@ export function AdminCareerGuidance({
             values={guidance.specialisations}
           />
           <section>
-            <h3 className="mb-2 text-xs font-bold">Ideal For</h3>
+            <h3 className="mb-2 text-sm font-bold uppercase tracking-wide text-charcoal">Ideal For</h3>
             <p className="text-sm leading-relaxed">{guidance.idealFor || "Not added yet."}</p>
           </section>
         </div>
@@ -97,11 +97,11 @@ export function AdminCareerGuidance({
           <Items title="Suggested Subjects" values={guidance.subjects} />
           <Items title="Recommended Training" values={guidance.recommendedCourses} />
           <section>
-            <h3 className="mb-2 text-xs font-bold">Future of This Career</h3>
+            <h3 className="mb-2 text-sm font-bold uppercase tracking-wide text-charcoal">Future of This Career</h3>
             <p className="text-sm leading-relaxed">{guidance.futureOutlook || "Not added yet."}</p>
           </section>
           <section>
-            <h3 className="mb-2 flex items-center gap-2 text-xs font-bold">
+            <h3 className="mb-2 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-charcoal">
               AI Exposure:
               <span>
                 {guidance.aiExposureLevel
