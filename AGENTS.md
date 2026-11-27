@@ -15,3 +15,4 @@
 - Expose the public availability notice through a narrow RPC, not direct settings-table access, to keep administrator settings private.
 
 - During development, never send emails to users, including invitations, confirmations, password resets or queued notifications. Use mocked email/auth services in tests. Create accounts silently without triggering emails when account CRUD is required.
+- Call O*NET Interest Profiler only from `src/lib/assessment.server.ts` (ONET_API_KEY stays server-side); store results in `scholar_assessments` owned by the scholar.

@@ -462,6 +462,7 @@ export type Database = {
           hr_name: string | null
           hr_phone: string | null
           id: number
+          is_sample: boolean
           location: string | null
           logo_path: string | null
           max_applicants: number | null
@@ -511,6 +512,7 @@ export type Database = {
           hr_name?: string | null
           hr_phone?: string | null
           id: number
+          is_sample?: boolean
           location?: string | null
           logo_path?: string | null
           max_applicants?: number | null
@@ -560,6 +562,7 @@ export type Database = {
           hr_name?: string | null
           hr_phone?: string | null
           id?: number
+          is_sample?: boolean
           location?: string | null
           logo_path?: string | null
           max_applicants?: number | null

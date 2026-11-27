@@ -1,3 +1,4 @@
+import { ScholarAssessments } from "./ScholarAssessments";
 import { displayTime } from "@/lib/time-entry";
 import { ProfilePhotoPicker } from "./ProfilePhotoPicker";
 import { bookingDateKey, datesInRange, placementsInDateRange } from "@/lib/placement-search";
@@ -265,7 +266,7 @@ function ScholarDetails({ p: source }: { p: Record<string, unknown> }) {
         </TabsContent>
       ))}
       <TabsContent value="assessments" className="mt-4">
-        <p className="text-sm">No assessments are available yet.</p>
+        <ScholarAssessments />
       </TabsContent>
     </Tabs>
   );
