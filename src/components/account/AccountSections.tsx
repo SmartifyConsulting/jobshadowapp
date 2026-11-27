@@ -2091,22 +2091,6 @@ export function NewBooking({
                   <dd>{chosen.days_per_shadow ?? 1}</dd>
                 </div>
                 <div>
-                  <dt className="font-semibold">Arrival time</dt>
-                  <dd>
-                    {selectedHours?.from_time
-                      ? displayTime(selectedHours.from_time)
-                      : "Choose a date to see its hours"}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="font-semibold">Collection time</dt>
-                  <dd>
-                    {selectedHours?.to_time
-                      ? displayTime(selectedHours.to_time)
-                      : "Choose a date to see its hours"}
-                  </dd>
-                </div>
-                <div>
                   <dt className="font-semibold">Fee</dt>
                   <dd>R{base.toFixed(0)}</dd>
                 </div>
