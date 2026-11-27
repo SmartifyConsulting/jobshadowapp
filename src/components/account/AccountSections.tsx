@@ -1624,15 +1624,17 @@ function SampleBookingForms({ career }: { career: string }) {
     },
   });
   return (
-    <div className="space-y-4 rounded-lg border border-border bg-[#FFFDF5] p-4">
-      <p className="text-sm font-semibold">Selected Career: {career}</p>
-      <p className="text-sm">
-        Test preview only. No booking, payment, signature or consent is recorded here.
-      </p>
-      <p className="text-sm">
-        For a real booking, the parent or guardian signs the indemnity and consent forms from their
-        own account.
-      </p>
+    <div className="space-y-4">
+      <div className="space-y-3 rounded-lg border border-border bg-[#FFFDF5] p-4">
+        <p className="text-sm font-semibold">Selected Career: {career}</p>
+        <p className="text-sm">
+          Test preview only. No booking, payment, signature or consent is recorded here.
+        </p>
+        <p className="text-sm">
+          For a real booking, the parent or guardian signs the indemnity and consent forms from
+          their own account.
+        </p>
+      </div>
       {documents.isPending ? (
         <p role="status">Loading forms…</p>
       ) : documents.isError ? (
@@ -1643,12 +1645,30 @@ function SampleBookingForms({ career }: { career: string }) {
           </button>
         </p>
       ) : documents.data.length ? (
-        documents.data.map((doc) => (
-          <details key={doc.key} className="rounded border border-border p-4" open>
-            <summary className="cursor-pointer font-semibold">{doc.title}</summary>
-            <div className="mt-3 whitespace-pre-wrap text-sm leading-relaxed">{doc.body}</div>
-          </details>
-        ))
+        documents.data.flatMap((doc) => {
+          const sections =
+            doc.key === "consent_forms"
+              ? doc.body.split(/(?=^##\s+Form\s+[A-Z]\s*:)/im).filter((section) => section.trim())
+              : [doc.body];
+          return sections.map((section, index) => {
+            const heading =
+              doc.key === "consent_forms" ? section.match(/^##\s+([^\r\n]+)\r?\n?/) : null;
+            return (
+              <details
+                key={`${doc.key}-${index}`}
+                className="rounded-lg border border-border bg-[#FFFDF5] p-4"
+                open
+              >
+                <summary className="cursor-pointer font-semibold">
+                  {heading?.[1] ?? doc.title}
+                </summary>
+                <div className="mt-3 whitespace-pre-wrap text-sm leading-relaxed">
+                  {heading ? section.slice(heading[0].length).trim() : section}
+                </div>
+              </details>
+            );
+          });
+        })
       ) : (
         <p className="text-sm">The form templates have not been added yet.</p>
       )}
