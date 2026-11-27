@@ -353,7 +353,7 @@ export function MentorOnboardingWizard({
       </div>
     );
   return (
-    <section className="space-y-4 bg-ivory p-3">
+    <section className="space-y-4 bg-teal p-3">
       <Tabs defaultValue={initialPhase}>
         {renderHosting && (
           <TabsList

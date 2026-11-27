@@ -287,7 +287,7 @@ export function AccountProfile({ admin = false }: { admin?: boolean } = {}) {
     "My Profile";
   return (
     <section className="space-y-4 bg-ivory p-4 text-foreground">
-      <h1 className="font-display text-2xl">My Profile</h1>
+      <h1 className="screen-heading bg-teal px-4 py-3 text-white">My Profile</h1>
       <ProfileSummaryCard
         name={name}
         previewSections={[

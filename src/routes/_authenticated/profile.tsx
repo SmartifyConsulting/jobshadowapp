@@ -168,7 +168,7 @@ function ProfileSettings() {
         <div className="mx-auto max-w-7xl space-y-4 px-5 py-8">
           {!inWorkflow && (
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Profile</h1>
+              <h1 className="screen-heading bg-teal px-4 py-3 text-white">Profile</h1>
               <p className="text-xs text-muted-foreground">
                 Manage your details, scholar account and bookings.
               </p>

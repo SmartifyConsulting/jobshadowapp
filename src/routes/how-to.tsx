@@ -113,9 +113,9 @@ function StepRow({
       <ol
         className={
           fitColumns
-            ? "grid grid-cols-2 items-start gap-y-4 " +
+            ? "workflow-steps grid grid-cols-2 items-start gap-y-4 " +
               (fitColumns === 3 ? "sm:grid-cols-3" : "sm:grid-cols-4")
-            : "flex min-w-[590px] items-start"
+            : "workflow-steps flex min-w-[590px] items-start"
         }
       >
         {steps.map((step, index) => (
@@ -138,7 +138,7 @@ function StepRow({
               aria-current={index === next ? "step" : undefined}
               aria-label={step.label.replace(/\n/g, " ") + (complete[index] ? " — completed" : "")}
               className={
-                "relative flex flex-col items-center gap-1 rounded p-1 text-center outline-none focus-visible:ring-2 focus-visible:ring-primary " +
+                "workflow-step relative flex flex-col items-center gap-1 rounded p-1 text-center outline-none focus-visible:ring-2 focus-visible:ring-primary " +
                 (complete[index]
                   ? "text-green-700"
                   : index === next
@@ -148,13 +148,13 @@ function StepRow({
             >
               {complete[index] ? (
                 <CheckCircle2
-                  className="h-6 w-6 rounded-full bg-green-700 text-white"
+                  className="workflow-step-indicator h-6 w-6 rounded-full bg-green-700 text-white"
                   aria-hidden
                 />
               ) : (
                 <span
                   className={
-                    "grid h-6 w-6 place-items-center rounded-full text-xs font-bold " +
+                    "workflow-step-indicator grid h-6 w-6 place-items-center rounded-full text-xs font-bold " +
                     (index === next
                       ? "bg-primary text-primary-foreground ring-4 ring-primary/15"
                       : "bg-muted text-muted-foreground")

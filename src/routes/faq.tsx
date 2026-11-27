@@ -31,10 +31,10 @@ export const Route = createFileRoute("/faq")({
 function Faq() {
   return (
     <SiteLayout>
-      <div className="bg-cta text-cta-foreground">
+      <div className="bg-cta text-white">
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-5 py-4">
           <ChevronDown className="h-6 w-6" aria-hidden />
-          <h1 className="screen-heading font-display text-2xl uppercase">Frequently Asked Questions</h1>
+          <h1 className="screen-heading font-display text-2xl">Frequently Asked Questions</h1>
         </div>
       </div>
       <section className="flex-1 bg-[#7CCCC8] px-5 py-6 md:py-8">

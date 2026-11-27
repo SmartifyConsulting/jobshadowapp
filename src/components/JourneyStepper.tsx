@@ -28,7 +28,7 @@ export function JourneyStepper({
           Step {position + 1} of {steps.length}
         </p>
       </div>
-      <nav aria-label={title + " steps"} className="flex gap-2 overflow-x-auto pb-2">
+      <nav aria-label={title + " steps"} className="workflow-steps flex gap-2 overflow-x-auto pb-2">
         {steps.map((step, index) => (
           <button
             key={step.id}
@@ -37,14 +37,14 @@ export function JourneyStepper({
             aria-current={active === step.id ? "step" : undefined}
             onClick={() => onChange(step.id)}
             className={
-              "flex min-w-[8.5rem] min-h-24 flex-1 flex-col items-center gap-2 rounded-lg border px-3 py-3 text-center disabled:opacity-40 " +
+              "workflow-step flex min-w-[8.5rem] min-h-24 flex-1 flex-col items-center gap-2 rounded-lg border px-3 py-3 text-center disabled:opacity-40 " +
               (active === step.id
                 ? "border-primary bg-accent text-accent-foreground"
                 : "border-border bg-ivory text-foreground")
             }
           >
             <span className="flex items-center gap-2">
-              <span className="grid h-5 w-5 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+              <span className="workflow-step-indicator grid h-5 w-5 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
                 {step.complete ? (
                   <Check className="h-3.5 w-3.5" aria-label="Completed" />
                 ) : (

@@ -429,3 +429,35 @@ h1, h2, .screen-heading {
 .screen-heading {
   font-size: calc(1.5rem + 1pt);
 }
+
+/* Shared workflow styling follows the client reference; geometry stays local. */
+.workflow-steps { --step-band: var(--teal); }
+.workflow-steps > :nth-child(4n + 2) { --step-band: var(--accent); }
+.workflow-steps > :nth-child(4n + 3) { --step-band: var(--primary); }
+.workflow-steps > :nth-child(4n + 4) { --step-band: #96c93d; }
+.workflow-step {
+  background-color: var(--step-band) !important;
+  color: white !important;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  font-family: "Gotham Black", "Gotham", sans-serif;
+  font-weight: 900;
+}
+.workflow-step[aria-current="step"] {
+  outline: 2px solid var(--charcoal);
+  outline-offset: 2px;
+}
+.workflow-step:focus-visible {
+  outline: 3px solid var(--charcoal);
+  outline-offset: 3px;
+}
+.workflow-step-indicator {
+  border: 1px solid white;
+  background-color: transparent !important;
+  color: white !important;
+  box-shadow: none !important;
+}
+.workflow-step-indicator:has([aria-label="Completed"]),
+.workflow-step-indicator.lucide-circle-check-big {
+  background-color: #15803d !important;
+}

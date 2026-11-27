@@ -38,8 +38,8 @@ export const Route = createFileRoute("/real-stories")({
 function Stories() {
   return (
     <SiteLayout>
-      <div className="bg-teal text-white">
-        <div className="mx-auto flex max-w-7xl items-center gap-3 px-5 py-4">
+      <div className="relative z-10 h-0 text-white">
+        <div className="absolute inset-x-0 top-0 mx-auto flex max-w-7xl items-center gap-3 px-5 py-4">
           <ChevronDown className="h-6 w-6" />
           <h1 className="screen-heading font-display text-2xl">Real Stories</h1>
         </div>
@@ -48,14 +48,14 @@ function Stories() {
         className="bg-accent pb-6"
         style={{
           background:
-            "linear-gradient(to bottom, var(--teal) 0, var(--teal) 15rem, var(--accent) 15rem, var(--accent) 100%)",
+            "linear-gradient(to bottom, var(--teal) 0, var(--teal) 20rem, var(--accent) 20rem, var(--accent) 100%)",
         }}
       >
         <Carousel opts={{ loop: true, align: "start" }} className="mx-auto max-w-6xl px-10 sm:px-14">
           <CarouselContent className="-ml-8">
             {STORIES.map((s) => (
               <CarouselItem key={s.name} className="basis-full pl-8 md:basis-1/2">
-                <div className="real-story-identity relative h-60 pt-8">
+                <div className="real-story-identity relative h-80">
                   <h3 className="real-story-name text-white">{s.name}</h3>
                   <div
                     className="relative shrink-0 overflow-hidden rounded-full"
