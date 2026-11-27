@@ -115,10 +115,10 @@ function About() {
         </div>
       </section>
       <img
-        src="/assets/about-career-panorama.png"
+        src="/assets/about-career-panorama-client.png"
         alt="Illustrated mentors and young people exploring design, science, social work and teaching in a shared workplace."
-        width={2172}
-        height={724}
+        width={2428}
+        height={619}
         loading="lazy"
         decoding="async"
         className="block h-auto w-full"
