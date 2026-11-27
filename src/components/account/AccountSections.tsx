@@ -2005,7 +2005,7 @@ export function NewBooking({
                 )}
               </div>
               <aside aria-label="Favourite career availability" className="space-y-3">
-                <h3 className="font-semibold">Your Favourites Are Available on These Days</h3>
+                <h3 className="font-semibold">Other Favourites Are Available on These Days</h3>
                 {!rangeApplied ? (
                   <p className="text-sm">
                     Search your preferred dates to see matches for your other favourite careers.
