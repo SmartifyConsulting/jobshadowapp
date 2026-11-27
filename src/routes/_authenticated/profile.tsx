@@ -198,15 +198,16 @@ export function ScholarProfileContent({
           </p>
         )}
         <div>
-          <AccountPanel />
+          <AccountPanel
+            profileActions={
+              <ProfilePreview
+                name={displayName || "My Profile"}
+                avatarUrl={avatarUrl}
+                sections={previewSections}
+              />
+            }
+          />
         </div>
-      </div>
-      <div className="flex justify-end">
-        <ProfilePreview
-          name={displayName || "My Profile"}
-          avatarUrl={avatarUrl}
-          sections={previewSections}
-        />
       </div>
     </div>
   );

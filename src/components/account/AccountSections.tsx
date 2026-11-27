@@ -68,10 +68,12 @@ export function AccountPanel({
   withBookings = false,
   initialStep,
   profileContent,
+  profileActions,
 }: {
   withBookings?: boolean;
   initialStep?: string | undefined;
   profileContent?: ReactNode;
+  profileActions?: ReactNode;
 }) {
   const { data: user } = useUser();
   const qc = useQueryClient();
@@ -162,6 +164,7 @@ export function AccountPanel({
             </Button>
           </div>
         )}
+        {profileActions}
       </div>
       {deleteErr && (
         <p role="alert" className="text-sm text-destructive">
@@ -1189,9 +1192,11 @@ function StudentJourney({
           {active === "profile" && profileContent && (
             <div className="space-y-4">
               {profileContent}
-              <Button disabled={!profile} onClick={() => setActive("careers")}>
-                Continue to Explore Careers
-              </Button>
+              <div className="flex justify-end">
+                <Button disabled={!profile} onClick={() => setActive("careers")}>
+                  Continue to Explore Careers
+                </Button>
+              </div>
             </div>
           )}
           {active === "profile" &&
@@ -1217,7 +1222,9 @@ function StudentJourney({
                   <Button variant="outline" onClick={() => setEditingProfile(true)}>
                     Edit Profile
                   </Button>
-                  <Button onClick={() => setActive("careers")}>Continue to Explore Careers</Button>
+                  <Button className="ml-auto" onClick={() => setActive("careers")}>
+                    Continue to Explore Careers
+                  </Button>
                 </div>
               </div>
             ))}
