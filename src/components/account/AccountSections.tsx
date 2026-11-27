@@ -1447,6 +1447,18 @@ export function NewBooking({
         return r.data ?? [];
       })) as Placement[],
   });
+  const favourites = useQuery({
+    queryKey: ["career-favourites", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const result = await supabase
+        .from("career_favourites")
+        .select("career_slug")
+        .eq("user_id", user!.id);
+      if (result.error) throw result.error;
+      return new Set((result.data ?? []).map((row) => row.career_slug));
+    },
+  });
   const myBookings = useQuery({
     queryKey: ["bookings", user?.id],
     enabled: !!user,
@@ -1496,7 +1508,7 @@ export function NewBooking({
   );
   const options = (placements.data ?? []).filter((p) =>
     initialCareer
-      ? p.career.trim().toLowerCase() === initialCareer.trim().toLowerCase()
+      ? p.career.trim().toLowerCase() === career.trim().toLowerCase()
       : p.sector === sector,
   );
   const chosen = options.find((p) => p.id === pid);
@@ -1623,6 +1635,27 @@ export function NewBooking({
       ? placementsInDateRange(careerHosts, rangeFrom, rangeTo)
       : []
     : careerHosts;
+  const favouriteHosts = rangeApplied
+    ? placementsInDateRange(
+        (placements.data ?? []).filter((p) => {
+          if (p.career.trim().toLowerCase() === career.trim().toLowerCase()) return false;
+          const key = p.career
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, "");
+          const role = ROLES.find(
+            (r) =>
+              r.title
+                .trim()
+                .toLowerCase()
+                .replace(/[^a-z0-9]/g, "") === key,
+          );
+          return favourites.data?.has(role?.slug ?? "other-careers--" + key);
+        }),
+        rangeFrom,
+        rangeTo,
+      )
+    : [];
   function updateRange(from: string, to: string) {
     setRangeFrom(from);
     setRangeTo(to);
@@ -1680,7 +1713,9 @@ export function NewBooking({
 
   return (
     <div className={initialCareer ? "min-w-0" : "-mx-6"}>
-      <div className={`${STEP_BG[step - 1]} px-6 py-5`}>
+      <div
+        className={`${step === 3 ? "bg-[#FFFDF5] text-foreground" : STEP_BG[step - 1]} px-6 py-5`}
+      >
         <div className="flex items-center gap-3">
           <ChevronDown className="h-6 w-6 shrink-0" />
           <h2 className="font-display text-2xl">
@@ -1747,102 +1782,170 @@ export function NewBooking({
             </select>
           )}
           {step === 3 && initialCareer && (
-            <div className="space-y-4">
-              <p className="text-sm font-semibold">{initialCareer}</p>
-              <div className="flex flex-wrap items-end gap-4">
-                <label className="text-sm">
-                  From
-                  <input
-                    type="date"
-                    value={rangeFrom}
-                    onChange={(e) => updateRange(e.target.value, rangeTo)}
-                    className="mt-1 block rounded border border-current/40 bg-transparent p-2"
-                  />
-                </label>
-                <label className="text-sm">
-                  To
-                  <input
-                    type="date"
-                    value={rangeTo}
-                    min={rangeFrom || undefined}
-                    onChange={(e) => updateRange(rangeFrom, e.target.value)}
-                    className="mt-1 block rounded border border-current/40 bg-transparent p-2"
-                  />
-                </label>
-                <Button type="button" disabled={placements.isFetching} onClick={searchDates}>
-                  Search Available Mentors
-                </Button>
-              </div>
-              {rangeError && (
-                <p role="alert" className="text-sm">
-                  {rangeError}
-                </p>
-              )}
-              {placements.isLoading ? (
-                <p role="status" className="text-sm">
-                  Loading availability…
-                </p>
-              ) : placements.error ? (
-                <p role="alert" className="text-sm">
-                  Availability could not be loaded.{" "}
-                  <button
-                    type="button"
-                    className="underline"
-                    onClick={() => void placements.refetch()}
-                  >
-                    Try again
-                  </button>
-                </p>
-              ) : rangeApplied ? (
-                <div className="space-y-3">
-                  <h3 className="font-semibold">Available mentor placements ({hosts.length})</h3>
-                  {hosts.map((host, index) => (
-                    <label
-                      key={host.id}
-                      className={
-                        "flex cursor-pointer items-start gap-3 rounded border p-3 " +
-                        (pid === host.id ? "border-primary bg-primary/5" : "border-current/30")
-                      }
+            <div className="grid min-w-0 gap-6 lg:grid-cols-2">
+              <div className="space-y-4">
+                <p className="text-sm font-semibold">{career}</p>
+                <div className="flex flex-wrap items-end gap-4">
+                  <label className="text-sm">
+                    From
+                    <input
+                      type="date"
+                      value={rangeFrom}
+                      onChange={(e) => updateRange(e.target.value, rangeTo)}
+                      className="mt-1 block rounded border border-current/40 bg-transparent p-2"
+                    />
+                  </label>
+                  <label className="text-sm">
+                    To
+                    <input
+                      type="date"
+                      value={rangeTo}
+                      min={rangeFrom || undefined}
+                      onChange={(e) => updateRange(rangeFrom, e.target.value)}
+                      className="mt-1 block rounded border border-current/40 bg-transparent p-2"
+                    />
+                  </label>
+                  <Button type="button" disabled={placements.isFetching} onClick={searchDates}>
+                    Search Available Mentors
+                  </Button>
+                </div>
+                {rangeError && (
+                  <p role="alert" className="text-sm">
+                    {rangeError}
+                  </p>
+                )}
+                {placements.isLoading ? (
+                  <p role="status" className="text-sm">
+                    Loading availability…
+                  </p>
+                ) : placements.error ? (
+                  <p role="alert" className="text-sm">
+                    Availability could not be loaded.{" "}
+                    <button
+                      type="button"
+                      className="underline"
+                      onClick={() => void placements.refetch()}
                     >
-                      <input
-                        type="radio"
-                        name="matching-host"
-                        checked={pid === host.id}
-                        onChange={() => {
+                      Try again
+                    </button>
+                  </p>
+                ) : rangeApplied ? (
+                  <div className="space-y-3">
+                    <h3 className="font-semibold">Available mentor placements ({hosts.length})</h3>
+                    {hosts.map((host, index) => (
+                      <label
+                        key={host.id}
+                        className={
+                          "flex cursor-pointer items-start gap-3 rounded border p-3 " +
+                          (pid === host.id ? "border-primary bg-primary/5" : "border-current/30")
+                        }
+                      >
+                        <input
+                          type="radio"
+                          name="matching-host"
+                          checked={pid === host.id}
+                          onChange={() => {
+                            setPid(host.id);
+                            setDate("");
+                            setConfirmDupe(false);
+                          }}
+                          className="mt-1"
+                        />
+                        <span className="min-w-0">
+                          <span className="block text-sm font-semibold">
+                            {hostLabel(host, index)}
+                          </span>
+                          <span className="mt-1 block text-xs">
+                            Times vary by available day · {host.days_per_shadow ?? 1} day(s)
+                          </span>
+                          <span className="mt-1 block text-xs">
+                            Available:{" "}
+                            {datesInRange(host.availability, rangeFrom, rangeTo)
+                              .map((day) => new Date(day + "T12:00:00").toLocaleDateString("en-ZA"))
+                              .join(", ")}
+                          </span>
+                        </span>
+                      </label>
+                    ))}
+                    {!hosts.length && (
+                      <p className="text-sm">
+                        No available mentors match these dates. Try a wider range or choose another
+                        career.
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm">
+                    Enter your preferred date range to find available mentors.
+                  </p>
+                )}
+              </div>
+              <aside aria-label="Favourite career availability" className="space-y-3">
+                <h3 className="font-semibold">Your Favourites Are Available on These Days</h3>
+                {!rangeApplied ? (
+                  <p className="text-sm">
+                    Search your preferred dates to see matches for your other favourite careers.
+                  </p>
+                ) : favourites.isPending ? (
+                  <p role="status" className="text-sm">
+                    Loading your favourites…
+                  </p>
+                ) : favourites.error ? (
+                  <p role="alert" className="text-sm">
+                    Your favourites could not be loaded.{" "}
+                    <button
+                      type="button"
+                      className="underline"
+                      onClick={() => void favourites.refetch()}
+                    >
+                      Try again
+                    </button>
+                  </p>
+                ) : placements.error ? (
+                  <p className="text-sm">
+                    Availability could not be loaded. Please try the search again.
+                  </p>
+                ) : placements.isFetching ? (
+                  <p role="status" className="text-sm">
+                    Checking availability…
+                  </p>
+                ) : favouriteHosts.length ? (
+                  favouriteHosts.map((host) => (
+                    <div key={host.id} className="rounded border border-border p-3">
+                      <p className="font-semibold">{host.career}</p>
+                      <p className="text-sm">
+                        {host.location}
+                        {host.mode ? ` · ${host.mode}` : ""}
+                      </p>
+                      <p className="mt-1 text-sm">
+                        {datesInRange(host.availability, rangeFrom, rangeTo)
+                          .map((day) => new Date(day + "T12:00:00").toLocaleDateString("en-ZA"))
+                          .join(", ")}
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="mt-2"
+                        onClick={() => {
+                          setCareer(host.career);
                           setPid(host.id);
                           setDate("");
                           setConfirmDupe(false);
+                          setStep(4);
                         }}
-                        className="mt-1"
-                      />
-                      <span className="min-w-0">
-                        <span className="block text-sm font-semibold">
-                          {hostLabel(host, index)}
-                        </span>
-                        <span className="mt-1 block text-xs">
-                          Times vary by available day · {host.days_per_shadow ?? 1} day(s)
-                        </span>
-                        <span className="mt-1 block text-xs">
-                          Available:{" "}
-                          {datesInRange(host.availability, rangeFrom, rangeTo)
-                            .map((day) => new Date(day + "T12:00:00").toLocaleDateString("en-ZA"))
-                            .join(", ")}
-                        </span>
-                      </span>
-                    </label>
-                  ))}
-                  {!hosts.length && (
-                    <p className="text-sm">
-                      No available mentors match these dates. Try a wider range or choose another
-                      career.
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <p className="text-sm">
-                  Enter your preferred date range to find available mentors.
-                </p>
-              )}
+                      >
+                        Choose This Mentor
+                      </Button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm">
+                    {favourites.data?.size
+                      ? "No other favourite careers have mentors available in this date range."
+                      : "Favourite careers while browsing to see their available dates here."}
+                  </p>
+                )}
+              </aside>
             </div>
           )}
           {step === 4 && chosen && (
@@ -2017,7 +2120,7 @@ export function NewBooking({
         </div>
       </div>
       <div
-        className={`flex flex-wrap gap-2 px-6 pb-5 ${initialCareer ? STEP_BG[step - 1] : "bg-primary pt-5"}`}
+        className={`flex flex-wrap gap-2 px-6 pb-5 ${step === 3 ? "bg-[#FFFDF5] text-foreground" : initialCareer ? STEP_BG[step - 1] : "bg-primary pt-5"}`}
       >
         {initialCareer && step === 3 && (
           <Button type="button" variant="outline" onClick={onBackToCareers}>

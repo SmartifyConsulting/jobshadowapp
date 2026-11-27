@@ -37,9 +37,92 @@ beforeEach(() => {
     return { data: { user: auth.user }, error: null };
   });
 });
-const client = () =>
-  new QueryClient({ defaultOptions: { queries: { staleTime: Infinity, retry: false } } });
+const client = () => {
+  const cache = new QueryClient({
+    defaultOptions: { queries: { staleTime: Infinity, retry: false } },
+  });
+  cache.setQueryData(["career-favourites", "test-scholar"], new Set());
+  return cache;
+};
 describe("guided career and host selection", () => {
+  it("matches only other favourites in the searched range and lets the scholar choose one", async () => {
+    const cache = client();
+    cache.setQueryData(["me"], auth.user);
+    cache.setQueryData(["bookings", auth.user.id], []);
+    cache.setQueryData(
+      ["career-favourites", auth.user.id],
+      new Set(["business-finance--accountant"]),
+    );
+    const placement = {
+      sector: "Finance",
+      arrival_time: "09:00",
+      collection_time: "15:00",
+      company: "Example",
+      amount: 350,
+      days_per_shadow: 1,
+    };
+    cache.setQueryData(
+      ["placements"],
+      [
+        {
+          ...placement,
+          id: 10,
+          career: "Accountant",
+          location: "Cape Town",
+          availability: "6/12/2099",
+        },
+        {
+          ...placement,
+          id: 11,
+          career: "Accountant",
+          location: "Outside Range",
+          availability: "7/12/2099",
+        },
+        {
+          ...placement,
+          id: 12,
+          career: "Teacher",
+          location: "Not Favourited",
+          availability: "6/12/2099",
+        },
+        {
+          ...placement,
+          id: 13,
+          career: "Accountant",
+          location: "No Hours",
+          availability: "6/12/2099",
+          arrival_time: null,
+        },
+      ],
+    );
+    render(
+      <QueryClientProvider client={cache}>
+        <NewBooking initialCareer="Property And Facilities Manager" />
+      </QueryClientProvider>,
+    );
+    fireEvent.change(screen.getByLabelText("From"), { target: { value: "2099-06-01" } });
+    fireEvent.change(screen.getByLabelText("To"), { target: { value: "2099-06-30" } });
+    fireEvent.click(screen.getByRole("button", { name: "Search Available Mentors" }));
+    const matches = screen.getByRole("complementary", { name: "Favourite career availability" });
+    expect(within(matches).getByText("Accountant")).toBeVisible();
+    expect(within(matches).getByText("Cape Town")).toBeVisible();
+    expect(within(matches).queryByText("Outside Range")).toBeNull();
+    expect(within(matches).queryByText("Not Favourited")).toBeNull();
+    expect(within(matches).queryByText("No Hours")).toBeNull();
+    fireEvent.click(within(matches).getByRole("button", { name: "Choose This Mentor" }));
+    expect(screen.getByRole("heading", { name: "Placement Details" })).toBeVisible();
+    expect(screen.getByText("Cape Town")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Back to Mentor Availability" }));
+    expect(screen.getByText("Available mentor placements (1)")).toBeVisible();
+    expect(screen.getByRole("radio")).toBeChecked();
+    fireEvent.change(screen.getByLabelText("To"), { target: { value: "2099-06-02" } });
+    expect(
+      within(
+        screen.getByRole("complementary", { name: "Favourite career availability" }),
+      ).queryByRole("button", { name: "Choose This Mentor" }),
+    ).toBeNull();
+    expect(screen.getByRole("button", { name: "Continue to Payment" })).toBeDisabled();
+  });
   it("cascades sector and category choices and clears an incompatible saved career", () => {
     const cache = client();
     cache.setQueryData(["public-career-content"], []);
