@@ -32,7 +32,7 @@ export const Route = createFileRoute("/about")({
           "Job Shadow facilitates job shadowing for high school students at R350 per Job Shadow, or R200 for a one-hour Digital Interview.",
       },
       { property: "og:title", content: "About Job Shadow" },
-      { property: "og:description", content: "Giving the youth opportunity and guidance." },
+      { property: "og:description", content: "Giving the Youth Opportunity and Guidance." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -59,7 +59,7 @@ function About() {
         </div>
       </div>
       <section className="bg-primary px-5 pb-14 pt-10 text-center text-primary-foreground">
-        <h2 className="font-display text-3xl text-white md:text-4xl">
+        <h2 className="font-display text-[calc(1.875rem+1pt)] text-white md:text-[calc(2.25rem+1pt)]">
           Giving the youth opportunity and guidance
         </h2>
         <div className="mx-auto mt-10 grid max-w-7xl gap-8 text-left text-[15px] leading-relaxed md:grid-cols-4">
