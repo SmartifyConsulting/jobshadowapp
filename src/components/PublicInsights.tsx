@@ -194,7 +194,9 @@ export function PublicInsights({
                           {post.kind === "news" ? "News" : "Articles"}
                         </button>
                       </div>
-                      <h1 className="font-display text-3xl leading-tight md:text-4xl">
+                      <h1
+                        className={`font-display text-3xl leading-tight md:text-4xl ${post.slug === FIRST_INSIGHT_SLUG ? "text-accent" : ""}`}
+                      >
                         {post.title}
                       </h1>
                     </header>

@@ -38,7 +38,7 @@ function Stories() {
   return (
     <SiteLayout>
       <section
-        className="bg-accent pb-14"
+        className="bg-accent pb-6"
         style={{
           background:
             "linear-gradient(to bottom, var(--teal) 0, var(--teal) 15rem, var(--accent) 15rem, var(--accent) 100%)",
@@ -49,21 +49,29 @@ function Stories() {
             {STORIES.map((s) => (
               <CarouselItem key={s.name} className="basis-full pl-8 md:basis-1/2">
                 <div className="relative h-60 pt-6">
-                  <h3 className="relative z-10 font-sans text-5xl font-bold leading-tight tracking-tight text-white sm:text-6xl">
+                  <h3 className="absolute left-0 top-8 z-10 font-sans text-5xl font-bold leading-tight tracking-tight text-white sm:text-6xl">
                     {s.name}
                   </h3>
-                  <div className="absolute right-0 top-12 h-56 w-56 overflow-hidden rounded-full">
+                  <div
+                    className="absolute right-0 top-8 h-56 w-56 shrink-0 overflow-hidden rounded-full"
+                    style={{
+                      width: 224,
+                      height: 224,
+                      borderRadius: "50%",
+                      clipPath: "circle(50%)",
+                    }}
+                  >
                     <img
                       src={s.img}
                       alt={s.name}
                       width={224}
                       height={224}
                       loading="lazy"
-                      className="h-full w-full object-cover object-right"
+                      className="block h-full w-full rounded-full object-cover object-right"
                     />
                   </div>
                 </div>
-                <p className="min-h-60 pb-8 pt-14 text-sm leading-relaxed text-accent-foreground">
+                <p className="pb-4 pt-8 text-sm leading-relaxed text-accent-foreground">
                   {s.quote}
                 </p>
               </CarouselItem>
@@ -72,7 +80,7 @@ function Stories() {
           <CarouselPrevious className="left-1 top-52 sm:-left-6" />
           <CarouselNext className="right-1 top-52 sm:-right-6" />
         </Carousel>
-        <div className="mx-auto mt-14 max-w-3xl px-5">
+        <div className="mx-auto mt-6 max-w-3xl px-5">
           <YouTube {...STORIES_VIDEO} />
         </div>
       </section>
