@@ -418,15 +418,15 @@ h1, h2, .screen-heading {
   white-space: nowrap;
 }
 
-/* Source artwork is 827 × 322; the portrait occupies x479–794, y4–319.
-   Crop that square rather than fitting the wide artwork into the circle. */
+/* Client portraits fill the circular frame, trimming only the outer export margins. */
 .real-story-portrait {
   position: absolute;
-  width: 262.54%;
+  width: 106%;
   max-width: none;
-  height: 102.22%;
-  right: -10.48%;
-  top: -1.27%;
+  height: 106%;
+  left: -3%;
+  top: -3%;
+  object-fit: cover;
 }
 
 /* Public page titles share a one-point size increase. */
