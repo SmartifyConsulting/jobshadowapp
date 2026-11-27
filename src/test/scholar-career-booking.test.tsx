@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -39,6 +40,51 @@ beforeEach(() => {
 const client = () =>
   new QueryClient({ defaultOptions: { queries: { staleTime: Infinity, retry: false } } });
 describe("guided career and host selection", () => {
+  it("cascades sector and category choices and clears an incompatible saved career", () => {
+    const cache = client();
+    cache.setQueryData(["public-career-content"], []);
+    cache.setQueryData(["public-careers-catalog"], []);
+    function Picker() {
+      const [selected, setSelected] = useState("Accountant");
+      return <CareerStepBrowser selected={selected} onSelect={setSelected} />;
+    }
+    render(
+      <QueryClientProvider client={cache}>
+        <Picker />
+      </QueryClientProvider>,
+    );
+    expect(screen.getByRole("combobox", { name: "Sector" })).toHaveValue("Business & Finance");
+    expect(screen.getByRole("combobox", { name: "Career Category" })).toHaveValue(
+      "Accounting & Audit",
+    );
+    expect(screen.getByRole("combobox", { name: "Career" })).toHaveValue("Accountant");
+    fireEvent.change(screen.getByRole("combobox", { name: "Sector" }), {
+      target: { value: "Education" },
+    });
+    expect(screen.getByRole("combobox", { name: "Career Category" })).toHaveValue("");
+    expect(screen.getByRole("combobox", { name: "Career" })).toHaveValue("");
+    expect(screen.getByRole("combobox", { name: "Career" })).toBeDisabled();
+    expect(screen.queryByRole("region", { name: "Selected career details" })).toBeNull();
+    fireEvent.change(screen.getByRole("combobox", { name: "Sector" }), {
+      target: { value: "Business & Finance" },
+    });
+    fireEvent.change(screen.getByRole("combobox", { name: "Career Category" }), {
+      target: { value: "Accounting & Audit" },
+    });
+    const choices = within(screen.getByRole("combobox", { name: "Career" }));
+    expect(choices.getByRole("option", { name: /^Accountant$/ })).toBeInTheDocument();
+    expect(choices.queryByRole("option", { name: /^Teacher$/ })).toBeNull();
+    fireEvent.change(screen.getByRole("combobox", { name: "Career" }), {
+      target: { value: "Accountant" },
+    });
+    expect(screen.getByRole("region", { name: "Selected career details" })).toBeVisible();
+    fireEvent.change(screen.getByRole("combobox", { name: "Career Category" }), {
+      target: { value: "Actuarial Science" },
+    });
+    expect(screen.getByRole("combobox", { name: "Career" })).toHaveValue("");
+    expect(screen.queryByRole("region", { name: "Selected career details" })).toBeNull();
+  });
+
   it("shows the chosen career guidance directly beneath the selector", () => {
     const cache = client();
     cache.setQueryData(
@@ -80,13 +126,19 @@ describe("guided career and host selection", () => {
         <CareerStepBrowser selected="" onSelect={select} />
       </QueryClientProvider>,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Browse all career descriptions" }));
+    fireEvent.click(screen.getByRole("button", { name: "Browse All Careers" }));
     fireEvent.change(screen.getByRole("searchbox", { name: "Search careers" }), {
       target: { value: "Accountant" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Select Accountant" }));
     expect(select).toHaveBeenCalledWith("Accountant");
-    expect(screen.queryByRole("link", { name: "Browse all career descriptions" })).toBeNull();
+    fireEvent.click(screen.getAllByRole("button", { name: "Collapse Careers" }).at(-1)!);
+    expect(screen.queryByRole("region", { name: "Browse career catalogue" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Browse All Careers" })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    expect(screen.queryByRole("link", { name: "Browse All Careers" })).toBeNull();
   });
   it("restores the saved career after remount and opens Step 3 directly", async () => {
     const mount = (step: string) => {
@@ -104,6 +156,12 @@ describe("guided career and host selection", () => {
       );
     };
     const first = mount("careers");
+    fireEvent.change(screen.getByRole("combobox", { name: "Sector" }), {
+      target: { value: "Business & Finance" },
+    });
+    fireEvent.change(screen.getByRole("combobox", { name: "Career Category" }), {
+      target: { value: "Accounting & Audit" },
+    });
     fireEvent.change(screen.getByRole("combobox", { name: "Career" }), {
       target: { value: "Accountant" },
     });
@@ -141,6 +199,12 @@ describe("guided career and host selection", () => {
         <AccountPanel withBookings initialStep="careers" />
       </QueryClientProvider>,
     );
+    fireEvent.change(screen.getByRole("combobox", { name: "Sector" }), {
+      target: { value: "Business & Finance" },
+    });
+    fireEvent.change(screen.getByRole("combobox", { name: "Career Category" }), {
+      target: { value: "Accounting & Audit" },
+    });
     fireEvent.change(screen.getByRole("combobox", { name: "Career" }), {
       target: { value: "Accountant" },
     });

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ROLES } from "@/lib/data";
 import { getCareerDescription } from "@/lib/career-descriptions";
@@ -16,6 +16,17 @@ export function CareerStepBrowser({
   onSelect: (career: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const browseButton = useRef<HTMLButtonElement>(null);
+  function closeCatalogue() {
+    setOpen(false);
+    requestAnimationFrame(() => {
+      browseButton.current?.focus({ preventScroll: true });
+      browseButton.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+  }
+  const [path, setPath] = useState<{ forCareer: string; sector: string; division: string } | null>(
+    null,
+  );
   const saved = useQuery({
     queryKey: ["public-career-content"],
     queryFn: async () => {
@@ -54,51 +65,96 @@ export function CareerStepBrowser({
       }))
       .sort((a, b) => a.title.localeCompare(b.title));
   }, [catalogue.data]);
-  const selectedRole = roles.find((role) => role.title === selected);
+  const selectedRole =
+    roles.find(
+      (role) =>
+        role.title === selected &&
+        (!path ||
+          path.forCareer !== selected ||
+          (role.field === path.sector && role.division === path.division)),
+    ) ?? roles.find((role) => role.title === selected);
+  const sector = path?.forCareer === selected ? path.sector : (selectedRole?.field ?? "");
+  const division = path?.forCareer === selected ? path.division : (selectedRole?.division ?? "");
+  const sectors = [...new Set(roles.map((role) => role.field))].sort((a, b) => a.localeCompare(b));
+  const divisions = [
+    ...new Set(roles.filter((role) => role.field === sector).map((role) => role.division)),
+  ].sort((a, b) => a.localeCompare(b));
+  const careerOptions = [
+    ...new Map(
+      roles
+        .filter((role) => role.field === sector && role.division === division)
+        .map((role) => [careerKey(role.title), role]),
+    ).values(),
+  ];
+  const selectClass =
+    "mt-1 block w-full rounded border border-input bg-background p-2 disabled:opacity-50";
   const contentFor = (title: string) => ({
     ...catalogue.data?.find((row) => careerKey(row.name) === careerKey(title)),
     ...saved.data?.find((row) => careerKey(row.name) === careerKey(title)),
   });
-  // Grouped by Sector, then Division within it - e.g. "Business & Finance — C-Suite".
-  const optionGroups = [
-    ...new Map(
-      roles.map((role) => [role.field + " — " + role.division, [] as typeof roles]),
-    ).keys(),
-  ]
-    .sort()
-    .map(
-      (label) =>
-        [
-          label,
-          roles
-            .filter((role) => role.field + " — " + role.division === label)
-            .sort((a, b) => a.title.localeCompare(b.title)),
-        ] as const,
-    );
   return (
     <div className="space-y-4">
-      <label className="block text-sm">
-        Career
-        <select
-          value={selected}
-          onChange={(e) => onSelect(e.target.value)}
-          className="mt-1 block w-full rounded border border-input bg-background p-2"
-        >
-          <option value="">Choose a career</option>
-          {optionGroups.map(([label, items]) => (
-            <optgroup key={label} label={label}>
-              {items.map((role) => (
-                <option key={role.slug} value={role.title}>
-                  {role.title}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
-      </label>
+      <div className="grid gap-3 md:grid-cols-3">
+        <label className="block text-sm">
+          Sector
+          <select
+            value={sector}
+            className={selectClass}
+            onChange={(e) => {
+              setPath({ forCareer: "", sector: e.target.value, division: "" });
+              if (selected) onSelect("");
+            }}
+          >
+            <option value="">Choose a sector</option>
+            {sectors.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block text-sm">
+          Career Category
+          <select
+            value={division}
+            disabled={!sector}
+            className={selectClass}
+            onChange={(e) => {
+              setPath({ forCareer: "", sector, division: e.target.value });
+              if (selected) onSelect("");
+            }}
+          >
+            <option value="">Choose a category</option>
+            {divisions.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block text-sm">
+          <span className="font-bold">Career</span>
+          <select
+            value={selected}
+            disabled={!sector || !division}
+            className={selectClass}
+            onChange={(e) => {
+              setPath({ forCareer: e.target.value, sector, division });
+              onSelect(e.target.value);
+            }}
+          >
+            <option value="">Choose a career</option>
+            {careerOptions.map((role) => (
+              <option key={role.slug} value={role.title}>
+                {role.title}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
       {selectedRole && (
         <section aria-label="Selected career details" className="space-y-2">
-          <h3 className="text-sm font-semibold">{selectedRole.title}</h3>
+          <h3 className="text-sm font-bold">{selectedRole.title}</h3>
           <CareerGuidance
             framed
             compact
@@ -119,9 +175,10 @@ export function CareerStepBrowser({
         className="text-sm text-primary underline"
         aria-expanded={open}
         aria-controls="wizard-career-descriptions"
-        onClick={() => setOpen((value) => !value)}
+        ref={browseButton}
+        onClick={() => (open ? closeCatalogue() : setOpen(true))}
       >
-        Browse all career descriptions
+        {open ? "Collapse Careers" : "Browse All Careers"}
       </button>
       {open && (
         <section
@@ -130,6 +187,15 @@ export function CareerStepBrowser({
           className="overflow-hidden rounded border border-border"
         >
           <CareerCatalogue embedded selected={selected} onSelect={onSelect} />
+          <div className="flex justify-end border-t border-border p-3">
+            <button
+              type="button"
+              onClick={closeCatalogue}
+              className="rounded border border-input bg-background px-4 py-2 text-sm font-semibold"
+            >
+              Collapse Careers
+            </button>
+          </div>
         </section>
       )}
     </div>
