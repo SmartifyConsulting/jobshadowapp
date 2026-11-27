@@ -79,7 +79,7 @@ export function JourneyStepper({
                     role="region"
                     aria-labelledby={panelId + "-" + step.id + "-heading"}
                     hidden={!expanded}
-                    className="min-w-0 bg-teal p-3 text-foreground sm:p-4"
+                    className="workflow-step-panel mx-4 my-3 min-w-0 rounded-xl border border-border p-4 text-foreground sm:mx-6 sm:p-5"
                   >
                     {selected ? children : null}
                   </div>

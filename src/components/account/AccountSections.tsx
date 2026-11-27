@@ -1190,9 +1190,7 @@ function StudentJourney({
           setActive(step);
         }}
       >
-        <div
-          className={`min-w-0 overflow-hidden text-foreground ${active === "request" ? "bg-teal p-0" : "bg-teal p-4 sm:p-6"}`}
-        >
+        <div className="min-w-0 overflow-hidden text-foreground">
           {active === "profile" && profileContent && (
             <div className="space-y-4">{profileContent}</div>
           )}

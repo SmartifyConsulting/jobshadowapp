@@ -481,3 +481,12 @@ h1, h2, .screen-heading {
   background-color: #F9DB01;
 }
 .profile-screen .bg-teal { background-color: #F9DB01; }
+
+/* Each expanded workflow step has the same ivory content frame. */
+.workflow-step-panel {
+  --ivory: #FFFDF5;
+  --card: #FFFDF5;
+  --background: #FFFDF5;
+  background-color: #FFFDF5;
+}
+.workflow-step-panel .bg-teal { background-color: #FFFDF5; }
