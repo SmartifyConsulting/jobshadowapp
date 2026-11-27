@@ -3,7 +3,11 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const auth = vi.hoisted(() => ({
-  user: { id: "test-scholar", user_metadata: {} as Record<string, unknown> },
+  user: { id: "test-scholar", user_metadata: {} } as {
+    id: string;
+    email?: string;
+    user_metadata: Record<string, unknown>;
+  },
   save: vi.fn(),
 }));
 vi.mock("@/components/SiteLayout", () => ({
@@ -45,6 +49,50 @@ const client = () => {
   return cache;
 };
 describe("guided career and host selection", () => {
+  it("lets the test scholar review Step 4 without creating a booking or recording payment", async () => {
+    auth.user = {
+      id: "1ec456b0-6280-4732-9393-9e67991ffdfa",
+      email: "elenanicolettis@icloud.com",
+      user_metadata: { selected_career: "Accountant" },
+    };
+    const cache = client();
+    cache.setQueryData(["me"], auth.user);
+    cache.setQueryData(["scholar-profile", auth.user.id], {});
+    cache.setQueryData(["bookings", auth.user.id], []);
+    cache.setQueryData(["career-favourites", auth.user.id], new Set());
+    cache.setQueryData(
+      ["placements"],
+      [
+        {
+          id: 900000115,
+          career: "Accountant",
+          location: "Johannesburg",
+          availability: "6/12/2099",
+          arrival_time: "09:00",
+          collection_time: "12:00",
+          amount: 350,
+        },
+      ],
+    );
+    render(
+      <QueryClientProvider client={cache}>
+        <AccountPanel withBookings initialStep="request" />
+      </QueryClientProvider>,
+    );
+    fireEvent.change(screen.getByLabelText("From"), { target: { value: "2099-06-01" } });
+    fireEvent.change(screen.getByLabelText("To"), { target: { value: "2099-06-30" } });
+    fireEvent.click(screen.getByRole("button", { name: "Search Available Mentors" }));
+    fireEvent.click(screen.getByRole("radio"));
+    expect(screen.getByText("Selected Career: Accountant")).toBeVisible();
+    expect(
+      screen.getByText(
+        "Payment preview only. No booking, payment or confirmation has been created.",
+      ),
+    ).toBeVisible();
+    expect(screen.getByRole("button", { name: "Payment Unavailable in Preview" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Pay with PayFast" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Continue to Complete Forms" })).toBeNull();
+  });
   it("restores searched dates and mentor selection from the account after remount", async () => {
     const mount = (user = auth.user, available = true) => {
       const cache = client();
@@ -93,7 +141,7 @@ describe("guided career and host selection", () => {
     second.unmount();
     const third = mount(auth.user, false);
     expect(screen.getByText("Available mentor placements (0)")).toBeVisible();
-    expect(screen.getByRole("button", { name: "Continue to Payment" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Continue to Placement Details" })).toBeDisabled();
     third.unmount();
     mount({ id: "other-scholar", user_metadata: {} });
     expect(screen.getByLabelText("From")).toHaveValue("");
@@ -202,7 +250,7 @@ describe("guided career and host selection", () => {
         screen.getByRole("complementary", { name: "Favourite career availability" }),
       ).queryByRole("button", { name: "Choose This Mentor" }),
     ).toBeNull();
-    expect(screen.getByRole("button", { name: "Continue to Payment" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Continue to Placement Details" })).toBeDisabled();
   });
   it("cascades sector and category choices and clears an incompatible saved career", () => {
     const cache = client();
@@ -338,6 +386,7 @@ describe("guided career and host selection", () => {
     first.unmount();
     const second = mount("request");
     expect(screen.getByRole("heading", { name: "Mentor Availability" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Step 4: Make Payment" })).toBeDisabled();
     expect(screen.getByText("Career: Accountant", { exact: true })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Back to Careers" }));
     expect(screen.getByRole("combobox", { name: "Career" })).toHaveValue("Accountant");
@@ -428,6 +477,6 @@ describe("guided career and host selection", () => {
     expect(screen.getAllByRole("radio")).toHaveLength(2);
     expect(screen.queryByText("London")).toBeNull();
     fireEvent.click(screen.getAllByRole("radio")[0]!);
-    expect(screen.getByRole("button", { name: "Continue to Payment" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Continue to Placement Details" })).toBeEnabled();
   });
 });

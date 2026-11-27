@@ -799,8 +799,8 @@ function HostProfile({
   }, []);
 
   return (
-    <section className="w-full space-y-4 bg-teal">
-      {!wizard && <ScreenHeading title="My Profile" tone="yellow" />}
+    <section className={wizard ? "w-full space-y-4 bg-ivory" : "w-full space-y-4 bg-[#F9DB01]"}>
+      {!wizard && <ScreenHeading title="My Profile" />}
       <MentorOnboardingWizard
         userId={ownIdentity.user.data?.id ?? ""}
         hostProfile={profile.data!}
@@ -1766,7 +1766,9 @@ function PlacementCard({
       _id: placement.id,
       _slots: slots,
       _active: vals.active,
-      _max_applicants: vals.max_applicants ? Number(vals.max_applicants) : (null as unknown as number),
+      _max_applicants: vals.max_applicants
+        ? Number(vals.max_applicants)
+        : (null as unknown as number),
     });
     if (error) {
       setBusy(false);

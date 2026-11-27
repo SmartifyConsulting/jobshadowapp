@@ -288,8 +288,8 @@ export function AccountProfile({ admin = false }: { admin?: boolean } = {}) {
     "My Profile";
   return (
     <div className="profile-screen flex flex-1 flex-col">
-      <ScreenHeading title="My Profile" tone="yellow" />
-      <section className="space-y-4 bg-ivory p-4 text-foreground">
+      <ScreenHeading title="My Profile" />
+      <section className="space-y-4 bg-[#F9DB01] p-4 text-foreground">
         <ProfileSummaryCard
           name={name}
           previewSections={[

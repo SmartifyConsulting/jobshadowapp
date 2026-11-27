@@ -8,6 +8,7 @@ import { SchoolPicker } from "./SchoolPicker";
 import { DietaryNeedsPicker } from "./ScholarSelections";
 import { JourneyStepper, type JourneyStep } from "@/components/JourneyStepper";
 import { ROLES } from "@/lib/data";
+import { isSwitchPersona, DEMO_ACCOUNTANT_PLACEMENT_ID } from "@/lib/dev-personas";
 import { phoneWithCountryCode } from "@/components/PhoneInput";
 import { PersonNameFields, joinPersonName } from "@/components/PersonNameFields";
 import { PhoneInput } from "@/components/PhoneInput";
@@ -1039,6 +1040,10 @@ function StudentJourney({
   initialStep?: string | undefined;
   profileContent?: ReactNode;
 }) {
+  const { data: journeyUser } = useUser();
+  const canPreviewPayment =
+    journeyUser?.id === userId && isSwitchPersona(userId, journeyUser.email);
+  const [paymentPreview, setPaymentPreview] = useState<PaymentPreview | null>(null);
   const [requestedActive, setActive] = useState(initialStep ?? "profile");
   useEffect(() => {
     if (initialStep) setActive(initialStep);
@@ -1121,7 +1126,13 @@ function StudentJourney({
       complete: !!current,
       locked: !profile,
     },
-    { id: "payment", title: "Make Payment", icon: CreditCard, complete: paid, locked: !current },
+    {
+      id: "payment",
+      title: "Make Payment",
+      icon: CreditCard,
+      complete: paid && !paymentPreview,
+      locked: !current && !paymentPreview,
+    },
     {
       id: "forms",
       title: "Complete Forms",
@@ -1237,134 +1248,204 @@ function StudentJourney({
                 Choose a career that interests you, then find a host offering that experience.
               </p>
               <CareerStepBrowser selected={career} onSelect={setCareer} />
-              <Button
-                disabled={!career || saveCareer.isPending}
-                onClick={() => setActive("request")}
-              >
-                Continue to Find a Mentor
-              </Button>
+              <div className="flex justify-end">
+                <Button
+                  disabled={!career || saveCareer.isPending}
+                  onClick={() => setActive("request")}
+                >
+                  Continue to Find a Mentor
+                </Button>
+              </div>
             </div>
           )}
           {active === "request" && (
             <NewBooking
               initialCareer={career}
               onBackToCareers={() => setActive("careers")}
+              onReviewPayment={
+                canPreviewPayment
+                  ? (preview) => {
+                      setPaymentPreview(preview);
+                      setActive("payment");
+                    }
+                  : undefined
+              }
               onBooked={(id) => {
                 setSelectedId(id);
                 setActive("payment");
               }}
             />
           )}
-          {["payment", "forms", "confirmation", "experience", "feedback"].includes(active) && (
-            <div className="space-y-4">
-              <label className="block text-sm">
-                Your application
-                <select
-                  value={current?.id ?? ""}
-                  onChange={(event) => setSelectedId(event.target.value)}
-                  className="mt-1 block w-full rounded border border-input bg-background p-2"
-                >
-                  <option value="" disabled>
-                    Choose an application
-                  </option>
-                  {bookings.data?.map((booking) => (
-                    <option key={booking.id} value={booking.id}>
-                      {booking.career} — {booking.company} — {booking.shadow_date}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              {!current ? (
-                <p className="text-sm">
-                  {bookings.isFetching
-                    ? "Loading your application…"
-                    : "Choose an application to continue."}
-                </p>
-              ) : (
+          {active === "payment" && canPreviewPayment && (paymentPreview || !current) && (
+            <div className="space-y-4 rounded-lg border border-border bg-[#FFFDF5] p-4">
+              {paymentPreview ? (
                 <>
-                  {active === "payment" && (
-                    <>
-                      <p className="text-sm">
-                        {paid
-                          ? "Payment is recorded for this booking."
-                          : current.status === "pending_approval"
-                            ? "Your host needs to approve the request before payment is available."
-                            : "Review your booking and complete payment below."}
-                      </p>
-                      <Bookings selectedId={current.id} />
-                      <Button disabled={!paid} onClick={() => setActive("forms")}>
-                        Continue to Complete Forms
-                      </Button>
-                    </>
-                  )}
-                  {active === "forms" && (
-                    <>
-                      <p className="text-sm">
-                        Check payment and complete the required indemnity and consent documents for
-                        this booking.
-                      </p>
-                      <Bookings selectedId={current.id} />
-                      <Button variant="outline" onClick={() => setActive("confirmation")}>
-                        Check Confirmation
-                      </Button>
-                    </>
-                  )}
-                  {active === "confirmation" && (
-                    <>
-                      <p className="text-sm">
-                        {confirmed
-                          ? "Your booking is confirmed. Check the date, location and arrangements before your visit."
-                          : current.status === "cancelled"
-                            ? "This application has been cancelled. You can request another booking."
-                            : "Your booking is not confirmed yet. Complete any outstanding payment or forms and check back here."}
-                      </p>
-                      <Bookings selectedId={current.id} />
-                      {confirmed && (
-                        <Button onClick={() => setActive("experience")}>
-                          Continue to Your Job Shadow
-                        </Button>
-                      )}
-                    </>
-                  )}
-                  {active === "experience" && (
-                    <>
-                      <p className="text-sm">
-                        {current.career} at {current.company} · {current.shadow_date}
-                      </p>
-                      <p className="text-sm">
-                        Check your booking instructions, arrival time and what to bring. Feedback
-                        becomes available when the experience is recorded as completed.
-                      </p>
-                      <Bookings selectedId={current.id} />
-                      {current.status === "completed" && (
-                        <Button onClick={() => setActive("feedback")}>Continue to Feedback</Button>
-                      )}
-                    </>
-                  )}
-                  {active === "feedback" && (
-                    <>
-                      {feedback.data?.already_submitted ? (
-                        <p className="text-sm">Thank you—your feedback has been submitted.</p>
-                      ) : (
-                        <>
-                          <p className="text-sm">
-                            Tell us about your experience and what you learned.
-                          </p>
-                          <Link
-                            to="/evaluation/$bookingId"
-                            params={{ bookingId: current.id }}
-                            className="inline-block rounded bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-                          >
-                            Complete Your Evaluation
-                          </Link>
-                        </>
-                      )}
-                    </>
-                  )}
+                  <p className="text-sm font-semibold">Selected Career: {paymentPreview.career}</p>
+                  <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                    <div>
+                      <dt className="font-semibold">Date</dt>
+                      <dd>{paymentPreview.date || "Not selected"}</dd>
+                    </div>
+                    <div>
+                      <dt className="font-semibold">Location</dt>
+                      <dd>{paymentPreview.location}</dd>
+                    </div>
+                    {paymentPreview.from && (
+                      <div>
+                        <dt className="font-semibold">Arrival Time</dt>
+                        <dd>{displayTime(paymentPreview.from)}</dd>
+                      </div>
+                    )}
+                    {paymentPreview.to && (
+                      <div>
+                        <dt className="font-semibold">Collection Time</dt>
+                        <dd>{displayTime(paymentPreview.to)}</dd>
+                      </div>
+                    )}
+                    <div>
+                      <dt className="font-semibold">Total</dt>
+                      <dd>R{paymentPreview.amount.toFixed(0)}</dd>
+                    </div>
+                  </dl>
+                  <p className="text-sm">
+                    Payment preview only. No booking, payment or confirmation has been created.
+                  </p>
+                  <Button disabled>Payment Unavailable in Preview</Button>
                 </>
+              ) : (
+                <p className="text-sm">
+                  Choose a mentor and an available date in Request a Booking, then select Review
+                  Payment to see the details here.
+                </p>
               )}
+              <div>
+                <Button variant="outline" onClick={() => setActive("request")}>
+                  Back to Mentor and Date Selection
+                </Button>
+              </div>
             </div>
           )}
+          {["payment", "forms", "confirmation", "experience", "feedback"].includes(active) &&
+            !(active === "payment" && canPreviewPayment && (paymentPreview || !current)) && (
+              <div className="space-y-4">
+                <label className="block text-sm">
+                  Your application
+                  <select
+                    value={current?.id ?? ""}
+                    onChange={(event) => setSelectedId(event.target.value)}
+                    className="mt-1 block w-full rounded border border-input bg-background p-2"
+                  >
+                    <option value="" disabled>
+                      Choose an application
+                    </option>
+                    {bookings.data?.map((booking) => (
+                      <option key={booking.id} value={booking.id}>
+                        {booking.career} — {booking.company} — {booking.shadow_date}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {!current ? (
+                  <p className="text-sm">
+                    {bookings.isFetching
+                      ? "Loading your application…"
+                      : "Choose an application to continue."}
+                  </p>
+                ) : (
+                  <>
+                    {active === "payment" && (
+                      <>
+                        <p className="text-sm">
+                          {paid
+                            ? "Payment is recorded for this booking."
+                            : current.status === "pending_approval"
+                              ? "Your host needs to approve the request before payment is available."
+                              : "Review your booking and complete payment below."}
+                        </p>
+                        <Bookings selectedId={current.id} />
+                        <div className="flex justify-end">
+                          <Button disabled={!paid} onClick={() => setActive("forms")}>
+                            Continue to Complete Forms
+                          </Button>
+                        </div>
+                      </>
+                    )}
+                    {active === "forms" && (
+                      <>
+                        <p className="text-sm">
+                          Check payment and complete the required indemnity and consent documents
+                          for this booking.
+                        </p>
+                        <Bookings selectedId={current.id} />
+                        <div className="flex justify-end">
+                          <Button variant="outline" onClick={() => setActive("confirmation")}>
+                            Check Confirmation
+                          </Button>
+                        </div>
+                      </>
+                    )}
+                    {active === "confirmation" && (
+                      <>
+                        <p className="text-sm">
+                          {confirmed
+                            ? "Your booking is confirmed. Check the date, location and arrangements before your visit."
+                            : current.status === "cancelled"
+                              ? "This application has been cancelled. You can request another booking."
+                              : "Your booking is not confirmed yet. Complete any outstanding payment or forms and check back here."}
+                        </p>
+                        <Bookings selectedId={current.id} />
+                        {confirmed && (
+                          <div className="flex justify-end">
+                            <Button onClick={() => setActive("experience")}>
+                              Continue to Your Job Shadow
+                            </Button>
+                          </div>
+                        )}
+                      </>
+                    )}
+                    {active === "experience" && (
+                      <>
+                        <p className="text-sm">
+                          {current.career} at {current.company} · {current.shadow_date}
+                        </p>
+                        <p className="text-sm">
+                          Check your booking instructions, arrival time and what to bring. Feedback
+                          becomes available when the experience is recorded as completed.
+                        </p>
+                        <Bookings selectedId={current.id} />
+                        {current.status === "completed" && (
+                          <div className="flex justify-end">
+                            <Button onClick={() => setActive("feedback")}>
+                              Continue to Feedback
+                            </Button>
+                          </div>
+                        )}
+                      </>
+                    )}
+                    {active === "feedback" && (
+                      <>
+                        {feedback.data?.already_submitted ? (
+                          <p className="text-sm">Thank you—your feedback has been submitted.</p>
+                        ) : (
+                          <>
+                            <p className="text-sm">
+                              Tell us about your experience and what you learned.
+                            </p>
+                            <Link
+                              to="/evaluation/$bookingId"
+                              params={{ bookingId: current.id }}
+                              className="inline-block rounded bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+                            >
+                              Complete Your Evaluation
+                            </Link>
+                          </>
+                        )}
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
           {bookings.error && (
             <p role="alert" className="mt-3 text-sm text-destructive">
               Your applications could not be loaded. Please refresh and try again.
@@ -1389,6 +1470,14 @@ type Placement = {
   collection_time: string | null;
   description: string | null;
   mode: string | null;
+};
+type PaymentPreview = {
+  career: string;
+  date: string;
+  location: string;
+  from: string;
+  to: string;
+  amount: number;
 };
 
 const savedMentorSearch = z.object({
@@ -1442,10 +1531,12 @@ export function NewBooking({
   initialCareer = "",
   onBooked,
   onBackToCareers,
+  onReviewPayment,
 }: {
   initialCareer?: string;
   onBooked?: ((id: string) => void) | undefined;
   onBackToCareers?: (() => void) | undefined;
+  onReviewPayment?: ((preview: PaymentPreview) => void) | undefined;
 } = {}) {
   const { data: user } = useUser();
   const qc = useQueryClient();
@@ -1605,6 +1696,22 @@ export function NewBooking({
       : p.sector === sector,
   );
   const chosen = options.find((p) => p.id === pid);
+  const canReviewDemo = (placement: Placement | undefined) =>
+    !!onReviewPayment &&
+    placement?.id === DEMO_ACCOUNTANT_PLACEMENT_ID &&
+    placement.career === "Accountant";
+  function reviewDemo(placement: Placement) {
+    if (!canReviewDemo(placement)) return false;
+    onReviewPayment!({
+      career: placement.career,
+      date: "",
+      location: placement.location,
+      from: "",
+      to: "",
+      amount: Number(placement.amount),
+    });
+    return true;
+  }
   const dayTimes = useQuery({
     queryKey: ["placement-day-times", chosen?.id],
     enabled: !!chosen,
@@ -1810,7 +1917,7 @@ export function NewBooking({
   return (
     <div className={initialCareer ? "min-w-0" : "-mx-6"}>
       <div
-        className={`${step === 3 ? "bg-[#FFFDF5] text-foreground" : STEP_BG[step - 1]} px-6 py-5`}
+        className={`${step >= 3 ? "bg-[#FFFDF5] text-foreground" : STEP_BG[step - 1]} px-6 py-5`}
       >
         <div className="flex items-center gap-3">
           <ChevronDown className="h-6 w-6 shrink-0" />
@@ -1972,6 +2079,7 @@ export function NewBooking({
                             setDate("");
                             setConfirmDupe(false);
                             saveSearch({ placementId: host.id, date: "" });
+                            reviewDemo(host);
                           }}
                           className="mt-1"
                         />
@@ -2056,7 +2164,7 @@ export function NewBooking({
                           setPid(host.id);
                           setDate("");
                           setConfirmDupe(false);
-                          setStep(4);
+                          if (!reviewDemo(host)) setStep(4);
                           saveSearch({ career: host.career, placementId: host.id, date: "" });
                         }}
                       >
@@ -2233,7 +2341,7 @@ export function NewBooking({
         </div>
       </div>
       <div
-        className={`flex flex-wrap gap-2 px-6 pb-5 ${step === 3 ? "bg-[#FFFDF5] text-foreground" : initialCareer ? STEP_BG[step - 1] : "bg-primary pt-5"}`}
+        className={`flex flex-wrap gap-2 px-6 pb-5 ${step >= 3 ? "bg-[#FFFDF5] text-foreground" : initialCareer ? STEP_BG[step - 1] : "bg-primary pt-5"}`}
       >
         {initialCareer && step === 3 && (
           <Button type="button" variant="outline" onClick={onBackToCareers}>
@@ -2244,18 +2352,54 @@ export function NewBooking({
           <button
             type="button"
             onClick={() => setStep(step - 1)}
-            className="bg-primary-foreground/20 px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-primary-foreground"
+            className="rounded border border-input bg-background px-5 py-2.5 text-sm font-semibold text-foreground"
           >
             {initialCareer ? `Back to ${titles[step - 2]}` : `Back to Step ${step - 1}`}
           </button>
         )}
         {step < 5 ? (
-          <Button type="button" onClick={() => setStep(step + 1)} disabled={!canContinue}>
+          <Button
+            className="ml-auto"
+            type="button"
+            onClick={() => {
+              if (step === 3 && chosen && reviewDemo(chosen)) return;
+              setStep(step + 1);
+            }}
+            disabled={!canContinue}
+          >
             {initialCareer
               ? step === 3
-                ? "Continue to Payment"
+                ? canReviewDemo(chosen)
+                  ? "Continue to Make Payment"
+                  : "Continue to Placement Details"
                 : `Continue to ${titles[step]}`
               : `Continue to Step ${step + 1}`}
+          </Button>
+        ) : onReviewPayment && canReviewDemo(chosen) ? (
+          <Button
+            className="ml-auto"
+            type="button"
+            disabled={
+              !chosen ||
+              !date ||
+              !dates.includes(date) ||
+              !selectedHours?.from_time ||
+              !selectedHours?.to_time ||
+              requestingDate
+            }
+            onClick={() => {
+              if (!chosen || !date || !selectedHours?.from_time || !selectedHours?.to_time) return;
+              onReviewPayment({
+                career: chosen.career,
+                date,
+                location: chosen.location,
+                from: selectedHours.from_time,
+                to: selectedHours.to_time,
+                amount: due,
+              });
+            }}
+          >
+            Review Payment
           </Button>
         ) : (
           <button
@@ -2269,7 +2413,7 @@ export function NewBooking({
             disabled={
               !chosen || !(requestingDate ? requestedDate : date) || (!!duplicate && !confirmDupe)
             }
-            className="rounded-full bg-cta px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-cta-foreground disabled:opacity-50"
+            className="ml-auto rounded-full bg-cta px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-cta-foreground disabled:opacity-50"
           >
             {requestingDate ? "Submit date request" : "Pay with PayFast"}
           </button>

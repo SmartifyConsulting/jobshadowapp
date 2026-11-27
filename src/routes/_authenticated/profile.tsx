@@ -226,11 +226,9 @@ export function ScholarProfileContent({
             : "flex flex-1 flex-col"
         }
       >
-        {!inWorkflow && (
-          <ScreenHeading title="Profile" tone={tab === "bookings" ? "teal" : "yellow"} />
-        )}
+        {!inWorkflow && <ScreenHeading title="Profile" />}
         <section
-          className={inWorkflow || tab === "bookings" ? "flex-1 bg-teal" : "flex-1 bg-ivory"}
+          className={inWorkflow || tab === "bookings" ? "flex-1 bg-teal" : "flex-1 bg-[#F9DB01]"}
         >
           <div
             className={

@@ -474,13 +474,12 @@ h1, h2, .screen-heading {
 
 /* Own Profile pages use yellow; the embedded How To journey keeps its teal theme. */
 .profile-screen {
-  --card: #F9DB01;
-  --background: #F9DB01;
-  --ivory: #F9DB01;
-  --accent: #F9DB01;
+  --card: #FFFDF5;
+  --background: #FFFDF5;
+  --ivory: #FFFDF5;
   background-color: #F9DB01;
 }
-.profile-screen .bg-teal { background-color: #F9DB01; }
+.profile-screen [role="tab"][data-state="active"] { background-color: #fff; }
 
 /* Each expanded workflow step has the same ivory content frame. */
 .workflow-step-panel {

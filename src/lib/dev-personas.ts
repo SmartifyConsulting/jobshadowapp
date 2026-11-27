@@ -21,6 +21,10 @@ export const DEV_PERSONAS = [
   },
 ] as const;
 
+// Pointer to the approved, database-flagged sample Accountant placement.
+// Its booking submission is blocked by the database; this enables read-only review only.
+export const DEMO_ACCOUNTANT_PLACEMENT_ID = 900000115;
+
 export function isSwitchPersona(id: string, email: string | null | undefined) {
   return DEV_PERSONAS.some(
     (persona) => persona.id === id && persona.email === email?.toLowerCase(),

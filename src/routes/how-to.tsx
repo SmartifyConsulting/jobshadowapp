@@ -508,7 +508,7 @@ function HowTo() {
               </div>
               <a
                 href={content.links[nextStep]}
-                className="inline-flex items-center gap-2 rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+                className="ml-auto inline-flex items-center self-end gap-2 rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
               >
                 {view === "scholar" && nextStep === 2 ? "Explore Now" : "Continue"}
                 <ArrowRight className="h-4 w-4" />

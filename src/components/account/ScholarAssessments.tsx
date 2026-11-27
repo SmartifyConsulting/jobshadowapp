@@ -179,7 +179,6 @@ export function ScholarAssessments() {
           Complete an assessment to save your results here for future review.
         </p>
       )}
-      {selected && <Result row={selected} latest={selected.id === latest?.id} />}
       {history.data && history.data.length > 0 && (
         <div>
           <h4 className="mb-2 font-semibold">Saved Assessment Results</h4>
@@ -207,6 +206,7 @@ export function ScholarAssessments() {
           </ul>
         </div>
       )}
+      {selected && <Result row={selected} latest={selected.id === latest?.id} />}
       <p className="text-xs text-muted-foreground">
         Questions and career suggestions come from the O*NET Interest Profiler, by the U.S.
         Department of Labor.
