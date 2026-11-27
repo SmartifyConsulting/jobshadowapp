@@ -138,7 +138,7 @@ it("resumes legacy LinkedIn drafts on the profile without showing a separate Lin
   mount(wizard());
   expect(await screen.findByRole("button", { name: "Save Profile Test Fixture" })).toBeVisible();
   expect(screen.queryByRole("button", { name: /LinkedIn/ })).toBeNull();
-  expect(screen.getByRole("button", { name: /Reference Checks/ })).toHaveTextContent("4");
+  expect(screen.getByRole("button", { name: /Reference Checks/ })).toHaveTextContent("Step 3");
 });
 it("resumes, validates required fields in red and submits before advancing", async () => {
   const { client, unmount } = mount(wizard());

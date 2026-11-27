@@ -31,37 +31,38 @@ export function MentorHostingGuide({
         steps={steps.map((item, index) => ({ ...item, complete: !!complete[index] }))}
         active={step}
         onChange={setStep}
-      />
-      <div className={step === "availability" ? "space-y-4" : "hidden"}>{preferences}</div>
-      {step === "forms" && (
-        <section className="rounded border border-border p-4 space-y-2">
-          <h2 className="text-sm font-bold">Complete Forms (Indemnity &amp; NDA)</h2>
-          <p className="text-sm">
-            Contact Job Shadow to arrange the mentoring forms and confirm which documents are
-            required.
-          </p>
-          <Link to="/contact" className="text-sm font-bold underline">
-            Contact Job Shadow
-          </Link>
-        </section>
-      )}
-      <div
-        className={["requests", "confirm", "experience"].includes(step) ? "space-y-4" : "hidden"}
       >
-        {bookings}
-      </div>
-      {step === "feedback" && (
-        <section className="rounded border border-border p-4 space-y-2">
-          <h2 className="text-sm font-bold">Get Feedback &amp; Build Your Profile</h2>
-          <p className="text-sm">
-            Review feedback from completed job shadows with Job Shadow and keep your profile up to
-            date.
-          </p>
-          <Link to="/contact" className="text-sm font-bold underline">
-            Contact Job Shadow About Feedback
-          </Link>
-        </section>
-      )}
+        <div className={step === "availability" ? "space-y-4" : "hidden"}>{preferences}</div>
+        {step === "forms" && (
+          <section className="rounded border border-border p-4 space-y-2">
+            <h2 className="text-sm font-bold">Complete Forms (Indemnity &amp; NDA)</h2>
+            <p className="text-sm">
+              Contact Job Shadow to arrange the mentoring forms and confirm which documents are
+              required.
+            </p>
+            <Link to="/contact" className="text-sm font-bold underline">
+              Contact Job Shadow
+            </Link>
+          </section>
+        )}
+        <div
+          className={["requests", "confirm", "experience"].includes(step) ? "space-y-4" : "hidden"}
+        >
+          {bookings}
+        </div>
+        {step === "feedback" && (
+          <section className="rounded border border-border p-4 space-y-2">
+            <h2 className="text-sm font-bold">Get Feedback &amp; Build Your Profile</h2>
+            <p className="text-sm">
+              Review feedback from completed job shadows with Job Shadow and keep your profile up to
+              date.
+            </p>
+            <Link to="/contact" className="text-sm font-bold underline">
+              Contact Job Shadow About Feedback
+            </Link>
+          </section>
+        )}
+      </JourneyStepper>
     </div>
   );
 }

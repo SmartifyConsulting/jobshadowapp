@@ -244,7 +244,10 @@ function ScholarDetails({ p: source }: { p: Record<string, unknown> }) {
         <TabsContent key={t.id} value={t.id} className="mt-4">
           <dl className="grid gap-4 sm:grid-cols-2">
             {t.rows.map(([l, k]) => (
-              <div key={k} className="min-w-0 space-y-1 border-b border-border py-3 text-card-foreground">
+              <div
+                key={k}
+                className="min-w-0 space-y-1 border-b border-border py-3 text-card-foreground"
+              >
                 <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   {l}
                 </dt>
@@ -1174,180 +1177,184 @@ function StudentJourney({
           if (step === "profile" && profile) setEditingProfile(true);
           setActive(step);
         }}
-      />
-      <div
-        className={`min-w-0 overflow-hidden rounded-lg border border-border text-foreground ${active === "request" ? "bg-teal p-0" : "bg-ivory p-4 sm:p-6"}`}
       >
-        {active === "profile" &&
-          (!profile || editingProfile ? (
-            <ProfileForm
-              userId={userId}
-              initialProfile={profile ?? undefined}
-              editing={!!profile && editingProfile}
-              onCancel={() => setEditingProfile(false)}
-              onSaved={() => {
-                setEditingProfile(false);
-                setActive("careers");
+        <div
+          className={`min-w-0 overflow-hidden rounded-lg border border-border text-foreground ${active === "request" ? "bg-teal p-0" : "bg-ivory p-4 sm:p-6"}`}
+        >
+          {active === "profile" &&
+            (!profile || editingProfile ? (
+              <ProfileForm
+                userId={userId}
+                initialProfile={profile ?? undefined}
+                editing={!!profile && editingProfile}
+                onCancel={() => setEditingProfile(false)}
+                onSaved={() => {
+                  setEditingProfile(false);
+                  setActive("careers");
+                }}
+              />
+            ) : (
+              <div className="space-y-4">
+                <h2 className="font-display text-2xl">Step 1: Complete Profile</h2>
+                <p className="text-sm">
+                  Your profile is saved. Review your details before choosing a career and host.
+                </p>
+                <ScholarDetails p={profile} />
+                <div className="flex flex-wrap gap-3">
+                  <Button variant="outline" onClick={() => setEditingProfile(true)}>
+                    Edit Profile
+                  </Button>
+                  <Button onClick={() => setActive("careers")}>Continue to Explore Careers</Button>
+                </div>
+              </div>
+            ))}
+          {active === "careers" && (
+            <div className="space-y-4">
+              <h2 className="font-display text-2xl">Step 2: Explore Careers</h2>
+              <p className="text-sm">
+                Choose a career that interests you, then find a host offering that experience.
+              </p>
+              <CareerStepBrowser selected={career} onSelect={setCareer} />
+              <Button
+                disabled={!career || saveCareer.isPending}
+                onClick={() => setActive("request")}
+              >
+                Continue to Find a Host
+              </Button>
+            </div>
+          )}
+          {active === "request" && (
+            <NewBooking
+              initialCareer={career}
+              onBackToCareers={() => setActive("careers")}
+              onBooked={(id) => {
+                setSelectedId(id);
+                setActive("payment");
               }}
             />
-          ) : (
+          )}
+          {["payment", "forms", "confirmation", "experience", "feedback"].includes(active) && (
             <div className="space-y-4">
-              <h2 className="font-display text-2xl">Step 1: Complete Profile</h2>
-              <p className="text-sm">
-                Your profile is saved. Review your details before choosing a career and host.
-              </p>
-              <ScholarDetails p={profile} />
-              <div className="flex flex-wrap gap-3">
-                <Button variant="outline" onClick={() => setEditingProfile(true)}>
-                  Edit Profile
-                </Button>
-                <Button onClick={() => setActive("careers")}>Continue to Explore Careers</Button>
-              </div>
-            </div>
-          ))}
-        {active === "careers" && (
-          <div className="space-y-4">
-            <h2 className="font-display text-2xl">Step 2: Explore Careers</h2>
-            <p className="text-sm">
-              Choose a career that interests you, then find a host offering that experience.
-            </p>
-            <CareerStepBrowser selected={career} onSelect={setCareer} />
-            <Button disabled={!career || saveCareer.isPending} onClick={() => setActive("request")}>
-              Continue to Find a Host
-            </Button>
-          </div>
-        )}
-        {active === "request" && (
-          <NewBooking
-            initialCareer={career}
-            onBackToCareers={() => setActive("careers")}
-            onBooked={(id) => {
-              setSelectedId(id);
-              setActive("payment");
-            }}
-          />
-        )}
-        {["payment", "forms", "confirmation", "experience", "feedback"].includes(active) && (
-          <div className="space-y-4">
-            <label className="block text-sm">
-              Your application
-              <select
-                value={current?.id ?? ""}
-                onChange={(event) => setSelectedId(event.target.value)}
-                className="mt-1 block w-full rounded border border-input bg-background p-2"
-              >
-                <option value="" disabled>
-                  Choose an application
-                </option>
-                {bookings.data?.map((booking) => (
-                  <option key={booking.id} value={booking.id}>
-                    {booking.career} — {booking.company} — {booking.shadow_date}
+              <label className="block text-sm">
+                Your application
+                <select
+                  value={current?.id ?? ""}
+                  onChange={(event) => setSelectedId(event.target.value)}
+                  className="mt-1 block w-full rounded border border-input bg-background p-2"
+                >
+                  <option value="" disabled>
+                    Choose an application
                   </option>
-                ))}
-              </select>
-            </label>
-            {!current ? (
-              <p className="text-sm">
-                {bookings.isFetching
-                  ? "Loading your application…"
-                  : "Choose an application to continue."}
-              </p>
-            ) : (
-              <>
-                {active === "payment" && (
-                  <>
-                    <h2 className="font-display text-2xl">Step 4: Make Payment</h2>
-                    <p className="text-sm">
-                      {paid
-                        ? "Payment is recorded for this booking."
-                        : current.status === "pending_approval"
-                          ? "Your host needs to approve the request before payment is available."
-                          : "Review your booking and complete payment below."}
-                    </p>
-                    <Bookings selectedId={current.id} />
-                    <Button disabled={!paid} onClick={() => setActive("forms")}>
-                      Continue to Complete Forms
-                    </Button>
-                  </>
-                )}
-                {active === "forms" && (
-                  <>
-                    <h2 className="font-display text-2xl">Step 5: Complete Forms</h2>
-                    <p className="text-sm">
-                      Check payment and complete the required indemnity and consent documents for
-                      this booking.
-                    </p>
-                    <Bookings selectedId={current.id} />
-                    <Button variant="outline" onClick={() => setActive("confirmation")}>
-                      Check Confirmation
-                    </Button>
-                  </>
-                )}
-                {active === "confirmation" && (
-                  <>
-                    <h2 className="font-display text-2xl">Step 6: Check Confirmation</h2>
-                    <p className="text-sm">
-                      {confirmed
-                        ? "Your booking is confirmed. Check the date, location and arrangements before your visit."
-                        : current.status === "cancelled"
-                          ? "This application has been cancelled. You can request another booking."
-                          : "Your booking is not confirmed yet. Complete any outstanding payment or forms and check back here."}
-                    </p>
-                    <Bookings selectedId={current.id} />
-                    {confirmed && (
-                      <Button onClick={() => setActive("experience")}>
-                        Continue to Your Job Shadow
+                  {bookings.data?.map((booking) => (
+                    <option key={booking.id} value={booking.id}>
+                      {booking.career} — {booking.company} — {booking.shadow_date}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {!current ? (
+                <p className="text-sm">
+                  {bookings.isFetching
+                    ? "Loading your application…"
+                    : "Choose an application to continue."}
+                </p>
+              ) : (
+                <>
+                  {active === "payment" && (
+                    <>
+                      <h2 className="font-display text-2xl">Step 4: Make Payment</h2>
+                      <p className="text-sm">
+                        {paid
+                          ? "Payment is recorded for this booking."
+                          : current.status === "pending_approval"
+                            ? "Your host needs to approve the request before payment is available."
+                            : "Review your booking and complete payment below."}
+                      </p>
+                      <Bookings selectedId={current.id} />
+                      <Button disabled={!paid} onClick={() => setActive("forms")}>
+                        Continue to Complete Forms
                       </Button>
-                    )}
-                  </>
-                )}
-                {active === "experience" && (
-                  <>
-                    <h2 className="font-display text-2xl">Step 7: Do Your Job Shadow</h2>
-                    <p className="text-sm">
-                      {current.career} at {current.company} · {current.shadow_date}
-                    </p>
-                    <p className="text-sm">
-                      Check your booking instructions, arrival time and what to bring. Feedback
-                      becomes available when the experience is recorded as completed.
-                    </p>
-                    <Bookings selectedId={current.id} />
-                    {current.status === "completed" && (
-                      <Button onClick={() => setActive("feedback")}>Continue to Feedback</Button>
-                    )}
-                  </>
-                )}
-                {active === "feedback" && (
-                  <>
-                    <h2 className="font-display text-2xl">Step 8: Share Feedback</h2>
-                    {feedback.data?.already_submitted ? (
-                      <p className="text-sm">Thank you—your feedback has been submitted.</p>
-                    ) : (
-                      <>
-                        <p className="text-sm">
-                          Tell us about your experience and what you learned.
-                        </p>
-                        <Link
-                          to="/evaluation/$bookingId"
-                          params={{ bookingId: current.id }}
-                          className="inline-block rounded bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-                        >
-                          Complete Your Evaluation
-                        </Link>
-                      </>
-                    )}
-                  </>
-                )}
-              </>
-            )}
-          </div>
-        )}
-        {bookings.error && (
-          <p role="alert" className="mt-3 text-sm text-destructive">
-            Your applications could not be loaded. Please refresh and try again.
-          </p>
-        )}
-      </div>
+                    </>
+                  )}
+                  {active === "forms" && (
+                    <>
+                      <h2 className="font-display text-2xl">Step 5: Complete Forms</h2>
+                      <p className="text-sm">
+                        Check payment and complete the required indemnity and consent documents for
+                        this booking.
+                      </p>
+                      <Bookings selectedId={current.id} />
+                      <Button variant="outline" onClick={() => setActive("confirmation")}>
+                        Check Confirmation
+                      </Button>
+                    </>
+                  )}
+                  {active === "confirmation" && (
+                    <>
+                      <h2 className="font-display text-2xl">Step 6: Check Confirmation</h2>
+                      <p className="text-sm">
+                        {confirmed
+                          ? "Your booking is confirmed. Check the date, location and arrangements before your visit."
+                          : current.status === "cancelled"
+                            ? "This application has been cancelled. You can request another booking."
+                            : "Your booking is not confirmed yet. Complete any outstanding payment or forms and check back here."}
+                      </p>
+                      <Bookings selectedId={current.id} />
+                      {confirmed && (
+                        <Button onClick={() => setActive("experience")}>
+                          Continue to Your Job Shadow
+                        </Button>
+                      )}
+                    </>
+                  )}
+                  {active === "experience" && (
+                    <>
+                      <h2 className="font-display text-2xl">Step 7: Do Your Job Shadow</h2>
+                      <p className="text-sm">
+                        {current.career} at {current.company} · {current.shadow_date}
+                      </p>
+                      <p className="text-sm">
+                        Check your booking instructions, arrival time and what to bring. Feedback
+                        becomes available when the experience is recorded as completed.
+                      </p>
+                      <Bookings selectedId={current.id} />
+                      {current.status === "completed" && (
+                        <Button onClick={() => setActive("feedback")}>Continue to Feedback</Button>
+                      )}
+                    </>
+                  )}
+                  {active === "feedback" && (
+                    <>
+                      <h2 className="font-display text-2xl">Step 8: Share Feedback</h2>
+                      {feedback.data?.already_submitted ? (
+                        <p className="text-sm">Thank you—your feedback has been submitted.</p>
+                      ) : (
+                        <>
+                          <p className="text-sm">
+                            Tell us about your experience and what you learned.
+                          </p>
+                          <Link
+                            to="/evaluation/$bookingId"
+                            params={{ bookingId: current.id }}
+                            className="inline-block rounded bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+                          >
+                            Complete Your Evaluation
+                          </Link>
+                        </>
+                      )}
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+          {bookings.error && (
+            <p role="alert" className="mt-3 text-sm text-destructive">
+              Your applications could not be loaded. Please refresh and try again.
+            </p>
+          )}
+        </div>
+      </JourneyStepper>
     </section>
   );
 }

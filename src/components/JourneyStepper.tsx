@@ -1,4 +1,5 @@
-import { Check, type LucideIcon } from "lucide-react";
+import { useId, useState, type ReactNode } from "react";
+import { Check, ChevronDown, type LucideIcon } from "lucide-react";
 export type JourneyStep = {
   id: string;
   title: string;
@@ -12,14 +13,81 @@ export function JourneyStepper({
   active,
   onChange,
   titleClassName,
+  children,
 }: {
   title: string;
   steps: JourneyStep[];
   active: string;
   onChange: (step: string) => void;
   titleClassName?: string;
+  children?: ReactNode;
 }) {
+  const panelId = useId();
+  const [closedStep, setClosedStep] = useState<string | null>(null);
   const position = steps.findIndex((step) => step.id === active);
+  if (children !== undefined)
+    return (
+      <div className="min-w-0 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h1 className={titleClassName ?? "font-display text-2xl"}>{title}</h1>
+          <p className="text-xs">
+            Step {position + 1} of {steps.length}
+          </p>
+        </div>
+        <div className="workflow-steps workflow-accordion" aria-label={title + " steps"}>
+          {steps.map((step, index) => {
+            const selected = active === step.id;
+            const expanded = selected && closedStep !== step.id;
+            return (
+              <div key={step.id}>
+                <h2>
+                  <button
+                    id={panelId + "-" + step.id + "-heading"}
+                    type="button"
+                    disabled={step.locked}
+                    aria-expanded={expanded}
+                    aria-controls={panelId + "-" + step.id}
+                    aria-current={selected ? "step" : undefined}
+                    onClick={() => {
+                      setClosedStep(selected && expanded ? step.id : null);
+                      if (!selected) onChange(step.id);
+                    }}
+                    className="workflow-step flex min-h-12 w-full items-center gap-4 px-4 py-2 text-left sm:gap-8 sm:px-6"
+                  >
+                    <span className="workflow-step-indicator grid h-8 w-8 shrink-0 place-items-center rounded-full">
+                      {step.complete ? (
+                        <Check className="h-5 w-5" aria-label="Completed" />
+                      ) : (
+                        <ChevronDown
+                          className={
+                            "h-5 w-5 transition-transform " + (expanded ? "rotate-180" : "")
+                          }
+                          aria-hidden
+                        />
+                      )}
+                    </span>
+                    <span className="font-display text-lg leading-tight sm:text-2xl">
+                      Step {index + 1}: {step.title}
+                    </span>
+                  </button>
+                </h2>
+                {
+                  <div
+                    id={panelId + "-" + step.id}
+                    role="region"
+                    aria-labelledby={panelId + "-" + step.id + "-heading"}
+                    hidden={!expanded}
+                    className="min-w-0 border-x border-border bg-ivory p-3 text-foreground sm:p-4"
+                  >
+                    {selected ? children : null}
+                  </div>
+                }
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
   return (
     <div className="min-w-0 space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">

@@ -466,3 +466,8 @@ h1, h2, .screen-heading {
 .workflow-step-indicator.lucide-circle-check-big {
   background-color: #15803d !important;
 }
+
+.workflow-accordion .workflow-step { border-radius: 0; }
+.workflow-accordion .workflow-step[aria-current="step"] { outline: none; }
+.workflow-accordion .workflow-step:focus-visible { outline: 3px solid var(--charcoal); outline-offset: -3px; }
+.workflow-accordion .workflow-step:disabled { cursor: not-allowed; }
