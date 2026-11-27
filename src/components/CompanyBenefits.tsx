@@ -2,7 +2,7 @@ export function CompanyBenefits() {
   return (
     <section
       id="company-benefits"
-      className="mt-6 scroll-mt-36 space-y-4 rounded border border-border bg-ivory p-4 sm:p-5"
+      className="mt-6 scroll-mt-36 space-y-4 rounded border border-border bg-teal p-4 sm:p-5"
     >
       <h2 className="font-display text-2xl">Why Companies Participate</h2>
       <p className="text-sm">
@@ -28,14 +28,14 @@ export function CompanyBenefits() {
             "The company payment is 10% of the amount actually paid for completed job shadows, excluding cancelled or refunded bookings and subject to Admin approval. This commercial benefit is separate from CSI, SED and Skills Development recognition.",
           ],
         ].map(([title, body]) => (
-          <section key={title} className="rounded border border-border bg-card p-4">
+          <section key={title} className="rounded border border-border bg-teal p-4">
             <h3 className="text-sm font-bold">{title}</h3>
             <p className="mt-2 text-sm">{body}</p>
           </section>
         ))}
       </div>
       <section
-        className="rounded border border-border bg-card p-4 space-y-3"
+        className="rounded border border-border bg-teal p-4 space-y-3"
         aria-label="Illustrative SED example"
       >
         <h3 className="text-sm font-bold">An Example of Potential SED Value</h3>

@@ -395,8 +395,8 @@ function HowTo() {
           <h1 className="screen-heading font-display text-2xl">How To</h1>
         </div>
       </div>
-      <section className="flex flex-1 items-center bg-[#7CCCC8] px-5 py-4">
-        <div className="mx-auto w-full max-w-7xl rounded-xl border border-border bg-background p-5 shadow-warm">
+      <section className="flex flex-1 items-center bg-teal px-5 py-4">
+        <div className="mx-auto w-full max-w-7xl rounded-xl border border-border bg-teal p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div
               role="group"
@@ -415,7 +415,7 @@ function HowTo() {
                 </button>
               ))}
             </div>
-            <span className="rounded-full border border-border bg-muted/40 px-2.5 py-1 text-xs text-muted-foreground">
+            <span className="rounded-full border border-border bg-teal px-2.5 py-1 text-xs text-muted-foreground">
               {view === "school"
                 ? "School guide"
                 : view === "company"
@@ -460,7 +460,7 @@ function HowTo() {
           )}
           {view === "company" && <CompanyBenefits />}
           {nextStep >= 0 ? (
-            <div className="mt-2 flex flex-wrap items-center justify-between gap-4 rounded-lg bg-muted/50 px-5 py-4">
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-4 rounded-lg bg-teal px-5 py-4">
               <div>
                 <h2 className="text-lg font-semibold">
                   NEXT STEP: {content.steps[nextStep]!.label.replace(/\n/g, " ")}
@@ -476,7 +476,7 @@ function HowTo() {
               </a>
             </div>
           ) : (
-            <p className="mt-2 rounded-lg bg-muted/50 px-5 py-4 text-sm">
+            <p className="mt-2 rounded-lg bg-teal px-5 py-4 text-sm">
               All saved steps are complete. Select a step above to review it.
             </p>
           )}
