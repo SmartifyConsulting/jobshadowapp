@@ -1647,7 +1647,7 @@ export function NewBooking({
   }
   const sel =
     "block w-full max-w-md border-b border-current/50 bg-transparent p-2 text-teal-foreground outline-none [&>option]:text-foreground";
-  const titles = ["Sector", "Career", "Host", "Placement Details", "Date & Pay"];
+  const titles = ["Sector", "Career", "Mentor Availability", "Placement Details", "Date & Pay"];
   const hostLabel = (p: Placement, i: number) => {
     const sameLocation = hosts.filter((h) => h.location === p.location);
     const base =

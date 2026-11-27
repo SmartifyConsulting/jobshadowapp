@@ -173,7 +173,7 @@ describe("guided career and host selection", () => {
     );
     first.unmount();
     const second = mount("request");
-    expect(screen.getByRole("heading", { name: "Host" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Mentor Availability" })).toBeVisible();
     expect(screen.getByText("Accountant", { exact: true })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Back to Careers" }));
     expect(screen.getByRole("combobox", { name: "Career" })).toHaveValue("Accountant");
@@ -181,7 +181,7 @@ describe("guided career and host selection", () => {
     auth.user = { id: "other-scholar", user_metadata: {} };
     mount("request");
     expect(screen.getByRole("combobox", { name: "Career" })).toHaveValue("");
-    expect(screen.queryByRole("heading", { name: "Host" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Mentor Availability" })).toBeNull();
   });
   it("shows a failed preference save and lets the scholar retry", async () => {
     auth.save.mockResolvedValueOnce({
