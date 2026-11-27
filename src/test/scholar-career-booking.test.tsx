@@ -74,7 +74,7 @@ describe("guided career and host selection", () => {
         },
       ],
     );
-    render(
+    const firstVisit = render(
       <QueryClientProvider client={cache}>
         <AccountPanel withBookings initialStep="request" />
       </QueryClientProvider>,
@@ -92,6 +92,27 @@ describe("guided career and host selection", () => {
     expect(screen.getByRole("button", { name: "Payment Unavailable in Preview" })).toBeDisabled();
     expect(screen.queryByRole("button", { name: "Pay with PayFast" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Continue to Complete Forms" })).toBeNull();
+    await waitFor(() =>
+      expect(auth.user.user_metadata["mentor_search"]).toMatchObject({ placementId: 900000115 }),
+    );
+    firstVisit.unmount();
+    const returnCache = client();
+    returnCache.setQueryData(["me"], auth.user);
+    returnCache.setQueryData(["scholar-profile", auth.user.id], {});
+    returnCache.setQueryData(["bookings", auth.user.id], []);
+    returnCache.setQueryData(["placements"], cache.getQueryData(["placements"]));
+    render(
+      <QueryClientProvider client={returnCache}>
+        <AccountPanel withBookings initialStep="payment" />
+      </QueryClientProvider>,
+    );
+    expect(screen.getByRole("button", { name: "Step 4: Make Payment" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Step 4: Make Payment" })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    expect(screen.getByText("Selected Career: Accountant")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Payment Unavailable in Preview" })).toBeDisabled();
   });
   it("restores searched dates and mentor selection from the account after remount", async () => {
     const mount = (user = auth.user, available = true) => {

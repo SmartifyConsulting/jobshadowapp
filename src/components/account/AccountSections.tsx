@@ -1043,7 +1043,45 @@ function StudentJourney({
   const { data: journeyUser } = useUser();
   const canPreviewPayment =
     journeyUser?.id === userId && isSwitchPersona(userId, journeyUser.email);
-  const [paymentPreview, setPaymentPreview] = useState<PaymentPreview | null>(null);
+  const [previewSelection, setPaymentPreview] = useState<
+    (PaymentPreview & { userId: string }) | null
+  >(null);
+  const savedSearch = savedMentorSearch.safeParse(journeyUser?.user_metadata?.["mentor_search"]);
+  const savedDemo =
+    canPreviewPayment &&
+    savedSearch.success &&
+    savedSearch.data.placementId === DEMO_ACCOUNTANT_PLACEMENT_ID &&
+    savedSearch.data.career === "Accountant"
+      ? savedSearch.data
+      : null;
+  const demoPlacements = useQuery({
+    queryKey: ["placements"],
+    queryFn: loadBookingPlacements,
+    enabled: !!savedDemo,
+  });
+  const savedPlacement = savedDemo
+    ? demoPlacements.data?.find(
+        (p) => p.id === savedDemo.placementId && p.career === savedDemo.career,
+      )
+    : undefined;
+  const paymentPreview =
+    previewSelection?.userId === userId
+      ? previewSelection
+      : savedPlacement && savedDemo
+        ? {
+            career: savedPlacement.career,
+            location: savedPlacement.location,
+            amount: Number(savedPlacement.amount),
+            date: datesInRange(savedPlacement.availability, savedDemo.from, savedDemo.to).includes(
+              bookingDateKey(savedDemo.date) ?? "",
+            )
+              ? savedDemo.date
+              : "",
+            from: "",
+            to: "",
+          }
+        : null;
+  const showingPaymentPreview = canPreviewPayment && (!!paymentPreview || !!savedDemo);
   const [requestedActive, setActive] = useState(initialStep ?? "profile");
   useEffect(() => {
     if (initialStep) setActive(initialStep);
@@ -1130,8 +1168,8 @@ function StudentJourney({
       id: "payment",
       title: "Make Payment",
       icon: CreditCard,
-      complete: paid && !paymentPreview,
-      locked: !current && !paymentPreview,
+      complete: paid && !showingPaymentPreview,
+      locked: !current && !showingPaymentPreview,
     },
     {
       id: "forms",
@@ -1265,7 +1303,7 @@ function StudentJourney({
               onReviewPayment={
                 canPreviewPayment
                   ? (preview) => {
-                      setPaymentPreview(preview);
+                      setPaymentPreview({ ...preview, userId });
                       setActive("payment");
                     }
                   : undefined
@@ -1276,7 +1314,7 @@ function StudentJourney({
               }}
             />
           )}
-          {active === "payment" && canPreviewPayment && (paymentPreview || !current) && (
+          {active === "payment" && showingPaymentPreview && (
             <div className="space-y-4 rounded-lg border border-border bg-[#FFFDF5] p-4">
               {paymentPreview ? (
                 <>
@@ -1312,10 +1350,22 @@ function StudentJourney({
                   </p>
                   <Button disabled>Payment Unavailable in Preview</Button>
                 </>
+              ) : demoPlacements.isError ? (
+                <p role="alert" className="text-sm">
+                  Your saved payment preview could not be loaded.{" "}
+                  <button
+                    type="button"
+                    className="underline"
+                    onClick={() => void demoPlacements.refetch()}
+                  >
+                    Try Again
+                  </button>
+                </p>
               ) : (
                 <p className="text-sm">
-                  Choose a mentor and an available date in Request a Booking, then select Review
-                  Payment to see the details here.
+                  {demoPlacements.isPending
+                    ? "Loading your saved payment preview…"
+                    : "This sample mentor is no longer available. Return to mentor selection to choose an option."}
                 </p>
               )}
               <div>
@@ -1326,7 +1376,7 @@ function StudentJourney({
             </div>
           )}
           {["payment", "forms", "confirmation", "experience", "feedback"].includes(active) &&
-            !(active === "payment" && canPreviewPayment && (paymentPreview || !current)) && (
+            !(active === "payment" && showingPaymentPreview) && (
               <div className="space-y-4">
                 <label className="block text-sm">
                   Your application
@@ -1480,6 +1530,14 @@ type PaymentPreview = {
   amount: number;
 };
 
+async function loadBookingPlacements() {
+  return (await fetchAllRows(async (from, to) => {
+    const result = await supabase.rpc("list_placements").order("id").range(from, to);
+    if (result.error) throw result.error;
+    return result.data ?? [];
+  })) as Placement[];
+}
+
 const savedMentorSearch = z.object({
   sourceCareer: z.string(),
   career: z.string(),
@@ -1542,12 +1600,7 @@ export function NewBooking({
   const qc = useQueryClient();
   const placements = useQuery({
     queryKey: ["placements"],
-    queryFn: async () =>
-      (await fetchAllRows(async (from, to) => {
-        const r = await supabase.rpc("list_placements").order("id").range(from, to);
-        if (r.error) throw r.error;
-        return r.data ?? [];
-      })) as Placement[],
+    queryFn: loadBookingPlacements,
   });
   const favourites = useQuery({
     queryKey: ["career-favourites", user?.id],
