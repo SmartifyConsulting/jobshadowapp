@@ -21,7 +21,7 @@ import { DEV_PERSONAS, isSwitchPersona } from "@/lib/dev-personas";
 export const SITE_NAV = [
   { to: "/", label: "Home" },
   { to: "/about", label: "About" },
-  { to: "/real-stories", label: "Stories" },
+  { to: "/real-stories", label: "Real Stories" },
   { to: "/how-to", label: "How To" },
   { to: "/roles", label: "Careers" },
   { to: "/blogs", label: "Insights" },
