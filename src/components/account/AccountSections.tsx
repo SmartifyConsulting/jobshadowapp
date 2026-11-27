@@ -245,6 +245,7 @@ function ScholarDetails({ p: source }: { p: Record<string, unknown> }) {
             {t.label}
           </TabsTrigger>
         ))}
+        <TabsTrigger value="assessments">Assessments</TabsTrigger>
       </TabsList>
       {SCHOLAR_DETAIL_TABS.map((t) => (
         <TabsContent key={t.id} value={t.id} className="mt-4">
@@ -263,6 +264,9 @@ function ScholarDetails({ p: source }: { p: Record<string, unknown> }) {
           </dl>
         </TabsContent>
       ))}
+      <TabsContent value="assessments" className="mt-4">
+        <p className="text-sm">No assessments are available yet.</p>
+      </TabsContent>
     </Tabs>
   );
 }
@@ -1190,14 +1194,7 @@ function StudentJourney({
           className={`min-w-0 overflow-hidden text-foreground ${active === "request" ? "bg-teal p-0" : "bg-teal p-4 sm:p-6"}`}
         >
           {active === "profile" && profileContent && (
-            <div className="space-y-4">
-              {profileContent}
-              <div className="flex justify-end">
-                <Button disabled={!profile} onClick={() => setActive("careers")}>
-                  Continue to Explore Careers
-                </Button>
-              </div>
-            </div>
+            <div className="space-y-4">{profileContent}</div>
           )}
           {active === "profile" &&
             !profileContent &&
@@ -1221,9 +1218,6 @@ function StudentJourney({
                 <div className="flex flex-wrap gap-3">
                   <Button variant="outline" onClick={() => setEditingProfile(true)}>
                     Edit Profile
-                  </Button>
-                  <Button className="ml-auto" onClick={() => setActive("careers")}>
-                    Continue to Explore Careers
                   </Button>
                 </div>
               </div>
