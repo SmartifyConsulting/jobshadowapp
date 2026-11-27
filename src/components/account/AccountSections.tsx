@@ -1473,7 +1473,7 @@ function StudentJourney({
           )}
           {active === "forms" && showingPaymentPreview && (
             <div className="space-y-4">
-              <SampleBookingForms career={paymentPreview?.career ?? "Accountant"} />
+              <SampleBookingForms />
               <Button variant="outline" onClick={() => setActive("payment")}>
                 Back to Make Payment
               </Button>
@@ -1611,7 +1611,7 @@ function StudentJourney({
   );
 }
 
-function SampleBookingForms({ career }: { career: string }) {
+function SampleBookingForms() {
   const documents = useQuery({
     queryKey: ["sample-booking-form-templates"],
     queryFn: async () => {
@@ -1625,16 +1625,6 @@ function SampleBookingForms({ career }: { career: string }) {
   });
   return (
     <div className="space-y-4">
-      <div className="space-y-3 rounded-lg border border-border bg-[#FFFDF5] p-4">
-        <p className="text-sm font-semibold">Selected Career: {career}</p>
-        <p className="text-sm">
-          Test preview only. No booking, payment, signature or consent is recorded here.
-        </p>
-        <p className="text-sm">
-          For a real booking, the parent or guardian signs the indemnity and consent forms from
-          their own account.
-        </p>
-      </div>
       {documents.isPending ? (
         <p role="status">Loading forms…</p>
       ) : documents.isError ? (

@@ -129,11 +129,6 @@ describe("guided career and host selection", () => {
       "true",
     );
     expect(screen.getByText("Current approved form text")).toBeVisible();
-    expect(
-      screen.getByText(
-        "Test preview only. No booking, payment, signature or consent is recorded here.",
-      ),
-    ).toBeVisible();
     expect(screen.queryByRole("dialog", { name: "Payment Successful" })).toBeNull();
   });
   it("restores searched dates and mentor selection from the account after remount", async () => {
