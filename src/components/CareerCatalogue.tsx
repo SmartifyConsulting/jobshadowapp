@@ -317,7 +317,7 @@ export function CareerCatalogue({
                 aria-expanded={fieldOpen}
                 className={`flex min-h-11 w-full items-center justify-between gap-3 px-3 py-1.5 text-left ${CATEGORY_BANDS[index % CATEGORY_BANDS.length]}`}
               >
-                <h2 className="font-display text-lg uppercase">{f}</h2>
+                <h2 className="font-display text-lg normal-case">{f}</h2>
                 <ChevronDown
                   className={`h-6 w-6 shrink-0 transition ${fieldOpen ? "rotate-180" : ""}`}
                 />
@@ -334,7 +334,7 @@ export function CareerCatalogue({
                         aria-expanded={divisionOpen}
                         className="flex min-h-9 w-full items-center justify-between gap-3 border-y border-warm-divider bg-muted/30 px-4 py-1.5 text-left"
                       >
-                        <h3 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                        <h3 className="text-xs font-bold normal-case tracking-wide text-muted-foreground">
                           {division} ({roles.length})
                         </h3>
                         <ChevronDown
