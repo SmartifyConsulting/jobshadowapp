@@ -287,8 +287,8 @@ export function AccountProfile({ admin = false }: { admin?: boolean } = {}) {
     profile.data?.display_name ||
     "My Profile";
   return (
-    <>
-      <ScreenHeading title="My Profile" />
+    <div className="profile-screen flex flex-1 flex-col">
+      <ScreenHeading title="My Profile" tone="yellow" />
       <section className="space-y-4 bg-ivory p-4 text-foreground">
         <ProfileSummaryCard
           name={name}
@@ -356,6 +356,6 @@ export function AccountProfile({ admin = false }: { admin?: boolean } = {}) {
           </Tabs>
         )}
       </section>
-    </>
+    </div>
   );
 }

@@ -137,7 +137,7 @@ function MentorPortal() {
       </p>
     );
   return (
-    <div className="flex min-h-screen flex-col bg-teal">
+    <div className="profile-screen flex min-h-screen flex-col">
       <SiteHeader />
       <main className="min-w-0 flex-1">
         <HostProfile
@@ -800,7 +800,7 @@ function HostProfile({
 
   return (
     <section className="w-full space-y-4 bg-teal">
-      {!wizard && <ScreenHeading title="My Profile" />}
+      {!wizard && <ScreenHeading title="My Profile" tone="yellow" />}
       <MentorOnboardingWizard
         userId={ownIdentity.user.data?.id ?? ""}
         hostProfile={profile.data!}

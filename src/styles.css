@@ -471,3 +471,13 @@ h1, h2, .screen-heading {
 .workflow-accordion .workflow-step[aria-current="step"] { outline: none; }
 .workflow-accordion .workflow-step:focus-visible { outline: 3px solid var(--charcoal); outline-offset: -3px; }
 .workflow-accordion .workflow-step:disabled { cursor: not-allowed; }
+
+/* Own Profile pages use yellow; the embedded How To journey keeps its teal theme. */
+.profile-screen {
+  --card: #F9DB01;
+  --background: #F9DB01;
+  --ivory: #F9DB01;
+  --accent: #F9DB01;
+  background-color: #F9DB01;
+}
+.profile-screen .bg-teal { background-color: #F9DB01; }

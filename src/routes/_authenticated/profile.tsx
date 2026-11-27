@@ -203,58 +203,70 @@ export function ScholarProfileContent({
   );
   return (
     <Layout>
-      {!inWorkflow && <ScreenHeading title="Profile" />}
-      <section className={inWorkflow || tab === "bookings" ? "flex-1 bg-teal" : "flex-1 bg-ivory"}>
-        <div
-          className={
-            inWorkflow || tab === "bookings"
-              ? "w-full space-y-4 py-8"
-              : "mx-auto max-w-7xl space-y-4 px-5 py-8"
-          }
+      <div
+        className={
+          !inWorkflow && tab !== "bookings"
+            ? "profile-screen flex flex-1 flex-col"
+            : "flex flex-1 flex-col"
+        }
+      >
+        {!inWorkflow && (
+          <ScreenHeading title="Profile" tone={tab === "bookings" ? "teal" : "yellow"} />
+        )}
+        <section
+          className={inWorkflow || tab === "bookings" ? "flex-1 bg-teal" : "flex-1 bg-ivory"}
         >
-          {!inWorkflow && (
-            <div>
-              <p className="text-xs text-muted-foreground">
-                Manage your details, scholar account and bookings.
-              </p>
-            </div>
-          )}
-          <Tabs
-            value={inWorkflow ? "bookings" : (tab ?? "profile")}
-            onValueChange={(v) =>
-              navigate({ to: "/profile", search: { tab: v as Tab }, replace: true })
+          <div
+            className={
+              inWorkflow || tab === "bookings"
+                ? "w-full space-y-4 py-8"
+                : "mx-auto max-w-7xl space-y-4 px-5 py-8"
             }
-            className="w-full"
           >
             {!inWorkflow && (
-              <TabsList className="flex w-full flex-wrap justify-start rounded-full bg-primary/90">
-                <TabsTrigger
-                  value="profile"
-                  className="data-[state=active]:bg-card data-[state=active]:text-foreground text-primary-foreground text-xs gap-1.5"
-                >
-                  <UserCircle className="h-3.5 w-3.5" />
-                  Profile
-                </TabsTrigger>
-                <TabsTrigger
-                  value="bookings"
-                  className="data-[state=active]:bg-card data-[state=active]:text-foreground text-primary-foreground text-xs gap-1.5"
-                >
-                  <CalendarCheck className="h-3.5 w-3.5" />
-                  My Bookings
-                </TabsTrigger>
-              </TabsList>
-            )}
-            <TabsContent value="profile" className="mt-4 space-y-4">
-              {profileContent}
-            </TabsContent>
-            <TabsContent value="bookings" className="mt-4 space-y-4">
-              <div className="w-full bg-teal text-teal-foreground">
-                <AccountPanel withBookings initialStep={step} profileContent={profileContent} />
+              <div>
+                <p className="text-xs text-muted-foreground">
+                  Manage your details, scholar account and bookings.
+                </p>
               </div>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </section>
+            )}
+            <Tabs
+              value={inWorkflow ? "bookings" : (tab ?? "profile")}
+              onValueChange={(v) =>
+                navigate({ to: "/profile", search: { tab: v as Tab }, replace: true })
+              }
+              className="w-full"
+            >
+              {!inWorkflow && (
+                <TabsList className="flex w-full flex-wrap justify-start rounded-full bg-primary/90">
+                  <TabsTrigger
+                    value="profile"
+                    className="data-[state=active]:bg-card data-[state=active]:text-foreground text-primary-foreground text-xs gap-1.5"
+                  >
+                    <UserCircle className="h-3.5 w-3.5" />
+                    Profile
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="bookings"
+                    className="data-[state=active]:bg-card data-[state=active]:text-foreground text-primary-foreground text-xs gap-1.5"
+                  >
+                    <CalendarCheck className="h-3.5 w-3.5" />
+                    My Bookings
+                  </TabsTrigger>
+                </TabsList>
+              )}
+              <TabsContent value="profile" className="mt-4 space-y-4">
+                {profileContent}
+              </TabsContent>
+              <TabsContent value="bookings" className="mt-4 space-y-4">
+                <div className="w-full bg-teal text-teal-foreground">
+                  <AccountPanel withBookings initialStep={step} profileContent={profileContent} />
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </section>
+      </div>
     </Layout>
   );
 }
