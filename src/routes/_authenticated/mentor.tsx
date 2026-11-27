@@ -1765,7 +1765,7 @@ function PlacementCard({
       _id: placement.id,
       _slots: slots,
       _active: vals.active,
-      _max_applicants: vals.max_applicants ? Number(vals.max_applicants) : null,
+      _max_applicants: vals.max_applicants ? Number(vals.max_applicants) : (null as unknown as number),
     });
     if (error) {
       setBusy(false);
