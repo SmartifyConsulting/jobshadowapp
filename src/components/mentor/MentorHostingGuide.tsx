@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Calendar, FileEdit, Users, CheckCircle2, Handshake, Bell } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { JourneyStepper } from "@/components/JourneyStepper";
+import { MentorSafeguardingForm } from "./MentorSafeguardingForm";
 
 export function MentorHostingGuide({
   initialStep = "availability",
@@ -34,16 +35,19 @@ export function MentorHostingGuide({
       >
         <div className={step === "availability" ? "space-y-4" : "hidden"}>{preferences}</div>
         {step === "forms" && (
-          <section className="rounded border border-border p-4 space-y-2">
-            <h2 className="sr-only">Complete Forms (Indemnity &amp; NDA)</h2>
-            <p className="text-sm">
-              Contact Job Shadow to arrange the mentoring forms and confirm which documents are
-              required.
-            </p>
-            <Link to="/contact" className="text-sm font-bold underline">
-              Contact Job Shadow
-            </Link>
-          </section>
+          <div className="space-y-4">
+            <MentorSafeguardingForm />
+            <section className="rounded border border-border p-4 space-y-2">
+              <h2 className="sr-only">Complete Forms (Indemnity &amp; NDA)</h2>
+              <p className="text-sm">
+                Contact Job Shadow to arrange the mentoring forms and confirm which documents are
+                required.
+              </p>
+              <Link to="/contact" className="text-sm font-bold underline">
+                Contact Job Shadow
+              </Link>
+            </section>
+          </div>
         )}
         <div
           className={["requests", "confirm", "experience"].includes(step) ? "space-y-4" : "hidden"}

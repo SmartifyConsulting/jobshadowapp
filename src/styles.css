@@ -488,3 +488,20 @@ h1, h2, .screen-heading {
   --background: #FFFDF5;
   background-color: #FFFDF5;
 }
+
+@font-face {
+  font-family: "Caveat Signature";
+  src: url("/fonts/caveat-signature-variable.ttf") format("truetype");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Dancing Script Signature";
+  src: url("/fonts/dancing-script-signature-variable.ttf") format("truetype");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+.scholar-signature-font { font-family: "Caveat Signature", cursive; }
+.guardian-signature-font { font-family: "Dancing Script Signature", cursive; }

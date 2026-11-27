@@ -8,6 +8,8 @@ import { SchoolPicker } from "./SchoolPicker";
 import { DietaryNeedsPicker } from "./ScholarSelections";
 import { JourneyStepper, type JourneyStep } from "@/components/JourneyStepper";
 import { ROLES } from "@/lib/data";
+import { LegalFormBody } from "@/components/LegalFormBody";
+import { FormAColumns, ScholarGuardianSignatureColumns } from "@/components/FormSignatureLayout";
 import { isSwitchPersona, DEMO_ACCOUNTANT_PLACEMENT_ID } from "@/lib/dev-personas";
 import { phoneWithCountryCode } from "@/components/PhoneInput";
 import { PersonNameFields, joinPersonName } from "@/components/PersonNameFields";
@@ -1641,6 +1643,8 @@ function SampleBookingForms() {
               ? doc.body.split(/(?=^##\s+Form\s+[A-Z]\s*:)/im).filter((section) => section.trim())
               : [doc.body];
           return sections.map((section, index) => {
+            if (doc.key === "consent_forms" && /^##\s+Form\s+C\s*:/i.test(section.trim()))
+              return null;
             const heading =
               doc.key === "consent_forms" ? section.match(/^##\s+([^\r\n]+)\r?\n?/) : null;
             return (
@@ -1649,11 +1653,22 @@ function SampleBookingForms() {
                 className="rounded-lg border border-border bg-[#FFFDF5] p-4"
                 open
               >
-                <summary className="cursor-pointer font-semibold">
-                  {heading?.[1] ?? doc.title}
-                </summary>
-                <div className="mt-3 whitespace-pre-wrap text-sm leading-relaxed">
-                  {heading ? section.slice(heading[0].length).trim() : section}
+                <summary className="cursor-pointer font-bold">{heading?.[1] ?? doc.title}</summary>
+                <div className="mt-5">
+                  {doc.key === "consent_forms" && /^Form\s+A\s*:/i.test(heading?.[1] ?? "") ? (
+                    <FormAColumns body={section.slice(heading![0].length).trim()} />
+                  ) : (
+                    <>
+                      <LegalFormBody
+                        body={heading ? section.slice(heading[0].length).trim() : section}
+                      />
+                      {doc.key === "consent_forms" && /^Form\s+B\s*:/i.test(heading?.[1] ?? "") && (
+                        <div className="mt-6">
+                          <ScholarGuardianSignatureColumns />
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               </details>
             );
