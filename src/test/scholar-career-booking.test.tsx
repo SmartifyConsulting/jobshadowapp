@@ -191,6 +191,7 @@ describe("guided career and host selection", () => {
     expect(within(matches).queryByText("No Hours")).toBeNull();
     fireEvent.click(within(matches).getByRole("button", { name: "Choose This Mentor" }));
     expect(screen.getByRole("heading", { name: "Placement Details" })).toBeVisible();
+    expect(screen.getByText("Selected Career: Accountant")).toBeVisible();
     expect(screen.getByText("Cape Town")).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Back to Mentor Availability" }));
     expect(screen.getByText("Available mentor placements (1)")).toBeVisible();
@@ -337,7 +338,7 @@ describe("guided career and host selection", () => {
     first.unmount();
     const second = mount("request");
     expect(screen.getByRole("heading", { name: "Mentor Availability" })).toBeVisible();
-    expect(screen.getByText("Accountant", { exact: true })).toBeVisible();
+    expect(screen.getByText("Career: Accountant", { exact: true })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Back to Careers" }));
     expect(screen.getByRole("combobox", { name: "Career" })).toHaveValue("Accountant");
     second.unmount();

@@ -1907,7 +1907,7 @@ export function NewBooking({
           {step === 3 && initialCareer && (
             <div className="grid min-w-0 gap-6 lg:grid-cols-2">
               <div className="space-y-4">
-                <p className="text-sm font-semibold">{career}</p>
+                <p className="text-sm font-semibold">Career: {career}</p>
                 <div className="flex flex-wrap items-end gap-4">
                   <label className="text-sm">
                     From
@@ -1976,6 +1976,7 @@ export function NewBooking({
                           className="mt-1"
                         />
                         <span className="min-w-0">
+                          <span className="block text-sm font-semibold">{host.career}</span>
                           <span className="block text-sm font-semibold">
                             {hostLabel(host, index)}
                           </span>
@@ -2005,7 +2006,7 @@ export function NewBooking({
                 )}
               </div>
               <aside aria-label="Favourite career availability" className="space-y-3">
-                <h3 className="font-semibold">Other Favourites Are Available on These Days</h3>
+                <h3 className="font-semibold">Other Favourites Available on These Days</h3>
                 {!rangeApplied ? (
                   <p className="text-sm">
                     Search your preferred dates to see matches for your other favourite careers.
@@ -2075,6 +2076,7 @@ export function NewBooking({
           )}
           {step === 4 && chosen && (
             <>
+              <p className="mb-3 text-sm font-semibold">Selected Career: {chosen.career}</p>
               <dl className="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
                 <div>
                   <dt className="font-semibold">Type</dt>
@@ -2114,6 +2116,7 @@ export function NewBooking({
           )}
           {step === 5 && chosen && (
             <div className="space-y-3">
+              <p className="text-sm font-semibold">Selected Career: {chosen.career}</p>
               <p className="text-sm">
                 {dates.length
                   ? "Please select from the available dates below"
