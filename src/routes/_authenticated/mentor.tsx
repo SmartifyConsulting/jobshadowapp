@@ -138,7 +138,7 @@ function MentorPortal() {
   return (
     <div className="flex min-h-screen flex-col bg-teal">
       <SiteHeader />
-      <main className="min-w-0 flex-1 p-4 md:p-6">
+      <main className="min-w-0 flex-1">
         <HostProfile
           initialStep={search.step}
           initialTab={
@@ -798,8 +798,8 @@ function HostProfile({
   }, []);
 
   return (
-    <section className="w-full space-y-4 bg-teal p-4">
-      {!wizard && <h1 className="screen-heading text-white">My Profile</h1>}
+    <section className="w-full space-y-4 bg-teal">
+      {!wizard && <h1 className="screen-heading px-4 pt-4 text-white">My Profile</h1>}
       <MentorOnboardingWizard
         userId={ownIdentity.user.data?.id ?? ""}
         hostProfile={profile.data!}

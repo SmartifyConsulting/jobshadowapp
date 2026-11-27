@@ -245,7 +245,13 @@ function ProfileSettings() {
   return (
     <SiteLayout>
       <section className={inWorkflow || tab === "bookings" ? "flex-1 bg-teal" : "flex-1 bg-ivory"}>
-        <div className="mx-auto max-w-7xl space-y-4 px-5 py-8">
+        <div
+          className={
+            inWorkflow || tab === "bookings"
+              ? "w-full space-y-4 py-8"
+              : "mx-auto max-w-7xl space-y-4 px-5 py-8"
+          }
+        >
           {!inWorkflow && (
             <div>
               <h1 className="screen-heading bg-teal px-4 py-3 text-white">Profile</h1>
@@ -281,7 +287,7 @@ function ProfileSettings() {
               {profileContent}
             </TabsContent>
             <TabsContent value="bookings" className="mt-4 space-y-4">
-              <div className="rounded-xl border border-primary bg-teal p-4 text-teal-foreground shadow-sm">
+              <div className="w-full bg-teal text-teal-foreground">
                 <AccountPanel withBookings initialStep={step} profileContent={profileContent} />
               </div>
             </TabsContent>
