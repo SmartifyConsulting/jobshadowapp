@@ -332,7 +332,7 @@ describe("guided career and host selection", () => {
       expect(auth.save).toHaveBeenCalledWith({ data: { selected_career: "Accountant" } }),
     );
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Continue to Find a Host" })).toBeEnabled(),
+      expect(screen.getByRole("button", { name: "Continue to Find a Mentor" })).toBeEnabled(),
     );
     first.unmount();
     const second = mount("request");

@@ -1241,7 +1241,7 @@ function StudentJourney({
                 disabled={!career || saveCareer.isPending}
                 onClick={() => setActive("request")}
               >
-                Continue to Find a Host
+                Continue to Find a Mentor
               </Button>
             </div>
           )}
