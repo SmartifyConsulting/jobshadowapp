@@ -48,7 +48,7 @@ function Stories() {
         className="bg-accent pb-6"
         style={{
           background:
-            "linear-gradient(to bottom, var(--teal) 0, var(--teal) 20rem, var(--accent) 20rem, var(--accent) 100%)",
+            "linear-gradient(to bottom, var(--teal) 0, var(--teal) calc(10rem + clamp(6.65rem, 24vw, 13.3rem) * 0.32), var(--accent) calc(10rem + clamp(6.65rem, 24vw, 13.3rem) * 0.32), var(--accent) 100%)",
         }}
       >
         <Carousel opts={{ loop: true, align: "start" }} className="mx-auto max-w-6xl px-10 sm:px-14">
@@ -76,7 +76,7 @@ function Stories() {
                     />
                   </div>
                 </div>
-                <p className="pb-4 pt-8 text-sm leading-relaxed text-accent-foreground">
+                <p className="relative -mt-12 pb-4 pt-8 text-sm leading-relaxed text-accent-foreground">
                   {s.quote}
                 </p>
               </CarouselItem>
