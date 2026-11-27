@@ -53,8 +53,8 @@ function Stories() {
                   <div
                     className="relative shrink-0 overflow-hidden rounded-full"
                     style={{
-                      width: "clamp(7rem, 46cqw, 14rem)",
-                      height: "clamp(7rem, 46cqw, 14rem)",
+                      width: "clamp(6.65rem, 43.7cqw, 13.3rem)",
+                      height: "clamp(6.65rem, 43.7cqw, 13.3rem)",
                       borderRadius: "50%",
                       clipPath: "circle(50%)",
                     }}

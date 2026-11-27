@@ -424,3 +424,8 @@ h1, h2, .screen-heading {
   right: -10.48%;
   top: -1.27%;
 }
+
+/* Public page titles share a one-point size increase. */
+.screen-heading {
+  font-size: calc(1.5rem + 1pt);
+}
