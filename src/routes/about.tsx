@@ -113,17 +113,16 @@ function About() {
             </p>
           </div>
         </div>
-        <div className="mx-auto mt-10 max-w-5xl">
-          <img
-            src="/assets/about-jobshadow-desk.jpeg"
-            alt="Job Shadow branded desk with laptops, tablets, notebooks and creative tools in yellow, teal and green."
-            width={1600}
-            height={901}
-            loading="lazy"
-            className="h-auto w-full rounded-xl"
-          />
-        </div>
       </section>
+      <img
+        src="/assets/about-career-panorama.png"
+        alt="Illustrated mentors and young people exploring design, science, social work and teaching in a shared workplace."
+        width={2172}
+        height={724}
+        loading="lazy"
+        decoding="async"
+        className="block h-auto w-full"
+      />
     </SiteLayout>
   );
 }
