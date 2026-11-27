@@ -398,17 +398,29 @@ h1, h2, .screen-heading {
 .real-story-identity {
   container-type: inline-size;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
 }
 .real-story-name {
   position: relative;
   z-index: 1;
   flex-shrink: 0;
-  margin-top: 2rem;
+  margin-top: 0;
   margin-right: -2rem;
   font-family: "Gotham Black", "Gotham", sans-serif;
   font-weight: 900;
   font-size: clamp(1.5rem, 12cqw, 3.75rem);
   line-height: 1.1;
   white-space: nowrap;
+}
+
+/* Source artwork is 827 × 322; the portrait occupies x479–794, y4–319.
+   Crop that square rather than fitting the wide artwork into the circle. */
+.real-story-portrait {
+  position: absolute;
+  width: 262.54%;
+  max-width: none;
+  height: 102.22%;
+  right: -10.48%;
+  top: -1.27%;
 }

@@ -65,7 +65,7 @@ function Stories() {
                       width={224}
                       height={224}
                       loading="lazy"
-                      className="block h-full w-full rounded-full object-cover object-right"
+                      className="real-story-portrait"
                     />
                   </div>
                 </div>
