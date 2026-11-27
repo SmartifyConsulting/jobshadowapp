@@ -386,7 +386,7 @@ export function MentorOnboardingWizard({
               })
             ) : (
               <fieldset className="min-w-0 rounded border border-charcoal/25 p-3">
-                <legend className="px-1 text-sm font-bold">{details[step].title}</legend>
+                <legend className="sr-only">{details[step].title}</legend>
                 {step === "email" && (
                   <div
                     id="email-verification"

@@ -24,15 +24,17 @@ export function JourneyStepper({
 }) {
   const panelId = useId();
   const [closedStep, setClosedStep] = useState<string | null>(null);
-  const position = steps.findIndex((step) => step.id === active);
   if (children !== undefined)
     return (
       <div className="min-w-0 space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h1 className={titleClassName ?? "font-display text-2xl"}>{title}</h1>
-          <p className="text-xs">
-            Step {position + 1} of {steps.length}
-          </p>
+        <div className="flex flex-wrap items-center justify-between gap-2 bg-teal px-4 py-3 text-white">
+          <h1
+            className={
+              titleClassName ? titleClassName + " text-white" : "font-display text-2xl text-white"
+            }
+          >
+            {title}
+          </h1>
         </div>
         <div className="workflow-steps workflow-accordion" aria-label={title + " steps"}>
           {steps.map((step, index) => {
@@ -77,7 +79,7 @@ export function JourneyStepper({
                     role="region"
                     aria-labelledby={panelId + "-" + step.id + "-heading"}
                     hidden={!expanded}
-                    className="min-w-0 border-x border-border bg-ivory p-3 text-foreground sm:p-4"
+                    className="min-w-0 bg-teal p-3 text-foreground sm:p-4"
                   >
                     {selected ? children : null}
                   </div>
@@ -92,9 +94,6 @@ export function JourneyStepper({
     <div className="min-w-0 space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className={titleClassName ?? "font-display text-2xl"}>{title}</h1>
-        <p className="text-xs text-muted-foreground">
-          Step {position + 1} of {steps.length}
-        </p>
       </div>
       <nav aria-label={title + " steps"} className="workflow-steps flex gap-2 overflow-x-auto pb-2">
         {steps.map((step, index) => (

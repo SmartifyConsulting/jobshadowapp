@@ -12,7 +12,7 @@ import { PersonNameFields, joinPersonName } from "@/components/PersonNameFields"
 import { PhoneInput } from "@/components/PhoneInput";
 import { isPossiblePhoneNumber } from "libphonenumber-js/min";
 import { Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   ChevronDown,
   UserRound,
@@ -67,9 +67,11 @@ function useUser() {
 export function AccountPanel({
   withBookings = false,
   initialStep,
+  profileContent,
 }: {
   withBookings?: boolean;
   initialStep?: string | undefined;
+  profileContent?: ReactNode;
 }) {
   const { data: user } = useUser();
   const qc = useQueryClient();
@@ -118,6 +120,7 @@ export function AccountPanel({
         }
         profile={profile.data as Record<string, unknown> | null}
         initialStep={initialStep}
+        profileContent={profileContent}
       />
     );
   if (!profile.data || editing)
@@ -1020,11 +1023,13 @@ function StudentJourney({
   savedCareer,
   profile,
   initialStep,
+  profileContent,
 }: {
   userId: string;
   savedCareer: string;
   profile: Record<string, unknown> | null;
   initialStep?: string | undefined;
+  profileContent?: ReactNode;
 }) {
   const [requestedActive, setActive] = useState(initialStep ?? "profile");
   useEffect(() => {
@@ -1179,9 +1184,18 @@ function StudentJourney({
         }}
       >
         <div
-          className={`min-w-0 overflow-hidden rounded-lg border border-border text-foreground ${active === "request" ? "bg-teal p-0" : "bg-ivory p-4 sm:p-6"}`}
+          className={`min-w-0 overflow-hidden text-foreground ${active === "request" ? "bg-teal p-0" : "bg-teal p-4 sm:p-6"}`}
         >
+          {active === "profile" && profileContent && (
+            <div className="space-y-4">
+              {profileContent}
+              <Button disabled={!profile} onClick={() => setActive("careers")}>
+                Continue to Explore Careers
+              </Button>
+            </div>
+          )}
           {active === "profile" &&
+            !profileContent &&
             (!profile || editingProfile ? (
               <ProfileForm
                 userId={userId}
@@ -1195,7 +1209,6 @@ function StudentJourney({
               />
             ) : (
               <div className="space-y-4">
-                <h2 className="font-display text-2xl">Step 1: Complete Profile</h2>
                 <p className="text-sm">
                   Your profile is saved. Review your details before choosing a career and host.
                 </p>
@@ -1210,7 +1223,6 @@ function StudentJourney({
             ))}
           {active === "careers" && (
             <div className="space-y-4">
-              <h2 className="font-display text-2xl">Step 2: Explore Careers</h2>
               <p className="text-sm">
                 Choose a career that interests you, then find a host offering that experience.
               </p>
@@ -1262,7 +1274,6 @@ function StudentJourney({
                 <>
                   {active === "payment" && (
                     <>
-                      <h2 className="font-display text-2xl">Step 4: Make Payment</h2>
                       <p className="text-sm">
                         {paid
                           ? "Payment is recorded for this booking."
@@ -1278,7 +1289,6 @@ function StudentJourney({
                   )}
                   {active === "forms" && (
                     <>
-                      <h2 className="font-display text-2xl">Step 5: Complete Forms</h2>
                       <p className="text-sm">
                         Check payment and complete the required indemnity and consent documents for
                         this booking.
@@ -1291,7 +1301,6 @@ function StudentJourney({
                   )}
                   {active === "confirmation" && (
                     <>
-                      <h2 className="font-display text-2xl">Step 6: Check Confirmation</h2>
                       <p className="text-sm">
                         {confirmed
                           ? "Your booking is confirmed. Check the date, location and arrangements before your visit."
@@ -1309,7 +1318,6 @@ function StudentJourney({
                   )}
                   {active === "experience" && (
                     <>
-                      <h2 className="font-display text-2xl">Step 7: Do Your Job Shadow</h2>
                       <p className="text-sm">
                         {current.career} at {current.company} · {current.shadow_date}
                       </p>
@@ -1325,7 +1333,6 @@ function StudentJourney({
                   )}
                   {active === "feedback" && (
                     <>
-                      <h2 className="font-display text-2xl">Step 8: Share Feedback</h2>
                       {feedback.data?.already_submitted ? (
                         <p className="text-sm">Thank you—your feedback has been submitted.</p>
                       ) : (

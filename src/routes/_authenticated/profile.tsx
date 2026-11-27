@@ -162,9 +162,89 @@ function ProfileSettings() {
         <AccountProfile admin={!!session.data?.isAdmin} />
       </SiteLayout>
     );
+  const profileContent = (
+    <>
+      <ProfileSummaryCard
+        name={displayName || "My Profile"}
+        avatarUrl={avatarUrl}
+        subtitle={user?.email}
+        previewSections={[
+          { title: "Account", fields: [{ label: "Email Address", value: user?.email }] },
+          ...SCHOLAR_DETAIL_TABS.map((section) => ({
+            title: section.label,
+            fields: section.rows.map(([label, key]) => ({
+              label: label.replace(/\b\w/g, (c) => c.toUpperCase()),
+              value: (scholar.data as Record<string, unknown> | null)?.[key],
+            })),
+          })),
+        ]}
+        onPhoto={() => document.getElementById("scholar-profile-photo")?.click()}
+      />
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm space-y-4 sm:p-5">
+        <input
+          id="scholar-profile-photo"
+          type="file"
+          accept="image/*"
+          aria-label="Change profile photo"
+          className="sr-only"
+          disabled={busy}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) setCropFile(file);
+            e.target.value = "";
+          }}
+        />
+        {cropFile && (
+          <ImageCropModal
+            file={cropFile}
+            onCancel={() => setCropFile(null)}
+            onSave={(blob) => {
+              setCropFile(null);
+              void uploadAvatar(blob);
+            }}
+          />
+        )}
+
+        <div className="w-full">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="block text-sm font-semibold">
+              First Name
+              <input
+                value={firstName}
+                onChange={(e) => setFirst(e.target.value)}
+                autoComplete="given-name"
+                className="mt-1 w-full border-b border-foreground/30 bg-transparent px-1 py-2 text-sm outline-none focus:border-foreground"
+              />
+            </label>
+            <label className="block text-sm font-semibold">
+              Last Name
+              <input
+                value={lastName}
+                onChange={(e) => setLast(e.target.value)}
+                autoComplete="family-name"
+                className="mt-1 w-full border-b border-foreground/30 bg-transparent px-1 py-2 text-sm outline-none focus:border-foreground"
+              />
+            </label>
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">Shown as: {displayName || "—"}</p>
+          {err && <p className="mt-2 text-sm text-destructive">{err}</p>}
+          <button
+            onClick={saveName}
+            disabled={busy}
+            className="mt-4 rounded-full bg-primary px-5 py-2 text-xs font-bold uppercase tracking-wide text-primary-foreground disabled:opacity-50"
+          >
+            {saved ? "Saved" : "Save"}
+          </button>
+        </div>
+        <div className="border-t border-border pt-4">
+          <AccountPanel />
+        </div>
+      </div>
+    </>
+  );
   return (
     <SiteLayout>
-      <section className="flex-1 bg-ivory">
+      <section className={inWorkflow || tab === "bookings" ? "flex-1 bg-teal" : "flex-1 bg-ivory"}>
         <div className="mx-auto max-w-7xl space-y-4 px-5 py-8">
           {!inWorkflow && (
             <div>
@@ -198,88 +278,11 @@ function ProfileSettings() {
               </TabsList>
             )}
             <TabsContent value="profile" className="mt-4 space-y-4">
-              <ProfileSummaryCard
-                name={displayName || "My Profile"}
-                avatarUrl={avatarUrl}
-                subtitle={user?.email}
-                previewSections={[
-                  { title: "Account", fields: [{ label: "Email Address", value: user?.email }] },
-                  ...SCHOLAR_DETAIL_TABS.map((section) => ({
-                    title: section.label,
-                    fields: section.rows.map(([label, key]) => ({
-                      label: label.replace(/\b\w/g, (c) => c.toUpperCase()),
-                      value: (scholar.data as Record<string, unknown> | null)?.[key],
-                    })),
-                  })),
-                ]}
-                onPhoto={() => document.getElementById("scholar-profile-photo")?.click()}
-              />
-              <div className="rounded-xl border border-border bg-card p-4 shadow-sm space-y-4 sm:p-5">
-                <input
-                  id="scholar-profile-photo"
-                  type="file"
-                  accept="image/*"
-                  aria-label="Change profile photo"
-                  className="sr-only"
-                  disabled={busy}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) setCropFile(file);
-                    e.target.value = "";
-                  }}
-                />
-                {cropFile && (
-                  <ImageCropModal
-                    file={cropFile}
-                    onCancel={() => setCropFile(null)}
-                    onSave={(blob) => {
-                      setCropFile(null);
-                      void uploadAvatar(blob);
-                    }}
-                  />
-                )}
-
-                <div className="w-full">
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <label className="block text-sm font-semibold">
-                      First Name
-                      <input
-                        value={firstName}
-                        onChange={(e) => setFirst(e.target.value)}
-                        autoComplete="given-name"
-                        className="mt-1 w-full border-b border-foreground/30 bg-transparent px-1 py-2 text-sm outline-none focus:border-foreground"
-                      />
-                    </label>
-                    <label className="block text-sm font-semibold">
-                      Last Name
-                      <input
-                        value={lastName}
-                        onChange={(e) => setLast(e.target.value)}
-                        autoComplete="family-name"
-                        className="mt-1 w-full border-b border-foreground/30 bg-transparent px-1 py-2 text-sm outline-none focus:border-foreground"
-                      />
-                    </label>
-                  </div>
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    Shown as: {displayName || "—"}
-                  </p>
-                  {err && <p className="mt-2 text-sm text-destructive">{err}</p>}
-                  <button
-                    onClick={saveName}
-                    disabled={busy}
-                    className="mt-4 rounded-full bg-primary px-5 py-2 text-xs font-bold uppercase tracking-wide text-primary-foreground disabled:opacity-50"
-                  >
-                    {saved ? "Saved" : "Save"}
-                  </button>
-                </div>
-                <div className="border-t border-border pt-4">
-                  <AccountPanel />
-                </div>
-              </div>
+              {profileContent}
             </TabsContent>
             <TabsContent value="bookings" className="mt-4 space-y-4">
               <div className="rounded-xl border border-primary bg-teal p-4 text-teal-foreground shadow-sm">
-                <AccountPanel withBookings initialStep={step} />
+                <AccountPanel withBookings initialStep={step} profileContent={profileContent} />
               </div>
             </TabsContent>
           </Tabs>
