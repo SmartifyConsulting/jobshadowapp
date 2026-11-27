@@ -44,19 +44,17 @@ function Stories() {
             "linear-gradient(to bottom, var(--teal) 0, var(--teal) 15rem, var(--accent) 15rem, var(--accent) 100%)",
         }}
       >
-        <Carousel opts={{ loop: true }} className="mx-auto max-w-6xl px-10 sm:px-14">
+        <Carousel opts={{ loop: true, align: "start" }} className="mx-auto max-w-6xl px-10 sm:px-14">
           <CarouselContent className="-ml-8">
             {STORIES.map((s) => (
               <CarouselItem key={s.name} className="basis-full pl-8 md:basis-1/2">
-                <div className="relative h-60 pt-6">
-                  <h3 className="absolute left-0 top-8 z-10 font-sans text-5xl font-bold leading-tight tracking-tight text-white sm:text-6xl">
-                    {s.name}
-                  </h3>
+                <div className="real-story-identity relative h-60 pt-8">
+                  <h3 className="real-story-name text-white">{s.name}</h3>
                   <div
-                    className="absolute right-0 top-8 h-56 w-56 shrink-0 overflow-hidden rounded-full"
+                    className="relative shrink-0 overflow-hidden rounded-full"
                     style={{
-                      width: 224,
-                      height: 224,
+                      width: "clamp(7rem, 46cqw, 14rem)",
+                      height: "clamp(7rem, 46cqw, 14rem)",
                       borderRadius: "50%",
                       clipPath: "circle(50%)",
                     }}

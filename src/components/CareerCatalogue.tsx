@@ -312,6 +312,7 @@ export function CareerCatalogue({
               className="mx-auto w-full max-w-6xl overflow-hidden border-x-[4px] border-b-[4px] border-ivory bg-ivory"
             >
               <button
+                data-list-font="black"
                 onClick={() => toggleField(f)}
                 aria-expanded={fieldOpen}
                 className={`flex min-h-11 w-full items-center justify-between gap-3 px-3 py-1.5 text-left ${CATEGORY_BANDS[index % CATEGORY_BANDS.length]}`}
@@ -328,6 +329,7 @@ export function CareerCatalogue({
                   return (
                     <div key={division} className="bg-ivory">
                       <button
+                        data-list-font="black"
                         onClick={() => toggleDivision(divisionKey)}
                         aria-expanded={divisionOpen}
                         className="flex min-h-9 w-full items-center justify-between gap-3 border-y border-warm-divider bg-muted/30 px-4 py-1.5 text-left"
@@ -355,6 +357,7 @@ export function CareerCatalogue({
                                 <div className="flex flex-wrap items-start justify-between gap-3">
                                   <button
                                     type="button"
+                                    data-list-font="black"
                                     onClick={() => setViewingSlug(r.slug)}
                                     className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-1 py-1 text-left outline-none transition hover:bg-pale-lime focus-visible:ring-2 focus-visible:ring-primary"
                                   >

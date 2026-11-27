@@ -50,6 +50,31 @@
   font-display: swap;
 }
 
+
+@font-face {
+  font-family: "Open Sans";
+  src: url("/fonts/open-sans-variable.ttf") format("truetype");
+  font-weight: 300 800;
+  font-style: normal;
+  font-stretch: 75% 100%;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Open Sans";
+  src: url("/fonts/open-sans-italic-variable.ttf") format("truetype");
+  font-weight: 300 800;
+  font-style: italic;
+  font-stretch: 75% 100%;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Gotham Black";
+  src: url("/fonts/gotham-black.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 /*
@@ -74,8 +99,8 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
-  --font-display: "DK Cinnabar Brush", "Gotham", sans-serif;
-  --font-sans: "Gotham", "Open Sans", system-ui, sans-serif;
+  --font-display: "Gotham Black", "Gotham", sans-serif;
+  --font-sans: "Open Sans", system-ui, sans-serif;
   --shadow-warm: var(--shadow-warm-v);
   --color-cta: var(--cta);
   --color-cta-foreground: var(--cta-foreground);
@@ -357,4 +382,33 @@ table:not([role="grid"]) > thead th:last-child {
 .sharing-page > main {
   display: grid;
   grid-template-rows: repeat(2, minmax(min-content, 1fr));
+}
+
+/* Shared typography: Open Sans body, Gotham Black headings and list records. */
+h1, h2, .screen-heading {
+  font-family: "Gotham Black", "Gotham", sans-serif !important;
+  font-weight: 900 !important;
+}
+:is(table:not([role="grid"]) th, table:not([role="grid"]) td, li, [role="listitem"], [role="option"], [data-list-font="black"]),
+:is(table:not([role="grid"]) th, table:not([role="grid"]) td, li, [role="listitem"], [role="option"], [data-list-font="black"]) :not(svg, svg *) {
+  font-family: "Gotham Black", "Gotham", sans-serif !important;
+  font-weight: 900 !important;
+}
+/* Keep each portrait attached to its own name, with visible overlap inside the circle. */
+.real-story-identity {
+  container-type: inline-size;
+  display: flex;
+  align-items: flex-start;
+}
+.real-story-name {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  margin-top: 2rem;
+  margin-right: -2rem;
+  font-family: "Gotham Black", "Gotham", sans-serif;
+  font-weight: 900;
+  font-size: clamp(1.5rem, 12cqw, 3.75rem);
+  line-height: 1.1;
+  white-space: nowrap;
 }
