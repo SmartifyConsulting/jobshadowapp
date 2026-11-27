@@ -1,3 +1,4 @@
+import { ScreenHeading } from "@/components/ScreenHeading";
 import { publicSeo } from "@/lib/seo";
 import { ShareStoryForm, SendToFriendForm } from "@/components/SharingPage";
 import { PartnerApplicationForm } from "@/components/PartnerApplicationForm";
@@ -166,12 +167,13 @@ function Contact() {
 
   return (
     <SiteLayout>
+      <ScreenHeading title="Contact Us" tone="yellow" />
       <section className="flex-1 bg-primary px-5 py-14 text-primary-foreground">
         <div className="mx-auto grid max-w-6xl items-start gap-10 md:grid-cols-2">
           <div>
-            <h1 className="whitespace-pre-line font-display text-3xl uppercase leading-tight md:text-4xl">
+            <h2 className="whitespace-pre-line font-display text-3xl uppercase leading-tight md:text-4xl">
               {PARTNER_HERO.title.replace(". ", ".\n")}
-            </h1>
+            </h2>
             <p className="mt-4 text-sm text-primary-foreground/80">{PARTNER_HERO.sub}</p>
           </div>
           <div className="md:text-right">
@@ -275,20 +277,20 @@ function Contact() {
                     </li>
                   ))}
                 </ul>
-                <div className="mt-2 flex flex-wrap gap-2">
+                <div className="mt-2 flex flex-wrap items-center gap-2 xl:flex-nowrap">
                   <Link
                     to="/contact"
                     search={{ type: b.type }}
-                    className="inline-block rounded-full bg-primary px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-primary-foreground"
+                    className="inline-block whitespace-nowrap rounded-full bg-primary px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-primary-foreground"
                   >
                     {b.cta}
                   </Link>
                   {b.type === "mentor" && (
                     <a
                       href="/how-to?guide=company#company-benefits"
-                      className="inline-block rounded-full bg-primary px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-primary-foreground"
+                      className="inline-block whitespace-nowrap rounded-full bg-primary px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-primary-foreground"
                     >
-                      Why Companies Participate
+                      Company Benefits
                     </a>
                   )}
                   {(b.type === "mentor" || b.type === "school") && (
@@ -296,7 +298,7 @@ function Contact() {
                       to="/contact"
                       search={{ view: "story" }}
                       resetScroll={false}
-                      className="inline-block rounded-full bg-primary px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-primary-foreground"
+                      className="inline-block whitespace-nowrap rounded-full bg-primary px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-primary-foreground"
                     >
                       Share Your Experience
                     </Link>
