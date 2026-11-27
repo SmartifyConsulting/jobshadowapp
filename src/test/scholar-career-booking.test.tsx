@@ -101,6 +101,16 @@ describe("guided career and host selection", () => {
     returnCache.setQueryData(["scholar-profile", auth.user.id], {});
     returnCache.setQueryData(["bookings", auth.user.id], []);
     returnCache.setQueryData(["placements"], cache.getQueryData(["placements"]));
+    returnCache.setQueryData(
+      ["sample-booking-form-templates"],
+      [
+        {
+          key: "standard_indemnity_clauses",
+          title: "Indemnity and Consent",
+          body: "Current approved form text",
+        },
+      ],
+    );
     render(
       <QueryClientProvider client={returnCache}>
         <AccountPanel withBookings initialStep="payment" />
@@ -113,6 +123,18 @@ describe("guided career and host selection", () => {
     );
     expect(screen.getByText("Selected Career: Accountant")).toBeVisible();
     expect(screen.getByRole("button", { name: "Payment Unavailable in Preview" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Complete Forms" }));
+    expect(screen.getByRole("button", { name: "Step 5: Complete Forms" })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    expect(screen.getByText("Current approved form text")).toBeVisible();
+    expect(
+      screen.getByText(
+        "Test preview only. No booking, payment, signature or consent is recorded here.",
+      ),
+    ).toBeVisible();
+    expect(screen.queryByRole("dialog", { name: "Payment Successful" })).toBeNull();
   });
   it("restores searched dates and mentor selection from the account after remount", async () => {
     const mount = (user = auth.user, available = true) => {

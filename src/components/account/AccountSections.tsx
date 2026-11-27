@@ -33,6 +33,14 @@ import { confirmAction } from "@/lib/dialogs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 const STATUS: Record<string, string> = {
@@ -910,7 +918,10 @@ export function ProfileForm({
   );
 }
 
-export function Bookings({ selectedId }: { selectedId?: string | undefined } = {}) {
+export function Bookings({
+  selectedId,
+  onCompleteForms,
+}: { selectedId?: string | undefined; onCompleteForms?: ((id: string) => void) | undefined } = {}) {
   const { data: user } = useUser();
   const qc = useQueryClient();
   const q = useQuery({
@@ -927,12 +938,41 @@ export function Bookings({ selectedId }: { selectedId?: string | undefined } = {
     },
   });
   const [err, setErr] = useState<string | null>(null);
+  const [payingId, setPayingId] = useState<string | null>(null);
+  const [successfulPayment, setSuccessfulPayment] = useState<{ id: string; userId: string } | null>(
+    null,
+  );
   async function act(fn: "confirm_test_payment", id: string) {
+    if (payingId || !user) return;
     setErr(null);
-    const { error } = await supabase.rpc(fn, { _booking: id });
-    if (error) setErr(error.message);
-    qc.invalidateQueries({ queryKey: ["bookings"] });
-    qc.invalidateQueries({ queryKey: ["emails"] });
+    setPayingId(id);
+    try {
+      const { error } = await supabase.rpc(fn, { _booking: id });
+      if (error) throw error;
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["bookings"] }),
+        qc.invalidateQueries({ queryKey: ["emails"] }),
+      ]);
+      const confirmed = qc
+        .getQueryData<NonNullable<typeof q.data>>(["bookings", user.id])
+        ?.find((booking) => booking.id === id);
+      if (
+        !confirmed ||
+        (!confirmed.paid_at &&
+          !["indemnity_required", "confirmed", "completed"].includes(confirmed.status))
+      )
+        throw new Error("Your payment has not been confirmed yet. Please try again shortly.");
+      setSuccessfulPayment({ id, userId: user.id });
+    } catch (error) {
+      setErr(
+        error instanceof Error
+          ? error.message
+          : (error as { message?: string })?.message ||
+              "Payment could not be confirmed. Please try again.",
+      );
+    } finally {
+      setPayingId(null);
+    }
   }
   async function reportMentorNoShow(id: string) {
     if (
@@ -951,7 +991,50 @@ export function Bookings({ selectedId }: { selectedId?: string | undefined } = {
   return (
     <div className="space-y-3">
       <h2 className="font-display text-3xl text-teal-foreground">My bookings</h2>
-      {err && <p className="text-sm text-destructive">{err}</p>}
+      {err && (
+        <p role="alert" className="text-sm text-destructive">
+          {err}
+        </p>
+      )}
+      <Dialog
+        open={!!successfulPayment && successfulPayment.userId === user?.id}
+        onOpenChange={(open) => {
+          if (!open) setSuccessfulPayment(null);
+        }}
+      >
+        <DialogContent className="bg-[#FFFDF5]">
+          <DialogHeader>
+            <BadgeCheck className="mb-2 size-10 text-green-600" aria-hidden />
+            <DialogTitle>Payment Successful</DialogTitle>
+            <DialogDescription>
+              Your test payment has been recorded successfully. Next, complete the required
+              indemnity and consent forms.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            {onCompleteForms ? (
+              <Button
+                onClick={() => {
+                  if (!successfulPayment || successfulPayment.userId !== user?.id) return;
+                  const id = successfulPayment.id;
+                  setSuccessfulPayment(null);
+                  onCompleteForms(id);
+                }}
+              >
+                Complete Forms
+              </Button>
+            ) : (
+              successfulPayment && (
+                <Button asChild>
+                  <Link to="/indemnity/$bookingId" params={{ bookingId: successfulPayment.id }}>
+                    Complete Forms
+                  </Link>
+                </Button>
+              )
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {q.data?.length === 0 && (
         <p className="text-muted-foreground">No bookings yet. Book your first Job Shadow below.</p>
       )}
@@ -982,8 +1065,14 @@ export function Bookings({ selectedId }: { selectedId?: string | undefined } = {
             </p>
             <div className="mt-3 flex gap-2">
               {b.status === "awaiting_payment" && (
-                <Button size="sm" onClick={() => act("confirm_test_payment", b.id)}>
-                  Pay R{Number(b.amount_due).toFixed(0)} (test payment)
+                <Button
+                  size="sm"
+                  disabled={!!payingId}
+                  onClick={() => act("confirm_test_payment", b.id)}
+                >
+                  {payingId === b.id
+                    ? "Confirming…"
+                    : `Pay R${Number(b.amount_due).toFixed(0)} (test payment)`}
                 </Button>
               )}
               {b.status === "indemnity_required" && (
@@ -1135,6 +1224,10 @@ function StudentJourney({
   const current = selectedId
     ? bookings.data?.find((booking) => booking.id === selectedId)
     : bookings.data?.find((booking) => booking.status !== "cancelled");
+  const completeBookingForms = (id: string) => {
+    setSelectedId(id);
+    setActive("forms");
+  };
   const feedback = useQuery({
     queryKey: ["student-journey-feedback", current?.id],
     enabled: current?.status === "completed",
@@ -1175,8 +1268,8 @@ function StudentJourney({
       id: "forms",
       title: "Complete Forms",
       icon: FileText,
-      complete: confirmed,
-      locked: !current,
+      complete: confirmed && !showingPaymentPreview,
+      locked: !current && !showingPaymentPreview,
     },
     {
       id: "confirmation",
@@ -1349,6 +1442,9 @@ function StudentJourney({
                     Payment preview only. No booking, payment or confirmation has been created.
                   </p>
                   <Button disabled>Payment Unavailable in Preview</Button>
+                  <div className="flex justify-end">
+                    <Button onClick={() => setActive("forms")}>Complete Forms</Button>
+                  </div>
                 </>
               ) : demoPlacements.isError ? (
                 <p role="alert" className="text-sm">
@@ -1375,8 +1471,16 @@ function StudentJourney({
               </div>
             </div>
           )}
+          {active === "forms" && showingPaymentPreview && (
+            <div className="space-y-4">
+              <SampleBookingForms career={paymentPreview?.career ?? "Accountant"} />
+              <Button variant="outline" onClick={() => setActive("payment")}>
+                Back to Make Payment
+              </Button>
+            </div>
+          )}
           {["payment", "forms", "confirmation", "experience", "feedback"].includes(active) &&
-            !(active === "payment" && showingPaymentPreview) && (
+            !(["payment", "forms"].includes(active) && showingPaymentPreview) && (
               <div className="space-y-4">
                 <label className="block text-sm">
                   Your application
@@ -1412,10 +1516,10 @@ function StudentJourney({
                               ? "Your host needs to approve the request before payment is available."
                               : "Review your booking and complete payment below."}
                         </p>
-                        <Bookings selectedId={current.id} />
+                        <Bookings selectedId={current.id} onCompleteForms={completeBookingForms} />
                         <div className="flex justify-end">
                           <Button disabled={!paid} onClick={() => setActive("forms")}>
-                            Continue to Complete Forms
+                            Complete Forms
                           </Button>
                         </div>
                       </>
@@ -1426,7 +1530,7 @@ function StudentJourney({
                           Check payment and complete the required indemnity and consent documents
                           for this booking.
                         </p>
-                        <Bookings selectedId={current.id} />
+                        <Bookings selectedId={current.id} onCompleteForms={completeBookingForms} />
                         <div className="flex justify-end">
                           <Button variant="outline" onClick={() => setActive("confirmation")}>
                             Check Confirmation
@@ -1443,7 +1547,7 @@ function StudentJourney({
                               ? "This application has been cancelled. You can request another booking."
                               : "Your booking is not confirmed yet. Complete any outstanding payment or forms and check back here."}
                         </p>
-                        <Bookings selectedId={current.id} />
+                        <Bookings selectedId={current.id} onCompleteForms={completeBookingForms} />
                         {confirmed && (
                           <div className="flex justify-end">
                             <Button onClick={() => setActive("experience")}>
@@ -1462,7 +1566,7 @@ function StudentJourney({
                           Check your booking instructions, arrival time and what to bring. Feedback
                           becomes available when the experience is recorded as completed.
                         </p>
-                        <Bookings selectedId={current.id} />
+                        <Bookings selectedId={current.id} onCompleteForms={completeBookingForms} />
                         {current.status === "completed" && (
                           <div className="flex justify-end">
                             <Button onClick={() => setActive("feedback")}>
@@ -1504,6 +1608,51 @@ function StudentJourney({
         </div>
       </JourneyStepper>
     </section>
+  );
+}
+
+function SampleBookingForms({ career }: { career: string }) {
+  const documents = useQuery({
+    queryKey: ["sample-booking-form-templates"],
+    queryFn: async () => {
+      const result = await supabase
+        .from("legal_documents")
+        .select("key, title, body")
+        .in("key", ["standard_indemnity_clauses", "consent_forms"]);
+      if (result.error) throw result.error;
+      return result.data ?? [];
+    },
+  });
+  return (
+    <div className="space-y-4 rounded-lg border border-border bg-[#FFFDF5] p-4">
+      <p className="text-sm font-semibold">Selected Career: {career}</p>
+      <p className="text-sm">
+        Test preview only. No booking, payment, signature or consent is recorded here.
+      </p>
+      <p className="text-sm">
+        For a real booking, the parent or guardian signs the indemnity and consent forms from their
+        own account.
+      </p>
+      {documents.isPending ? (
+        <p role="status">Loading forms…</p>
+      ) : documents.isError ? (
+        <p role="alert">
+          Forms could not be loaded.{" "}
+          <button type="button" className="underline" onClick={() => void documents.refetch()}>
+            Try Again
+          </button>
+        </p>
+      ) : documents.data.length ? (
+        documents.data.map((doc) => (
+          <details key={doc.key} className="rounded border border-border p-4" open>
+            <summary className="cursor-pointer font-semibold">{doc.title}</summary>
+            <div className="mt-3 whitespace-pre-wrap text-sm leading-relaxed">{doc.body}</div>
+          </details>
+        ))
+      ) : (
+        <p className="text-sm">The form templates have not been added yet.</p>
+      )}
+    </div>
   );
 }
 

@@ -255,14 +255,14 @@ export function ScholarProfileContent({
                 <TabsList className="flex w-full flex-wrap justify-start rounded-full bg-primary/90">
                   <TabsTrigger
                     value="profile"
-                    className="data-[state=active]:bg-card data-[state=active]:text-foreground text-primary-foreground text-xs gap-1.5"
+                    className="data-[state=active]:bg-card data-[state=active]:text-foreground text-primary-foreground font-display font-black text-sm gap-1.5"
                   >
                     <UserCircle className="h-3.5 w-3.5" />
                     Profile
                   </TabsTrigger>
                   <TabsTrigger
                     value="bookings"
-                    className="data-[state=active]:bg-card data-[state=active]:text-foreground text-primary-foreground text-xs gap-1.5"
+                    className="data-[state=active]:bg-card data-[state=active]:text-foreground text-primary-foreground font-display font-black text-sm gap-1.5"
                   >
                     <CalendarCheck className="h-3.5 w-3.5" />
                     My Bookings
