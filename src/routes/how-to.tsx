@@ -396,7 +396,7 @@ function HowTo() {
         </div>
       </div>
       <section className="flex flex-1 items-center bg-teal px-5 py-4">
-        <div className="mx-auto w-full max-w-7xl rounded-xl border border-border bg-teal p-5">
+        <div className="mx-auto w-full max-w-7xl bg-teal p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div
               role="group"
