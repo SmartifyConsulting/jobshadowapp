@@ -294,6 +294,7 @@ table:not([role="grid"]) > thead th:last-child {
 
 /* Home reference artwork: geometry and colours only, with shared type and controls. */
 .home-reference {
+  --home-logo-width: clamp(96px, 21.6vw, 310px);
   --primary: oklch(0.555476 0.221758 19.0106);
   --brand-deep: var(--primary);
   --accent: oklch(0.956867 0.206505 108.5585);
@@ -306,15 +307,21 @@ table:not([role="grid"]) > thead th:last-child {
 .home-reference::before {
   content: "";
   position: absolute;
-  inset: 96px 0 0;
+  inset: 0;
   z-index: -1;
   pointer-events: none;
-  clip-path: polygon(3% 0, 100% 24.5vw, 100% 100%, 10% 100%);
-  background: linear-gradient(135deg, #c90035 0%, #d20339 45%, #d00437 100%);
+  clip-path: polygon(
+    calc(1% + var(--home-logo-width) * 0.04) calc(24px + var(--home-logo-width) * 0.28),
+    calc(1% + var(--home-logo-width) * 0.74) 26px,
+    100% calc(26px + 26vw),
+    100% 100%,
+    10% 100%
+  );
+  background: #d00020;
 }
 
 .home-reference > header {
-  background: var(--primary);
+  background: transparent;
   box-shadow: none;
 }
 
@@ -331,7 +338,7 @@ table:not([role="grid"]) > thead th:last-child {
 }
 
 .home-reference > header > div > a > img {
-  width: clamp(96px, 21.6vw, 310px);
+  width: var(--home-logo-width);
   height: auto;
 }
 
@@ -368,9 +375,6 @@ table:not([role="grid"]) > thead th:last-child {
 
   .home-reference.has-role-navigation > header > div > a > img {
     height: 95px;
-  }
-  .home-reference::before {
-    top: 112px;
   }
 
   .home-reference > header > div {
