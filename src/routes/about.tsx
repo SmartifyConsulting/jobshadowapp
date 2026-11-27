@@ -25,7 +25,7 @@ export const Route = createFileRoute("/about")({
     links: publicSeo("/about").links,
     meta: [
       ...publicSeo("/about").meta,
-      { title: "About Job Shadow — Giving the youth opportunity and guidance" },
+      { title: "About Job Shadow — Giving the Youth Opportunity and Guidance" },
       {
         name: "description",
         content:
@@ -52,14 +52,14 @@ function About() {
 
   return (
     <SiteLayout>
-      <div className="bg-teal text-teal-foreground">
+      <div className="bg-teal text-white">
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-5 py-4">
           <ChevronDown className="h-6 w-6" />
-          <span className="screen-heading font-display text-2xl uppercase">About</span>
+          <h1 className="screen-heading font-display text-2xl">About</h1>
         </div>
       </div>
       <section className="bg-primary px-5 pb-14 pt-10 text-center text-primary-foreground">
-        <h2 className="font-display text-3xl uppercase md:text-4xl">
+        <h2 className="font-display text-3xl text-white md:text-4xl">
           Giving the youth opportunity and guidance
         </h2>
         <div className="mx-auto mt-10 grid max-w-7xl gap-8 text-left text-[15px] leading-relaxed md:grid-cols-4">
