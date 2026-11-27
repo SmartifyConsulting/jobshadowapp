@@ -1,3 +1,4 @@
+import { ScreenHeading } from "@/components/ScreenHeading";
 import {
   LocationFields,
   readUserLocation,
@@ -286,73 +287,75 @@ export function AccountProfile({ admin = false }: { admin?: boolean } = {}) {
     profile.data?.display_name ||
     "My Profile";
   return (
-    <section className="space-y-4 bg-ivory p-4 text-foreground">
-      <h1 className="screen-heading bg-teal px-4 py-3 text-white">My Profile</h1>
-      <ProfileSummaryCard
-        name={name}
-        previewSections={[
-          {
-            title: "Personal Details",
-            fields: [
-              { label: "First Name", value: profile.data?.first_name },
-              { label: "Last Name", value: profile.data?.last_name },
-              { label: "Email Address", value: user.data?.email },
-              {
-                label: "Location",
-                value: locationText(readUserLocation(user.data?.user_metadata)),
-              },
-            ],
-          },
-        ]}
-        avatarUrl={avatar}
-        subtitle={user.data?.email}
-        onPhoto={() => document.getElementById("own-account-photo")?.click()}
-      />
-      {admin ? (
-        <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
-          <AccountPersonalDetails hidePhoto photoInputId="own-account-photo" />
-        </div>
-      ) : (
-        <Tabs
-          defaultValue="personal"
-          className="rounded-xl border border-border bg-card p-4 sm:p-5"
-        >
-          <TabsList
-            className="flex h-auto w-full flex-wrap justify-start"
-            aria-label="Profile details"
-          >
-            <TabsTrigger value="personal">Personal Details</TabsTrigger>
-            <TabsTrigger value="secondary">Secondary Information</TabsTrigger>
-          </TabsList>
-          <TabsContent forceMount value="personal" className="mt-4 data-[state=inactive]:hidden">
+    <>
+      <ScreenHeading title="My Profile" />
+      <section className="space-y-4 bg-ivory p-4 text-foreground">
+        <ProfileSummaryCard
+          name={name}
+          previewSections={[
+            {
+              title: "Personal Details",
+              fields: [
+                { label: "First Name", value: profile.data?.first_name },
+                { label: "Last Name", value: profile.data?.last_name },
+                { label: "Email Address", value: user.data?.email },
+                {
+                  label: "Location",
+                  value: locationText(readUserLocation(user.data?.user_metadata)),
+                },
+              ],
+            },
+          ]}
+          avatarUrl={avatar}
+          subtitle={user.data?.email}
+          onPhoto={() => document.getElementById("own-account-photo")?.click()}
+        />
+        {admin ? (
+          <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
             <AccountPersonalDetails hidePhoto photoInputId="own-account-photo" />
-          </TabsContent>
-          <TabsContent value="secondary" className="mt-4">
-            <dl className="grid gap-4 text-sm sm:grid-cols-2">
-              <div>
-                <dt className="text-xs text-muted-foreground">Email Address</dt>
-                <dd>{user.data?.email ?? "Not recorded"}</dd>
-              </div>
-              <div>
-                <dt className="text-xs text-muted-foreground">Account Created</dt>
-                <dd>
-                  {user.data?.created_at
-                    ? new Date(user.data.created_at).toLocaleDateString()
-                    : "Unknown"}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs text-muted-foreground">Last Sign-In</dt>
-                <dd>
-                  {user.data?.last_sign_in_at
-                    ? new Date(user.data.last_sign_in_at).toLocaleString()
-                    : "Unknown"}
-                </dd>
-              </div>
-            </dl>
-          </TabsContent>
-        </Tabs>
-      )}
-    </section>
+          </div>
+        ) : (
+          <Tabs
+            defaultValue="personal"
+            className="rounded-xl border border-border bg-card p-4 sm:p-5"
+          >
+            <TabsList
+              className="flex h-auto w-full flex-wrap justify-start"
+              aria-label="Profile details"
+            >
+              <TabsTrigger value="personal">Personal Details</TabsTrigger>
+              <TabsTrigger value="secondary">Secondary Information</TabsTrigger>
+            </TabsList>
+            <TabsContent forceMount value="personal" className="mt-4 data-[state=inactive]:hidden">
+              <AccountPersonalDetails hidePhoto photoInputId="own-account-photo" />
+            </TabsContent>
+            <TabsContent value="secondary" className="mt-4">
+              <dl className="grid gap-4 text-sm sm:grid-cols-2">
+                <div>
+                  <dt className="text-xs text-muted-foreground">Email Address</dt>
+                  <dd>{user.data?.email ?? "Not recorded"}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-muted-foreground">Account Created</dt>
+                  <dd>
+                    {user.data?.created_at
+                      ? new Date(user.data.created_at).toLocaleDateString()
+                      : "Unknown"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-muted-foreground">Last Sign-In</dt>
+                  <dd>
+                    {user.data?.last_sign_in_at
+                      ? new Date(user.data.last_sign_in_at).toLocaleString()
+                      : "Unknown"}
+                  </dd>
+                </div>
+              </dl>
+            </TabsContent>
+          </Tabs>
+        )}
+      </section>
+    </>
   );
 }

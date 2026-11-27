@@ -1,3 +1,4 @@
+import { ScreenHeading } from "@/components/ScreenHeading";
 import { MentorHostingGuide } from "@/components/mentor/MentorHostingGuide";
 import { ProfileSummaryCard } from "@/components/account/ProfileSummaryCard";
 import { readUserLocation, locationText } from "@/components/account/LocationFields";
@@ -799,7 +800,7 @@ function HostProfile({
 
   return (
     <section className="w-full space-y-4 bg-teal">
-      {!wizard && <h1 className="screen-heading px-4 pt-4 text-white">My Profile</h1>}
+      {!wizard && <ScreenHeading title="My Profile" />}
       <MentorOnboardingWizard
         userId={ownIdentity.user.data?.id ?? ""}
         hostProfile={profile.data!}

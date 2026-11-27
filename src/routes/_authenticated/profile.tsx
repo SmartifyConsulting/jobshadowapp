@@ -1,8 +1,9 @@
+import { ScreenHeading } from "@/components/ScreenHeading";
 import { ProfileSummaryCard } from "@/components/account/ProfileSummaryCard";
 import { AccountProfile, useOwnIdentity } from "@/components/account/AccountProfile";
 import { PortalLoading } from "@/components/PortalLoading";
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Fragment, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteLayout, useSiteSession } from "@/components/SiteLayout";
@@ -59,9 +60,19 @@ function useUser() {
 }
 
 function ProfileSettings() {
-  const { tab, entry, step } = Route.useSearch();
+  return <ScholarProfileContent search={Route.useSearch()} />;
+}
+export function ScholarProfileContent({
+  search,
+  embedded = false,
+}: {
+  search: { tab?: Tab | undefined; entry?: "workflow" | undefined; step?: string | undefined };
+  embedded?: boolean;
+}) {
+  const { tab, entry, step } = search;
   const inWorkflow = entry === "workflow";
-  const navigate = Route.useNavigate();
+  const navigate = useNavigate();
+  const Layout = embedded ? Fragment : SiteLayout;
   const qc = useQueryClient();
   const ownIdentity = useOwnIdentity();
   const user = ownIdentity.user.data;
@@ -158,9 +169,9 @@ function ProfileSettings() {
     (!!scholar.data || session.data?.roles.includes("user") || inWorkflow || tab === "bookings");
   if (!scholarView)
     return (
-      <SiteLayout>
+      <Layout>
         <AccountProfile admin={!!session.data?.isAdmin} />
-      </SiteLayout>
+      </Layout>
     );
   const profileContent = (
     <>
@@ -243,7 +254,8 @@ function ProfileSettings() {
     </>
   );
   return (
-    <SiteLayout>
+    <Layout>
+      {!inWorkflow && <ScreenHeading title="Profile" />}
       <section className={inWorkflow || tab === "bookings" ? "flex-1 bg-teal" : "flex-1 bg-ivory"}>
         <div
           className={
@@ -254,7 +266,6 @@ function ProfileSettings() {
         >
           {!inWorkflow && (
             <div>
-              <h1 className="screen-heading bg-teal px-4 py-3 text-white">Profile</h1>
               <p className="text-xs text-muted-foreground">
                 Manage your details, scholar account and bookings.
               </p>
@@ -262,7 +273,9 @@ function ProfileSettings() {
           )}
           <Tabs
             value={inWorkflow ? "bookings" : (tab ?? "profile")}
-            onValueChange={(v) => navigate({ search: { tab: v as Tab }, replace: true })}
+            onValueChange={(v) =>
+              navigate({ to: "/profile", search: { tab: v as Tab }, replace: true })
+            }
             className="w-full"
           >
             {!inWorkflow && (
@@ -294,6 +307,6 @@ function ProfileSettings() {
           </Tabs>
         </div>
       </section>
-    </SiteLayout>
+    </Layout>
   );
 }

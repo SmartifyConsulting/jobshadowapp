@@ -1,6 +1,6 @@
 import { publicSeo } from "@/lib/seo";
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { SiteLayout } from "@/components/SiteLayout";
 import { YouTube } from "@/components/YouTube";
 import {
@@ -51,7 +51,10 @@ function Stories() {
             "linear-gradient(to bottom, var(--teal) 0, var(--teal) calc(10rem + clamp(6.65rem, 24vw, 13.3rem) * 0.32), #F9DB01 calc(10rem + clamp(6.65rem, 24vw, 13.3rem) * 0.32), #F9DB01 100%)",
         }}
       >
-        <Carousel opts={{ loop: true, align: "start" }} className="mx-auto max-w-6xl px-10 sm:px-14">
+        <Carousel
+          opts={{ loop: true, align: "start" }}
+          className="mx-auto max-w-6xl px-10 sm:px-14"
+        >
           <CarouselContent className="-ml-8">
             {STORIES.map((s) => (
               <CarouselItem key={s.name} className="basis-full pl-8 md:basis-1/2">
@@ -76,14 +79,34 @@ function Stories() {
                     />
                   </div>
                 </div>
-                <p className="relative -mt-12 pb-4 pt-8 text-sm leading-relaxed text-accent-foreground">
+                <p className="relative -mt-12 max-w-[38ch] pb-4 pt-8 text-sm leading-relaxed text-accent-foreground">
                   {s.quote}
                 </p>
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="left-1 top-52 sm:-left-6" />
-          <CarouselNext className="right-1 top-52 sm:-right-6" />
+          <CarouselPrevious
+            variant="ghost"
+            className="left-0 top-40 h-20 w-16 rounded-none border-0 bg-transparent p-0 text-white shadow-none hover:bg-transparent hover:text-white sm:-left-8"
+          >
+            <ChevronLeft
+              className="size-16"
+              style={{ width: 64, height: 64 }}
+              strokeWidth={2.5}
+              aria-hidden
+            />
+          </CarouselPrevious>
+          <CarouselNext
+            variant="ghost"
+            className="right-0 top-40 h-20 w-16 rounded-none border-0 bg-transparent p-0 text-white shadow-none hover:bg-transparent hover:text-white sm:-right-8"
+          >
+            <ChevronRight
+              className="size-16"
+              style={{ width: 64, height: 64 }}
+              strokeWidth={2.5}
+              aria-hidden
+            />
+          </CarouselNext>
         </Carousel>
         <div className="mx-auto mt-6 max-w-3xl px-5">
           <YouTube {...STORIES_VIDEO} />

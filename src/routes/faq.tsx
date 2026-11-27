@@ -31,14 +31,14 @@ export const Route = createFileRoute("/faq")({
 function Faq() {
   return (
     <SiteLayout>
-      <div className="bg-cta text-white">
+      <div className="bg-primary text-white">
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-5 py-4">
           <ChevronDown className="h-6 w-6" aria-hidden />
           <h1 className="screen-heading font-display text-2xl">Frequently Asked Questions</h1>
         </div>
       </div>
-      <section className="flex-1 bg-[#7CCCC8] px-5 py-6 md:py-8">
-        <div className="mx-auto max-w-5xl rounded-xl border border-border bg-background p-5 shadow-warm md:p-7">
+      <section className="flex-1 bg-cta px-5 py-6 md:py-8">
+        <div className="mx-auto max-w-5xl rounded-xl border border-border bg-cta p-5 md:p-7">
           <p className="mb-5 text-sm leading-relaxed">
             Job shadowing guidance for scholars, tertiary students, mentors, companies and schools.
           </p>

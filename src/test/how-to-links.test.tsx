@@ -21,6 +21,13 @@ vi.mock("@/components/HowToProgress", () => ({
   useHowToProgress: () => ({ data: { student: state.done, mentor: [], host: [] }, error: null }),
 }));
 vi.mock("@/components/YouTube", () => ({ YouTube: () => null }));
+vi.mock("@/routes/_authenticated/profile", () => ({
+  ScholarProfileContent: ({ embedded }: { embedded: boolean }) => (
+    <div role="region" aria-label="Scholar accordion journey">
+      {embedded ? "Inline profile and booking steps" : "Standalone"}
+    </div>
+  ),
+}));
 import { Route } from "@/routes/how-to";
 afterEach(() => {
   cleanup();
@@ -115,18 +122,19 @@ describe("How To links", () => {
     expect(links[5]).toHaveAttribute("href", "/auth?go=studentForms");
     expect(screen.getByText("You Are Here")).toBeVisible();
   });
-  it("links signed-in scholars directly to each wizard step and marks only verified progress", () => {
-    state.user = { id: "student" };
-    state.done = [true, true, false, false, false, false, false];
+  it("shows the actual inline scholar journey without audience tabs even with a company guide URL", async () => {
+    state.user = { id: "raphaela" };
+    state.roles = ["user"];
+    state.guide = "company";
     const Page = Route.options.component as () => React.JSX.Element;
     render(<Page />);
-    const links = within(screen.getByRole("navigation", { name: "How-to steps" })).getAllByRole(
-      "link",
-    );
-    expect(links[1]).toHaveAttribute("href", "/profile?tab=bookings&step=profile");
-    expect(links[1]).toHaveAccessibleName(/completed/);
-    expect(links[5]).toHaveAttribute("href", "/profile?tab=bookings&step=forms");
-    expect(links[5]).not.toHaveAccessibleName(/completed/);
+    expect(
+      await screen.findByRole("region", { name: "Scholar accordion journey" }),
+    ).toHaveTextContent("Inline profile and booking steps");
+    expect(screen.queryByRole("button", { name: "Scholars" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Mentors" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Companies" })).toBeNull();
+    expect(screen.queryByRole("navigation", { name: "How-to steps" })).toBeNull();
   });
   it("shows the mentor step frame instead when the signed-in user is a mentor", () => {
     state.user = { id: "m" };

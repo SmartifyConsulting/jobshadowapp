@@ -26,7 +26,12 @@ import {
   Award,
 } from "lucide-react";
 import { SiteLayout, useSiteSession } from "@/components/SiteLayout";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
+const ScholarProfileContent = lazy(() =>
+  import("@/routes/_authenticated/profile").then((module) => ({
+    default: module.ScholarProfileContent,
+  })),
+);
 
 type Step = { icon: typeof User; label: string };
 
@@ -208,7 +213,8 @@ export const Route = createFileRoute("/how-to")({
 
 function HowTo() {
   const { guide } = Route.useSearch();
-  const { data: session } = useSiteSession();
+  const sessionQuery = useSiteSession();
+  const session = sessionQuery.data;
   const progress = useHowToProgress(session?.user?.id, session?.roles ?? []);
   const destination = (key: keyof typeof HOW_TO_DESTINATIONS) =>
     session?.user ? HOW_TO_DESTINATIONS[key] : "/auth?go=" + key;
@@ -224,7 +230,10 @@ function HowTo() {
   ];
   const roles = session?.roles ?? [];
   const scholar =
-    roles.includes("learner") || roles.includes("scholar") || progress.data?.student[1] === true;
+    roles.includes("user") ||
+    roles.includes("learner") ||
+    roles.includes("scholar") ||
+    progress.data?.student[1] === true;
   const provider = roles.includes("mentor") || roles.includes("hr_admin");
   const [selectedView, setSelectedView] = useState<{
     userId?: string | undefined;
@@ -387,6 +396,36 @@ function HowTo() {
                 "Welcome your scholar and host the experience.",
                 "Read feedback and keep your profile up to date.",
               ];
+  if (sessionQuery.isPending)
+    return (
+      <SiteLayout>
+        <p role="status" className="bg-teal p-5">
+          Loading your journey…
+        </p>
+      </SiteLayout>
+    );
+  if (session?.user && scholar && !isAdmin && !provider && !roles.includes("school"))
+    return (
+      <SiteLayout>
+        <div className="bg-cta text-white">
+          <div className="mx-auto flex max-w-7xl items-center gap-3 px-5 py-4">
+            <ChevronDown className="h-6 w-6" aria-hidden />
+            <h1 className="screen-heading font-display text-2xl">How To</h1>
+          </div>
+        </div>
+        <section className="w-full flex-1 bg-teal">
+          <Suspense
+            fallback={
+              <p role="status" className="p-5">
+                Loading your steps…
+              </p>
+            }
+          >
+            <ScholarProfileContent embedded search={{ entry: "workflow", tab: "bookings" }} />
+          </Suspense>
+        </section>
+      </SiteLayout>
+    );
   return (
     <SiteLayout className="lg:[&>footer>div:first-child]:py-3">
       <div className="bg-cta text-white">
