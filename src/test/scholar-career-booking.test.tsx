@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const auth = vi.hoisted(() => ({
-  user: { id: "test-scholar", user_metadata: {} as Record<string, string> },
+  user: { id: "test-scholar", user_metadata: {} as Record<string, unknown> },
   save: vi.fn(),
 }));
 vi.mock("@/components/SiteLayout", () => ({
@@ -45,6 +45,86 @@ const client = () => {
   return cache;
 };
 describe("guided career and host selection", () => {
+  it("restores searched dates and mentor selection from the account after remount", async () => {
+    const mount = (user = auth.user, available = true) => {
+      const cache = client();
+      cache.setQueryData(["me"], user);
+      cache.setQueryData(["career-favourites", user.id], new Set());
+      cache.setQueryData(["bookings", user.id], []);
+      cache.setQueryData(
+        ["placements"],
+        available
+          ? [
+              {
+                id: 91,
+                career: "Accountant",
+                location: "Cape Town",
+                availability: "6/12/2099",
+                arrival_time: "09:00",
+                collection_time: "15:00",
+              },
+            ]
+          : [],
+      );
+      return render(
+        <QueryClientProvider client={cache}>
+          <NewBooking initialCareer="Accountant" />
+        </QueryClientProvider>,
+      );
+    };
+    const first = mount();
+    fireEvent.change(screen.getByLabelText("From"), { target: { value: "2099-06-01" } });
+    fireEvent.change(screen.getByLabelText("To"), { target: { value: "2099-06-30" } });
+    fireEvent.click(screen.getByRole("button", { name: "Search Available Mentors" }));
+    fireEvent.click(screen.getByRole("radio"));
+    await waitFor(() =>
+      expect(auth.user.user_metadata["mentor_search"]).toMatchObject({
+        from: "2099-06-01",
+        to: "2099-06-30",
+        placementId: 91,
+      }),
+    );
+    first.unmount();
+    const second = mount();
+    expect(screen.getByLabelText("From")).toHaveValue("2099-06-01");
+    expect(screen.getByLabelText("To")).toHaveValue("2099-06-30");
+    expect(screen.getByText("Available mentor placements (1)")).toBeVisible();
+    expect(screen.getByRole("radio")).toBeChecked();
+    second.unmount();
+    const third = mount(auth.user, false);
+    expect(screen.getByText("Available mentor placements (0)")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Continue to Payment" })).toBeDisabled();
+    third.unmount();
+    mount({ id: "other-scholar", user_metadata: {} });
+    expect(screen.getByLabelText("From")).toHaveValue("");
+    expect(screen.getByLabelText("To")).toHaveValue("");
+  });
+
+  it("shows a failed search save and retries without losing the results", async () => {
+    auth.save.mockResolvedValueOnce({ error: { message: "Offline" } });
+    const cache = client();
+    cache.setQueryData(["me"], auth.user);
+    cache.setQueryData(["bookings", auth.user.id], []);
+    cache.setQueryData(["placements"], []);
+    render(
+      <QueryClientProvider client={cache}>
+        <NewBooking initialCareer="Accountant" />
+      </QueryClientProvider>,
+    );
+    fireEvent.change(screen.getByLabelText("From"), { target: { value: "2099-06-01" } });
+    fireEvent.change(screen.getByLabelText("To"), { target: { value: "2099-06-30" } });
+    fireEvent.click(screen.getByRole("button", { name: "Search Available Mentors" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Your search could not be saved");
+    expect(screen.getByText("Available mentor placements (0)")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Retry Saving" }));
+    await waitFor(() =>
+      expect(auth.user.user_metadata["mentor_search"]).toMatchObject({
+        from: "2099-06-01",
+        to: "2099-06-30",
+      }),
+    );
+    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
+  });
   it("matches only other favourites in the searched range and lets the scholar choose one", async () => {
     const cache = client();
     cache.setQueryData(["me"], auth.user);

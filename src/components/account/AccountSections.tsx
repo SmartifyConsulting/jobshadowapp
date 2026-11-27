@@ -12,7 +12,7 @@ import { PersonNameFields, joinPersonName } from "@/components/PersonNameFields"
 import { PhoneInput } from "@/components/PhoneInput";
 import { isPossiblePhoneNumber } from "libphonenumber-js/min";
 import { Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   ChevronDown,
   UserRound,
@@ -1390,6 +1390,16 @@ type Placement = {
   mode: string | null;
 };
 
+const savedMentorSearch = z.object({
+  sourceCareer: z.string(),
+  career: z.string(),
+  from: z.string(),
+  to: z.string(),
+  placementId: z.number().nullable(),
+  date: z.string(),
+});
+type SavedMentorSearch = z.infer<typeof savedMentorSearch>;
+
 function HostProfileCard({ companyId }: { companyId: number }) {
   const profile = useQuery({
     queryKey: ["host-profile-for-placement", companyId],
@@ -1500,6 +1510,88 @@ export function NewBooking({
   const [requestingDate, setRequestingDate] = useState(false);
   const [requestedDate, setRequestedDate] = useState("");
   const [requestNote, setRequestNote] = useState("");
+  const [restoredSearch, setRestoredSearch] = useState(false);
+  const restoredSearchKey = useRef("");
+  const searchSave = useMutation({
+    scope: { id: `mentor-search-${user?.id}` },
+    mutationFn: async (value: { userId: string; search: SavedMentorSearch }) => {
+      const session = await supabase.auth.getUser();
+      if (session.error || session.data.user?.id !== value.userId)
+        throw new Error("The signed-in account has changed.");
+      const result = await supabase.auth.updateUser({ data: { mentor_search: value.search } });
+      if (result.error) throw result.error;
+      return value;
+    },
+    onSuccess: (value) => {
+      qc.setQueryData(["me"], (previous: typeof user) =>
+        previous?.id === value.userId
+          ? {
+              ...previous,
+              user_metadata: { ...previous.user_metadata, mentor_search: value.search },
+            }
+          : previous,
+      );
+    },
+  });
+  function saveSearch(changes: Partial<SavedMentorSearch> = {}) {
+    if (!user || !initialCareer) return;
+    searchSave.mutate({
+      userId: user.id,
+      search: {
+        sourceCareer: initialCareer,
+        career,
+        from: rangeFrom,
+        to: rangeTo,
+        placementId: pid,
+        date,
+        ...changes,
+      },
+    });
+  }
+  useEffect(() => {
+    if (!user || !initialCareer || !placements.isSuccess) return;
+    const key = `${user.id}:${initialCareer}`;
+    if (restoredSearchKey.current === key) return;
+    restoredSearchKey.current = key;
+    setCareer(initialCareer);
+    setRangeFrom("");
+    setRangeTo("");
+    setRangeApplied(false);
+    setPid(null);
+    setDate("");
+    setRestoredSearch(false);
+    setRangeError("");
+    const parsed = savedMentorSearch.safeParse(user.user_metadata?.["mentor_search"]);
+    if (!parsed.success || parsed.data.sourceCareer !== initialCareer) return;
+    const saved = parsed.data;
+    if (!bookingDateKey(saved.from) || !bookingDateKey(saved.to) || saved.from > saved.to) return;
+    setCareer(saved.career);
+    setRangeFrom(saved.from);
+    setRangeTo(saved.to);
+    const today = new Date();
+    const todayKey = bookingDateKey(
+      `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`,
+    )!;
+    if (saved.from < todayKey) {
+      setRangeError(
+        "Your saved search includes past dates. Choose a new date range to search again.",
+      );
+      return;
+    }
+    setRangeApplied(true);
+    setRestoredSearch(true);
+    const selected = placementsInDateRange(placements.data, saved.from, saved.to).find(
+      (p) => p.id === saved.placementId && p.career === saved.career,
+    );
+    setPid(selected?.id ?? null);
+    if (
+      selected &&
+      datesInRange(selected.availability, saved.from, saved.to).includes(
+        bookingDateKey(saved.date) ?? "",
+      )
+    )
+      setDate(saved.date);
+  }, [user, initialCareer, placements.isSuccess, placements.data]);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const sectors = useMemo(
@@ -1664,6 +1756,7 @@ export function NewBooking({
     setPid(null);
     setDate("");
     setConfirmDupe(false);
+    setRestoredSearch(false);
   }
   function searchDates() {
     const todayKey = bookingDateKey(
@@ -1677,6 +1770,8 @@ export function NewBooking({
     }
     setRangeApplied(true);
     setRangeError("");
+    setRestoredSearch(false);
+    saveSearch();
   }
   const sel =
     "block w-full max-w-md border-b border-current/50 bg-transparent p-2 text-teal-foreground outline-none [&>option]:text-foreground";
@@ -1723,6 +1818,33 @@ export function NewBooking({
           </h2>
         </div>
         <div className="mt-5">
+          {initialCareer && searchSave.isPending && (
+            <p role="status" className="mb-3 text-sm">
+              Saving your search…
+            </p>
+          )}
+          {initialCareer && searchSave.isSuccess && !searchSave.isPending && (
+            <p role="status" className="mb-3 text-sm">
+              Search saved to your account.
+            </p>
+          )}
+          {initialCareer && searchSave.isError && (
+            <p role="alert" className="mb-3 text-sm text-destructive">
+              Your search could not be saved.{" "}
+              <button
+                type="button"
+                className="underline"
+                onClick={() => searchSave.variables && searchSave.mutate(searchSave.variables)}
+              >
+                Retry Saving
+              </button>
+            </p>
+          )}
+          {initialCareer && restoredSearch && (
+            <p className="mb-3 text-sm">
+              Your saved search has been restored. Results reflect current mentor availability.
+            </p>
+          )}
           {step === 1 && (
             <select
               className={sel}
@@ -1848,6 +1970,7 @@ export function NewBooking({
                             setPid(host.id);
                             setDate("");
                             setConfirmDupe(false);
+                            saveSearch({ placementId: host.id, date: "" });
                           }}
                           className="mt-1"
                         />
@@ -1932,6 +2055,7 @@ export function NewBooking({
                           setDate("");
                           setConfirmDupe(false);
                           setStep(4);
+                          saveSearch({ career: host.career, placementId: host.id, date: "" });
                         }}
                       >
                         Choose This Mentor
@@ -2003,6 +2127,7 @@ export function NewBooking({
                       setDate(d);
                       setConfirmDupe(false);
                       setRequestingDate(false);
+                      saveSearch({ date: d });
                     }}
                     className={`border px-3 py-1 text-sm ${!requestingDate && date === d ? "bg-primary text-primary-foreground" : "border-current/60"}`}
                   >
