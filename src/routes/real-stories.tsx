@@ -45,10 +45,10 @@ function Stories() {
         </div>
       </div>
       <section
-        className="bg-accent pb-6"
+        className="bg-[#F9DB01] pb-6"
         style={{
           background:
-            "linear-gradient(to bottom, var(--teal) 0, var(--teal) calc(10rem + clamp(6.65rem, 24vw, 13.3rem) * 0.32), var(--accent) calc(10rem + clamp(6.65rem, 24vw, 13.3rem) * 0.32), var(--accent) 100%)",
+            "linear-gradient(to bottom, var(--teal) 0, var(--teal) calc(10rem + clamp(6.65rem, 24vw, 13.3rem) * 0.32), #F9DB01 calc(10rem + clamp(6.65rem, 24vw, 13.3rem) * 0.32), #F9DB01 100%)",
         }}
       >
         <Carousel opts={{ loop: true, align: "start" }} className="mx-auto max-w-6xl px-10 sm:px-14">

@@ -411,10 +411,10 @@ h1, h2, .screen-heading {
   z-index: 1;
   flex-shrink: 0;
   margin-top: calc((20rem - clamp(6.65rem, 43.7cqw, 13.3rem)) / 2);
-  margin-right: -2rem;
+  margin-right: calc(clamp(6.65rem, 43.7cqw, 13.3rem) * -0.22);
   font-family: "Gotham Black", "Gotham", sans-serif;
   font-weight: 900;
-  font-size: clamp(1.5rem, 12cqw, 3.75rem);
+  font-size: clamp(1.7rem, 14cqw, 4.375rem);
   line-height: 1.1;
   white-space: nowrap;
 }
