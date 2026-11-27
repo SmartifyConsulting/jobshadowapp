@@ -406,10 +406,11 @@ h1, h2, .screen-heading {
   justify-content: center;
 }
 .real-story-name {
+  align-self: flex-start;
   position: relative;
   z-index: 1;
   flex-shrink: 0;
-  margin-top: 0;
+  margin-top: calc((20rem - clamp(6.65rem, 43.7cqw, 13.3rem)) / 2);
   margin-right: -2rem;
   font-family: "Gotham Black", "Gotham", sans-serif;
   font-weight: 900;
