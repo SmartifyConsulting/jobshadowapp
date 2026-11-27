@@ -13,6 +13,7 @@ export function ProfileSummaryCard({
   previewSections,
   layout = "default",
   label = "Profile summary",
+  framed = true,
 }: {
   name: string;
   avatarUrl?: string | null;
@@ -23,6 +24,7 @@ export function ProfileSummaryCard({
   previewSections?: ProfilePreviewSection[];
   layout?: "default" | "mentor";
   label?: string;
+  framed?: boolean;
 }) {
   const photo = (
     <>
@@ -48,7 +50,10 @@ export function ProfileSummaryCard({
   const avatarClass =
     "relative grid h-20 w-20 shrink-0 place-items-center rounded-full border border-input bg-muted";
   return (
-    <header aria-label={label} className="rounded-xl border border-border bg-card p-4 sm:p-5">
+    <header
+      aria-label={label}
+      className={framed ? "rounded-xl border border-border bg-card p-4 sm:p-5" : ""}
+    >
       <div
         className={
           layout === "mentor"

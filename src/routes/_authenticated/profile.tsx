@@ -1,3 +1,4 @@
+import { ProfilePreview } from "@/components/account/ProfilePreview";
 import { ScreenHeading } from "@/components/ScreenHeading";
 import { ProfileSummaryCard } from "@/components/account/ProfileSummaryCard";
 import { AccountProfile, useOwnIdentity } from "@/components/account/AccountProfile";
@@ -147,25 +148,26 @@ export function ScholarProfileContent({
         <AccountProfile admin={!!session.data?.isAdmin} />
       </Layout>
     );
+  const previewSections = [
+    { title: "Account", fields: [{ label: "Email Address", value: user?.email }] },
+    ...SCHOLAR_DETAIL_TABS.map((section) => ({
+      title: section.label,
+      fields: section.rows.map(([label, key]) => ({
+        label: label.replace(/\b\w/g, (c) => c.toUpperCase()),
+        value: (scholar.data as Record<string, unknown> | null)?.[key],
+      })),
+    })),
+  ];
   const profileContent = (
-    <>
+    <div className="rounded-xl border border-border bg-card p-4 space-y-4 sm:p-5">
       <ProfileSummaryCard
         name={displayName || "My Profile"}
         avatarUrl={avatarUrl}
         subtitle={user?.email}
-        previewSections={[
-          { title: "Account", fields: [{ label: "Email Address", value: user?.email }] },
-          ...SCHOLAR_DETAIL_TABS.map((section) => ({
-            title: section.label,
-            fields: section.rows.map(([label, key]) => ({
-              label: label.replace(/\b\w/g, (c) => c.toUpperCase()),
-              value: (scholar.data as Record<string, unknown> | null)?.[key],
-            })),
-          })),
-        ]}
+        framed={false}
         onPhoto={() => document.getElementById("scholar-profile-photo")?.click()}
       />
-      <div className="rounded-xl border border-border bg-card p-4 shadow-sm space-y-4 sm:p-5">
+      <div className="space-y-4">
         <input
           id="scholar-profile-photo"
           type="file"
@@ -199,7 +201,14 @@ export function ScholarProfileContent({
           <AccountPanel />
         </div>
       </div>
-    </>
+      <div className="flex justify-end">
+        <ProfilePreview
+          name={displayName || "My Profile"}
+          avatarUrl={avatarUrl}
+          sections={previewSections}
+        />
+      </div>
+    </div>
   );
   return (
     <Layout>
