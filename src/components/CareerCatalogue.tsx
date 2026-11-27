@@ -211,7 +211,7 @@ export function CareerCatalogue({
     <Layout>
       {!embedded && (
         <>
-          <div className="bg-cta text-cta-foreground">
+          <div className="bg-primary text-primary-foreground">
             <div className="mx-auto flex max-w-7xl items-center gap-3 px-5 py-4">
               <ChevronDown className="h-6 w-6" />
               <h1 className="font-display text-2xl uppercase">Careers</h1>

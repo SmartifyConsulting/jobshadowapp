@@ -87,7 +87,7 @@ export function PublicInsights({
           }}
         />
       )}
-      <div className="bg-cta text-cta-foreground">
+      <div className="bg-accent text-accent-foreground">
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-5 py-4">
           <ChevronDown className="h-6 w-6" aria-hidden />
           <Link to="/blogs" className="font-display text-2xl uppercase">
