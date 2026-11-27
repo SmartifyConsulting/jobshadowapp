@@ -1,6 +1,5 @@
 import { publicSeo } from "@/lib/seo";
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronDown } from "lucide-react";
 import { SiteLayout } from "@/components/SiteLayout";
 import { YouTube } from "@/components/YouTube";
 import {
@@ -38,14 +37,6 @@ export const Route = createFileRoute("/real-stories")({
 function Stories() {
   return (
     <SiteLayout>
-      <div className="bg-primary text-primary-foreground">
-        <div className="bg-teal text-teal-foreground">
-          <div className="mx-auto flex max-w-7xl items-center gap-3 px-5 py-4">
-            <ChevronDown className="h-6 w-6" />
-            <span className="font-display text-2xl uppercase">Real stories</span>
-          </div>
-        </div>
-      </div>
       <section
         className="bg-accent pb-14"
         style={{

@@ -4,7 +4,6 @@ import { useHowToProgress } from "@/components/HowToProgress";
 import { HOW_TO_DESTINATIONS } from "@/lib/journey-progress";
 import { createFileRoute } from "@tanstack/react-router";
 import {
-  ChevronDown,
   Users,
   UserPlus,
   User,
@@ -389,12 +388,6 @@ function HowTo() {
               ];
   return (
     <SiteLayout className="lg:[&>footer>div:first-child]:py-3">
-      <div className="bg-cta text-cta-foreground">
-        <div className="mx-auto flex max-w-7xl items-center gap-3 px-5 py-4">
-          <ChevronDown className="h-6 w-6" />
-          <span className="font-display text-2xl uppercase">How To</span>
-        </div>
-      </div>
       <section className="flex flex-1 items-center bg-[#7CCCC8] px-5 py-4">
         <div className="mx-auto w-full max-w-7xl rounded-xl border border-border bg-background p-5 shadow-warm">
           <div className="flex flex-wrap items-center justify-between gap-3">

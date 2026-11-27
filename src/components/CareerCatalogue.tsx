@@ -219,10 +219,10 @@ export function CareerCatalogue({
           </div>
 
           <section className="bg-teal px-5 pb-4 pt-12 text-center text-teal-foreground">
-            <h2 className="font-display text-2xl md:text-3xl">
+            <h2 className="font-display text-2xl text-white md:text-3xl">
               Already have an idea of your dream career?
             </h2>
-            <p className="font-display text-2xl md:text-3xl">
+            <p className="font-display text-2xl text-white md:text-3xl">
               See some of the job shadows you can book below!
             </p>
             <p className="mx-auto mt-5 max-w-2xl text-sm">
