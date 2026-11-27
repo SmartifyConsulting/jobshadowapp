@@ -93,20 +93,17 @@ export function ScholarProfileContent({
     },
   });
 
-  const [first, setFirst] = useState<string | null>(null);
-  const [last, setLast] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
   const [cropFile, setCropFile] = useState<File | null>(null);
 
   const splitName = (profile.data?.display_name ?? "").trim().split(/\s+/);
   const firstName =
-    first ??
+    scholar.data?.first_name ??
     profile.data?.first_name ??
     (splitName.length > 1 ? splitName.slice(0, -1).join(" ") : (splitName[0] ?? ""));
   const lastName =
-    last ??
+    scholar.data?.last_name ??
     profile.data?.last_name ??
     (splitName.length > 1 ? (splitName[splitName.length - 1] ?? "") : "");
   const displayName = `${firstName} ${lastName}`.trim();
@@ -131,29 +128,6 @@ export function ScholarProfileContent({
       .upsert({ user_id: user.id, avatar_path: path, updated_at: new Date().toISOString() });
     setBusy(false);
     if (error) return setErr(error.message);
-    qc.invalidateQueries({ queryKey: ["profile", user.id] });
-    qc.invalidateQueries({ queryKey: ["site-session"] });
-  }
-
-  async function saveName() {
-    if (!user) return;
-    setBusy(true);
-    setErr(null);
-    setSaved(false);
-    if (!firstName.trim() || !lastName.trim()) {
-      setBusy(false);
-      return setErr("Please enter your first name and last name.");
-    }
-    const { error } = await supabase.from("profiles").upsert({
-      user_id: user.id,
-      first_name: firstName.trim(),
-      last_name: lastName.trim(),
-      display_name: displayName,
-      updated_at: new Date().toISOString(),
-    });
-    setBusy(false);
-    if (error) return setErr(error.message);
-    setSaved(true);
     qc.invalidateQueries({ queryKey: ["profile", user.id] });
     qc.invalidateQueries({ queryKey: ["site-session"] });
   }
@@ -216,38 +190,12 @@ export function ScholarProfileContent({
           />
         )}
 
-        <div className="w-full">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block text-sm font-semibold">
-              First Name
-              <input
-                value={firstName}
-                onChange={(e) => setFirst(e.target.value)}
-                autoComplete="given-name"
-                className="mt-1 w-full border-b border-foreground/30 bg-transparent px-1 py-2 text-sm outline-none focus:border-foreground"
-              />
-            </label>
-            <label className="block text-sm font-semibold">
-              Last Name
-              <input
-                value={lastName}
-                onChange={(e) => setLast(e.target.value)}
-                autoComplete="family-name"
-                className="mt-1 w-full border-b border-foreground/30 bg-transparent px-1 py-2 text-sm outline-none focus:border-foreground"
-              />
-            </label>
-          </div>
-          <p className="mt-2 text-xs text-muted-foreground">Shown as: {displayName || "—"}</p>
-          {err && <p className="mt-2 text-sm text-destructive">{err}</p>}
-          <button
-            onClick={saveName}
-            disabled={busy}
-            className="mt-4 rounded-full bg-primary px-5 py-2 text-xs font-bold uppercase tracking-wide text-primary-foreground disabled:opacity-50"
-          >
-            {saved ? "Saved" : "Save"}
-          </button>
-        </div>
-        <div className="border-t border-border pt-4">
+        {err && (
+          <p role="alert" className="text-sm text-destructive">
+            {err}
+          </p>
+        )}
+        <div>
           <AccountPanel />
         </div>
       </div>
