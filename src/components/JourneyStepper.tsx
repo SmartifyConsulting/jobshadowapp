@@ -6,6 +6,7 @@ export type JourneyStep = {
   icon: LucideIcon;
   complete?: boolean;
   locked?: boolean;
+  unframed?: boolean;
 };
 export function JourneyStepper({
   title,
@@ -91,7 +92,7 @@ export function JourneyStepper({
                     role="region"
                     aria-labelledby={panelId + "-" + step.id + "-heading"}
                     hidden={!expanded}
-                    className="workflow-step-panel mx-4 my-3 min-w-0 rounded-xl border border-border p-4 text-foreground sm:mx-6 sm:p-5"
+                    className={step.unframed ? "mx-4 my-3 min-w-0 text-foreground sm:mx-6" : "workflow-step-panel mx-4 my-3 min-w-0 rounded-xl border border-border p-4 text-foreground sm:mx-6 sm:p-5"}
                   >
                     {selected ? children : null}
                   </div>

@@ -2,14 +2,17 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, expect, it, vi } from "vitest";
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
+vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
+vi.mock("@/lib/personal-onboarding.functions", () => ({ loadPersonalOnboarding: vi.fn() }));
 import { IndemnityDraftPreview } from "@/components/account/IndemnityDraftPreview";
 afterEach(cleanup);
 it("lets Elena preview Form D without replacing other forms or offering a signing action", () => {
   const cache = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity } } });
   cache.setQueryData(["me"], { id: "ea29d396-45d1-430c-88d7-29d4504d9725", email: "elena@moi.co.za" });
-  render(<QueryClientProvider client={cache}><IndemnityDraftPreview /></QueryClientProvider>);
-  fireEvent.click(screen.getByText("Indemnity Form"));
-  expect(screen.getByText("Draft for client review.")).toBeVisible();
+  cache.setQueryData(["personal-onboarding", "scholar"], { self: false });
+  render(<QueryClientProvider client={cache}><IndemnityDraftPreview scholarId="scholar" /></QueryClientProvider>);
+  expect(screen.getByRole("region", { name: "Indemnity Form" }).closest("details")).toBeNull();
+  expect(screen.queryByText("Draft for client review.")).toBeNull();
   expect(screen.getByText("Parent / Guardian Signature Where Required")).toBeVisible();
   const scholar = within(screen.getByRole("region", { name: "Scholar form" }));
   const parent = within(screen.getByRole("region", { name: "Parent or guardian form" }));
@@ -17,7 +20,11 @@ it("lets Elena preview Form D without replacing other forms or offering a signin
   expect(scholar.queryByRole("heading", { name: "Parent or Guardian Health and Emergency Consent" })).toBeNull();
   expect(parent.getByRole("heading", { name: "Parent or Guardian Health and Emergency Consent" })).toBeVisible();
   expect(parent.getByText("Parent / Guardian Signature Where Required")).toBeVisible();
-  expect(screen.queryByRole("button")).toBeNull(); expect(screen.queryByRole("textbox")).toBeNull();
+  expect(screen.queryByRole("button")).toBeNull();
+  expect(screen.getByRole("textbox", { name: "Parent / Guardian Signature Where Required" })).toBeEnabled();
+  expect(screen.getByRole("textbox", { name: "Scholar / Tertiary Student Signature" })).toBeDisabled();
+  fireEvent.change(screen.getByRole("textbox", { name: "Parent / Guardian Signature Where Required" }), { target: { value: "Elena Nicolettis" } });
+  expect(screen.getByText("Signature preview — not submitted.")).toBeVisible();
 });
 it("does not show the unapproved draft to ordinary users", () => {
   const cache = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity } } });

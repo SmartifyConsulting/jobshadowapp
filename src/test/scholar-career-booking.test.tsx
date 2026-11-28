@@ -61,6 +61,19 @@ const client = () => {
   return cache;
 };
 describe("guided career and host selection", () => {
+  it("opens consent by default and keeps Verify My Identity disabled until the parent signs", async () => {
+    const cache = client();
+    cache.setQueryData(["me"], auth.user);
+    cache.setQueryData(["scholar-profile", auth.user.id], {});
+    cache.setQueryData(["bookings", auth.user.id], []);
+    cache.setQueryData(["personal-onboarding", auth.user.id], { ...onboardingState, identity: null, scholarSigned: true, parentSigned: false, consentComplete: false });
+    render(<QueryClientProvider client={cache}><AccountPanel withBookings initialStep="identity" /></QueryClientProvider>);
+    expect(screen.getByText("Personal Information & Identity Verification Consent").closest("details")).toHaveAttribute("open");
+    expect(screen.getByRole("button", { name: "Verify My Identity" })).toBeDisabled();
+    cache.setQueryData(["personal-onboarding", auth.user.id], { ...onboardingState, identity: null });
+    await waitFor(() => expect(screen.getByRole("button", { name: "Verify My Identity" })).toBeEnabled());
+    expect(kyc.start).not.toHaveBeenCalled();
+  });
   it("lets only the test scholar pass the KYC preview and opens the next accordion without calling KYC or signing", async () => {
     auth.user = { id: "1ec456b0-6280-4732-9393-9e67991ffdfa", email: "elenanicolettis@icloud.com", user_metadata: {} };
     const cache = client();

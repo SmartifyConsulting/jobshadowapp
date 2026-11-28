@@ -40,7 +40,7 @@ function ParentPortal() {
               <h2 className="text-lg font-semibold">{c.full_name}</h2>
               <ScholarSignupDate scholarId={c.scholar_user_id} />
               <div className="mt-4"><PersonalOnboarding key={c.scholar_user_id} scholarId={c.scholar_user_id} parent /></div>
-              <div className="mt-4"><IndemnityDraftPreview /></div>
+              <div className="mt-4"><IndemnityDraftPreview scholarId={c.scholar_user_id} /></div>
               <div className="mt-4 space-y-2">
                 {c.pending_bookings.length === 0 && <p className="text-sm text-muted-foreground">No bookings yet.</p>}
                 {c.pending_bookings.map((b) => (

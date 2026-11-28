@@ -35,7 +35,7 @@ export function PersonalOnboarding({ scholarId, parent = false, testPassed = fal
   const verified = data.identity?.status === "approved" && data.identity.environment === "live";
   return <div className="space-y-4">
     {error && <p role="alert" className="text-destructive">{error}</p>}
-    <details className="rounded-lg border bg-[#FFFDF5] p-4">
+    <details open className="rounded-lg border bg-[#FFFDF5] p-4">
       <summary className="cursor-pointer font-bold">Personal Information & Identity Verification Consent{data.consentComplete ? " — Signed" : ""}</summary>
       <div className="mt-4 space-y-4"><LegalFormBody body={data.body} />
         <div className="grid gap-6 md:grid-cols-2">{(["scholar", "parent"] as const).map(role => {
@@ -52,7 +52,7 @@ export function PersonalOnboarding({ scholarId, parent = false, testPassed = fal
       <p>{verified ? "Your identity is verified. This verification will be used for future Job Shadows." : !data.consentComplete ? "Complete Form A with your linked Parent/Guardian before verifying your identity." : "Verify your identity securely. You only need to complete this once."}</p>
       {verified && data.identity?.verified_at && <p className="text-sm">Verified: {new Date(data.identity.verified_at).toLocaleString()}</p>}
       {data.identity?.environment === "test" && <p className="text-sm font-semibold">Test verification only. This does not verify your identity for a live booking.</p>}
-      {!verified && <div className="flex flex-wrap gap-2"><Button disabled={!data.consentComplete || begin.isPending} onClick={() => begin.mutate()}>{begin.isPending ? "Starting…" : data.identity?.verification_url ? "Continue Identity Verification" : "Verify My Identity"}</Button>{data.identity && <Button variant="outline" disabled={check.isPending} onClick={() => check.mutate()}>Check Verification Status</Button>}</div>}
+      {!verified && <div className="flex flex-wrap gap-2"><Button disabled={!data.parentSigned || !data.scholarSigned || !data.consentComplete || begin.isPending} onClick={() => begin.mutate()}>{begin.isPending ? "Starting…" : data.identity?.verification_url ? "Continue Identity Verification" : "Verify My Identity"}</Button>{data.identity && <Button variant="outline" disabled={check.isPending} onClick={() => check.mutate()}>Check Verification Status</Button>}</div>}
       {canTestPass && !verified && !testPassed && onTestPassed && <div className="space-y-2 border-t border-border pt-3"><p className="text-xs">Test preview only. Bypass this step without recording KYC or signatures.</p><Button onClick={() => { try { window.sessionStorage.setItem(`jobshadow-demo-identity:${scholarId}`, "passed"); } catch { /* In-memory test preview still works. */ } onTestPassed(); }}>Pass KYC</Button></div>}
     </div>}
   </div>;

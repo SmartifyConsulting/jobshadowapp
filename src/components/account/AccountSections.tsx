@@ -1294,6 +1294,7 @@ function StudentJourney({
     {
       id: "forms",
       title: "Complete Indemnity Form",
+      unframed: true,
       icon: FileText,
       complete: formsComplete && !showingPaymentPreview,
       locked: !showingPaymentPreview && (!current || !paid),
@@ -1473,7 +1474,7 @@ function StudentJourney({
               <PersonalOnboarding key={userId} scholarId={userId} testPassed={demoIdentityComplete} onTestPassed={() => setTestIdentityPassed(true)} />
             </div>
           )}
-          {active === "forms" && <IndemnityDraftPreview />}
+          {active === "forms" && <IndemnityDraftPreview scholarId={userId} />}
           {["payment", "forms", "confirmation", "experience", "feedback"].includes(active) &&
             !(["payment", "forms"].includes(active) && showingPaymentPreview) && (
               <div className="space-y-4">
