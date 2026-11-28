@@ -1,6 +1,23 @@
+import { createContext, useContext, useState, type ReactNode } from "react";
 import { LegalFormBody } from "./LegalFormBody";
 
+type SignatureEntry = {
+  role: "scholar" | "parent" | "mentor";
+  disabled?: boolean;
+  onChange?: (name: string) => void;
+};
+const SignatureEntryContext = createContext<SignatureEntry | null>(null);
+export function SignatureEntryProvider({
+  children,
+  ...entry
+}: SignatureEntry & { children: ReactNode }) {
+  return <SignatureEntryContext.Provider value={entry}>{children}</SignatureEntryContext.Provider>;
+}
+
 export function SignatureSpace({ signer }: { signer: "scholar" | "parent" | "mentor" }) {
+  const entry = useContext(SignatureEntryContext);
+  const [name, setName] = useState("");
+  const canType = entry?.role === signer && !entry.disabled;
   const title =
     signer === "scholar"
       ? "Scholar"
@@ -11,7 +28,12 @@ export function SignatureSpace({ signer }: { signer: "scholar" | "parent" | "men
     <section className="space-y-2" aria-label={`${title} signature`}>
       <h4 className="font-bold">Digital Signature</h4>
       <input
-        disabled
+        disabled={!canType}
+        value={name}
+        onChange={(event) => {
+          setName(event.target.value);
+          entry?.onChange?.(event.target.value);
+        }}
         aria-label={`${title} digital signature`}
         placeholder={`${title} Signature`}
         className={`h-24 w-full rounded border border-input bg-transparent px-3 text-3xl disabled:opacity-100 ${signer === "scholar" ? "scholar-signature-font" : "guardian-signature-font"}`}

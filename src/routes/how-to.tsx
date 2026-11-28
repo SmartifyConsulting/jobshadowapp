@@ -416,7 +416,7 @@ function HowTo() {
         <div className="bg-cta text-white">
           <div className="mx-auto flex max-w-7xl items-center gap-3 px-5 py-4">
             <ChevronDown className="h-6 w-6" aria-hidden />
-            <h1 className="screen-heading font-display text-2xl">How To</h1>
+            <h1 className="screen-heading font-display text-2xl">How to Book Your Job Shadow</h1>
           </div>
         </div>
         <section className="w-full flex-1 bg-teal">

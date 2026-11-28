@@ -234,7 +234,7 @@ export function ScholarProfileContent({
           <div
             className={
               inWorkflow || tab === "bookings"
-                ? "w-full space-y-4 py-8"
+                ? "w-full space-y-4"
                 : "mx-auto max-w-7xl space-y-4 px-5 py-8"
             }
           >
@@ -273,7 +273,7 @@ export function ScholarProfileContent({
               <TabsContent value="profile" className="mt-4 space-y-4">
                 {profileContent}
               </TabsContent>
-              <TabsContent value="bookings" className="mt-4 space-y-4">
+              <TabsContent value="bookings" className={inWorkflow ? "mt-0" : "mt-4 space-y-4"}>
                 <div className="w-full bg-teal text-teal-foreground">
                   <AccountPanel withBookings initialStep={step} profileContent={profileContent} />
                 </div>

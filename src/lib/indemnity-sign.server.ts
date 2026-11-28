@@ -30,6 +30,10 @@ export async function buildSignedIndemnityPdf(opts: {
   guardianName: string;
   guardianContact: string;
   signaturePngDataUrl: string;
+  signedAt?: string;
+  signerIp?: string | null;
+  signerRole?: string;
+  documentHash?: string;
 }): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
   const font = await pdf.embedFont(StandardFonts.Helvetica);
@@ -75,11 +79,13 @@ export async function buildSignedIndemnityPdf(opts: {
   const sigDims = sigImage.scaleToFit(200, 60);
   page.drawImage(sigImage, { x: margin, y: y - sigDims.height, width: sigDims.width, height: sigDims.height });
   y -= sigDims.height + 4;
-  drawLine("Parent / Guardian signature", { size: 8 });
+  drawLine(`${opts.signerRole === "scholar" ? "Scholar" : opts.signerRole === "mentor" || opts.signerRole === "hr_admin" ? "Mentor / Company Representative" : "Parent / Guardian"} signature`, { size: 8 });
   y -= 8;
-  drawLine(`Parent / Guardian name: ${opts.guardianName}`, { size: 10 });
+  drawLine(`Signer name: ${opts.guardianName}`, { size: 10 });
   drawLine(`Contact number: ${opts.guardianContact}`, { size: 10 });
-  drawLine(`Date signed: ${new Date().toLocaleDateString("en-ZA")}`, { size: 10 });
+  drawLine(`Date / time signed (UTC): ${opts.signedAt ?? new Date().toISOString()}`, { size: 10 });
+  drawLine(`IP address: ${opts.signerIp ?? "Unavailable"}`, { size: 10 });
+  if (opts.documentHash) drawParagraph(`Document version (SHA-256): ${opts.documentHash}`,8);
 
   return pdf.save();
 }

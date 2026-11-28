@@ -83,6 +83,7 @@ describe("guided career and host selection", () => {
     fireEvent.change(screen.getByLabelText("To"), { target: { value: "2099-06-30" } });
     fireEvent.click(screen.getByRole("button", { name: "Search Available Mentors" }));
     fireEvent.click(screen.getByRole("radio"));
+    fireEvent.click(screen.getByRole("button", { name: "Continue to Make Payment" }));
     expect(screen.getByLabelText("Selected Career: Accountant")).toBeVisible();
     expect(
       screen.getByText(
@@ -185,7 +186,7 @@ describe("guided career and host selection", () => {
     second.unmount();
     const third = mount(auth.user, false);
     expect(screen.getByText("Available mentor placements (0)")).toBeVisible();
-    expect(screen.getByRole("button", { name: "Continue to Placement Details" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Continue to Make Payment" })).toBeDisabled();
     third.unmount();
     mount({ id: "other-scholar", user_metadata: {} });
     expect(screen.getByLabelText("From")).toHaveValue("");
@@ -282,10 +283,9 @@ describe("guided career and host selection", () => {
     expect(within(matches).queryByText("Not Favourited")).toBeNull();
     expect(within(matches).queryByText("No Hours")).toBeNull();
     fireEvent.click(within(matches).getByRole("button", { name: "Choose This Mentor" }));
-    expect(screen.getByRole("heading", { name: "Placement Details" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Mentor Availability" })).toBeVisible();
     expect(screen.getByLabelText("Selected Career: Accountant")).toBeVisible();
-    expect(screen.getByText("Cape Town")).toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: "Back to Mentor Availability" }));
+    expect(screen.getAllByText("Cape Town")[0]).toBeVisible();
     expect(screen.getByText("Available mentor placements (1)")).toBeVisible();
     expect(screen.getByRole("radio")).toBeChecked();
     fireEvent.change(screen.getByLabelText("To"), { target: { value: "2099-06-02" } });
@@ -294,7 +294,7 @@ describe("guided career and host selection", () => {
         screen.getByRole("complementary", { name: "Favourite career availability" }),
       ).queryByRole("button", { name: "Choose This Mentor" }),
     ).toBeNull();
-    expect(screen.getByRole("button", { name: "Continue to Placement Details" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Continue to Make Payment" })).toBeDisabled();
   });
   it("cascades sector and category choices and clears an incompatible saved career", () => {
     const cache = client();
@@ -521,6 +521,6 @@ describe("guided career and host selection", () => {
     expect(screen.getAllByRole("radio")).toHaveLength(2);
     expect(screen.queryByText("London")).toBeNull();
     fireEvent.click(screen.getAllByRole("radio")[0]!);
-    expect(screen.getByRole("button", { name: "Continue to Placement Details" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Continue to Make Payment" })).toBeDisabled();
   });
 });
