@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, expect, it } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { LegalFormBody } from "@/components/LegalFormBody";
@@ -62,6 +62,7 @@ it("shows only Form C in the mentor form frame", () => {
     </QueryClientProvider>,
   );
   expect(screen.getByText("Form C: Mentor Safeguarding")).toBeVisible();
+  fireEvent.click(screen.getByText("Form C: Mentor Safeguarding"));
   expect(screen.getByRole("heading", { name: "Child Safeguarding & Supervision" })).toBeVisible();
   expect(screen.getByText("I agree to provide a safe environment.")).toBeVisible();
   expect(screen.queryByText(/Scholar-only text/)).toBeNull();

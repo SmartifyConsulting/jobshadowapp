@@ -1651,9 +1651,8 @@ function SampleBookingForms() {
               <details
                 key={`${doc.key}-${index}`}
                 className="rounded-lg border border-border bg-[#FFFDF5] p-4"
-                open
               >
-                <summary className="cursor-pointer font-bold">{heading?.[1] ?? doc.title}</summary>
+                <summary className="cursor-pointer font-bold">{doc.key === "standard_indemnity_clauses" ? "Form C: Standard JobShadow Indemnity Clauses" : (heading?.[1] ?? doc.title)}</summary>
                 <div className="mt-5">
                   {doc.key === "consent_forms" && /^Form\s+A\s*:/i.test(heading?.[1] ?? "") ? (
                     <FormAColumns body={section.slice(heading![0].length).trim()} />

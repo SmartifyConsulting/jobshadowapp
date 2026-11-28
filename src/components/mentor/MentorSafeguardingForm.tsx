@@ -33,7 +33,7 @@ export function MentorSafeguardingForm() {
   if (!section) return <p className="text-sm">The safeguarding form is not available yet.</p>;
   const heading = section.match(/^##\s+([^\r\n]+)\r?\n?/);
   return (
-    <details className="rounded-lg border border-border bg-[#FFFDF5] p-4" open>
+    <details className="rounded-lg border border-border bg-[#FFFDF5] p-4">
       <summary className="cursor-pointer font-bold">
         {heading?.[1] ?? "Mentor & Company Safeguarding Undertaking"}
       </summary>
