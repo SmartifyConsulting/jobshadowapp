@@ -1413,7 +1413,7 @@ function StudentJourney({
             <div className="space-y-4 rounded-lg border border-border bg-[#FFFDF5] p-4">
               {paymentPreview ? (
                 <>
-                  <p className="text-sm font-semibold">Selected Career: {paymentPreview.career}</p>
+                  <SelectedCareerBadge career={paymentPreview.career} />
                   <dl className="grid gap-3 text-sm sm:grid-cols-2">
                     <div>
                       <dt className="font-semibold">Date</dt>
@@ -1679,6 +1679,10 @@ function SampleBookingForms() {
       )}
     </div>
   );
+}
+
+function SelectedCareerBadge({ career }: { career: string }) {
+  return <span aria-label={`Selected Career: ${career}`} className="inline-flex rounded-full bg-primary px-3 py-1 text-sm font-semibold text-primary-foreground">{career}</span>;
 }
 
 type Placement = {
@@ -2241,7 +2245,7 @@ export function NewBooking({
           {step === 3 && initialCareer && (
             <div className="grid min-w-0 gap-6 lg:grid-cols-2">
               <div className="space-y-4">
-                <p className="text-sm font-semibold">Career: {career}</p>
+                <SelectedCareerBadge career={career} />
                 <div className="flex flex-wrap items-end gap-4">
                   <label className="text-sm">
                     From
@@ -2411,7 +2415,7 @@ export function NewBooking({
           )}
           {step === 4 && chosen && (
             <>
-              <p className="mb-3 text-sm font-semibold">Selected Career: {chosen.career}</p>
+              <SelectedCareerBadge career={chosen.career} />
               <dl className="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
                 <div>
                   <dt className="font-semibold">Type</dt>
@@ -2435,7 +2439,7 @@ export function NewBooking({
           )}
           {step === 5 && chosen && (
             <div className="space-y-3">
-              <p className="text-sm font-semibold">Selected Career: {chosen.career}</p>
+              <SelectedCareerBadge career={chosen.career} />
               <p className="text-sm">
                 {dates.length
                   ? "Please select from the available dates below"

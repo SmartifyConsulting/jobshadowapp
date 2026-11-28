@@ -83,7 +83,7 @@ describe("guided career and host selection", () => {
     fireEvent.change(screen.getByLabelText("To"), { target: { value: "2099-06-30" } });
     fireEvent.click(screen.getByRole("button", { name: "Search Available Mentors" }));
     fireEvent.click(screen.getByRole("radio"));
-    expect(screen.getByText("Selected Career: Accountant")).toBeVisible();
+    expect(screen.getByLabelText("Selected Career: Accountant")).toBeVisible();
     expect(
       screen.getByText(
         "Payment preview only. No booking, payment or confirmation has been created.",
@@ -121,7 +121,7 @@ describe("guided career and host selection", () => {
       "aria-expanded",
       "true",
     );
-    expect(screen.getByText("Selected Career: Accountant")).toBeVisible();
+    expect(screen.getByLabelText("Selected Career: Accountant")).toBeVisible();
     expect(screen.getByRole("button", { name: "Payment Unavailable in Preview" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "Complete Forms" }));
     expect(screen.getByRole("button", { name: "Step 5: Complete Forms" })).toHaveAttribute(
@@ -277,7 +277,7 @@ describe("guided career and host selection", () => {
     expect(within(matches).queryByText("No Hours")).toBeNull();
     fireEvent.click(within(matches).getByRole("button", { name: "Choose This Mentor" }));
     expect(screen.getByRole("heading", { name: "Placement Details" })).toBeVisible();
-    expect(screen.getByText("Selected Career: Accountant")).toBeVisible();
+    expect(screen.getByLabelText("Selected Career: Accountant")).toBeVisible();
     expect(screen.getByText("Cape Town")).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Back to Mentor Availability" }));
     expect(screen.getByText("Available mentor placements (1)")).toBeVisible();
@@ -425,7 +425,7 @@ describe("guided career and host selection", () => {
     const second = mount("request");
     expect(screen.getByRole("heading", { name: "Mentor Availability" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Step 4: Make Payment" })).toBeDisabled();
-    expect(screen.getByText("Career: Accountant", { exact: true })).toBeVisible();
+    expect(screen.getByLabelText("Selected Career: Accountant")).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Back to Careers" }));
     expect(screen.getByRole("combobox", { name: "Career" })).toHaveValue("Accountant");
     second.unmount();
