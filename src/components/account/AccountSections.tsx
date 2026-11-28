@@ -1276,6 +1276,17 @@ function StudentJourney({
     ["scholar", "parent"].every((role) =>
       testSignatures.data?.receipts.some((receipt) => receipt.signer_role === role),
     );
+  if (typeof window !== "undefined")
+    console.debug("[step6-debug]", {
+      userId,
+      journeyUserId: journeyUser?.id,
+      journeyUserEmail: journeyUser?.email,
+      canPreviewPayment,
+      testSignaturesStatus: testSignatures.status,
+      testSignaturesError: testSignatures.error,
+      receipts: testSignatures.data?.receipts,
+      testFormsSigned,
+    });
   const formsComplete =
     confirmed || (!!current?.indemnity_received && !!current?.guardian_signed_at) || testFormsSigned;
   const awaitingMentor = current?.status === "pending_approval";
