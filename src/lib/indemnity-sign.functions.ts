@@ -6,6 +6,12 @@ export const signIndemnityDocument = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { bookingId: string; document: "standard" | "company"; guardianName: string; guardianContact: string; signatureDataUrl: string }) => d)
   .handler(async ({ context, data }) => {
+    const parent = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "parent",
+    });
+    if (parent.error || parent.data !== true)
+      throw new Error("Only a linked Parent/Guardian account can sign. Please sign in to the parent/guardian account.");
     const { data: ctxRows, error: ctxErr } = await context.supabase.rpc("get_indemnity_context", { _booking: data.bookingId });
     const ctx = ctxRows?.[0];
     if (ctxErr || !ctx) throw new Error(ctxErr?.message ?? "Booking not found.");
