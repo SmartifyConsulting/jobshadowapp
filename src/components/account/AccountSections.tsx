@@ -1287,6 +1287,16 @@ function StudentJourney({
       receipts: testSignatures.data?.receipts,
       testFormsSigned,
     });
+  const step6Debug = JSON.stringify({
+    userId,
+    journeyUserId: journeyUser?.id,
+    journeyUserEmail: journeyUser?.email,
+    canPreviewPayment,
+    testSignaturesStatus: testSignatures.status,
+    testSignaturesErrorMessage: testSignatures.error instanceof Error ? testSignatures.error.message : testSignatures.error,
+    receipts: testSignatures.data?.receipts,
+    testFormsSigned,
+  });
   const formsComplete =
     confirmed || (!!current?.indemnity_received && !!current?.guardian_signed_at) || testFormsSigned;
   const awaitingMentor = current?.status === "pending_approval";
@@ -1360,6 +1370,11 @@ function StudentJourney({
 
   return (
     <section className="min-w-0 space-y-5" aria-label="Scholar step wizard">
+      {canPreviewPayment && (
+        <p role="status" className="break-all rounded bg-black p-2 text-xs text-lime-300">
+          {step6Debug}
+        </p>
+      )}
       {saveCareer.isPending && (
         <p role="status" className="text-sm">
           Saving your career selection…
