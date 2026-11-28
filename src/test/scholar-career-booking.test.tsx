@@ -41,6 +41,7 @@ import { AccountPanel, NewBooking } from "@/components/account/AccountSections";
 import { CareerStepBrowser } from "@/components/account/CareerStepBrowser";
 afterEach(cleanup);
 beforeEach(() => {
+  window.sessionStorage.clear();
   kyc.start.mockReset();
   kyc.poll.mockReset().mockResolvedValue({ status: null, verificationUrl: null, environment: null });
   auth.user = { id: "test-scholar", user_metadata: {} };
@@ -57,11 +58,39 @@ const client = () => {
   return cache;
 };
 describe("guided career and host selection", () => {
+  it("ticks a submitted request but locks payment until mentor acceptance, even through a payment deep link", () => {
+    const cache = client();
+    cache.setQueryData(["me"], auth.user);
+    cache.setQueryData(["scholar-profile", auth.user.id], {});
+    cache.setQueryData(["bookings", auth.user.id], [{ id: "pending", career: "Accountant", status: "pending_approval", shadow_date: "2026-12-07", location: "Johannesburg" }]);
+    render(<QueryClientProvider client={cache}><AccountPanel withBookings initialStep="payment" /></QueryClientProvider>);
+    expect(screen.getByRole("button", { name: /Step 4: Make Payment/ })).toBeDisabled();
+    const request = screen.getByRole("button", { name: /Step 3: Submit Booking Request/ });
+    expect(request).toHaveAttribute("aria-expanded", "true");
+    expect(within(request).getByLabelText("Completed")).toBeVisible();
+    expect(screen.getByText("Awaiting Mentor Acceptance")).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Pass Payment" })).toBeNull();
+  });
+  it.each([
+    ["awaiting_payment", {}, "Step 4: Make Payment"],
+    ["indemnity_required", { paid_at: "2026-11-28T12:00:00Z" }, "Step 5: Complete Forms"],
+    ["indemnity_required", { paid_at: "2026-11-28T12:00:00Z", indemnity_received: true, guardian_signed_at: "2026-11-28T12:00:00Z" }, "Step 6: Identity Verification"],
+    ["confirmed", { paid_at: "2026-11-28T12:00:00Z", kyc_status: "approved", kyc_environment: "live" }, "Step 8: Do Your Job Shadow"],
+  ])("opens the next unfinished step for a %s booking on return", (status, details, expected) => {
+    const cache = client();
+    cache.setQueryData(["me"], auth.user);
+    cache.setQueryData(["scholar-profile", auth.user.id], {});
+    cache.setQueryData(["bookings", auth.user.id], [{ id: "saved-booking", career: "Accountant", amount_due: 350, status, ...details }]);
+    render(<QueryClientProvider client={cache}><AccountPanel withBookings /></QueryClientProvider>);
+    expect(screen.getByRole("button", { name: expected })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("button", { name: /Step 1: Complete Profile/ })).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getAllByRole("button").filter(button => button.getAttribute("aria-expanded") === "true")).toHaveLength(1);
+  });
   it("connects the real booking's Step 6 to the FORUS action while keeping the scholar wizard", async () => {
     const cache = client();
     cache.setQueryData(["me"], auth.user);
     cache.setQueryData(["scholar-profile", auth.user.id], {});
-    cache.setQueryData(["bookings", auth.user.id], [{ id: "booking-kyc", status: "indemnity_required", paid_at: "2026-11-28T00:00:00Z", career: "Accountant" }]);
+    cache.setQueryData(["bookings", auth.user.id], [{ id: "booking-kyc", status: "indemnity_required", indemnity_received: true, guardian_signed_at: "2026-11-28T00:00:00Z", paid_at: "2026-11-28T00:00:00Z", career: "Accountant" }]);
     kyc.start.mockResolvedValue({ status: "in_progress", environment: "test", verificationUrl: "https://verify.didit.me/session/test" });
     const open = vi.spyOn(window, "open").mockReturnValue(null);
     render(<QueryClientProvider client={cache}><AccountPanel withBookings initialStep="identity" /></QueryClientProvider>);
@@ -109,6 +138,7 @@ describe("guided career and host selection", () => {
     fireEvent.click(screen.getByRole("button", { name: "Search Available Mentors" }));
     fireEvent.click(screen.getByRole("radio"));
     fireEvent.click(screen.getByRole("button", { name: "Review Payment" }));
+    expect(within(screen.getByRole("button", { name: /Step 3: Submit Booking Request/ })).getByLabelText("Completed")).toBeVisible();
     expect(screen.getByLabelText("Selected Career: Accountant")).toBeVisible();
     expect(
       screen.getByText(
@@ -456,7 +486,7 @@ describe("guided career and host selection", () => {
       expect(auth.save).toHaveBeenCalledWith({ data: { selected_career: "Accountant" } }),
     );
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Step 3: Request a Booking" })).toHaveAttribute("aria-expanded", "true"),
+      expect(screen.getByRole("button", { name: "Step 3: Submit Booking Request" })).toHaveAttribute("aria-expanded", "true"),
     );
     first.unmount();
     const second = mount("request");

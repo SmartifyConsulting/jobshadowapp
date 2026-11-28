@@ -1082,7 +1082,9 @@ export function Bookings({
   }
   return (
     <div className="space-y-3">
-      <h2 className="font-display text-3xl text-teal-foreground">My bookings</h2>
+      <h2 className="font-display text-xl">My Bookings</h2>
+      {q.isPending && <p role="status">Loading your bookings…</p>}
+      {q.isError && <p role="alert">Your bookings could not be loaded. Please try again.</p>}
       {err && (
         <p role="alert" className="text-sm text-destructive">
           {err}
@@ -1128,7 +1130,7 @@ export function Bookings({
         </DialogContent>
       </Dialog>
       {q.data?.length === 0 && (
-        <p className="text-muted-foreground">No bookings yet. Book your first Job Shadow below.</p>
+        <p className="text-muted-foreground">No bookings yet. Open How To to book your first Job Shadow.</p>
       )}
       {q.data
         ?.filter((b) => !selectedId || b.id === selectedId)
@@ -1265,8 +1267,13 @@ function StudentJourney({
   const showingPaymentPreview = canPreviewPayment && (!!paymentPreview || !!savedDemo);
   const [passedPreview, setPassedPreview] = useState<string | null>(null);
   const previewKey = paymentPreview ? JSON.stringify([userId, paymentPreview.career, paymentPreview.date, paymentPreview.location, paymentPreview.amount]) : null;
-  const previewPaid = showingPaymentPreview && !!previewKey && passedPreview === previewKey;
-  const [requestedActive, setActive] = useState(initialStep ?? "profile");
+  let savedPreviewPass: string | null = null;
+  try {
+    if (typeof window !== "undefined" && canPreviewPayment)
+      savedPreviewPass = window.sessionStorage.getItem(`jobshadow-demo-payment:${userId}`);
+  } catch { /* The preview still works when browser storage is unavailable. */ }
+  const previewPaid = showingPaymentPreview && !!previewKey && (passedPreview === previewKey || savedPreviewPass === previewKey);
+  const [requestedActive, setActive] = useState<string | null>(initialStep ?? null);
   useEffect(() => {
     if (initialStep) setActive(initialStep);
   }, [initialStep]);
@@ -1336,6 +1343,8 @@ function StudentJourney({
     !!current?.paid_at ||
     ["indemnity_required", "confirmed", "completed"].includes(current?.status ?? "");
   const confirmed = current?.status === "confirmed" || current?.status === "completed";
+  const formsComplete = confirmed || (!!current?.indemnity_received && !!current?.guardian_signed_at);
+  const awaitingMentor = current?.status === "pending_approval";
   const steps: JourneyStep[] = [
     { id: "profile", title: "Complete Profile", icon: UserRound, complete: !!profile },
     {
@@ -1347,9 +1356,9 @@ function StudentJourney({
     },
     {
       id: "request",
-      title: "Request a Booking",
+      title: "Submit Booking Request",
       icon: CalendarDays,
-      complete: !!current,
+      complete: !!current || showingPaymentPreview,
       locked: !profile,
     },
     {
@@ -1357,28 +1366,28 @@ function StudentJourney({
       title: "Make Payment",
       icon: CreditCard,
       complete: showingPaymentPreview ? previewPaid : paid,
-      locked: !current && !showingPaymentPreview,
+      locked: !showingPaymentPreview && (!current || awaitingMentor),
     },
     {
       id: "forms",
       title: "Complete Forms",
       icon: FileText,
-      complete: confirmed && !showingPaymentPreview,
-      locked: !current && !showingPaymentPreview,
+      complete: formsComplete && !showingPaymentPreview,
+      locked: !showingPaymentPreview && (!current || !paid),
     },
     {
       id: "identity",
       title: "Identity Verification",
       icon: ShieldCheck,
       complete: current?.kyc_status === "approved" && current?.kyc_environment === "live",
-      locked: !current && !showingPaymentPreview,
+      locked: !showingPaymentPreview && (!current || !formsComplete),
     },
     {
       id: "confirmation",
       title: "Booking Confirmation",
       icon: BadgeCheck,
       complete: confirmed,
-      locked: !current,
+      locked: !current || awaitingMentor,
     },
     {
       id: "experience",
@@ -1395,16 +1404,17 @@ function StudentJourney({
       locked: current?.status !== "completed",
     },
   ];
-  const unlockedActive = steps.find((step) => step.id === requestedActive)?.locked
-    ? !profile
-      ? "profile"
-      : !current
-        ? "request"
-        : !confirmed
-          ? "forms"
-          : "experience"
+  const focusStep = !profile ? "profile"
+    : showingPaymentPreview ? (previewPaid ? "forms" : "payment")
+    : awaitingMentor ? "request"
+    : steps.find((step) => !step.complete && !step.locked)?.id ?? "feedback";
+  const unlockedActive = !requestedActive || steps.find((step) => step.id === requestedActive)?.locked
+    ? focusStep
     : requestedActive;
-  const active = unlockedActive === "request" && !career ? "careers" : unlockedActive;
+  const active = unlockedActive === "request" && !career && !current ? "careers" : unlockedActive;
+
+  if (bookings.isPending || (savedDemo && demoPlacements.isPending))
+    return <p role="status" className="p-4">Loading your next step…</p>;
 
   return (
     <section className="min-w-0 space-y-5" aria-label="Scholar step wizard">
@@ -1421,7 +1431,7 @@ function StudentJourney({
           </button>
         </p>
       )}
-      {active !== requestedActive && (
+      {requestedActive && active !== requestedActive && !awaitingMentor && (
         <p className="text-sm">
           Complete the current step before continuing to the step you selected.
         </p>
@@ -1476,7 +1486,15 @@ function StudentJourney({
               <CareerStepBrowser selected={career} onSelect={setCareer} />
             </div>
           )}
-          {active === "request" && (
+          {active === "request" && awaitingMentor && current && (
+            <div className="space-y-3 rounded-lg border border-border bg-[#FFFDF5] p-4">
+              <SelectedCareerBadge career={current.career ?? career} />
+              <h3 className="font-bold">Awaiting Mentor Acceptance</h3>
+              <p>Your booking request has been submitted. Payment will become available once your mentor accepts it.</p>
+              <p className="text-sm">{current.shadow_date} · {current.location}</p>
+            </div>
+          )}
+          {active === "request" && !awaitingMentor && (
             <NewBooking
               accordion
               initialCareer={career}
@@ -1505,6 +1523,7 @@ function StudentJourney({
                   ) : (
                     <Button onClick={() => {
                       if (!canPreviewPayment || !showingPaymentPreview || !previewKey) return;
+                      try { window.sessionStorage.setItem(`jobshadow-demo-payment:${userId}`, previewKey); } catch { /* Keep the in-memory preview. */ }
                       setPassedPreview(previewKey);
                     }}>Pass Payment</Button>
                   )}
@@ -2093,9 +2112,9 @@ export function NewBooking({
       );
     } else {
       setMsg("Booking created – continue to payment and forms.");
-      if (created?.id) onBooked?.(created.id);
     }
-    qc.invalidateQueries({ queryKey: ["bookings"] });
+    await qc.invalidateQueries({ queryKey: ["bookings"] });
+    if (created?.id) onBooked?.(created.id);
   }
 
   const careers = [...new Set(options.map((p) => p.career))].sort();
@@ -2641,7 +2660,7 @@ export function NewBooking({
               finally { setCreatingBooking(false); }
             }}
           >
-            {creatingBooking ? "Saving Booking…" : canReviewDemo(chosen) ? "Review Payment" : requestingDate ? "Submit Date Request" : "Request Booking"}
+            {creatingBooking ? "Saving Booking…" : canReviewDemo(chosen) ? "Review Payment" : requestingDate ? "Submit Date Request" : "Submit Booking Request"}
           </Button>
         ) : step < 5 ? (
           <Button

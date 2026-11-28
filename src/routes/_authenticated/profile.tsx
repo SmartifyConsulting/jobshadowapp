@@ -3,14 +3,14 @@ import { ScreenHeading } from "@/components/ScreenHeading";
 import { ProfileSummaryCard } from "@/components/account/ProfileSummaryCard";
 import { AccountProfile, useOwnIdentity } from "@/components/account/AccountProfile";
 import { PortalLoading } from "@/components/PortalLoading";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Fragment, useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { Fragment, useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteLayout, useSiteSession } from "@/components/SiteLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserCircle, CalendarCheck } from "lucide-react";
-import { AccountPanel, SCHOLAR_DETAIL_TABS } from "@/components/account/AccountSections";
+import { AccountPanel, Bookings, SCHOLAR_DETAIL_TABS } from "@/components/account/AccountSections";
 import { ImageCropModal } from "@/components/ImageCropModal";
 
 type Tab = "profile" | "bookings";
@@ -72,8 +72,9 @@ export function ScholarProfileContent({
   embedded?: boolean;
 }) {
   const { tab, entry, step } = search;
-  const inWorkflow = entry === "workflow";
-  const navigate = useNavigate();
+  const inWorkflow = entry === "workflow" || !!step;
+  const [activeTab, setActiveTab] = useState<Tab>(tab ?? "profile");
+  useEffect(() => { setActiveTab(tab ?? "profile"); }, [tab]);
   const Layout = embedded ? Fragment : SiteLayout;
   const qc = useQueryClient();
   const ownIdentity = useOwnIdentity();
@@ -162,7 +163,7 @@ export function ScholarProfileContent({
   const profileContent = (
     <div
       className={
-        inWorkflow || tab === "bookings"
+        inWorkflow
           ? "space-y-4"
           : "rounded-xl border border-border bg-card p-4 space-y-4 sm:p-5"
       }
@@ -222,18 +223,18 @@ export function ScholarProfileContent({
     <Layout>
       <div
         className={
-          !inWorkflow && tab !== "bookings"
+          !inWorkflow
             ? "profile-screen flex flex-1 flex-col"
             : "flex flex-1 flex-col"
         }
       >
         {!inWorkflow && <ScreenHeading title="Profile" />}
         <section
-          className={inWorkflow || tab === "bookings" ? "flex-1 bg-teal" : "flex-1 bg-[#F9DB01]"}
+          className={inWorkflow ? "flex-1 bg-teal" : "flex-1 bg-[#F9DB01]"}
         >
           <div
             className={
-              inWorkflow || tab === "bookings"
+              inWorkflow
                 ? "w-full space-y-4 py-8"
                 : "mx-auto max-w-7xl space-y-4 px-5 py-8"
             }
@@ -246,10 +247,8 @@ export function ScholarProfileContent({
               </div>
             )}
             <Tabs
-              value={inWorkflow ? "bookings" : (tab ?? "profile")}
-              onValueChange={(v) =>
-                navigate({ to: "/profile", search: { tab: v as Tab }, replace: true })
-              }
+              value={inWorkflow ? "bookings" : activeTab}
+              onValueChange={(v) => setActiveTab(v as Tab)}
               className="w-full"
             >
               {!inWorkflow && (
@@ -274,9 +273,9 @@ export function ScholarProfileContent({
                 {profileContent}
               </TabsContent>
               <TabsContent value="bookings" className="mt-4 space-y-4">
-                <div className="w-full bg-teal text-teal-foreground">
+                {inWorkflow ? <div className="w-full bg-teal text-teal-foreground">
                   <AccountPanel withBookings initialStep={step} profileContent={profileContent} />
-                </div>
+                </div> : <Bookings />}
               </TabsContent>
             </Tabs>
           </div>
