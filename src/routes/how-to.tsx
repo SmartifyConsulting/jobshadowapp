@@ -26,12 +26,7 @@ import {
   Award,
 } from "lucide-react";
 import { SiteLayout, useSiteSession } from "@/components/SiteLayout";
-import { lazy, Suspense, useState } from "react";
-const ScholarProfileContent = lazy(() =>
-  import("@/routes/_authenticated/profile").then((module) => ({
-    default: module.ScholarProfileContent,
-  })),
-);
+import { useState } from "react";
 
 type Step = { icon: typeof User; label: string };
 
@@ -408,28 +403,6 @@ function HowTo() {
         <p role="status" className="bg-teal p-5">
           Loading your journey…
         </p>
-      </SiteLayout>
-    );
-  if (session?.user && scholar && !isAdmin && !provider && !roles.includes("school"))
-    return (
-      <SiteLayout>
-        <div className="bg-cta text-white">
-          <div className="mx-auto flex max-w-7xl items-center gap-3 px-5 py-4">
-            <ChevronDown className="h-6 w-6" aria-hidden />
-            <h1 className="screen-heading font-display text-2xl">How to Book Your Job Shadow</h1>
-          </div>
-        </div>
-        <section className="w-full flex-1 bg-teal">
-          <Suspense
-            fallback={
-              <p role="status" className="p-5">
-                Loading your steps…
-              </p>
-            }
-          >
-            <ScholarProfileContent embedded search={{ entry: "workflow", tab: "bookings" }} />
-          </Suspense>
-        </section>
       </SiteLayout>
     );
   return (
