@@ -7,9 +7,9 @@ export function IndemnityDraftPreview() {
   const user = useQuery({ queryKey: ["me"], queryFn: async () => (await supabase.auth.getUser()).data.user });
   if (!user.data || !isSwitchPersona(user.data.id, user.data.email)) return null;
   return <details className="rounded-lg border border-border bg-[#FFFDF5] p-4">
-    <summary className="cursor-pointer font-bold">Indemnity Form (Consolidated Form B and Form C)</summary>
+    <summary className="cursor-pointer font-bold">Indemnity Form</summary>
     <div className="mt-4 space-y-4">
-      <p className="text-sm font-semibold">Form D — Draft for client review. Forms B and C remain unchanged.</p>
+      <p className="text-sm font-semibold">Draft for client review.</p>
       <div className="grid gap-6 md:grid-cols-2">
         <section aria-label="Scholar form" className="flex min-w-0 flex-col gap-4">
           <h3 className="font-bold">Scholar / Tertiary Student</h3>

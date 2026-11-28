@@ -218,8 +218,10 @@ describe("guided career and host selection", () => {
       "aria-expanded",
       "true",
     );
-    fireEvent.click(screen.getByText("Form C: Standard JobShadow Indemnity Clauses"));
-    expect(screen.getByText("Current approved form text")).toBeVisible();
+    fireEvent.click(screen.getByText("Indemnity Form"));
+    expect(screen.getByRole("region", { name: "Scholar form" })).toBeVisible();
+    expect(screen.getByRole("region", { name: "Parent or guardian form" })).toBeVisible();
+    expect(screen.queryByText("Form C: Standard JobShadow Indemnity Clauses")).toBeNull();
     expect(screen.queryByRole("dialog", { name: "Payment Successful" })).toBeNull();
     expect(screen.getByRole("button", { name: /Step 2: Identity Verification/ })).toBeEnabled();
     fireEvent.click(screen.getByRole("button", { name: /Step 2: Identity Verification/ }));

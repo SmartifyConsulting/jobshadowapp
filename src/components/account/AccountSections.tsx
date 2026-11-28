@@ -14,8 +14,8 @@ import { SchoolPicker } from "./SchoolPicker";
 import { DietaryNeedsPicker } from "./ScholarSelections";
 import { JourneyStepper, type JourneyStep } from "@/components/JourneyStepper";
 import { ROLES } from "@/lib/data";
-import { LegalFormBody } from "@/components/LegalFormBody";
-import { FormAColumns, ScholarGuardianSignatureColumns, ScholarSignaturePreview } from "@/components/FormSignatureLayout";
+
+
 import { isSwitchPersona, DEMO_ACCOUNTANT_PLACEMENT_ID, demoIdentityPassed } from "@/lib/dev-personas";
 import { phoneWithCountryCode } from "@/components/PhoneInput";
 import { PersonNameFields, joinPersonName } from "@/components/PersonNameFields";
@@ -1465,11 +1465,7 @@ function StudentJourney({
               )}
             </div>
           )}
-          {active === "forms" && showingPaymentPreview && (
-            <div className="space-y-4">
-              <SampleBookingForms key={userId} scholarUserId={userId} />
-            </div>
-          )}
+
           {active === "identity" && (
             <div className="space-y-4 rounded-lg border border-border bg-[#FFFDF5] p-4">
               <p className="font-bold">Digital KYC Verification</p>
@@ -1583,77 +1579,6 @@ function StudentJourney({
         </div>
       </JourneyStepper>
     </section>
-  );
-}
-
-function SampleBookingForms({ scholarUserId }: { scholarUserId: string }) {
-  const { data: signedInUser } = useUser();
-  const documents = useQuery({
-    queryKey: ["sample-booking-form-templates"],
-    queryFn: async () => {
-      const result = await supabase
-        .from("legal_documents")
-        .select("key, title, body")
-        .in("key", ["standard_indemnity_clauses", "consent_forms"]);
-      if (result.error) throw result.error;
-      return result.data ?? [];
-    },
-  });
-  return (
-    <ScholarSignaturePreview canSign={signedInUser?.id === scholarUserId}>
-    <div className="space-y-4">
-      {documents.isPending ? (
-        <p role="status">Loading forms…</p>
-      ) : documents.isError ? (
-        <p role="alert">
-          Forms could not be loaded.{" "}
-          <button type="button" className="underline" onClick={() => void documents.refetch()}>
-            Try Again
-          </button>
-        </p>
-      ) : documents.data.length ? (
-        documents.data.flatMap((doc) => {
-          const sections =
-            doc.key === "consent_forms"
-              ? doc.body.split(/(?=^##\s+Form\s+[A-Z]\s*:)/im).filter((section) => section.trim())
-              : [doc.body];
-          return sections.map((section, index) => {
-            if (doc.key === "consent_forms" && /^##\s+Form\s+A\s*:/i.test(section.trim())) return null;
-            if (doc.key === "consent_forms" && /^##\s+Form\s+C\s*:/i.test(section.trim()))
-              return null;
-            const heading =
-              doc.key === "consent_forms" ? section.match(/^##\s+([^\r\n]+)\r?\n?/) : null;
-            return (
-              <details
-                key={`${doc.key}-${index}`}
-                className="rounded-lg border border-border bg-[#FFFDF5] p-4"
-              >
-                <summary className="cursor-pointer font-bold">{doc.key === "standard_indemnity_clauses" ? "Form C: Standard JobShadow Indemnity Clauses" : (heading?.[1] ?? doc.title)}</summary>
-                <div className="mt-5">
-                  {doc.key === "consent_forms" && /^Form\s+A\s*:/i.test(heading?.[1] ?? "") ? (
-                    <FormAColumns body={section.slice(heading![0].length).trim()} />
-                  ) : (
-                    <>
-                      <LegalFormBody
-                        body={heading ? section.slice(heading[0].length).trim() : section}
-                      />
-                      {doc.key === "consent_forms" && /^Form\s+B\s*:/i.test(heading?.[1] ?? "") && (
-                        <div className="mt-6">
-                          <ScholarGuardianSignatureColumns />
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              </details>
-            );
-          });
-        })
-      ) : (
-        <p className="text-sm">The form templates have not been added yet.</p>
-      )}
-    </div>
-    </ScholarSignaturePreview>
   );
 }
 
