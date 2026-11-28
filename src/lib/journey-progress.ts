@@ -4,6 +4,8 @@ export const HOW_TO_DESTINATIONS = {
   studentRequest: "/profile?tab=bookings&step=request",
   studentPayment: "/profile?tab=bookings&step=payment",
   studentForms: "/profile?tab=bookings&step=forms",
+  studentIdentity: "/profile?tab=bookings&step=identity",
+  studentConfirmation: "/profile?tab=bookings&step=confirmation",
   studentExperience: "/profile?tab=bookings&step=experience",
   studentFeedback: "/profile?tab=bookings&step=feedback",
   providerProfile: "/mentor?entry=onboarding&step=profile",
@@ -67,6 +69,8 @@ export function journeyProgress({
       !!current,
       !!current?.paid_at ||
         ["indemnity_required", "confirmed", "completed"].includes(current?.status ?? ""),
+      current?.status === "confirmed" || current?.status === "completed",
+      false, // Identity completion requires a verified result from the KYC provider.
       current?.status === "confirmed" || current?.status === "completed",
       current?.status === "completed",
       !!studentFeedback,

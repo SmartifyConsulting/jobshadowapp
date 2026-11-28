@@ -42,7 +42,9 @@ const STUDENT_STEPS: Step[] = [
   { icon: CalendarDays, label: "Request\na booking" },
   { icon: CreditCard, label: "Make\npayment" },
   { icon: ClipboardCheck, label: "Complete\nforms (indemnity & consent)" },
-  { icon: Handshake, label: "Do your\njob shadow" },
+  { icon: ShieldCheck, label: "Identity\nverification" },
+  { icon: CheckCircle2, label: "Booking\nconfirmation" },
+  { icon: Handshake, label: "Attend your\njob shadow" },
   { icon: Star, label: "Share\nfeedback" },
 ];
 
@@ -314,6 +316,8 @@ function HowTo() {
             "studentRequest",
             "studentPayment",
             "studentForms",
+            "studentIdentity",
+            "studentConfirmation",
             "studentExperience",
             "studentFeedback",
           ] as const
@@ -383,6 +387,8 @@ function HowTo() {
                 "Choose a mentor and request a date that suits you.",
                 "Make payment once your booking is ready.",
                 "Complete the required forms with your parent or guardian.",
+                "Complete digital KYC verification after signing the required consent forms.",
+                "Check whether your booking has been confirmed.",
                 "Check your arrangements and enjoy your job shadow.",
                 "Tell us what you learned from your visit.",
               ]

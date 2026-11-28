@@ -131,6 +131,11 @@ describe("guided career and host selection", () => {
     fireEvent.click(screen.getByText("Form C: Standard JobShadow Indemnity Clauses"));
     expect(screen.getByText("Current approved form text")).toBeVisible();
     expect(screen.queryByRole("dialog", { name: "Payment Successful" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Step 6: Identity Verification" })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: "Continue to Identity Verification" }));
+    expect(screen.getByRole("button", { name: "Step 6: Identity Verification" })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText(/Your identity has not been marked as verified/)).toBeVisible();
+    expect(screen.getByRole("button", { name: "Step 7: Booking Confirmation" })).toBeVisible();
   });
   it("restores searched dates and mentor selection from the account after remount", async () => {
     const mount = (user = auth.user, available = true) => {

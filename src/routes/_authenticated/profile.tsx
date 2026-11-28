@@ -29,6 +29,7 @@ export const Route = createFileRoute("/_authenticated/profile")({
       "request",
       "payment",
       "forms",
+      "identity",
       "confirmation",
       "experience",
       "feedback",

@@ -24,6 +24,7 @@ import {
   CalendarDays,
   FileText,
   BadgeCheck,
+  ShieldCheck,
   CreditCard,
   Briefcase,
   Star,
@@ -1274,8 +1275,15 @@ function StudentJourney({
       locked: !current && !showingPaymentPreview,
     },
     {
+      id: "identity",
+      title: "Identity Verification",
+      icon: ShieldCheck,
+      complete: false,
+      locked: !current && !showingPaymentPreview,
+    },
+    {
       id: "confirmation",
-      title: "Check Confirmation",
+      title: "Booking Confirmation",
       icon: BadgeCheck,
       complete: confirmed,
       locked: !current,
@@ -1476,9 +1484,21 @@ function StudentJourney({
           {active === "forms" && showingPaymentPreview && (
             <div className="space-y-4">
               <SampleBookingForms />
+              <div className="flex justify-end"><Button onClick={() => setActive("identity")}>Continue to Identity Verification</Button></div>
               <Button variant="outline" onClick={() => setActive("payment")}>
                 Back to Make Payment
               </Button>
+            </div>
+          )}
+          {active === "identity" && (
+            <div className="space-y-4 rounded-lg border border-border bg-[#FFFDF5] p-4">
+              <p className="font-bold">Digital KYC Verification</p>
+              <p>After the required consent forms have been signed, identity verification will be completed here.</p>
+              <p role="status">Identity verification is not available yet. Your identity has not been marked as verified.</p>
+              <div className="flex flex-wrap justify-between gap-3">
+                <Button variant="outline" onClick={() => setActive("forms")}>Back to Complete Forms</Button>
+                <Button onClick={() => setActive("confirmation")}>Review Booking Confirmation</Button>
+              </div>
             </div>
           )}
           {["payment", "forms", "confirmation", "experience", "feedback"].includes(active) &&
@@ -1534,8 +1554,8 @@ function StudentJourney({
                         </p>
                         <Bookings selectedId={current.id} onCompleteForms={completeBookingForms} />
                         <div className="flex justify-end">
-                          <Button variant="outline" onClick={() => setActive("confirmation")}>
-                            Check Confirmation
+                          <Button onClick={() => setActive("identity")}>
+                            Continue to Identity Verification
                           </Button>
                         </div>
                       </>

@@ -82,7 +82,7 @@ describe("How To links", () => {
     render(<Page />);
     expect(
       within(screen.getByRole("navigation", { name: "How-to steps" })).getAllByRole("link"),
-    ).toHaveLength(8);
+    ).toHaveLength(10);
     expect(screen.getByRole("button", { name: "Scholars" })).toHaveAttribute(
       "aria-pressed",
       "true",
@@ -116,10 +116,12 @@ describe("How To links", () => {
     const links = within(screen.getByRole("navigation", { name: "How-to steps" })).getAllByRole(
       "link",
     );
-    expect(links).toHaveLength(8);
+    expect(links).toHaveLength(10);
     expect(links[0]).toHaveAttribute("href", "/register");
     expect(links[4]).toHaveAttribute("href", "/auth?go=studentPayment");
     expect(links[5]).toHaveAttribute("href", "/auth?go=studentForms");
+    expect(links[6]).toHaveAttribute("href", "/auth?go=studentIdentity");
+    expect(links[7]).toHaveAttribute("href", "/auth?go=studentConfirmation");
     expect(screen.getByText("You Are Here")).toBeVisible();
   });
   it("shows the actual inline scholar journey without audience tabs even with a company guide URL", async () => {

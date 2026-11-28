@@ -22,6 +22,8 @@ describe("Personal journey completion", () => {
       false,
       false,
       false,
+      false,
+      false,
     ]);
     expect(journeyProgress(blank).provider[3]).toBe(false);
   });
@@ -34,7 +36,7 @@ describe("Personal journey completion", () => {
       ],
       evaluations: [{ booking_id: "old", role: "scholar" }],
     });
-    expect(progress.student).toEqual([true, true, true, true, false, false, false, false]);
+    expect(progress.student).toEqual([true, true, true, true, false, false, false, false, false, false]);
   });
   it("ticks feedback only for the completed booking and verifies availability times", () => {
     const progress = journeyProgress({
@@ -45,7 +47,8 @@ describe("Personal journey completion", () => {
         { active: true, dates: "12/1/2026", arrival_time: "09:00", collection_time: null },
       ],
     });
-    expect(progress.student.every(Boolean)).toBe(true);
+    expect(progress.student[6]).toBe(false);
+    expect(progress.student.filter((_, index) => index !== 6).every(Boolean)).toBe(true);
     expect(progress.provider[2]).toBe(false);
   });
   it("accepts only known internal sign-in destinations", () => {
