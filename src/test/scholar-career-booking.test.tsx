@@ -67,7 +67,7 @@ describe("guided career and host selection", () => {
     render(<QueryClientProvider client={cache}><AccountPanel withBookings initialStep="identity" /></QueryClientProvider>);
     await waitFor(() => expect(kyc.poll).toHaveBeenCalledWith({ data: { bookingId: "booking-kyc" } }));
     expect(screen.getByRole("button", { name: "Step 6: Identity Verification" })).toHaveAttribute("aria-expanded", "true");
-    fireEvent.click(screen.getByRole("button", { name: "Start Identity Verification" }));
+    fireEvent.click(screen.getByRole("button", { name: "Verify My Identity" }));
     await waitFor(() => expect(kyc.start).toHaveBeenCalledWith({ data: { bookingId: "booking-kyc" } }));
     expect(await screen.findByText("Test verification: use sample identity details only.")).toBeVisible();
     expect(open).toHaveBeenCalledWith("https://verify.didit.me/session/test", "_blank", "noopener");
@@ -107,6 +107,7 @@ describe("guided career and host selection", () => {
     fireEvent.change(screen.getByLabelText("To"), { target: { value: "2099-06-30" } });
     fireEvent.click(screen.getByRole("button", { name: "Search Available Mentors" }));
     fireEvent.click(screen.getByRole("radio"));
+    fireEvent.click(screen.getByRole("button", { name: "Review Payment" }));
     expect(screen.getByLabelText("Selected Career: Accountant")).toBeVisible();
     expect(
       screen.getByText(
@@ -147,7 +148,7 @@ describe("guided career and host selection", () => {
     );
     expect(screen.getByLabelText("Selected Career: Accountant")).toBeVisible();
     expect(screen.getByRole("button", { name: "Payment Unavailable in Preview" })).toBeDisabled();
-    fireEvent.click(screen.getByRole("button", { name: "Complete Forms" }));
+    fireEvent.click(screen.getByRole("button", { name: "Step 5: Complete Forms" }));
     expect(screen.getByRole("button", { name: "Step 5: Complete Forms" })).toHaveAttribute(
       "aria-expanded",
       "true",
@@ -156,9 +157,9 @@ describe("guided career and host selection", () => {
     expect(screen.getByText("Current approved form text")).toBeVisible();
     expect(screen.queryByRole("dialog", { name: "Payment Successful" })).toBeNull();
     expect(screen.getByRole("button", { name: "Step 6: Identity Verification" })).toBeEnabled();
-    fireEvent.click(screen.getByRole("button", { name: "Continue to Identity Verification" }));
+    fireEvent.click(screen.getByRole("button", { name: "Step 6: Identity Verification" }));
     expect(screen.getByRole("button", { name: "Step 6: Identity Verification" })).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByText(/Your identity has not been marked as verified/)).toBeVisible();
+    expect(screen.getByRole("button", { name: "Verify My Identity" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Step 7: Booking Confirmation" })).toBeVisible();
   });
   it("restores searched dates and mentor selection from the account after remount", async () => {
@@ -449,14 +450,14 @@ describe("guided career and host selection", () => {
       expect(auth.save).toHaveBeenCalledWith({ data: { selected_career: "Accountant" } }),
     );
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Continue to Find a Mentor" })).toBeEnabled(),
+      expect(screen.getByRole("button", { name: "Step 3: Request a Booking" })).toHaveAttribute("aria-expanded", "true"),
     );
     first.unmount();
     const second = mount("request");
     expect(screen.getByRole("heading", { name: "Mentor Availability" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Step 4: Make Payment" })).toBeDisabled();
     expect(screen.getByLabelText("Selected Career: Accountant")).toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: "Back to Careers" }));
+    fireEvent.click(screen.getByRole("button", { name: /Step 2: Explore Careers/ }));
     expect(screen.getByRole("combobox", { name: "Career" })).toHaveValue("Accountant");
     second.unmount();
     auth.user = { id: "other-scholar", user_metadata: {} };

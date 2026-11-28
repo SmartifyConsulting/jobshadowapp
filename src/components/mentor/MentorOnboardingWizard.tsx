@@ -367,6 +367,7 @@ export function MentorOnboardingWizard({
             </a>
           )}
           <JourneyStepper
+            key={userId}
             title="Step 1: Onboarding"
             titleClassName="font-sans text-lg font-bold"
             steps={steps.map((id) => ({
@@ -652,18 +653,6 @@ export function MentorOnboardingWizard({
               </fieldset>
             )}
             <div className="flex items-center justify-between gap-3">
-              {position > 0 ? (
-                <button
-                  disabled={busy}
-                  type="button"
-                  className="rounded border px-4 py-2 text-sm"
-                  onClick={() => go(steps[position - 1]!)}
-                >
-                  Back
-                </button>
-              ) : (
-                <span />
-              )}
               {(step !== "profile" || embedded) && (
                 <div className="ml-auto flex gap-2">
                   {step !== "profile" && (
@@ -697,8 +686,8 @@ export function MentorOnboardingWizard({
                       {busy
                         ? "Saving…"
                         : ["references", "training", "employer"].includes(step)
-                          ? "Submit & Next"
-                          : "Next"}
+                          ? "Submit for Review"
+                          : "Save"}
                     </button>
                   )}
                 </div>

@@ -1,4 +1,4 @@
-import { useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Check, ChevronDown, type LucideIcon } from "lucide-react";
 export type JourneyStep = {
   id: string;
@@ -24,6 +24,18 @@ export function JourneyStepper({
 }) {
   const panelId = useId();
   const [closedStep, setClosedStep] = useState<string | null>(null);
+  const previous = useRef<{ active: string; complete: Record<string, boolean> } | null>(null);
+  useEffect(() => {
+    const before = previous.current;
+    previous.current = { active, complete: Object.fromEntries(steps.map(step => [step.id, !!step.complete])) };
+    const index = steps.findIndex(step => step.id === active);
+    const current = steps[index];
+    if (children === undefined || before?.active !== active || !current?.complete || before.complete[active] !== false) return;
+    const following = steps.slice(index + 1);
+    const next = following.find(step => !step.locked && !step.complete) ?? following.find(step => !step.locked);
+    if (next) { setClosedStep(null); onChange(next.id); }
+    else setClosedStep(active);
+  }, [active, steps, onChange, children]);
   if (children !== undefined)
     return (
       <div className="min-w-0 space-y-3">

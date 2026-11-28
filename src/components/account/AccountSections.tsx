@@ -97,15 +97,16 @@ const KYC_IN_FLIGHT: ReadonlySet<string> = new Set([
   "awaiting_user",
   "review_required",
 ]);
-function IdentityVerificationStep({ bookingId }: { bookingId: string }) {
+function IdentityVerificationStep({ bookingId }: { bookingId?: string | undefined }) {
   const qc = useQueryClient();
   const start = useServerFn(startIdentityVerification);
   const poll = useServerFn(getIdentityVerificationStatus);
   const [err, setErr] = useState<string | null>(null);
   const status = useQuery({
     queryKey: ["identity-verification", bookingId],
+    enabled: !!bookingId,
     queryFn: async () => {
-      const result = await poll({ data: { bookingId } });
+      const result = await poll({ data: { bookingId: bookingId! } });
       if (result.status === "approved") void qc.invalidateQueries({ queryKey: ["bookings"] });
       return result;
     },
@@ -114,7 +115,7 @@ function IdentityVerificationStep({ bookingId }: { bookingId: string }) {
       query.state.data?.status && KYC_IN_FLIGHT.has(query.state.data.status) ? 30_000 : false,
   });
   const begin = useMutation({
-    mutationFn: () => start({ data: { bookingId } }),
+    mutationFn: () => start({ data: { bookingId: bookingId! } }),
     onSuccess: (result) => {
       setErr(null);
       qc.setQueryData(["identity-verification", bookingId], result);
@@ -141,14 +142,15 @@ function IdentityVerificationStep({ bookingId }: { bookingId: string }) {
           : "Identity verification has not been started yet."}
       </p>
       {!approved && !terminal && (
-        <Button disabled={begin.isPending} onClick={() => begin.mutate()}>
+        <Button disabled={begin.isPending || !bookingId} onClick={() => begin.mutate()}>
           {begin.isPending
             ? "Starting…"
             : currentStatus && KYC_IN_FLIGHT.has(currentStatus)
               ? "Re-open verification"
-              : "Start Identity Verification"}
+              : "Verify My Identity"}
         </Button>
       )}
+      {!bookingId && <p className="text-sm">Choose a booking and complete the required consent forms to enable KYC verification.</p>}
       {status.data?.verificationUrl && !approved && (
         <a
           href={status.data.verificationUrl}
@@ -1336,7 +1338,7 @@ function StudentJourney({
       id: "careers",
       title: "Explore Careers",
       icon: Search,
-      complete: !!career || !!current,
+      complete: (!!career && savedCareer === career && !saveCareer.isPending && !saveCareer.isError) || !!current,
       locked: !profile,
     },
     {
@@ -1421,6 +1423,7 @@ function StudentJourney({
         </p>
       )}
       <JourneyStepper
+        key={userId}
         title="Your Job Shadow Journey"
         steps={steps}
         active={active}
@@ -1433,11 +1436,6 @@ function StudentJourney({
           {active === "profile" && profileContent && (
             <div className="space-y-4">
               {profileContent}
-              <div className="flex justify-end">
-                <Button disabled={!profile} onClick={() => setActive("careers")}>
-                  Continue to Explore Careers
-                </Button>
-              </div>
             </div>
           )}
           {active === "profile" &&
@@ -1463,9 +1461,6 @@ function StudentJourney({
                   <Button variant="outline" onClick={() => setEditingProfile(true)}>
                     Edit Profile
                   </Button>
-                  <Button className="ml-auto" onClick={() => setActive("careers")}>
-                    Continue to Explore Careers
-                  </Button>
                 </div>
               </div>
             ))}
@@ -1475,18 +1470,11 @@ function StudentJourney({
                 Choose a career that interests you, then find a host offering that experience.
               </p>
               <CareerStepBrowser selected={career} onSelect={setCareer} />
-              <div className="flex justify-end">
-                <Button
-                  disabled={!career || saveCareer.isPending}
-                  onClick={() => setActive("request")}
-                >
-                  Continue to Find a Mentor
-                </Button>
-              </div>
             </div>
           )}
           {active === "request" && (
             <NewBooking
+              accordion
               initialCareer={career}
               onBackToCareers={() => setActive("careers")}
               onReviewPayment={
@@ -1538,9 +1526,6 @@ function StudentJourney({
                     Payment preview only. No booking, payment or confirmation has been created.
                   </p>
                   <Button disabled>Payment Unavailable in Preview</Button>
-                  <div className="flex justify-end">
-                    <Button onClick={() => setActive("forms")}>Complete Forms</Button>
-                  </div>
                 </>
               ) : demoPlacements.isError ? (
                 <p role="alert" className="text-sm">
@@ -1560,31 +1545,18 @@ function StudentJourney({
                     : "This sample mentor is no longer available. Return to mentor selection to choose an option."}
                 </p>
               )}
-              <div>
-                <Button variant="outline" onClick={() => setActive("request")}>
-                  Back to Mentor and Date Selection
-                </Button>
-              </div>
             </div>
           )}
           {active === "forms" && showingPaymentPreview && (
             <div className="space-y-4">
               <SampleBookingForms />
-              <div className="flex justify-end"><Button onClick={() => setActive("identity")}>Continue to Identity Verification</Button></div>
-              <Button variant="outline" onClick={() => setActive("payment")}>
-                Back to Make Payment
-              </Button>
             </div>
           )}
           {active === "identity" && (
             <div className="space-y-4 rounded-lg border border-border bg-[#FFFDF5] p-4">
               <p className="font-bold">Digital KYC Verification</p>
               <p>After the required consent forms have been signed, complete identity verification here.</p>
-              {current ? <IdentityVerificationStep bookingId={current.id} /> : <p role="status">This preview does not submit identity verification. Your identity has not been marked as verified.</p>}
-              <div className="flex flex-wrap justify-between gap-3">
-                <Button variant="outline" onClick={() => setActive("forms")}>Back to Complete Forms</Button>
-                <Button onClick={() => setActive("confirmation")}>Review Booking Confirmation</Button>
-              </div>
+              <IdentityVerificationStep bookingId={current?.id} />
             </div>
           )}
           {["payment", "forms", "confirmation", "experience", "feedback"].includes(active) &&
@@ -1625,11 +1597,6 @@ function StudentJourney({
                               : "Review your booking and complete payment below."}
                         </p>
                         <Bookings selectedId={current.id} onCompleteForms={completeBookingForms} />
-                        <div className="flex justify-end">
-                          <Button disabled={!paid} onClick={() => setActive("forms")}>
-                            Complete Forms
-                          </Button>
-                        </div>
                       </>
                     )}
                     {active === "forms" && (
@@ -1639,11 +1606,6 @@ function StudentJourney({
                           for this booking.
                         </p>
                         <Bookings selectedId={current.id} onCompleteForms={completeBookingForms} />
-                        <div className="flex justify-end">
-                          <Button onClick={() => setActive("identity")}>
-                            Continue to Identity Verification
-                          </Button>
-                        </div>
                       </>
                     )}
                     {active === "confirmation" && (
@@ -1656,13 +1618,6 @@ function StudentJourney({
                               : "Your booking is not confirmed yet. Complete any outstanding payment or forms and check back here."}
                         </p>
                         <Bookings selectedId={current.id} onCompleteForms={completeBookingForms} />
-                        {confirmed && (
-                          <div className="flex justify-end">
-                            <Button onClick={() => setActive("experience")}>
-                              Continue to Your Job Shadow
-                            </Button>
-                          </div>
-                        )}
                       </>
                     )}
                     {active === "experience" && (
@@ -1675,13 +1630,6 @@ function StudentJourney({
                           becomes available when the experience is recorded as completed.
                         </p>
                         <Bookings selectedId={current.id} onCompleteForms={completeBookingForms} />
-                        {current.status === "completed" && (
-                          <div className="flex justify-end">
-                            <Button onClick={() => setActive("feedback")}>
-                              Continue to Feedback
-                            </Button>
-                          </div>
-                        )}
                       </>
                     )}
                     {active === "feedback" && (
@@ -1869,11 +1817,13 @@ function HostProfileCard({ companyId }: { companyId: number }) {
 }
 
 export function NewBooking({
+  accordion = false,
   initialCareer = "",
   onBooked,
   onBackToCareers,
   onReviewPayment,
 }: {
+  accordion?: boolean;
   initialCareer?: string;
   onBooked?: ((id: string) => void) | undefined;
   onBackToCareers?: (() => void) | undefined;
@@ -1938,6 +1888,7 @@ export function NewBooking({
   const [requestingDate, setRequestingDate] = useState(false);
   const [requestedDate, setRequestedDate] = useState("");
   const [requestNote, setRequestNote] = useState("");
+  const [creatingBooking, setCreatingBooking] = useState(false);
   const [restoredSearch, setRestoredSearch] = useState(false);
   const restoredSearchKey = useRef("");
   const searchSave = useMutation({
@@ -2415,7 +2366,7 @@ export function NewBooking({
                             setDate("");
                             setConfirmDupe(false);
                             saveSearch({ placementId: host.id, date: "" });
-                            reviewDemo(host);
+                            if (!accordion) reviewDemo(host);
                           }}
                           className="mt-1"
                         />
@@ -2500,7 +2451,7 @@ export function NewBooking({
                           setPid(host.id);
                           setDate("");
                           setConfirmDupe(false);
-                          if (!reviewDemo(host)) setStep(4);
+                          if (!accordion && !reviewDemo(host)) setStep(4);
                           saveSearch({ career: host.career, placementId: host.id, date: "" });
                         }}
                       >
@@ -2518,9 +2469,9 @@ export function NewBooking({
               </aside>
             </div>
           )}
-          {step === 4 && chosen && (
+          {(step === 4 || accordion) && chosen && (
             <>
-              <SelectedCareerBadge career={chosen.career} />
+              {accordion ? <h3 className="mt-5 font-bold">Mentor Details</h3> : <SelectedCareerBadge career={chosen.career} />}
               <dl className="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
                 <div>
                   <dt className="font-semibold">Type</dt>
@@ -2542,9 +2493,9 @@ export function NewBooking({
               <HostProfileCard companyId={chosen.id} />
             </>
           )}
-          {step === 5 && chosen && (
+          {(step === 5 || accordion) && chosen && (
             <div className="space-y-3">
-              <SelectedCareerBadge career={chosen.career} />
+              {accordion ? <h3 className="mt-5 font-bold">Choose Your Date</h3> : <SelectedCareerBadge career={chosen.career} />}
               <p className="text-sm">
                 {dates.length
                   ? "Please select from the available dates below"
@@ -2679,12 +2630,12 @@ export function NewBooking({
       <div
         className={`flex flex-wrap gap-2 px-6 pb-5 ${step >= 3 ? "bg-[#FFFDF5] text-foreground" : initialCareer ? STEP_BG[step - 1] : "bg-primary pt-5"}`}
       >
-        {initialCareer && step === 3 && (
+        {!accordion && initialCareer && step === 3 && (
           <Button type="button" variant="outline" onClick={onBackToCareers}>
             Back to Careers
           </Button>
         )}
-        {step > (initialCareer ? 3 : 1) && (
+        {!accordion && step > (initialCareer ? 3 : 1) && (
           <button
             type="button"
             onClick={() => setStep(step - 1)}
@@ -2693,7 +2644,21 @@ export function NewBooking({
             {initialCareer ? `Back to ${titles[step - 2]}` : `Back to Step ${step - 1}`}
           </button>
         )}
-        {step < 5 ? (
+        {accordion ? (
+          <Button
+            className="ml-auto"
+            disabled={creatingBooking || !chosen || (!canReviewDemo(chosen) && (!(requestingDate ? requestedDate : date) || (!requestingDate && (!selectedHours?.from_time || !selectedHours?.to_time)) || (!!duplicate && !confirmDupe)))}
+            onClick={async () => {
+              if (chosen && reviewDemo(chosen)) return;
+              setCreatingBooking(true);
+              try { await book(); }
+              catch (error) { setMsg(error instanceof Error ? error.message : "Your booking could not be saved. Please try again."); }
+              finally { setCreatingBooking(false); }
+            }}
+          >
+            {creatingBooking ? "Saving Booking…" : canReviewDemo(chosen) ? "Review Payment" : requestingDate ? "Submit Date Request" : "Request Booking"}
+          </Button>
+        ) : step < 5 ? (
           <Button
             className="ml-auto"
             type="button"

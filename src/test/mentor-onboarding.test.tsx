@@ -103,7 +103,7 @@ it("keeps onboarding inside the profile and returns to profile editing without n
   mount(<UnifiedProfile />);
   await screen.findByText("My profile fields");
   expect(screen.queryByRole("link", { name: "Back to Profile" })).toBeNull();
-  fireEvent.click(screen.getByRole("button", { name: /^Next$/ }));
+  fireEvent.click(screen.getByRole("button", { name: /^Save$/ }));
   expect(await screen.findByText(/Identity verification \(KYC\) is pending/)).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: /Verified & Active/ }));
   expect(await screen.findByRole("alert")).toBeVisible();
@@ -124,11 +124,11 @@ it("saves profile edits before advancing and remains on the page when saving fai
     />,
   );
   await screen.findByText("Editable profile");
-  fireEvent.click(screen.getByRole("button", { name: /^Next$/ }));
+  fireEvent.click(screen.getByRole("button", { name: /^Save$/ }));
   await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
   expect(state.save).not.toHaveBeenCalled();
   expect(screen.getByText("Editable profile")).toBeVisible();
-  fireEvent.click(screen.getByRole("button", { name: /^Next$/ }));
+  fireEvent.click(screen.getByRole("button", { name: /^Save$/ }));
   await screen.findByText(/Identity verification \(KYC\) is pending/);
   expect(save).toHaveBeenCalledTimes(2);
   expect(state.save).toHaveBeenCalledWith(expect.objectContaining({ current_step: "email" }));
@@ -145,7 +145,7 @@ it("resumes, validates required fields in red and submits before advancing", asy
   await screen.findByText(
     "Provide professional referees for Job Shadow to review. Nobody is contacted automatically.",
   );
-  fireEvent.click(screen.getByRole("button", { name: "Submit & Next" }));
+  fireEvent.click(screen.getByRole("button", { name: "Submit for Review" }));
   expect(await screen.findByRole("alert")).toHaveTextContent("First Name");
   expect(screen.getByLabelText("First Name")).toHaveAttribute("aria-invalid", "true");
   expect(state.save).not.toHaveBeenCalled();
@@ -156,7 +156,7 @@ it("resumes, validates required fields in red and submits before advancing", asy
     ["Email Address", "referee@example.com"],
   ])
     fireEvent.change(screen.getByLabelText(label!), { target: { value } });
-  fireEvent.click(screen.getByRole("button", { name: "Submit & Next" }));
+  fireEvent.click(screen.getByRole("button", { name: "Submit for Review" }));
   await screen.findByLabelText("Training Name");
   expect(state.draft.current_step).toBe("training");
   expect(state.draft.data.references_submitted).toBe(true);
@@ -183,12 +183,12 @@ it("preserves data and position on failed save, and supports retry", async () =>
   state.fail = true;
   mount(wizard());
   await screen.findByLabelText("First Name");
-  fireEvent.click(screen.getByRole("button", { name: "Submit & Next" }));
+  fireEvent.click(screen.getByRole("button", { name: "Submit for Review" }));
   expect(await screen.findByRole("alert")).toHaveTextContent("could not be saved");
   expect(screen.getByLabelText("First Name")).toHaveValue("Test");
   expect(state.draft.current_step).toBe("references");
   state.fail = false;
-  fireEvent.click(screen.getByRole("button", { name: "Submit & Next" }));
+  fireEvent.click(screen.getByRole("button", { name: "Submit for Review" }));
   expect(await screen.findByLabelText("Training Name")).toBeVisible();
 });
 it("skips employer sign-off for independent mentors and retains it for company mentors", () => {
@@ -258,14 +258,14 @@ it("submits training, skips the independent employer step and allows returning t
     ["Evidence Link (HTTPS)", "https://example.com/synthetic-evidence"],
   ])
     fireEvent.change(screen.getByLabelText(label!), { target: { value } });
-  fireEvent.click(screen.getByRole("button", { name: "Submit & Next" }));
+  fireEvent.click(screen.getByRole("button", { name: "Submit for Review" }));
   await screen.findByText(
     "Job Shadow reviews your submissions. Green ticks show approved vetting steps.",
   );
   expect(state.draft.current_step).toBe("review");
   expect(state.draft.data.training_submitted).toBe(true);
   expect(screen.queryByRole("button", { name: /Employer Sign-Off/ })).toBeNull();
-  fireEvent.click(screen.getByRole("button", { name: "Back" }));
+  fireEvent.click(screen.getByRole("button", { name: /Safeguarding Training/ }));
   expect(await screen.findByLabelText("Training Name")).toHaveValue("Synthetic safeguarding");
 });
 

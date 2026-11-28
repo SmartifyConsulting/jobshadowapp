@@ -68,3 +68,31 @@ it("keeps validation with the parent when a requested step is rejected", () => {
     "true",
   );
 });
+it("closes a newly completed step, shows its tick and expands the next step", () => {
+  function CompletingWizard() {
+    const [active, setActive] = useState("profile");
+    const [saved, setSaved] = useState(false);
+    return <JourneyStepper title="Onboarding" active={active} onChange={setActive} steps={steps.map(step => ({ ...step, complete: step.id === "profile" && saved }))}>
+      {active === "profile" ? <button onClick={() => setSaved(true)}>Save Details</button> : <p>Identity form</p>}
+    </JourneyStepper>;
+  }
+  render(<CompletingWizard />);
+  fireEvent.click(screen.getByRole("button", { name: "Save Details" }));
+  const completed = screen.getByRole("button", { name: /Step 1: Personal Details/ });
+  expect(completed).toHaveAttribute("aria-expanded", "false");
+  expect(completed.querySelector('[aria-label="Completed"]')).not.toBeNull();
+  expect(screen.getByRole("button", { name: /Step 2: Verify Identity/ })).toHaveAttribute("aria-expanded", "true");
+  expect(screen.queryByRole("button", { name: /^(Next|Back)$/ })).toBeNull();
+  fireEvent.click(completed);
+  expect(completed).toHaveAttribute("aria-expanded", "true");
+  expect(screen.getByRole("button", { name: "Save Details" })).toBeVisible();
+});
+it("keeps an incomplete step open until completion is actually recorded", () => {
+  const onChange = vi.fn();
+  const pendingSteps = steps.map(step => ({ ...step, complete: false }));
+  const view = render(<JourneyStepper title="Onboarding" steps={pendingSteps} active="profile" onChange={onChange}><p>Saving failed. Please retry.</p></JourneyStepper>);
+  view.rerender(<JourneyStepper title="Onboarding" steps={pendingSteps} active="profile" onChange={onChange}><p>Saving failed. Please retry.</p></JourneyStepper>);
+  expect(onChange).not.toHaveBeenCalled();
+  expect(screen.getByRole("button", { name: /Step 1: Personal Details/ })).toHaveAttribute("aria-expanded", "true");
+  expect(screen.queryByLabelText("Completed")).toBeNull();
+});
