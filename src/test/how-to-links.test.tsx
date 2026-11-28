@@ -118,9 +118,9 @@ describe("How To links", () => {
     );
     expect(links).toHaveLength(10);
     expect(links[0]).toHaveAttribute("href", "/register");
-    expect(links[4]).toHaveAttribute("href", "/auth?go=studentPayment");
-    expect(links[5]).toHaveAttribute("href", "/auth?go=studentForms");
-    expect(links[6]).toHaveAttribute("href", "/auth?go=studentIdentity");
+    expect(links[5]).toHaveAttribute("href", "/auth?go=studentPayment");
+    expect(links[6]).toHaveAttribute("href", "/auth?go=studentForms");
+    expect(links[2]).toHaveAttribute("href", "/auth?go=studentIdentity");
     expect(links[7]).toHaveAttribute("href", "/auth?go=studentConfirmation");
     expect(screen.getByText("You Are Here")).toBeVisible();
   });

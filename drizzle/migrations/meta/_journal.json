@@ -589,6 +589,13 @@
       "when": 1795884600000,
       "tag": "0083_mandatory_mentor_acceptance",
       "breakpoints": true
+    },
+    {
+      "idx": 83,
+      "version": "7",
+      "when": 1795885500000,
+      "tag": "0084_account_identity_onboarding",
+      "breakpoints": true
     }
   ]
 }

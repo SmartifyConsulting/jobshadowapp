@@ -19,11 +19,11 @@ function forusKey() {
     throw new Error("Development identity verification requires a FORUS test secret key.");
   return key;
 }
-export function validateVerification(value: unknown, bookingId: string) {
+export function validateVerification(value: unknown, bookingId: string, kind: "booking" | "scholar" = "booking") {
   const parsed = verificationSchema.safeParse(value);
   if (!parsed.success) throw new Error("The verification service returned an incomplete response. Please try again later.");
   const result = parsed.data;
-  if (result.reference !== "booking_" + bookingId) throw new Error("The verification result does not match this booking.");
+  if (result.reference !== kind + "_" + bookingId) throw new Error("The verification result does not match this " + kind + ".");
   if (EMAIL_DELIVERY_PAUSED && result.environment !== "test") throw new Error("Live identity verification is disabled during development.");
   if (result.verification_url) {
     const url = new URL(result.verification_url);
@@ -32,13 +32,24 @@ export function validateVerification(value: unknown, bookingId: string) {
   }
   return result;
 }
-async function forusRequest(path: string, init: RequestInit, bookingId: string) {
+async function forusRequest(path: string, init: RequestInit, bookingId: string, kind: "booking" | "scholar" = "booking") {
   const response = await fetch("https://developer.forus.digital" + path, {
     ...init, signal: AbortSignal.timeout(15_000),
     headers: { Authorization: "Bearer " + forusKey(), "Content-Type": "application/json", ...init.headers },
   });
   if (!response.ok) throw new Error(response.status === 429 ? "The verification service is busy. Please try again later." : "Identity verification is temporarily unavailable. Please try again later.");
-  return validateVerification(await response.json(), bookingId);
+  return validateVerification(await response.json(), bookingId, kind);
+}
+export async function createScholarVerification(userId: string, consentVersion: string) {
+  return forusRequest("/v1/compliance/kyc", {
+    method: "POST", headers: { "Idempotency-Key": "jobshadow-scholar-" + userId },
+    body: JSON.stringify({ reference: "scholar_" + userId, consent: { obtained: true, version: consentVersion } }),
+  }, userId, "scholar");
+}
+export async function getScholarVerification(sessionId: string, userId: string) {
+  const result = await forusRequest("/v1/compliance/kyc/" + sessionId, { method: "GET" }, userId, "scholar");
+  if (result.id !== sessionId) throw new Error("The verification result does not match this session.");
+  return result;
 }
 export async function createForusVerification(bookingId: string) {
   return forusRequest("/v1/compliance/kyc", {

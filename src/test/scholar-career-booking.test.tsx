@@ -2,8 +2,8 @@ import { useState } from "react";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-const kyc = vi.hoisted(() => ({ start: vi.fn(), poll: vi.fn() }));
-vi.mock("@/lib/forus-kyc.functions", () => ({ startIdentityVerification: kyc.start, getIdentityVerificationStatus: kyc.poll }));
+const kyc = vi.hoisted(() => ({ start: vi.fn(), poll: vi.fn(), load: vi.fn(), sign: vi.fn() }));
+vi.mock("@/lib/personal-onboarding.functions", () => ({ startPersonalIdentity: kyc.start, refreshPersonalIdentity: kyc.poll, loadPersonalOnboarding: kyc.load, signPersonalFormA: kyc.sign }));
 vi.mock("@tanstack/react-start", async (original) => ({
   ...(await original<typeof import("@tanstack/react-start")>()),
   useServerFn: (fn: unknown) => fn,
@@ -44,37 +44,51 @@ beforeEach(() => {
   window.sessionStorage.clear();
   kyc.start.mockReset();
   kyc.poll.mockReset().mockResolvedValue({ status: null, verificationUrl: null, environment: null });
+  kyc.load.mockReset().mockResolvedValue(onboardingState);
   auth.user = { id: "test-scholar", user_metadata: {} };
   auth.save.mockReset().mockImplementation(async ({ data }) => {
     auth.user = { ...auth.user, user_metadata: { ...auth.user.user_metadata, ...data } };
     return { data: { user: auth.user }, error: null };
   });
 });
+const onboardingState = { body: "Consent", version: "a".repeat(64), self: true, signatures: [], scholarSigned: true, parentSigned: true, consentComplete: true, identity: { status: "approved", environment: "live", verified_at: "2026-11-28T00:00:00Z", verification_url: null } };
 const client = () => {
   const cache = new QueryClient({
     defaultOptions: { queries: { staleTime: Infinity, retry: false } },
   });
+  cache.setQueryData(["personal-onboarding", auth.user.id], onboardingState);
   cache.setQueryData(["career-favourites", "test-scholar"], new Set());
   return cache;
 };
 describe("guided career and host selection", () => {
+  it("keeps personal steps 1 to 3 completed when starting another booking", () => {
+    auth.user = { ...auth.user, user_metadata: { selected_career: "Accountant" } };
+    const cache = client();
+    cache.setQueryData(["me"], auth.user);
+    cache.setQueryData(["scholar-profile", auth.user.id], {});
+    cache.setQueryData(["bookings", auth.user.id], [{ id: "another-booking", career: "Teacher", status: "pending_approval" }]);
+    render(<QueryClientProvider client={cache}><AccountPanel withBookings /></QueryClientProvider>);
+    for (const name of [/Step 1: Complete Profile/, /Step 2: Identity Verification/, /Step 3: Explore Careers/])
+      expect(within(screen.getByRole("button", { name })).getByLabelText("Completed")).toBeVisible();
+    expect(screen.getByRole("button", { name: /Step 5: Make Payment/ })).toBeDisabled();
+  });
   it("ticks a submitted request but locks payment until mentor acceptance, even through a payment deep link", () => {
     const cache = client();
     cache.setQueryData(["me"], auth.user);
     cache.setQueryData(["scholar-profile", auth.user.id], {});
     cache.setQueryData(["bookings", auth.user.id], [{ id: "pending", career: "Accountant", status: "pending_approval", shadow_date: "2026-12-07", location: "Johannesburg" }]);
     render(<QueryClientProvider client={cache}><AccountPanel withBookings initialStep="payment" /></QueryClientProvider>);
-    expect(screen.getByRole("button", { name: /Step 4: Make Payment/ })).toBeDisabled();
-    const request = screen.getByRole("button", { name: /Step 3: Submit Booking Request/ });
+    expect(screen.getByRole("button", { name: /Step 5: Make Payment/ })).toBeDisabled();
+    const request = screen.getByRole("button", { name: /Step 4: Submit Booking Request/ });
     expect(request).toHaveAttribute("aria-expanded", "true");
     expect(within(request).getByLabelText("Completed")).toBeVisible();
     expect(screen.getByText("Awaiting Mentor Acceptance")).toBeVisible();
     expect(screen.queryByRole("button", { name: "Pass Payment" })).toBeNull();
   });
   it.each([
-    ["awaiting_payment", {}, "Step 4: Make Payment"],
-    ["indemnity_required", { paid_at: "2026-11-28T12:00:00Z" }, "Step 5: Complete Indemnity Forms"],
-    ["indemnity_required", { paid_at: "2026-11-28T12:00:00Z", indemnity_received: true, guardian_signed_at: "2026-11-28T12:00:00Z" }, "Step 6: Identity Verification"],
+    ["awaiting_payment", {}, "Step 5: Make Payment"],
+    ["indemnity_required", { paid_at: "2026-11-28T12:00:00Z" }, "Step 6: Complete Indemnity Form"],
+    ["indemnity_required", { paid_at: "2026-11-28T12:00:00Z", indemnity_received: true, guardian_signed_at: "2026-11-28T12:00:00Z" }, "Step 7: Booking Confirmation"],
     ["confirmed", { paid_at: "2026-11-28T12:00:00Z", kyc_status: "approved", kyc_environment: "live" }, "Step 8: Do Your Job Shadow"],
   ])("opens the next unfinished step for a %s booking on return", (status, details, expected) => {
     const cache = client();
@@ -86,24 +100,21 @@ describe("guided career and host selection", () => {
     expect(screen.getByRole("button", { name: /Step 1: Complete Profile/ })).toHaveAttribute("aria-expanded", "false");
     expect(screen.getAllByRole("button").filter(button => button.getAttribute("aria-expanded") === "true")).toHaveLength(1);
   });
-  it("connects the real booking's Step 6 to the FORUS action while keeping the scholar wizard", async () => {
+  it("starts personal KYC after Form A without requiring a booking or payment", async () => {
     const cache = client();
     cache.setQueryData(["me"], auth.user);
     cache.setQueryData(["scholar-profile", auth.user.id], {});
-    cache.setQueryData(["bookings", auth.user.id], [{ id: "booking-kyc", status: "indemnity_required", indemnity_received: true, guardian_signed_at: "2026-11-28T00:00:00Z", paid_at: "2026-11-28T00:00:00Z", career: "Accountant" }]);
-    kyc.start.mockResolvedValue({ status: "in_progress", environment: "test", verificationUrl: "https://verify.didit.me/session/test" });
+    cache.setQueryData(["bookings", auth.user.id], []);
+    cache.setQueryData(["personal-onboarding", auth.user.id], { ...onboardingState, identity: null });
+    kyc.start.mockResolvedValue({ status: "in_progress", environment: "test", verification_url: "https://verify.didit.me/session/test" });
     const open = vi.spyOn(window, "open").mockReturnValue(null);
     render(<QueryClientProvider client={cache}><AccountPanel withBookings initialStep="identity" /></QueryClientProvider>);
-    await waitFor(() => expect(kyc.poll).toHaveBeenCalledWith({ data: { bookingId: "booking-kyc" } }));
-    expect(screen.getByRole("button", { name: "Step 6: Identity Verification" })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("button", { name: /Step 2: Identity Verification/ })).toHaveAttribute("aria-expanded", "true");
     fireEvent.click(screen.getByRole("button", { name: "Verify My Identity" }));
-    await waitFor(() => expect(kyc.start).toHaveBeenCalledWith({ data: { bookingId: "booking-kyc" } }));
-    expect(await screen.findByText("Test verification: use sample identity details only.")).toBeVisible();
-    expect(screen.queryByRole("button", { name: "Pass Payment" })).toBeNull();
+    await waitFor(() => expect(kyc.start).toHaveBeenCalledWith({ data: { scholarId: "test-scholar" } }));
     expect(open).toHaveBeenCalledWith("https://verify.didit.me/session/test", "_blank", "noopener");
     open.mockRestore();
-  });
-  it("lets the test scholar review Step 4 without creating a booking or recording payment", async () => {
+  });  it("lets the test scholar review Step 4 without creating a booking or recording payment", async () => {
     auth.user = {
       id: "1ec456b0-6280-4732-9393-9e67991ffdfa",
       email: "elenanicolettis@icloud.com",
@@ -138,7 +149,7 @@ describe("guided career and host selection", () => {
     fireEvent.click(screen.getByRole("button", { name: "Search Available Mentors" }));
     fireEvent.click(screen.getByRole("radio"));
     fireEvent.click(screen.getByRole("button", { name: "Review Payment" }));
-    expect(within(screen.getByRole("button", { name: /Step 3: Submit Booking Request/ })).getByLabelText("Completed")).toBeVisible();
+    expect(within(screen.getByRole("button", { name: /Step 4: Submit Booking Request/ })).getByLabelText("Completed")).toBeVisible();
     expect(screen.getByLabelText("Selected Career: Accountant")).toBeVisible();
     expect(
       screen.getByText(
@@ -172,30 +183,30 @@ describe("guided career and host selection", () => {
         <AccountPanel withBookings initialStep="payment" />
       </QueryClientProvider>,
     );
-    expect(screen.getByRole("button", { name: /Step 4: Make Payment/ })).toBeEnabled();
-    expect(screen.getByRole("button", { name: /Step 4: Make Payment/ })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: /Step 5: Make Payment/ })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Step 5: Make Payment/ })).toHaveAttribute(
       "aria-expanded",
       "true",
     );
     expect(screen.getByLabelText("Selected Career: Accountant")).toBeVisible();
     expect(screen.getByRole("button", { name: "Pass Payment" })).toBeEnabled();
     fireEvent.click(screen.getByRole("button", { name: "Pass Payment" }));
-    await waitFor(() => expect(screen.getByRole("button", { name: "Step 5: Complete Indemnity Forms" })).toHaveAttribute("aria-expanded", "true"));
-    expect(within(screen.getByRole("button", { name: /Step 4: Make Payment/ })).getByLabelText("Completed")).toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: /Step 4: Make Payment/ }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Step 6: Complete Indemnity Form" })).toHaveAttribute("aria-expanded", "true"));
+    expect(within(screen.getByRole("button", { name: /Step 5: Make Payment/ })).getByLabelText("Completed")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: /Step 5: Make Payment/ }));
     expect(screen.getByLabelText("Paid stamp — test only")).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Complete Forms" }));
-    expect(screen.getByRole("button", { name: "Step 5: Complete Indemnity Forms" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "Step 6: Complete Indemnity Form" })).toHaveAttribute(
       "aria-expanded",
       "true",
     );
     fireEvent.click(screen.getByText("Form C: Standard JobShadow Indemnity Clauses"));
     expect(screen.getByText("Current approved form text")).toBeVisible();
     expect(screen.queryByRole("dialog", { name: "Payment Successful" })).toBeNull();
-    expect(screen.getByRole("button", { name: "Step 6: Identity Verification" })).toBeEnabled();
-    fireEvent.click(screen.getByRole("button", { name: "Step 6: Identity Verification" }));
-    expect(screen.getByRole("button", { name: "Step 6: Identity Verification" })).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByRole("button", { name: "Verify My Identity" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Step 2: Identity Verification/ })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: /Step 2: Identity Verification/ }));
+    expect(screen.getByRole("button", { name: /Step 2: Identity Verification/ })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText("Your identity is verified. This verification will be used for future Job Shadows.")).toBeVisible();
     expect(screen.getByRole("button", { name: "Step 7: Booking Confirmation" })).toBeVisible();
   });
   it("restores searched dates and mentor selection from the account after remount", async () => {
@@ -486,14 +497,14 @@ describe("guided career and host selection", () => {
       expect(auth.save).toHaveBeenCalledWith({ data: { selected_career: "Accountant" } }),
     );
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Step 3: Submit Booking Request" })).toHaveAttribute("aria-expanded", "true"),
+      expect(screen.getByRole("button", { name: "Step 4: Submit Booking Request" })).toHaveAttribute("aria-expanded", "true"),
     );
     first.unmount();
     const second = mount("request");
     expect(screen.getByRole("heading", { name: "Mentor Availability" })).toBeVisible();
-    expect(screen.getByRole("button", { name: /Step 4: Make Payment/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Step 5: Make Payment/ })).toBeDisabled();
     expect(screen.getByLabelText("Selected Career: Accountant")).toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: /Step 2: Explore Careers/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Step 3: Explore Careers/ }));
     expect(screen.getByRole("combobox", { name: "Career" })).toHaveValue("Accountant");
     second.unmount();
     auth.user = { id: "other-scholar", user_metadata: {} };

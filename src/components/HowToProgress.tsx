@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { journeyProgress } from "@/lib/journey-progress";
 import { fetchAllRows } from "@/lib/admin-export";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export function useHowToProgress(userId: string | undefined, roles: string[]) {
   const provider = roles.includes("mentor") || roles.includes("hr_admin");
@@ -97,6 +98,9 @@ export function useHowToProgress(userId: string | undefined, roles: string[]) {
           })) as { booking_id: string; role: string }[]),
         );
       }
+      const identity = profile.data ? await (supabase as unknown as SupabaseClient).from("scholar_identity_verifications").select("status,environment").eq("user_id", userId!).maybeSingle() : { data: null, error: null };
+      if (identity.error) throw identity.error;
+      const ownUser = await supabase.auth.getUser();
       const progress = journeyProgress({
         registered: !!userId,
         profile: !!profile.data,
@@ -106,6 +110,8 @@ export function useHowToProgress(userId: string | undefined, roles: string[]) {
         placements: placements.data ?? [],
         hostBookings: hosted.data ?? [],
         evaluations,
+        identityVerified: identity.data?.status === "approved" && identity.data.environment === "live",
+        careerSelected: !!ownUser.data.user?.user_metadata?.["selected_career"],
       });
       const data = onboarding.data?.data;
       const noLinkedin = !!(

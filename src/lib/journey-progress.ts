@@ -37,6 +37,8 @@ export function journeyProgress({
   placements,
   hostBookings,
   evaluations,
+  identityVerified = false,
+  careerSelected = false,
 }: {
   registered: boolean;
   profile: boolean;
@@ -51,6 +53,8 @@ export function journeyProgress({
   }[];
   hostBookings: ProgressBooking[];
   evaluations: { booking_id: string; role: string }[];
+  identityVerified?: boolean;
+  careerSelected?: boolean;
 }) {
   // A completed old visit must not mark the forms for a new pending booking complete.
   const current = bookings.find((booking) => booking.status !== "cancelled");
@@ -67,12 +71,12 @@ export function journeyProgress({
     student: [
       registered,
       profile,
-      !!current?.career,
+      identityVerified,
+      careerSelected || !!current?.career,
       !!current,
       !!current?.paid_at ||
         ["indemnity_required", "confirmed", "completed"].includes(current?.status ?? ""),
       current?.status === "confirmed" || current?.status === "completed",
-      current?.kyc_status === "approved" && current?.kyc_environment === "live",
       current?.status === "confirmed" || current?.status === "completed",
       current?.status === "completed",
       !!studentFeedback,
