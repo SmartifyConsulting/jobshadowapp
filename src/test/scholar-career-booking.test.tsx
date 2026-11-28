@@ -19,6 +19,14 @@ vi.mock("@tanstack/react-router", () => ({
     <a href={to}>{children}</a>
   ),
 }));
+vi.mock("@tanstack/react-start", async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  useServerFn: (fn: unknown) => fn,
+}));
+vi.mock("@/lib/forus-kyc.functions", () => ({
+  startIdentityVerification: vi.fn(async () => ({ status: "in_progress", verificationUrl: null })),
+  getIdentityVerificationStatus: vi.fn(async () => ({ status: null, verificationUrl: null })),
+}));
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     auth: {
@@ -135,7 +143,9 @@ describe("guided career and host selection", () => {
     expect(screen.getByRole("button", { name: "Step 6: Identity Verification" })).toBeEnabled();
     fireEvent.click(screen.getByRole("button", { name: "Continue to Identity Verification" }));
     expect(screen.getByRole("button", { name: "Step 6: Identity Verification" })).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByText(/Your identity has not been marked as verified/)).toBeVisible();
+    expect(
+      await screen.findByText(/Request a booking before completing identity verification/),
+    ).toBeVisible();
     expect(screen.getByRole("button", { name: "Step 7: Booking Confirmation" })).toBeVisible();
   });
   it("restores searched dates and mentor selection from the account after remount", async () => {

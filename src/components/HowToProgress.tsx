@@ -23,7 +23,9 @@ export function useHowToProgress(userId: string | undefined, roles: string[]) {
         supabase.from("scholar_profiles").select("user_id").eq("user_id", userId!).maybeSingle(),
         supabase
           .from("bookings")
-          .select("id,status,career,paid_at,indemnity_received,guardian_signature_status")
+          .select(
+            "id,status,career,paid_at,indemnity_received,guardian_signature_status,kyc_status",
+          )
           .eq("user_id", userId!)
           .order("created_at", { ascending: false }),
         provider
