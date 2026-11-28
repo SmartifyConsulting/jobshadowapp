@@ -61,6 +61,23 @@ const client = () => {
   return cache;
 };
 describe("guided career and host selection", () => {
+  it("lets only the test scholar pass the KYC preview and opens the next accordion without calling KYC or signing", async () => {
+    auth.user = { id: "1ec456b0-6280-4732-9393-9e67991ffdfa", email: "elenanicolettis@icloud.com", user_metadata: {} };
+    const cache = client();
+    cache.setQueryData(["me"], auth.user);
+    cache.setQueryData(["scholar-profile", auth.user.id], {});
+    cache.setQueryData(["bookings", auth.user.id], []);
+    cache.setQueryData(["personal-onboarding", auth.user.id], { ...onboardingState, identity: null, consentComplete: false, scholarSigned: false, parentSigned: false });
+    cache.setQueryData(["public-career-content"], []);
+    cache.setQueryData(["public-careers-catalog"], []);
+    cache.setQueryData(["placements"], []);
+    render(<QueryClientProvider client={cache}><AccountPanel withBookings initialStep="identity" /></QueryClientProvider>);
+    fireEvent.click(screen.getByRole("button", { name: "Pass KYC" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: /Step 3: Explore Careers/ })).toHaveAttribute("aria-expanded", "true"));
+    expect(within(screen.getByRole("button", { name: /Step 2: Identity Verification/ })).getByLabelText("Completed")).toBeVisible();
+    expect(window.sessionStorage.getItem(`jobshadow-demo-identity:${auth.user.id}`)).toBe("passed");
+    expect(kyc.start).not.toHaveBeenCalled(); expect(kyc.sign).not.toHaveBeenCalled();
+  });
   it("keeps personal steps 1 to 3 completed when starting another booking", () => {
     auth.user = { ...auth.user, user_metadata: { selected_career: "Accountant" } };
     const cache = client();
@@ -110,6 +127,7 @@ describe("guided career and host selection", () => {
     const open = vi.spyOn(window, "open").mockReturnValue(null);
     render(<QueryClientProvider client={cache}><AccountPanel withBookings initialStep="identity" /></QueryClientProvider>);
     expect(screen.getByRole("button", { name: /Step 2: Identity Verification/ })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.queryByRole("button", { name: "Pass KYC" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Verify My Identity" }));
     await waitFor(() => expect(kyc.start).toHaveBeenCalledWith({ data: { scholarId: "test-scholar" } }));
     expect(open).toHaveBeenCalledWith("https://verify.didit.me/session/test", "_blank", "noopener");

@@ -4,13 +4,15 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { loadPersonalOnboarding, signPersonalFormA, startPersonalIdentity, refreshPersonalIdentity } from "@/lib/personal-onboarding.functions";
 import { LegalFormBody } from "@/components/LegalFormBody";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { isSwitchPersona } from "@/lib/dev-personas";
 export function ScholarSignupDate({ scholarId }: { scholarId: string }) {
   const load = useServerFn(loadPersonalOnboarding);
   const state = useQuery({ queryKey: ["personal-onboarding", scholarId], queryFn: () => load({ data: { scholarId } }) });
   const date = state.data?.signedUpAt ? new Date(state.data.signedUpAt) : null;
   return <p className="text-xs text-muted-foreground">{state.isPending ? "Loading sign-up date…" : date && !Number.isNaN(date.getTime()) ? `Signed up ${date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "Africa/Johannesburg" })}` : "Sign-up date: Unknown"}</p>;
 }
-export function PersonalOnboarding({ scholarId, parent = false }: { scholarId: string; parent?: boolean }) {
+export function PersonalOnboarding({ scholarId, parent = false, testPassed = false, onTestPassed }: { scholarId: string; parent?: boolean; testPassed?: boolean; onTestPassed?: (() => void) | undefined }) {
   const qc = useQueryClient();
   const load = useServerFn(loadPersonalOnboarding);
   const sign = useServerFn(signPersonalFormA);
@@ -20,6 +22,8 @@ export function PersonalOnboarding({ scholarId, parent = false }: { scholarId: s
   const [accepted, setAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const key = ["personal-onboarding", scholarId];
+  const user = useQuery({ queryKey: ["me"], queryFn: async () => (await supabase.auth.getUser()).data.user });
+  const canTestPass = !parent && user.data?.id === scholarId && isSwitchPersona(user.data.id, user.data.email);
   const state = useQuery({ queryKey: key, queryFn: async () => { if (!parent) await refresh({ data: { scholarId } }); return load({ data: { scholarId } }); }, refetchInterval: query => query.state.data?.identity && query.state.data.identity.status !== "approved" && !parent ? 30_000 : false });
   const save = useMutation({ mutationFn: () => sign({ data: { scholarId, name, accepted: true, version: state.data!.version } }), onSuccess: () => { setError(null); void qc.invalidateQueries({ queryKey: key }); }, onError: e => setError(e.message) });
   const begin = useMutation({ mutationFn: () => start({ data: { scholarId } }), onSuccess: v => { if (v.verification_url) window.open(v.verification_url, "_blank", "noopener"); void qc.invalidateQueries({ queryKey: key }); setError(null); }, onError: e => setError(e.message) });
@@ -44,10 +48,12 @@ export function PersonalOnboarding({ scholarId, parent = false }: { scholarId: s
       </div>
     </details>
     {!parent && <div className="space-y-3 rounded-lg border bg-[#FFFDF5] p-4"><h3 className="font-bold">Identity Verification</h3>
+      {canTestPass && testPassed && <p className="text-sm font-semibold">KYC passed for this test preview only. No identity verification or consent has been recorded.</p>}
       <p>{verified ? "Your identity is verified. This verification will be used for future Job Shadows." : !data.consentComplete ? "Complete Form A with your linked Parent/Guardian before verifying your identity." : "Verify your identity securely. You only need to complete this once."}</p>
       {verified && data.identity?.verified_at && <p className="text-sm">Verified: {new Date(data.identity.verified_at).toLocaleString()}</p>}
       {data.identity?.environment === "test" && <p className="text-sm font-semibold">Test verification only. This does not verify your identity for a live booking.</p>}
       {!verified && <div className="flex flex-wrap gap-2"><Button disabled={!data.consentComplete || begin.isPending} onClick={() => begin.mutate()}>{begin.isPending ? "Starting…" : data.identity?.verification_url ? "Continue Identity Verification" : "Verify My Identity"}</Button>{data.identity && <Button variant="outline" disabled={check.isPending} onClick={() => check.mutate()}>Check Verification Status</Button>}</div>}
+      {canTestPass && !verified && !testPassed && onTestPassed && <div className="space-y-2 border-t border-border pt-3"><p className="text-xs">Test preview only. Bypass this step without recording KYC or signatures.</p><Button onClick={() => { try { window.sessionStorage.setItem(`jobshadow-demo-identity:${scholarId}`, "passed"); } catch { /* In-memory test preview still works. */ } onTestPassed(); }}>Pass KYC</Button></div>}
     </div>}
   </div>;
 }

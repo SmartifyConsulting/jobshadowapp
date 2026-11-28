@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { ScholarAssessments } from "./ScholarAssessments";
 import { BookingInvoice } from "./BookingInvoice";
 import { PersonalOnboarding } from "./PersonalOnboarding";
+import { IndemnityDraftPreview } from "./IndemnityDraftPreview";
 import { loadPersonalOnboarding } from "@/lib/personal-onboarding.functions";
 import { displayTime } from "@/lib/time-entry";
 import { ProfilePhotoPicker } from "./ProfilePhotoPicker";
@@ -15,7 +16,7 @@ import { JourneyStepper, type JourneyStep } from "@/components/JourneyStepper";
 import { ROLES } from "@/lib/data";
 import { LegalFormBody } from "@/components/LegalFormBody";
 import { FormAColumns, ScholarGuardianSignatureColumns, ScholarSignaturePreview } from "@/components/FormSignatureLayout";
-import { isSwitchPersona, DEMO_ACCOUNTANT_PLACEMENT_ID } from "@/lib/dev-personas";
+import { isSwitchPersona, DEMO_ACCOUNTANT_PLACEMENT_ID, demoIdentityPassed } from "@/lib/dev-personas";
 import { phoneWithCountryCode } from "@/components/PhoneInput";
 import { PersonNameFields, joinPersonName } from "@/components/PersonNameFields";
 import { PhoneInput } from "@/components/PhoneInput";
@@ -1144,6 +1145,8 @@ function StudentJourney({
   const onboarding = useQuery({ queryKey: ["personal-onboarding", userId], enabled: !!profile, queryFn: () => loadOnboarding({ data: { scholarId: userId } }) });
   const canPreviewPayment =
     journeyUser?.id === userId && isSwitchPersona(userId, journeyUser.email);
+  const [testIdentityPassed, setTestIdentityPassed] = useState(false);
+  const demoIdentityComplete = canPreviewPayment && (testIdentityPassed || demoIdentityPassed(userId, journeyUser?.email));
   const [previewSelection, setPaymentPreview] = useState<
     (PaymentPreview & { userId: string }) | null
   >(null);
@@ -1263,7 +1266,7 @@ function StudentJourney({
   const confirmed = current?.status === "confirmed" || current?.status === "completed";
   const formsComplete = confirmed || (!!current?.indemnity_received && !!current?.guardian_signed_at);
   const awaitingMentor = current?.status === "pending_approval";
-  const identityComplete = onboarding.data?.identity?.status === "approved" && onboarding.data.identity.environment === "live";
+  const identityComplete = (onboarding.data?.identity?.status === "approved" && onboarding.data.identity.environment === "live") || demoIdentityComplete;
   const steps: JourneyStep[] = [
     { id: "profile", title: "Complete Profile", icon: UserRound, complete: !!profile },
     { id: "identity", title: "Identity Verification", icon: ShieldCheck, complete: identityComplete, locked: !profile },
@@ -1471,9 +1474,10 @@ function StudentJourney({
             <div className="space-y-4 rounded-lg border border-border bg-[#FFFDF5] p-4">
               <p className="font-bold">Digital KYC Verification</p>
               <p>After the required consent forms have been signed, complete identity verification here.</p>
-              <PersonalOnboarding key={userId} scholarId={userId} />
+              <PersonalOnboarding key={userId} scholarId={userId} testPassed={demoIdentityComplete} onTestPassed={() => setTestIdentityPassed(true)} />
             </div>
           )}
+          {active === "forms" && <IndemnityDraftPreview />}
           {["payment", "forms", "confirmation", "experience", "feedback"].includes(active) &&
             !(["payment", "forms"].includes(active) && showingPaymentPreview) && (
               <div className="space-y-4">

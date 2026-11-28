@@ -34,6 +34,12 @@ export function isParentSwitchPersona(id: string, email: string | null | undefin
 // Its booking submission is blocked by the database; this enables read-only review only.
 export const DEMO_ACCOUNTANT_PLACEMENT_ID = 900000115;
 
+export function demoIdentityPassed(id: string, email: string | null | undefined) {
+  if (!isSwitchPersona(id, email) || typeof window === "undefined") return false;
+  try { return window.sessionStorage.getItem(`jobshadow-demo-identity:${id}`) === "passed"; }
+  catch { return false; }
+}
+
 export function isSwitchPersona(id: string, email: string | null | undefined) {
   return DEV_PERSONAS.some(
     (persona) => persona.id === id && persona.email === email?.toLowerCase(),
