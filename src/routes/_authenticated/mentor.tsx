@@ -1311,7 +1311,6 @@ function HostSettings() {
   const [maxMonth, setMaxMonth] = useState("");
   const [bufferDays, setBufferDays] = useState("");
   const [maxHours, setMaxHours] = useState("");
-  const [autoAccept, setAutoAccept] = useState(true);
   const placements = useQuery({
     queryKey: ["mentor-placements"],
     queryFn: async () => {
@@ -1332,7 +1331,6 @@ function HostSettings() {
     setMaxMonth(s.max_shadows_per_month != null ? String(s.max_shadows_per_month) : "");
     setBufferDays(s.buffer_days != null ? String(s.buffer_days) : "");
     setMaxHours(s.max_consecutive_hours != null ? String(s.max_consecutive_hours) : "");
-    setAutoAccept(s.auto_accept ?? true);
   }, [settings.data]);
 
   async function save() {
@@ -1346,7 +1344,7 @@ function HostSettings() {
       _buffer_days: bufferDays ? Number(bufferDays) : null,
       _blackout_dates: [],
       _max_consecutive_hours: maxHours ? Number(maxHours) : null,
-      _auto_accept: autoAccept,
+      _auto_accept: false,
     } as never);
     setBusy(false);
     if (error) return setErr(error.message);
@@ -1373,20 +1371,7 @@ function HostSettings() {
             </p>
           </div>
 
-          <div className="rounded-lg border bg-card p-4">
-            <label className="flex items-center gap-2 text-sm font-semibold">
-              <input
-                type="checkbox"
-                checked={autoAccept}
-                onChange={(e) => setAutoAccept(e.target.checked)}
-              />
-              Automatically accept new booking requests
-            </label>
-            <p className="mt-1 text-xs text-muted-foreground">
-              On: scholars can book and pay straight away. Off: you'll need to approve or decline
-              each request first, before the scholar can pay.
-            </p>
-          </div>
+          <p className="text-sm">Review and accept each booking request before the scholar can pay.</p>
 
           <div className="grid gap-4 rounded-lg border bg-card p-4 sm:grid-cols-2">
             <label className="text-sm">

@@ -73,7 +73,7 @@ describe("guided career and host selection", () => {
   });
   it.each([
     ["awaiting_payment", {}, "Step 4: Make Payment"],
-    ["indemnity_required", { paid_at: "2026-11-28T12:00:00Z" }, "Step 5: Complete Forms"],
+    ["indemnity_required", { paid_at: "2026-11-28T12:00:00Z" }, "Step 5: Complete Indemnity Forms"],
     ["indemnity_required", { paid_at: "2026-11-28T12:00:00Z", indemnity_received: true, guardian_signed_at: "2026-11-28T12:00:00Z" }, "Step 6: Identity Verification"],
     ["confirmed", { paid_at: "2026-11-28T12:00:00Z", kyc_status: "approved", kyc_environment: "live" }, "Step 8: Do Your Job Shadow"],
   ])("opens the next unfinished step for a %s booking on return", (status, details, expected) => {
@@ -180,12 +180,12 @@ describe("guided career and host selection", () => {
     expect(screen.getByLabelText("Selected Career: Accountant")).toBeVisible();
     expect(screen.getByRole("button", { name: "Pass Payment" })).toBeEnabled();
     fireEvent.click(screen.getByRole("button", { name: "Pass Payment" }));
-    await waitFor(() => expect(screen.getByRole("button", { name: "Step 5: Complete Forms" })).toHaveAttribute("aria-expanded", "true"));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Step 5: Complete Indemnity Forms" })).toHaveAttribute("aria-expanded", "true"));
     expect(within(screen.getByRole("button", { name: /Step 4: Make Payment/ })).getByLabelText("Completed")).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: /Step 4: Make Payment/ }));
     expect(screen.getByLabelText("Paid stamp — test only")).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Complete Forms" }));
-    expect(screen.getByRole("button", { name: "Step 5: Complete Forms" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "Step 5: Complete Indemnity Forms" })).toHaveAttribute(
       "aria-expanded",
       "true",
     );

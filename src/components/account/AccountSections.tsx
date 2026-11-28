@@ -1370,7 +1370,7 @@ function StudentJourney({
     },
     {
       id: "forms",
-      title: "Complete Forms",
+      title: "Complete Indemnity Forms",
       icon: FileText,
       complete: formsComplete && !showingPaymentPreview,
       locked: !showingPaymentPreview && (!current || !paid),
