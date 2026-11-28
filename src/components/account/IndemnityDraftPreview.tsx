@@ -42,7 +42,6 @@ export function IndemnityDraftPreview({ scholarId }: { scholarId?: string | unde
   const linkedParent = user.data.id !== scholarId && consent.data?.self === false;
   const document = signatures.data?.document ?? draft;
   return <section aria-label="Indemnity Form" className="space-y-4">
-    <h2 className="font-bold">Indemnity Form</h2>
       {signatures.isError && <p role="alert" className="text-sm text-destructive">Saved signatures could not be loaded. <button className="underline" onClick={() => void signatures.refetch()}>Try Again</button></p>}
       <div className="grid gap-6 md:grid-cols-2">
         <section aria-label="Scholar form" aria-disabled={!ownScholar} className={`flex min-w-0 flex-col gap-4 rounded-lg border border-border bg-[#FFFDF5] p-4 ${ownScholar ? "" : "opacity-50"}`}>

@@ -5,6 +5,7 @@ import { BookingInvoice } from "./BookingInvoice";
 import { PersonalOnboarding } from "./PersonalOnboarding";
 import { IndemnityDraftPreview } from "./IndemnityDraftPreview";
 import { loadPersonalOnboarding } from "@/lib/personal-onboarding.functions";
+import { loadTestIndemnity } from "@/lib/test-indemnity.functions";
 import { displayTime } from "@/lib/time-entry";
 import { ProfilePhotoPicker } from "./ProfilePhotoPicker";
 import { bookingDateKey, datesInRange, placementsInDateRange } from "@/lib/placement-search";
@@ -1264,7 +1265,19 @@ function StudentJourney({
     !!current?.paid_at ||
     ["indemnity_required", "confirmed", "completed"].includes(current?.status ?? "");
   const confirmed = current?.status === "confirmed" || current?.status === "completed";
-  const formsComplete = confirmed || (!!current?.indemnity_received && !!current?.guardian_signed_at);
+  const loadTestSignatures = useServerFn(loadTestIndemnity);
+  const testSignatures = useQuery({
+    queryKey: ["test-indemnity-signatures", userId],
+    enabled: canPreviewPayment,
+    queryFn: () => loadTestSignatures({ data: { scholarId: userId } }),
+  });
+  const testFormsSigned =
+    canPreviewPayment &&
+    ["scholar", "parent"].every((role) =>
+      testSignatures.data?.receipts.some((receipt) => receipt.signer_role === role),
+    );
+  const formsComplete =
+    confirmed || (!!current?.indemnity_received && !!current?.guardian_signed_at) || testFormsSigned;
   const awaitingMentor = current?.status === "pending_approval";
   const identityComplete = (onboarding.data?.identity?.status === "approved" && onboarding.data.identity.environment === "live") || demoIdentityComplete;
   const steps: JourneyStep[] = [

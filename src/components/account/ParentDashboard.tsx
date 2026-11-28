@@ -18,6 +18,15 @@ function HistoryDocument({ receipt }: { receipt: ParentSignatureHistory }) {
     return <div className="space-y-3">{document.sections?.map(section => <section key={section.heading}><h5 className="font-bold">{section.heading}</h5><p className="text-sm leading-relaxed">{section.body}</p></section>)}<p className="text-sm">{document.parent_declaration}</p></div>;
   } catch { return <p className="whitespace-pre-wrap text-sm">{receipt.document_body}</p>; }
 }
+function SignatureRecordView({ role, signature }: { role: "Scholar / Tertiary Student" | "Parent / Guardian"; signature: { signature_name: string; signed_at: string; ip_address: string | null } | null }) {
+  return <div className="min-w-0 space-y-2 rounded-lg border border-border bg-[#FFFDF5] p-3">
+    <h5 className="font-bold text-sm">{role}</h5>
+    {signature ? <>
+      <p aria-readonly className={`text-3xl ${role === "Scholar / Tertiary Student" ? "scholar-signature-font" : "guardian-signature-font"}`}>{signature.signature_name}</p>
+      <p className="text-xs">Date &amp; Time: {date(signature.signed_at)} · IP Address: {signature.ip_address ?? "Unavailable"}</p>
+    </> : <p className="text-xs text-muted-foreground">Not signed</p>}
+  </div>;
+}
 function BookingCard({ booking, signed }: { booking: ParentBooking; signed: boolean }) {
   return <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-[#FFFDF5] p-3 text-sm"><div><p className="font-bold">{booking.career} — {booking.company}</p><p>{booking.shadow_date}</p></div><Link to="/indemnity/$bookingId" params={{ bookingId: booking.booking_id }} className="rounded bg-primary px-4 py-2 font-semibold text-primary-foreground">{signed ? "View Signed Form" : "Sign Indemnity Form"}</Link></div>;
 }
@@ -45,7 +54,7 @@ function ChildDashboard({ child, parentId, testProfiles }: { child: ParentChild;
     <section aria-label="Signature History" className="space-y-3 border-t border-border pt-4"><h3 className="font-bold text-lg">History</h3>
       {history.isPending && <p role="status">Loading signing history…</p>}
       {history.isError && <p role="alert">Your signing history could not be loaded. Please refresh.</p>}
-      {history.data?.map(receipt => <details key={`${receipt.document_key}-${receipt.document_version}`} className="rounded-lg border bg-[#FFFDF5] p-4"><summary className="cursor-pointer text-sm font-semibold">{receipt.document_key === "form_a" ? "Personal Information & Identity Verification Consent" : "Indemnity Form"} · Signed {date(receipt.signed_at)}{receipt.is_test ? " · Test" : ""}</summary><div className="mt-4 space-y-4"><HistoryDocument receipt={receipt} /><p className="guardian-signature-font text-3xl">{receipt.signature_name}</p><p className="text-xs">Date &amp; Time: {date(receipt.signed_at)} · IP Address: {receipt.ip_address ?? "Unavailable"}</p></div></details>)}
+      {history.data?.map(receipt => <details key={`${receipt.document_key}-${receipt.document_version}`} className="rounded-lg border bg-[#FFFDF5] p-4"><summary className="cursor-pointer text-sm font-semibold">{receipt.document_key === "form_a" ? "Personal Information & Identity Verification Consent" : "Indemnity Form"} · Signed {date(receipt.signed_at)}{receipt.is_test ? " · Test" : ""}</summary><div className="mt-4 space-y-4"><HistoryDocument receipt={receipt} /><div className="grid gap-3 md:grid-cols-2"><SignatureRecordView role="Scholar / Tertiary Student" signature={receipt.scholar} /><SignatureRecordView role="Parent / Guardian" signature={{ signature_name: receipt.signature_name, signed_at: receipt.signed_at, ip_address: receipt.ip_address }} /></div></div></details>)}
       {signedBookings.map(booking => <BookingCard key={booking.booking_id} booking={booking} signed />)}
       {history.isSuccess && !history.data.length && !signedBookings.length && <p className="text-sm">Your signed forms will appear here.</p>}
     </section>
