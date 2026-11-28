@@ -3,7 +3,7 @@ import { afterEach, expect, it } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { LegalFormBody } from "@/components/LegalFormBody";
 import { MentorSafeguardingForm } from "@/components/mentor/MentorSafeguardingForm";
-import { FormAColumns, ScholarGuardianSignatureColumns } from "@/components/FormSignatureLayout";
+import { FormAColumns, ScholarGuardianSignatureColumns, ScholarSignaturePreview } from "@/components/FormSignatureLayout";
 
 afterEach(cleanup);
 it("keeps each Form A declaration with its own signature space and distinct role font", () => {
@@ -31,6 +31,15 @@ it("provides scholar and guardian signature columns at the end of Form B", () =>
   expect(
     screen.getByRole("textbox", { name: "Parent / Legal Guardian digital signature" }),
   ).toBeVisible();
+});
+it("lets the scholar type their own preview while keeping the guardian signature locked", () => {
+  render(<ScholarSignaturePreview canSign><ScholarGuardianSignatureColumns /></ScholarSignaturePreview>);
+  const scholar = screen.getByRole("textbox", { name: "Scholar digital signature" });
+  expect(scholar).toBeEnabled();
+  expect(screen.getByRole("textbox", { name: "Parent / Legal Guardian digital signature" })).toBeDisabled();
+  fireEvent.change(scholar, { target: { value: "Raphaela Nicolettis" } });
+  expect(scholar).toHaveValue("Raphaela Nicolettis");
+  expect(screen.getByRole("status")).toHaveTextContent("not submitted");
 });
 it("removes internal instructions while keeping the agreement below its clause heading", () => {
   render(

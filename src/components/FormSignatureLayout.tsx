@@ -1,6 +1,15 @@
+import { createContext, useContext, useState, type ReactNode } from "react";
 import { LegalFormBody } from "./LegalFormBody";
 
+const SignatureEntryContext = createContext<"scholar" | null>(null);
+export function ScholarSignaturePreview({ canSign, children }: { canSign: boolean; children: ReactNode }) {
+  return <SignatureEntryContext.Provider value={canSign ? "scholar" : null}>{children}</SignatureEntryContext.Provider>;
+}
+
 export function SignatureSpace({ signer }: { signer: "scholar" | "parent" | "mentor" }) {
+  const role = useContext(SignatureEntryContext);
+  const [name, setName] = useState("");
+  const canSign = signer === "scholar" && role === "scholar";
   const title =
     signer === "scholar"
       ? "Scholar"
@@ -11,11 +20,14 @@ export function SignatureSpace({ signer }: { signer: "scholar" | "parent" | "men
     <section className="space-y-2" aria-label={`${title} signature`}>
       <h4 className="font-bold">Digital Signature</h4>
       <input
-        disabled
+        disabled={!canSign}
+        value={name}
+        onChange={(event) => setName(event.target.value)}
         aria-label={`${title} digital signature`}
         placeholder={`${title} Signature`}
         className={`h-24 w-full rounded border border-input bg-transparent px-3 text-3xl disabled:opacity-100 ${signer === "scholar" ? "scholar-signature-font" : "guardian-signature-font"}`}
       />
+      {canSign && name && <p role="status" className="text-xs">Signature preview - not submitted.</p>}
       <dl className="flex flex-wrap gap-x-8 gap-y-1 text-xs">
         <div>
           <dt className="inline font-semibold">Date &amp; Time: </dt>

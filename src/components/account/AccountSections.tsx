@@ -11,7 +11,7 @@ import { DietaryNeedsPicker } from "./ScholarSelections";
 import { JourneyStepper, type JourneyStep } from "@/components/JourneyStepper";
 import { ROLES } from "@/lib/data";
 import { LegalFormBody } from "@/components/LegalFormBody";
-import { FormAColumns, ScholarGuardianSignatureColumns } from "@/components/FormSignatureLayout";
+import { FormAColumns, ScholarGuardianSignatureColumns, ScholarSignaturePreview } from "@/components/FormSignatureLayout";
 import { isSwitchPersona, DEMO_ACCOUNTANT_PLACEMENT_ID } from "@/lib/dev-personas";
 import { phoneWithCountryCode } from "@/components/PhoneInput";
 import { PersonNameFields, joinPersonName } from "@/components/PersonNameFields";
@@ -1549,7 +1549,7 @@ function StudentJourney({
           )}
           {active === "forms" && showingPaymentPreview && (
             <div className="space-y-4">
-              <SampleBookingForms />
+              <SampleBookingForms key={userId} scholarUserId={userId} />
             </div>
           )}
           {active === "identity" && (
@@ -1667,7 +1667,8 @@ function StudentJourney({
   );
 }
 
-function SampleBookingForms() {
+function SampleBookingForms({ scholarUserId }: { scholarUserId: string }) {
+  const { data: signedInUser } = useUser();
   const documents = useQuery({
     queryKey: ["sample-booking-form-templates"],
     queryFn: async () => {
@@ -1680,6 +1681,7 @@ function SampleBookingForms() {
     },
   });
   return (
+    <ScholarSignaturePreview canSign={signedInUser?.id === scholarUserId}>
     <div className="space-y-4">
       {documents.isPending ? (
         <p role="status">Loading forms…</p>
@@ -1731,6 +1733,7 @@ function SampleBookingForms() {
         <p className="text-sm">The form templates have not been added yet.</p>
       )}
     </div>
+    </ScholarSignaturePreview>
   );
 }
 
