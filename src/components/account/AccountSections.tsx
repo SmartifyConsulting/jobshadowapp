@@ -1,3 +1,5 @@
+import { useServerFn } from "@tanstack/react-start";
+import { startIdentityVerification, getIdentityVerificationStatus } from "@/lib/forus-kyc.functions";
 import { ScholarAssessments } from "./ScholarAssessments";
 import { displayTime } from "@/lib/time-entry";
 import { ProfilePhotoPicker } from "./ProfilePhotoPicker";
@@ -75,6 +77,90 @@ function useUser() {
     queryKey: ["me"],
     queryFn: async () => (await supabase.auth.getUser()).data.user,
   });
+}
+
+const KYC_STATUS_LABEL: Record<string, string> = {
+  creating: "Starting your verification…",
+  creation_failed: "Your verification could not be started. Contact Job Shadow for help.",
+  in_progress: "Verification in progress. Complete the steps in the window we opened for you.",
+  awaiting_user: "We're waiting for you to complete verification in the window we opened for you.",
+  approved: "Your identity has been verified.",
+  declined: "Your identity verification was declined. Contact Job Shadow for help.",
+  review_required: "Your verification needs a manual review. We'll be in touch.",
+  resubmission_required: "Please resubmit your documents using the link below.",
+  abandoned: "Verification was not completed. Contact Job Shadow to restart.",
+  expired: "This verification link expired. Contact Job Shadow for a new link.",
+};
+const KYC_IN_FLIGHT: ReadonlySet<string> = new Set([
+  "creating",
+  "in_progress",
+  "awaiting_user",
+  "review_required",
+]);
+function IdentityVerificationStep({ bookingId }: { bookingId: string }) {
+  const qc = useQueryClient();
+  const start = useServerFn(startIdentityVerification);
+  const poll = useServerFn(getIdentityVerificationStatus);
+  const [err, setErr] = useState<string | null>(null);
+  const status = useQuery({
+    queryKey: ["identity-verification", bookingId],
+    queryFn: async () => {
+      const result = await poll({ data: { bookingId } });
+      if (result.status === "approved") void qc.invalidateQueries({ queryKey: ["bookings"] });
+      return result;
+    },
+    refetchOnWindowFocus: true,
+    refetchInterval: (query) =>
+      query.state.data?.status && KYC_IN_FLIGHT.has(query.state.data.status) ? 30_000 : false,
+  });
+  const begin = useMutation({
+    mutationFn: () => start({ data: { bookingId } }),
+    onSuccess: (result) => {
+      setErr(null);
+      qc.setQueryData(["identity-verification", bookingId], result);
+      if (result.verificationUrl) window.open(result.verificationUrl, "_blank", "noopener");
+    },
+    onError: (error) =>
+      setErr(error instanceof Error ? error.message : "Identity verification could not be started."),
+  });
+  const currentStatus = status.data?.status ?? null;
+  const approved = currentStatus === "approved";
+  const terminal = !!currentStatus && ["creation_failed", "abandoned", "expired", "declined"].includes(currentStatus);
+  return (
+    <div className="space-y-3">
+      {status.data?.environment === "test" && <p className="text-sm font-semibold">Test verification: use sample identity details only.</p>}
+      {status.isError && <p role="alert" className="text-sm text-destructive">Your verification status could not be loaded. Please try again later.</p>}
+      {err && (
+        <p role="alert" className="text-sm text-destructive">
+          {err}
+        </p>
+      )}
+      <p role="status" className="text-sm">
+        {currentStatus
+          ? (approved && status.data?.environment === "test" ? "Test verification completed. This does not verify your identity for a live booking." : KYC_STATUS_LABEL[currentStatus] ?? currentStatus)
+          : "Identity verification has not been started yet."}
+      </p>
+      {!approved && !terminal && (
+        <Button disabled={begin.isPending} onClick={() => begin.mutate()}>
+          {begin.isPending
+            ? "Starting…"
+            : currentStatus && KYC_IN_FLIGHT.has(currentStatus)
+              ? "Re-open verification"
+              : "Start Identity Verification"}
+        </Button>
+      )}
+      {status.data?.verificationUrl && !approved && (
+        <a
+          href={status.data.verificationUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block text-sm underline"
+        >
+          Open the verification window again
+        </a>
+      )}
+    </div>
+  );
 }
 
 export function AccountPanel({
@@ -1278,7 +1364,7 @@ function StudentJourney({
       id: "identity",
       title: "Identity Verification",
       icon: ShieldCheck,
-      complete: false,
+      complete: current?.kyc_status === "approved" && current?.kyc_environment === "live",
       locked: !current && !showingPaymentPreview,
     },
     {
@@ -1493,8 +1579,8 @@ function StudentJourney({
           {active === "identity" && (
             <div className="space-y-4 rounded-lg border border-border bg-[#FFFDF5] p-4">
               <p className="font-bold">Digital KYC Verification</p>
-              <p>After the required consent forms have been signed, identity verification will be completed here.</p>
-              <p role="status">Identity verification is not available yet. Your identity has not been marked as verified.</p>
+              <p>After the required consent forms have been signed, complete identity verification here.</p>
+              {current ? <IdentityVerificationStep bookingId={current.id} /> : <p role="status">This preview does not submit identity verification. Your identity has not been marked as verified.</p>}
               <div className="flex flex-wrap justify-between gap-3">
                 <Button variant="outline" onClick={() => setActive("forms")}>Back to Complete Forms</Button>
                 <Button onClick={() => setActive("confirmation")}>Review Booking Confirmation</Button>

@@ -12,6 +12,11 @@ const blank = {
   evaluations: [],
 };
 describe("Personal journey completion", () => {
+  it("counts only approved live identity checks as verified", () => {
+    const booking = { id: "kyc", status: "confirmed", career: "Accountant", kyc_status: "approved" };
+    expect(journeyProgress({ ...blank, bookings: [{ ...booking, kyc_environment: "test" }] }).student[6]).toBe(false);
+    expect(journeyProgress({ ...blank, bookings: [{ ...booking, kyc_environment: "live" }] }).student[6]).toBe(true);
+  });
   it("does not complete booking or paperwork steps just because someone visited", () => {
     expect(journeyProgress(blank).student).toEqual([
       true,

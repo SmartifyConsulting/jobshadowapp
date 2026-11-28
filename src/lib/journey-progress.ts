@@ -25,6 +25,8 @@ type ProgressBooking = {
   paid_at?: string | null;
   indemnity_received?: boolean;
   guardian_signature_status?: string;
+  kyc_status?: string | null;
+  kyc_environment?: string | null;
 };
 export function journeyProgress({
   registered,
@@ -70,7 +72,7 @@ export function journeyProgress({
       !!current?.paid_at ||
         ["indemnity_required", "confirmed", "completed"].includes(current?.status ?? ""),
       current?.status === "confirmed" || current?.status === "completed",
-      false, // Identity completion requires a verified result from the KYC provider.
+      current?.kyc_status === "approved" && current?.kyc_environment === "live",
       current?.status === "confirmed" || current?.status === "completed",
       current?.status === "completed",
       !!studentFeedback,

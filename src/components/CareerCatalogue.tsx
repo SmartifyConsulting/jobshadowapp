@@ -279,7 +279,7 @@ export function CareerCatalogue({
       <div className="bg-ivory py-1">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-2">
           {!placements.isLoading && mentorCounts.size === 0 && noAvailabilityMessage.data && (
-            <p className="min-w-0 flex-1 text-xs text-muted-foreground">
+            <p className="min-w-0 flex-1 text-sm font-bold text-destructive">
               {noAvailabilityMessage.data} Counts show available mentors out of each career’s
               target.
             </p>
@@ -329,12 +329,11 @@ export function CareerCatalogue({
                   return (
                     <div key={division} className="bg-ivory">
                       <button
-                        data-list-font="black"
                         onClick={() => toggleDivision(divisionKey)}
                         aria-expanded={divisionOpen}
-                        className="flex min-h-9 w-full items-center justify-between gap-3 border-y border-warm-divider bg-muted/30 px-4 py-1.5 text-left"
+                        className="flex min-h-9 w-full items-center justify-between gap-3 border-y border-warm-divider bg-muted/30 px-4 py-1.5 text-left font-display"
                       >
-                        <h3 className="text-xs font-bold normal-case tracking-wide text-muted-foreground">
+                        <h3 className="font-display text-sm font-bold normal-case tracking-wide text-muted-foreground">
                           {division} ({roles.length})
                         </h3>
                         <ChevronDown
@@ -357,12 +356,11 @@ export function CareerCatalogue({
                                 <div className="flex flex-wrap items-start justify-between gap-3">
                                   <button
                                     type="button"
-                                    data-list-font="black"
                                     onClick={() => setViewingSlug(r.slug)}
-                                    className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-1 py-1 text-left outline-none transition hover:bg-pale-lime focus-visible:ring-2 focus-visible:ring-primary"
+                                    className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-1 py-1 text-left font-sans outline-none transition hover:bg-pale-lime focus-visible:ring-2 focus-visible:ring-primary"
                                   >
                                     <span className="min-w-0">
-                                      <span className="flex items-center gap-2 text-sm font-semibold leading-tight text-charcoal">
+                                      <span className="flex items-center gap-2 font-sans text-sm font-semibold leading-tight text-charcoal">
                                         {r.title}
                                         {r.video && (
                                           <PlayCircle className="h-4 w-4" aria-label="Has video" />

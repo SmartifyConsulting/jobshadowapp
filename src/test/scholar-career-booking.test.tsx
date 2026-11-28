@@ -2,6 +2,12 @@ import { useState } from "react";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+const kyc = vi.hoisted(() => ({ start: vi.fn(), poll: vi.fn() }));
+vi.mock("@/lib/forus-kyc.functions", () => ({ startIdentityVerification: kyc.start, getIdentityVerificationStatus: kyc.poll }));
+vi.mock("@tanstack/react-start", async (original) => ({
+  ...(await original<typeof import("@tanstack/react-start")>()),
+  useServerFn: (fn: unknown) => fn,
+}));
 const auth = vi.hoisted(() => ({
   user: { id: "test-scholar", user_metadata: {} } as {
     id: string;
@@ -35,6 +41,8 @@ import { AccountPanel, NewBooking } from "@/components/account/AccountSections";
 import { CareerStepBrowser } from "@/components/account/CareerStepBrowser";
 afterEach(cleanup);
 beforeEach(() => {
+  kyc.start.mockReset();
+  kyc.poll.mockReset().mockResolvedValue({ status: null, verificationUrl: null, environment: null });
   auth.user = { id: "test-scholar", user_metadata: {} };
   auth.save.mockReset().mockImplementation(async ({ data }) => {
     auth.user = { ...auth.user, user_metadata: { ...auth.user.user_metadata, ...data } };
@@ -49,6 +57,22 @@ const client = () => {
   return cache;
 };
 describe("guided career and host selection", () => {
+  it("connects the real booking's Step 6 to the FORUS action while keeping the scholar wizard", async () => {
+    const cache = client();
+    cache.setQueryData(["me"], auth.user);
+    cache.setQueryData(["scholar-profile", auth.user.id], {});
+    cache.setQueryData(["bookings", auth.user.id], [{ id: "booking-kyc", status: "indemnity_required", paid_at: "2026-11-28T00:00:00Z", career: "Accountant" }]);
+    kyc.start.mockResolvedValue({ status: "in_progress", environment: "test", verificationUrl: "https://verify.didit.me/session/test" });
+    const open = vi.spyOn(window, "open").mockReturnValue(null);
+    render(<QueryClientProvider client={cache}><AccountPanel withBookings initialStep="identity" /></QueryClientProvider>);
+    await waitFor(() => expect(kyc.poll).toHaveBeenCalledWith({ data: { bookingId: "booking-kyc" } }));
+    expect(screen.getByRole("button", { name: "Step 6: Identity Verification" })).toHaveAttribute("aria-expanded", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Start Identity Verification" }));
+    await waitFor(() => expect(kyc.start).toHaveBeenCalledWith({ data: { bookingId: "booking-kyc" } }));
+    expect(await screen.findByText("Test verification: use sample identity details only.")).toBeVisible();
+    expect(open).toHaveBeenCalledWith("https://verify.didit.me/session/test", "_blank", "noopener");
+    open.mockRestore();
+  });
   it("lets the test scholar review Step 4 without creating a booking or recording payment", async () => {
     auth.user = {
       id: "1ec456b0-6280-4732-9393-9e67991ffdfa",
