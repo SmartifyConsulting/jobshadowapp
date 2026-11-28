@@ -1151,9 +1151,26 @@ function StudentJourney({
   const [previewSelection, setPaymentPreview] = useState<
     (PaymentPreview & { userId: string }) | null
   >(null);
+  const [selectedId, setSelectedId] = useState("");
+  const bookings = useQuery({
+    queryKey: ["bookings", userId],
+    queryFn: async () => {
+      const result = await supabase
+        .from("bookings")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+      if (result.error) throw result.error;
+      return result.data ?? [];
+    },
+  });
+  const current = selectedId
+    ? bookings.data?.find((booking) => booking.id === selectedId)
+    : bookings.data?.find((booking) => booking.status !== "cancelled");
   const savedSearch = savedMentorSearch.safeParse(journeyUser?.user_metadata?.["mentor_search"]);
   const savedDemo =
     canPreviewPayment &&
+    !current &&
     savedSearch.success &&
     savedSearch.data.placementId === DEMO_ACCOUNTANT_PLACEMENT_ID &&
     savedSearch.data.career === "Accountant"
@@ -1232,22 +1249,6 @@ function StudentJourney({
     setSelection(value);
     saveCareer.mutate(value);
   };
-  const [selectedId, setSelectedId] = useState("");
-  const bookings = useQuery({
-    queryKey: ["bookings", userId],
-    queryFn: async () => {
-      const result = await supabase
-        .from("bookings")
-        .select("*")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false });
-      if (result.error) throw result.error;
-      return result.data ?? [];
-    },
-  });
-  const current = selectedId
-    ? bookings.data?.find((booking) => booking.id === selectedId)
-    : bookings.data?.find((booking) => booking.status !== "cancelled");
   const completeBookingForms = (id: string) => {
     setSelectedId(id);
     setActive("forms");
@@ -1276,27 +1277,6 @@ function StudentJourney({
     ["scholar", "parent"].every((role) =>
       testSignatures.data?.receipts.some((receipt) => receipt.signer_role === role),
     );
-  if (typeof window !== "undefined")
-    console.debug("[step6-debug]", {
-      userId,
-      journeyUserId: journeyUser?.id,
-      journeyUserEmail: journeyUser?.email,
-      canPreviewPayment,
-      testSignaturesStatus: testSignatures.status,
-      testSignaturesError: testSignatures.error,
-      receipts: testSignatures.data?.receipts,
-      testFormsSigned,
-    });
-  const step6Debug = JSON.stringify({
-    userId,
-    journeyUserId: journeyUser?.id,
-    journeyUserEmail: journeyUser?.email,
-    canPreviewPayment,
-    testSignaturesStatus: testSignatures.status,
-    testSignaturesErrorMessage: testSignatures.error instanceof Error ? testSignatures.error.message : testSignatures.error,
-    receipts: testSignatures.data?.receipts,
-    testFormsSigned,
-  });
   const formsComplete =
     confirmed || (!!current?.indemnity_received && !!current?.guardian_signed_at) || testFormsSigned;
   const awaitingMentor = current?.status === "pending_approval";
@@ -1370,11 +1350,6 @@ function StudentJourney({
 
   return (
     <section className="min-w-0 space-y-5" aria-label="Scholar step wizard">
-      {canPreviewPayment && (
-        <p role="status" className="break-all rounded bg-black p-2 text-xs text-lime-300">
-          {step6Debug}
-        </p>
-      )}
       {saveCareer.isPending && (
         <p role="status" className="text-sm">
           Saving your career selection…
