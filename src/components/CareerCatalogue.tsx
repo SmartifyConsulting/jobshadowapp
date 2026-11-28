@@ -333,7 +333,7 @@ export function CareerCatalogue({
                         aria-expanded={divisionOpen}
                         className="flex min-h-9 w-full items-center justify-between gap-3 border-y border-warm-divider bg-muted/30 px-4 py-1.5 text-left font-sans"
                       >
-                        <h3 className="font-sans text-xs font-bold normal-case tracking-wide text-muted-foreground">
+                        <h3 className="font-sans text-sm font-bold normal-case tracking-wide text-muted-foreground">
                           {division} ({roles.length})
                         </h3>
                         <ChevronDown
