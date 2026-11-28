@@ -1310,7 +1310,7 @@ function StudentJourney({
       title: "Complete Indemnity Form",
       unframed: true,
       icon: FileText,
-      complete: formsComplete && !showingPaymentPreview,
+      complete: formsComplete,
       locked: !showingPaymentPreview && (!current || !paid),
     },
     {
