@@ -1,4 +1,5 @@
 export const HOW_TO_DESTINATIONS = {
+  studentJourney: "/profile?tab=bookings&entry=workflow",
   studentProfile: "/profile?tab=bookings&step=profile",
   studentCareers: "/profile?tab=bookings&step=careers",
   studentRequest: "/profile?tab=bookings&step=request",

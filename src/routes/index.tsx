@@ -87,7 +87,7 @@ function Home() {
   const [showSignUp, setShowSignUp] = useState(false);
 
   function focusSignIn() {
-    if (signedIn) { void navigate({ to: "/profile", search: { tab: "bookings", step: "profile" } }); return; }
+    if (signedIn) { void navigate({ to: "/profile", search: { tab: "bookings", entry: "workflow" } }); return; }
     setShowSignIn(true);
     setShowSignUp(false);
     requestAnimationFrame(() => {

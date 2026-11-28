@@ -420,11 +420,11 @@ export function SiteFooter() {
             </li>
             <li>
               {session?.user ? (
-                <Link to="/profile" search={{ tab: "bookings", step: "profile" }}>
+                <Link to="/profile" search={{ tab: "bookings", entry: "workflow" }}>
                   Book a Job Shadow
                 </Link>
               ) : (
-                <Link to="/auth" search={{ go: "studentProfile" }}>
+                <Link to="/auth" search={{ go: "studentJourney" }}>
                   Book a Job Shadow
                 </Link>
               )}

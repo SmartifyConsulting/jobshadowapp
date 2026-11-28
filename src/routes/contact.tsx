@@ -244,7 +244,7 @@ function Contact() {
               <div className="mt-2 flex flex-wrap gap-2">
                 <a
                   href={
-                    session?.user ? "/profile?tab=bookings&step=profile" : "/auth?go=studentProfile"
+                    session?.user ? "/profile?tab=bookings&entry=workflow" : "/auth?go=studentJourney"
                   }
                   className="inline-block rounded-full bg-primary px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-primary-foreground"
                 >
