@@ -70,6 +70,7 @@ describe("guided career and host selection", () => {
     fireEvent.click(screen.getByRole("button", { name: "Verify My Identity" }));
     await waitFor(() => expect(kyc.start).toHaveBeenCalledWith({ data: { bookingId: "booking-kyc" } }));
     expect(await screen.findByText("Test verification: use sample identity details only.")).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Pass Payment" })).toBeNull();
     expect(open).toHaveBeenCalledWith("https://verify.didit.me/session/test", "_blank", "noopener");
     open.mockRestore();
   });
@@ -111,10 +112,10 @@ describe("guided career and host selection", () => {
     expect(screen.getByLabelText("Selected Career: Accountant")).toBeVisible();
     expect(
       screen.getByText(
-        "Payment preview only. No booking, payment or confirmation has been created.",
+        "Test preview only. No money is charged and no real payment or booking confirmation is recorded.",
       ),
     ).toBeVisible();
-    expect(screen.getByRole("button", { name: "Payment Unavailable in Preview" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Pass Payment" })).toBeEnabled();
     expect(screen.queryByRole("button", { name: "Pay with PayFast" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Continue to Complete Forms" })).toBeNull();
     await waitFor(() =>
@@ -141,14 +142,19 @@ describe("guided career and host selection", () => {
         <AccountPanel withBookings initialStep="payment" />
       </QueryClientProvider>,
     );
-    expect(screen.getByRole("button", { name: "Step 4: Make Payment" })).toBeEnabled();
-    expect(screen.getByRole("button", { name: "Step 4: Make Payment" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: /Step 4: Make Payment/ })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Step 4: Make Payment/ })).toHaveAttribute(
       "aria-expanded",
       "true",
     );
     expect(screen.getByLabelText("Selected Career: Accountant")).toBeVisible();
-    expect(screen.getByRole("button", { name: "Payment Unavailable in Preview" })).toBeDisabled();
-    fireEvent.click(screen.getByRole("button", { name: "Step 5: Complete Forms" }));
+    expect(screen.getByRole("button", { name: "Pass Payment" })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: "Pass Payment" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Step 5: Complete Forms" })).toHaveAttribute("aria-expanded", "true"));
+    expect(within(screen.getByRole("button", { name: /Step 4: Make Payment/ })).getByLabelText("Completed")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: /Step 4: Make Payment/ }));
+    expect(screen.getByLabelText("Paid stamp — test only")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Complete Forms" }));
     expect(screen.getByRole("button", { name: "Step 5: Complete Forms" })).toHaveAttribute(
       "aria-expanded",
       "true",
@@ -455,7 +461,7 @@ describe("guided career and host selection", () => {
     first.unmount();
     const second = mount("request");
     expect(screen.getByRole("heading", { name: "Mentor Availability" })).toBeVisible();
-    expect(screen.getByRole("button", { name: "Step 4: Make Payment" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Step 4: Make Payment/ })).toBeDisabled();
     expect(screen.getByLabelText("Selected Career: Accountant")).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: /Step 2: Explore Careers/ }));
     expect(screen.getByRole("combobox", { name: "Career" })).toHaveValue("Accountant");

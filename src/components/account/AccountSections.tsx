@@ -1,6 +1,7 @@
 import { useServerFn } from "@tanstack/react-start";
 import { startIdentityVerification, getIdentityVerificationStatus } from "@/lib/forus-kyc.functions";
 import { ScholarAssessments } from "./ScholarAssessments";
+import { BookingInvoice } from "./BookingInvoice";
 import { displayTime } from "@/lib/time-entry";
 import { ProfilePhotoPicker } from "./ProfilePhotoPicker";
 import { bookingDateKey, datesInRange, placementsInDateRange } from "@/lib/placement-search";
@@ -1150,10 +1151,10 @@ export function Bookings({
                 {STATUS[b.status] ?? b.status}
               </span>
             </div>
-            <p className="mt-2 text-sm">
-              Amount: R{Number(b.amount_due).toFixed(0)}
-              {b.voucher_code ? ` (voucher ${b.voucher_code}, -${b.discount}%)` : ""}
-            </p>
+            <div className="mt-3">
+              {selectedId ? <BookingInvoice career={b.career ?? "Job Shadow"} date={b.shadow_date ?? undefined} location={b.location ?? undefined} arrival={b.arrival_time ? displayTime(b.arrival_time) : undefined} collection={b.collection_time ? displayTime(b.collection_time) : undefined} amount={Number(b.amount_due)} reference={b.id} paid={!!b.paid_at} /> : <p className="text-sm">Amount: R{Number(b.amount_due).toFixed(0)}</p>}
+              {b.voucher_code && <p className="mt-2 text-sm">Voucher: {b.voucher_code} ({b.discount}% discount applied)</p>}
+            </div>
             <div className="mt-3 flex gap-2">
               {b.status === "awaiting_payment" && (
                 <Button
@@ -1262,6 +1263,9 @@ function StudentJourney({
           }
         : null;
   const showingPaymentPreview = canPreviewPayment && (!!paymentPreview || !!savedDemo);
+  const [passedPreview, setPassedPreview] = useState<string | null>(null);
+  const previewKey = paymentPreview ? JSON.stringify([userId, paymentPreview.career, paymentPreview.date, paymentPreview.location, paymentPreview.amount]) : null;
+  const previewPaid = showingPaymentPreview && !!previewKey && passedPreview === previewKey;
   const [requestedActive, setActive] = useState(initialStep ?? "profile");
   useEffect(() => {
     if (initialStep) setActive(initialStep);
@@ -1352,7 +1356,7 @@ function StudentJourney({
       id: "payment",
       title: "Make Payment",
       icon: CreditCard,
-      complete: paid && !showingPaymentPreview,
+      complete: showingPaymentPreview ? previewPaid : paid,
       locked: !current && !showingPaymentPreview,
     },
     {
@@ -1492,41 +1496,19 @@ function StudentJourney({
             />
           )}
           {active === "payment" && showingPaymentPreview && (
-            <div className="space-y-4 rounded-lg border border-border bg-[#FFFDF5] p-4">
+            <div className="space-y-4">
               {paymentPreview ? (
-                <>
-                  <SelectedCareerBadge career={paymentPreview.career} />
-                  <dl className="grid gap-3 text-sm sm:grid-cols-2">
-                    <div>
-                      <dt className="font-semibold">Date</dt>
-                      <dd>{paymentPreview.date || "Not selected"}</dd>
-                    </div>
-                    <div>
-                      <dt className="font-semibold">Location</dt>
-                      <dd>{paymentPreview.location}</dd>
-                    </div>
-                    {paymentPreview.from && (
-                      <div>
-                        <dt className="font-semibold">Arrival Time</dt>
-                        <dd>{displayTime(paymentPreview.from)}</dd>
-                      </div>
-                    )}
-                    {paymentPreview.to && (
-                      <div>
-                        <dt className="font-semibold">Collection Time</dt>
-                        <dd>{displayTime(paymentPreview.to)}</dd>
-                      </div>
-                    )}
-                    <div>
-                      <dt className="font-semibold">Total</dt>
-                      <dd>R{paymentPreview.amount.toFixed(0)}</dd>
-                    </div>
-                  </dl>
-                  <p className="text-sm">
-                    Payment preview only. No booking, payment or confirmation has been created.
-                  </p>
-                  <Button disabled>Payment Unavailable in Preview</Button>
-                </>
+                <BookingInvoice career={paymentPreview.career} date={paymentPreview.date} location={paymentPreview.location} arrival={paymentPreview.from ? displayTime(paymentPreview.from) : undefined} collection={paymentPreview.to ? displayTime(paymentPreview.to) : undefined} amount={paymentPreview.amount} paid={previewPaid} preview>
+                  <p className="text-sm">Test preview only. No money is charged and no real payment or booking confirmation is recorded.</p>
+                  {previewPaid ? (
+                    <Button onClick={() => setActive("forms")}>Complete Forms</Button>
+                  ) : (
+                    <Button onClick={() => {
+                      if (!canPreviewPayment || !showingPaymentPreview || !previewKey) return;
+                      setPassedPreview(previewKey);
+                    }}>Pass Payment</Button>
+                  )}
+                </BookingInvoice>
               ) : demoPlacements.isError ? (
                 <p role="alert" className="text-sm">
                   Your saved payment preview could not be loaded.{" "}

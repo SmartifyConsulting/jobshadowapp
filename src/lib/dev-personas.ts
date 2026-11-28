@@ -19,7 +19,16 @@ export const DEV_PERSONAS = [
     email: "elenanicolettis@icloud.com",
     label: "Raphy Nicolettis — Scholar",
   },
+  {
+    id: "ea29d396-45d1-430c-88d7-29d4504d9725",
+    email: "elena@moi.co.za",
+    label: "Elena Nicolettis — Parent/Guardian",
+  },
 ] as const;
+
+export function isParentSwitchPersona(id: string, email: string | null | undefined) {
+  return id === DEV_PERSONAS[4].id && email?.toLowerCase() === DEV_PERSONAS[4].email;
+}
 
 // Pointer to the approved, database-flagged sample Accountant placement.
 // Its booking submission is blocked by the database; this enables read-only review only.

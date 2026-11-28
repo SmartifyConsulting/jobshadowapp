@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { DEV_PERSONAS, isSwitchPersona, switchTarget } from "@/lib/dev-personas";
+import { DEV_PERSONAS, isSwitchPersona, isParentSwitchPersona, switchTarget } from "@/lib/dev-personas";
 const mocks = vi.hoisted(() => ({
   getUserById: vi.fn(),
   generateLink: vi.fn(),
@@ -56,12 +56,14 @@ beforeEach(() => {
     error: null,
   });
 });
-describe("isolated four-profile switcher", () => {
+describe("isolated five-profile switcher", () => {
   it("allows only exact account IDs and emails, including each allowed pair", () => {
-    expect(DEV_PERSONAS).toHaveLength(4);
+    expect(DEV_PERSONAS).toHaveLength(5);
     for (const from of DEV_PERSONAS)
       for (const to of DEV_PERSONAS) expect(switchTarget(from.id, from.email, to.email)).toBe(to);
     expect(isSwitchPersona("other", caller.email)).toBe(false);
+    expect(isParentSwitchPersona(DEV_PERSONAS[4].id, "elena@moi.co.za")).toBe(true);
+    expect(isParentSwitchPersona("other", "elena@moi.co.za")).toBe(false);
   });
   it.each([
     request("unrelated", "other@example.com"),

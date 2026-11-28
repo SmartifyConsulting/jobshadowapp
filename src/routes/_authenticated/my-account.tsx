@@ -1,5 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { isParentSwitchPersona } from "@/lib/dev-personas";
 
 export const Route = createFileRoute("/_authenticated/my-account")({
   validateSearch: (s: Record<string, unknown>): { view?: "profile" | undefined } => ({
@@ -27,6 +28,8 @@ export const Route = createFileRoute("/_authenticated/my-account")({
           to: "/admin",
           search: search.view === "profile" ? { section: "profile" } : {},
         });
+      if (isParent && isParentSwitchPersona(userId, u.user?.email))
+        throw redirect({ to: "/parent" });
       if (isHrAdmin)
         throw redirect({
           to: "/company-report",
