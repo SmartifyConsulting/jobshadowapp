@@ -279,7 +279,7 @@ export function CareerCatalogue({
       <div className="bg-ivory py-1">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-2">
           {!placements.isLoading && mentorCounts.size === 0 && noAvailabilityMessage.data && (
-            <p className="min-w-0 flex-1 text-xs text-muted-foreground">
+            <p className="min-w-0 flex-1 text-sm font-bold text-destructive">
               {noAvailabilityMessage.data} Counts show available mentors out of each career’s
               target.
             </p>
