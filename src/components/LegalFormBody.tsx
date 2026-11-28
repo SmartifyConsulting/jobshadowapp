@@ -11,7 +11,7 @@ export function LegalFormBody({ body }: { body: string }) {
           const heading = block.match(/^([^:\n]{1,100}):\s+([\s\S]+)$/);
           return heading ? (
             <section key={index} className="space-y-2">
-              <h4 className="font-bold">{heading[1]}</h4>
+              <h4 className="font-bold">{/^Scholar Accuracy Declaration$/i.test(heading[1] ?? "") ? "Information Accuracy Declaration" : heading[1]}</h4>
               <p className="whitespace-pre-wrap">{heading[2]}</p>
             </section>
           ) : /^#{1,4}\s/.test(block) ? (

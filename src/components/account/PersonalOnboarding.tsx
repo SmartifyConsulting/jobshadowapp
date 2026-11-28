@@ -25,29 +25,35 @@ export function PersonalOnboarding({ scholarId, parent = false, testPassed = fal
   const user = useQuery({ queryKey: ["me"], queryFn: async () => (await supabase.auth.getUser()).data.user });
   const canTestPass = !parent && user.data?.id === scholarId && isSwitchPersona(user.data.id, user.data.email);
   const state = useQuery({ queryKey: key, queryFn: async () => { if (!parent) await refresh({ data: { scholarId } }); return load({ data: { scholarId } }); }, refetchInterval: query => query.state.data && (!query.state.data.consentComplete || (query.state.data.identity && query.state.data.identity.status !== "approved" && !parent)) ? 30_000 : false });
-  const save = useMutation({ mutationFn: () => sign({ data: { scholarId, name, accepted: true, version: state.data!.version } }), onSuccess: () => { setError(null); void qc.invalidateQueries({ queryKey: key }); }, onError: e => setError(e.message) });
+  const save = useMutation({ mutationFn: () => sign({ data: { scholarId, name, accepted: true, version: state.data!.version } }), onSuccess: () => { setError(null); void qc.invalidateQueries({ queryKey: key }); void qc.invalidateQueries({ queryKey: ["parent-signature-history", scholarId] }); }, onError: e => setError(e.message) });
   const begin = useMutation({ mutationFn: () => start({ data: { scholarId } }), onSuccess: v => { if (v.verification_url) window.open(v.verification_url, "_blank", "noopener"); void qc.invalidateQueries({ queryKey: key }); setError(null); }, onError: e => setError(e.message) });
   const check = useMutation({ mutationFn: () => refresh({ data: { scholarId } }), onSuccess: () => { void qc.invalidateQueries({ queryKey: key }); setError(null); }, onError: e => setError(e.message) });
   if (state.isPending) return <p role="status">Loading Form A and identity verification…</p>;
   if (state.isError || !state.data) return <p role="alert">Your onboarding details could not be loaded. <button className="underline" onClick={() => void state.refetch()}>Try Again</button></p>;
   const data = state.data;
+  const agreementBlocks = data.body.split(/\r?\n\s*\r?\n/).map(block => block.trim()).filter(Boolean);
+  const scholarBlocks = agreementBlocks.filter(block => /^(?:Scholar|Information) Accuracy Declaration:/i.test(block));
+  const parentBlocks = agreementBlocks.filter(block => /^Parent\s*\/\s*Legal Guardian Consent/i.test(block));
+  const sharedBlocks = agreementBlocks.filter(block => !scholarBlocks.includes(block) && !parentBlocks.includes(block));
   const signed = parent ? data.parentSigned : data.scholarSigned;
   const verified = data.identity?.status === "approved" && data.identity.environment === "live";
   return <div className="space-y-4">
     {error && <p role="alert" className="text-destructive">{error}</p>}
     <details open className="rounded-lg border bg-[#FFFDF5] p-4">
       <summary className="cursor-pointer font-bold">Personal Information & Identity Verification Consent{data.consentComplete ? " — Signed" : ""}</summary>
-      <div className="mt-4 space-y-4"><LegalFormBody body={data.body} />
+      <div className="mt-4 space-y-4">{sharedBlocks.length > 0 && <LegalFormBody body={sharedBlocks.join("\n\n")} />}
         <div className="grid gap-6 md:grid-cols-2">{(["scholar", "parent"] as const).map(role => {
           const receipt = data.signatures.find(s => s.signer_role === role && (role !== "parent" || data.parentSigned));
-          const own = role === (parent ? "parent" : "scholar");
-          return <section key={role} className="space-y-2"><h4 className="font-bold">{role === "parent" ? "Parent / Guardian" : "Scholar"}</h4>
+          const own = role === "scholar" ? user.data?.id === scholarId && data.self === true : !!user.data && user.data.id !== scholarId && data.self === false;
+          return <section key={role} aria-label={role === "parent" ? "Parent privacy agreement" : "Scholar privacy agreement"} aria-disabled={!own} className={`flex flex-col gap-3 rounded-lg border border-border bg-[#FFFDF5] p-4 ${own ? "" : "opacity-50"}`}><h4 className="font-bold">{role === "parent" ? "Parent / Guardian" : "Scholar"}</h4>
+            <LegalFormBody body={(role === "parent" ? parentBlocks : scholarBlocks).join("\n\n")} />
+            <div className="mt-auto space-y-2">
             {receipt ? <><p className={role === "parent" ? "guardian-signature-font text-3xl" : "scholar-signature-font text-3xl"}>{receipt.signature_name}</p><p className="text-xs">Signed: {new Date(receipt.signed_at).toLocaleString()} · IP: {receipt.ip_address ?? "Not available"}</p></> : own ? <><label className="block text-sm">Digital Signature<input aria-label={`${role === "parent" ? "Parent / Guardian" : "Scholar"} digital signature`} value={name} onChange={e => setName(e.target.value)} className={`mt-1 h-16 w-full rounded border bg-transparent px-3 text-3xl ${parent ? "guardian-signature-font" : "scholar-signature-font"}`} /></label><label className="flex gap-2 text-sm"><input type="checkbox" checked={accepted} onChange={e => setAccepted(e.target.checked)} />I have read and agree to Form A.</label><Button disabled={!accepted || !name.trim() || save.isPending || signed} onClick={() => save.mutate()}>{save.isPending ? "Saving…" : "Sign Form A"}</Button></> : <p className="text-sm">Waiting for the {role === "parent" ? "linked Parent/Guardian" : "scholar"} to sign from their own account.</p>}
-          </section>;
+            </div></section>;
         })}</div>
       </div>
     </details>
-    {!parent && <div className="space-y-3 rounded-lg border bg-[#FFFDF5] p-4"><h3 className="font-bold">Identity Verification</h3>
+    {!parent && <div className="space-y-3 rounded-lg border bg-[#FFFDF5] p-4"><h3 className="font-bold">Digital KYC Verification</h3>
       {canTestPass && testPassed && <p className="text-sm font-semibold">KYC passed for this test preview only. No identity verification or consent has been recorded.</p>}
       <p>{verified ? "Your identity is verified. This verification will be used for future Job Shadows." : !data.consentComplete ? "Complete Form A with your linked Parent/Guardian before verifying your identity." : "Verify your identity securely. You only need to complete this once."}</p>
       {verified && data.identity?.verified_at && <p className="text-sm">Verified: {new Date(data.identity.verified_at).toLocaleString()}</p>}

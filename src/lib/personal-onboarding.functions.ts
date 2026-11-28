@@ -5,6 +5,14 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { personalContext, personalOnboardingAdmin as admin, savePersonalVerification } from "./personal-onboarding.server";
 const input = z.object({ scholarId: z.string().uuid().optional() });
+export type ParentSignatureHistory = { document_key: string; document_version: string; document_body: string; signature_name: string; signed_at: string; ip_address: string | null; is_test: boolean };
+export const loadParentSignatureHistory = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((data: unknown) => input.parse(data)).handler(async ({ context, data }) => {
+  const c = await personalContext(context.supabase, context.userId, data.scholarId ?? context.userId);
+  if (c.self) throw new Error("Sign in as the linked Parent/Guardian to view this signing history.");
+  const result = await admin.from("scholar_onboarding_signatures").select("document_key,document_version,document_body,signature_name,signed_at,ip_address,is_test").eq("scholar_user_id", c.scholarId).eq("signer_user_id", context.userId).eq("signer_role", "parent").order("signed_at", { ascending: false });
+  if (result.error) throw new Error("Your signing history could not be loaded.");
+  return (result.data ?? []) as ParentSignatureHistory[];
+});
 export const loadPersonalOnboarding = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((data: unknown) => input.parse(data)).handler(async ({ context, data }) => {
   const c = await personalContext(context.supabase, context.userId, data.scholarId ?? context.userId);
   const registered = await admin.auth.admin.getUserById(c.scholarId);

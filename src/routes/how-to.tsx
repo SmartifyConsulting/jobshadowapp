@@ -38,7 +38,7 @@ type Step = { icon: typeof User; label: string };
 const STUDENT_STEPS: Step[] = [
   { icon: UserPlus, label: "Register\nas a scholar" },
   { icon: User, label: "Create\nyour profile" },
-  { icon: ShieldCheck, label: "Form A & identity\nverification" },
+  { icon: ShieldCheck, label: "Privacy & identity\nverification" },
   { icon: Search, label: "Explore\ncareers" },
   { icon: CalendarDays, label: "Submit\nbooking request" },
   { icon: CreditCard, label: "Make\npayment" },

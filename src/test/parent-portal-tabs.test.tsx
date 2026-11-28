@@ -1,0 +1,24 @@
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { afterEach, expect, it, vi } from "vitest";
+import type { ReactNode } from "react";
+vi.mock("@tanstack/react-router", () => ({ createFileRoute: () => (options: unknown) => ({ options }) }));
+vi.mock("@/components/SiteLayout", () => ({ SiteLayout: ({ children }: { children: ReactNode }) => <main>{children}</main> }));
+vi.mock("@/components/account/AccountProfile", () => ({ useOwnIdentity: () => ({ pending: false, user: { data: { id: "parent", email: "parent@example.com" } }, profile: { data: { first_name: "Elena", last_name: "Nicolettis" } } }), AccountPersonalDetails: () => <div>Parent personal details</div> }));
+vi.mock("@/components/account/PersonalOnboarding", () => ({ ScholarSignupDate: () => <p>Signed up 12 November 2026</p> }));
+vi.mock("@/components/account/ParentDashboard", () => ({ ParentDashboard: ({ childrenList }: { childrenList: { full_name: string }[] }) => <div>Forms to Sign and History for {childrenList.map(child => child.full_name).join(", ")}</div> }));
+vi.mock("@/integrations/supabase/client", () => ({ supabase: { auth: { getUser: async () => ({ data: { user: { id: "parent" } }, error: null }) }, rpc: async () => ({ data: [{ scholar_user_id: "child", full_name: "Raphy Nicolettis", school: "Crawford", pending_bookings: [] }, { scholar_user_id: "parent", full_name: "Legacy Self Scholar", school: "Old", pending_bookings: [] }], error: null }) } }));
+import { Route } from "@/routes/_authenticated/parent";
+afterEach(cleanup);
+it("lands on the parent's Profile, excludes their legacy self scholar record and switches Dashboard locally", async () => {
+  const cache = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const Page = Route.options.component as () => React.JSX.Element;
+  render(<QueryClientProvider client={cache}><Page /></QueryClientProvider>);
+  expect(screen.getByRole("tab", { name: "Profile" })).toHaveAttribute("aria-selected", "true");
+  expect(screen.getByText("Parent personal details")).toBeVisible();
+  expect(await screen.findByText("Raphy Nicolettis")).toBeVisible();
+  expect(screen.queryByText("Legacy Self Scholar")).toBeNull();
+  fireEvent.mouseDown(screen.getByRole("tab", { name: "Dashboard" }), { button: 0, ctrlKey: false });
+  expect(screen.getByText("Forms to Sign and History for Raphy Nicolettis")).toBeVisible();
+  expect(screen.queryByText("Parent personal details")).toBeNull();
+});

@@ -14,7 +14,7 @@ it("keeps each Form A declaration with its own signature space and distinct role
       }
     />,
   );
-  expect(screen.getByRole("heading", { name: "Scholar Accuracy Declaration" })).toBeVisible();
+  expect(screen.getByRole("heading", { name: "Information Accuracy Declaration" })).toBeVisible();
   expect(
     screen.getByRole("heading", { name: "Parent / Legal Guardian Consent (Competent Person)" }),
   ).toBeVisible();
@@ -50,7 +50,7 @@ it("removes internal instructions while keeping the agreement below its clause h
     />,
   );
   expect(screen.queryByText(/Must be digitally signed/)).toBeNull();
-  expect(screen.getByRole("heading", { name: "Scholar Accuracy Declaration" })).toHaveClass(
+  expect(screen.getByRole("heading", { name: "Information Accuracy Declaration" })).toHaveClass(
     "font-bold",
   );
   expect(screen.getByText("I confirm that the information is accurate.")).toBeVisible();

@@ -1,0 +1,33 @@
+import { cleanup, render, screen, within, act, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { afterEach, expect, it, vi } from "vitest";
+import type { ReactNode } from "react";
+vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
+vi.mock("@tanstack/react-router", () => ({ Link: ({ children }: { children: ReactNode }) => <a>{children}</a> }));
+vi.mock("@/lib/personal-onboarding.functions", () => ({ loadPersonalOnboarding: vi.fn(), loadParentSignatureHistory: vi.fn() }));
+vi.mock("@/lib/test-indemnity.functions", () => ({ loadTestIndemnity: vi.fn() }));
+vi.mock("@/components/account/PersonalOnboarding", () => ({ PersonalOnboarding: () => <p>Identity consent to sign</p> }));
+vi.mock("@/components/account/IndemnityDraftPreview", () => ({ IndemnityDraftPreview: () => <p>Indemnity to sign</p> }));
+import { ParentDashboard } from "@/components/account/ParentDashboard";
+afterEach(cleanup);
+it("moves completed forms from Forms to Sign to History without repeating them", async () => {
+  const cache = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
+  const parentId = "ea29d396-45d1-430c-88d7-29d4504d9725";
+  cache.setQueryData(["personal-onboarding", "child"], { parentSigned: false });
+  cache.setQueryData(["test-indemnity-signatures", "child"], { receipts: [], version: "a" });
+  cache.setQueryData(["parent-signature-history", "child", parentId], []);
+  render(<QueryClientProvider client={cache}><ParentDashboard user={{ id: parentId, email: "elena@moi.co.za" }} childrenList={[{ scholar_user_id: "child", full_name: "Raphy", school: "Crawford", career_interests: "", pending_bookings: [] }]} /></QueryClientProvider>);
+  const pending = within(screen.getByRole("region", { name: "Forms to Sign" }));
+  expect(pending.getByText("Identity consent to sign")).toBeVisible();
+  expect(pending.getByText("Indemnity to sign")).toBeVisible();
+  await act(async () => {
+    cache.setQueryData(["personal-onboarding", "child"], { parentSigned: true });
+    cache.setQueryData(["test-indemnity-signatures", "child"], { receipts: [{ signer_role: "parent", signer_user_id: parentId }], version: "a" });
+    cache.setQueryData(["parent-signature-history", "child", parentId], [{ document_key: "form_a", document_version: "a", document_body: "Signed consent", signature_name: "Elena", signed_at: "2026-11-28T12:00:00Z", ip_address: "192.0.2.44", is_test: false }, { document_key: "form_d_test", document_version: "b", document_body: JSON.stringify({ sections: [] }), signature_name: "Elena", signed_at: "2026-11-28T12:01:00Z", ip_address: "192.0.2.44", is_test: true }]);
+  });
+  await waitFor(() => expect(pending.getByText("You have no forms waiting for your signature.")).toBeVisible());
+  expect(pending.queryByText("Identity consent to sign")).toBeNull();
+  expect(pending.queryByText("Indemnity to sign")).toBeNull();
+  const history = screen.getByRole("region", { name: "Signature History" });
+  expect(history.querySelectorAll("details")).toHaveLength(2);
+});

@@ -1,15 +1,23 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
+const api = vi.hoisted(() => ({ load: vi.fn(), sign: vi.fn(), receipt: null as Record<string, unknown> | null }));
+vi.mock("@/lib/test-indemnity.functions", () => ({ loadTestIndemnity: api.load, signTestIndemnity: api.sign }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
 vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
 vi.mock("@/lib/personal-onboarding.functions", () => ({ loadPersonalOnboarding: vi.fn() }));
 import { IndemnityDraftPreview } from "@/components/account/IndemnityDraftPreview";
 afterEach(cleanup);
-it("lets Elena preview Form D without replacing other forms or offering a signing action", () => {
+beforeEach(() => {
+  vi.clearAllMocks(); api.receipt = null;
+  api.load.mockImplementation(async () => ({ version: "a".repeat(64), receipts: api.receipt ? [api.receipt] : [] }));
+  api.sign.mockImplementation(async () => { api.receipt = { signer_user_id: "ea29d396-45d1-430c-88d7-29d4504d9725", signer_role: "parent", signature_name: "Elena Nicolettis", signed_at: "2026-11-28T12:00:00Z", ip_address: "192.0.2.44", document_version: "a".repeat(64) }; return api.receipt; });
+});
+it("lets Elena sign only her section and shows the saved server metadata", async () => {
   const cache = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity } } });
   cache.setQueryData(["me"], { id: "ea29d396-45d1-430c-88d7-29d4504d9725", email: "elena@moi.co.za" });
   cache.setQueryData(["personal-onboarding", "scholar"], { self: false });
+  cache.setQueryData(["test-indemnity-signatures", "scholar"], { version: "a".repeat(64), receipts: [] });
   render(<QueryClientProvider client={cache}><IndemnityDraftPreview scholarId="scholar" /></QueryClientProvider>);
   expect(screen.getByRole("region", { name: "Indemnity Form" }).closest("details")).toBeNull();
   expect(screen.queryByText("Draft for client review.")).toBeNull();
@@ -20,11 +28,16 @@ it("lets Elena preview Form D without replacing other forms or offering a signin
   expect(scholar.queryByRole("heading", { name: "Parent or Guardian Health and Emergency Consent" })).toBeNull();
   expect(parent.getByRole("heading", { name: "Parent or Guardian Health and Emergency Consent" })).toBeVisible();
   expect(parent.getByText("Parent / Guardian Signature Where Required")).toBeVisible();
-  expect(screen.queryByRole("button")).toBeNull();
+  expect(screen.getByRole("region", { name: "Scholar form" })).toHaveClass("opacity-50");
+  expect(screen.getByRole("region", { name: "Parent or guardian form" })).not.toHaveClass("opacity-50");
   expect(screen.getByRole("textbox", { name: "Parent / Guardian Signature Where Required" })).toBeEnabled();
   expect(screen.getByRole("textbox", { name: "Scholar / Tertiary Student Signature" })).toBeDisabled();
   fireEvent.change(screen.getByRole("textbox", { name: "Parent / Guardian Signature Where Required" }), { target: { value: "Elena Nicolettis" } });
-  expect(screen.getByText("Signature preview — not submitted.")).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "Sign" }));
+  await waitFor(() => expect(screen.getByText("192.0.2.44")).toBeVisible());
+  expect(screen.getByText("Signed · Test signature")).toBeVisible();
+  expect(screen.getByRole("textbox", { name: "Parent / Guardian Signature Where Required" })).toBeDisabled();
+  expect(api.sign).toHaveBeenCalledWith({ data: { scholarId: "scholar", name: "Elena Nicolettis", version: "a".repeat(64) } });
 });
 it("does not show the unapproved draft to ordinary users", () => {
   const cache = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity } } });

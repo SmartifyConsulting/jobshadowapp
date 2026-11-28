@@ -1269,7 +1269,7 @@ function StudentJourney({
   const identityComplete = (onboarding.data?.identity?.status === "approved" && onboarding.data.identity.environment === "live") || demoIdentityComplete;
   const steps: JourneyStep[] = [
     { id: "profile", title: "Complete Profile", icon: UserRound, complete: !!profile },
-    { id: "identity", title: "Identity Verification", icon: ShieldCheck, complete: identityComplete, locked: !profile },
+    { id: "identity", title: "Privacy & Identity Verification", icon: ShieldCheck, complete: identityComplete, locked: !profile },
     {
       id: "careers",
       title: "Explore Careers",
@@ -1469,8 +1469,6 @@ function StudentJourney({
 
           {active === "identity" && (
             <div className="space-y-4 rounded-lg border border-border bg-[#FFFDF5] p-4">
-              <p className="font-bold">Digital KYC Verification</p>
-              <p>After the required consent forms have been signed, complete identity verification here.</p>
               <PersonalOnboarding key={userId} scholarId={userId} testPassed={demoIdentityComplete} onTestPassed={() => setTestIdentityPassed(true)} />
             </div>
           )}

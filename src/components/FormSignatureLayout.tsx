@@ -62,7 +62,7 @@ export function FormAColumns({ body }: { body: string }) {
     .split(/\r?\n\s*\r?\n/)
     .map((block) => block.trim())
     .filter(Boolean);
-  const scholar = blocks.filter((block) => /^Scholar Accuracy Declaration:/i.test(block));
+  const scholar = blocks.filter((block) => /^(?:Scholar|Information) Accuracy Declaration:/i.test(block));
   const guardian = blocks.filter((block) => /^Parent\s*\/\s*Legal Guardian Consent/i.test(block));
   const other = blocks.filter((block) => !scholar.includes(block) && !guardian.includes(block));
   return (

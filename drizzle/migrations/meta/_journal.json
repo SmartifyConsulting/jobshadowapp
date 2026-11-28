@@ -596,6 +596,13 @@
       "when": 1795885500000,
       "tag": "0084_account_identity_onboarding",
       "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "7",
+      "when": 1795887300000,
+      "tag": "0085_test_indemnity_signature_receipts",
+      "breakpoints": true
     }
   ]
 }

@@ -45,7 +45,7 @@ export const Route = createFileRoute("/_authenticated/my-account")({
           to: "/school",
           search: search.view === "profile" ? { section: "profile" } : {},
         });
-      if (isParent && search.view !== "profile") throw redirect({ to: "/parent" });
+      if (isParent) throw redirect({ to: "/parent" });
     }
     throw redirect({
       to: "/profile",

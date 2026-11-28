@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const kyc = vi.hoisted(() => ({ start: vi.fn(), poll: vi.fn(), load: vi.fn(), sign: vi.fn() }));
+vi.mock("@/lib/test-indemnity.functions", () => ({ loadTestIndemnity: vi.fn().mockResolvedValue({ version: "a".repeat(64), receipts: [] }), signTestIndemnity: vi.fn() }));
 vi.mock("@/lib/personal-onboarding.functions", () => ({ startPersonalIdentity: kyc.start, refreshPersonalIdentity: kyc.poll, loadPersonalOnboarding: kyc.load, signPersonalFormA: kyc.sign }));
 vi.mock("@tanstack/react-start", async (original) => ({
   ...(await original<typeof import("@tanstack/react-start")>()),
@@ -66,10 +67,17 @@ describe("guided career and host selection", () => {
     cache.setQueryData(["me"], auth.user);
     cache.setQueryData(["scholar-profile", auth.user.id], {});
     cache.setQueryData(["bookings", auth.user.id], []);
-    cache.setQueryData(["personal-onboarding", auth.user.id], { ...onboardingState, identity: null, scholarSigned: true, parentSigned: false, consentComplete: false });
+    cache.setQueryData(["personal-onboarding", auth.user.id], { ...onboardingState, identity: null, scholarSigned: true, parentSigned: false, consentComplete: false, body: "Scholar Accuracy Declaration: Scholar test clause\n\nParent / Legal Guardian Consent: Guardian test clause" });
     render(<QueryClientProvider client={cache}><AccountPanel withBookings initialStep="identity" /></QueryClientProvider>);
     expect(screen.getByText("Personal Information & Identity Verification Consent").closest("details")).toHaveAttribute("open");
     expect(screen.getByRole("button", { name: "Verify My Identity" })).toBeDisabled();
+    const scholarAgreement = screen.getByRole("region", { name: "Scholar privacy agreement" });
+    const parentAgreement = screen.getByRole("region", { name: "Parent privacy agreement" });
+    expect(within(scholarAgreement).getByText(/Scholar test clause/)).toBeVisible();
+    expect(within(scholarAgreement).queryByText(/Guardian test clause/)).toBeNull();
+    expect(within(parentAgreement).getByText(/Guardian test clause/)).toBeVisible();
+    expect(parentAgreement).toHaveClass("opacity-50");
+    expect(scholarAgreement).not.toHaveClass("opacity-50");
     cache.setQueryData(["personal-onboarding", auth.user.id], { ...onboardingState, identity: null });
     await waitFor(() => expect(screen.getByRole("button", { name: "Verify My Identity" })).toBeEnabled());
     expect(kyc.start).not.toHaveBeenCalled();
@@ -87,7 +95,7 @@ describe("guided career and host selection", () => {
     render(<QueryClientProvider client={cache}><AccountPanel withBookings initialStep="identity" /></QueryClientProvider>);
     fireEvent.click(screen.getByRole("button", { name: "Pass KYC" }));
     await waitFor(() => expect(screen.getByRole("button", { name: /Step 3: Explore Careers/ })).toHaveAttribute("aria-expanded", "true"));
-    expect(within(screen.getByRole("button", { name: /Step 2: Identity Verification/ })).getByLabelText("Completed")).toBeVisible();
+    expect(within(screen.getByRole("button", { name: /Step 2: Privacy & Identity Verification/ })).getByLabelText("Completed")).toBeVisible();
     expect(window.sessionStorage.getItem(`jobshadow-demo-identity:${auth.user.id}`)).toBe("passed");
     expect(kyc.start).not.toHaveBeenCalled(); expect(kyc.sign).not.toHaveBeenCalled();
   });
@@ -98,7 +106,7 @@ describe("guided career and host selection", () => {
     cache.setQueryData(["scholar-profile", auth.user.id], {});
     cache.setQueryData(["bookings", auth.user.id], [{ id: "another-booking", career: "Teacher", status: "pending_approval" }]);
     render(<QueryClientProvider client={cache}><AccountPanel withBookings /></QueryClientProvider>);
-    for (const name of [/Step 1: Complete Profile/, /Step 2: Identity Verification/, /Step 3: Explore Careers/])
+    for (const name of [/Step 1: Complete Profile/, /Step 2: Privacy & Identity Verification/, /Step 3: Explore Careers/])
       expect(within(screen.getByRole("button", { name })).getByLabelText("Completed")).toBeVisible();
     expect(screen.getByRole("button", { name: /Step 5: Make Payment/ })).toBeDisabled();
   });
@@ -139,7 +147,7 @@ describe("guided career and host selection", () => {
     kyc.start.mockResolvedValue({ status: "in_progress", environment: "test", verification_url: "https://verify.didit.me/session/test" });
     const open = vi.spyOn(window, "open").mockReturnValue(null);
     render(<QueryClientProvider client={cache}><AccountPanel withBookings initialStep="identity" /></QueryClientProvider>);
-    expect(screen.getByRole("button", { name: /Step 2: Identity Verification/ })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("button", { name: /Step 2: Privacy & Identity Verification/ })).toHaveAttribute("aria-expanded", "true");
     expect(screen.queryByRole("button", { name: "Pass KYC" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Verify My Identity" }));
     await waitFor(() => expect(kyc.start).toHaveBeenCalledWith({ data: { scholarId: "test-scholar" } }));
@@ -236,9 +244,9 @@ describe("guided career and host selection", () => {
     expect(screen.getByRole("region", { name: "Parent or guardian form" })).toBeVisible();
     expect(screen.queryByText("Form C: Standard JobShadow Indemnity Clauses")).toBeNull();
     expect(screen.queryByRole("dialog", { name: "Payment Successful" })).toBeNull();
-    expect(screen.getByRole("button", { name: /Step 2: Identity Verification/ })).toBeEnabled();
-    fireEvent.click(screen.getByRole("button", { name: /Step 2: Identity Verification/ }));
-    expect(screen.getByRole("button", { name: /Step 2: Identity Verification/ })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("button", { name: /Step 2: Privacy & Identity Verification/ })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: /Step 2: Privacy & Identity Verification/ }));
+    expect(screen.getByRole("button", { name: /Step 2: Privacy & Identity Verification/ })).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByText("Your identity is verified. This verification will be used for future Job Shadows.")).toBeVisible();
     expect(screen.getByRole("button", { name: "Step 7: Booking Confirmation" })).toBeVisible();
   });
