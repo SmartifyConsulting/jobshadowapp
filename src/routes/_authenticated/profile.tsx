@@ -12,91 +12,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserCircle, CalendarCheck } from "lucide-react";
 import { AccountPanel, SCHOLAR_DETAIL_TABS } from "@/components/account/AccountSections";
 import { ImageCropModal } from "@/components/ImageCropModal";
-import { displayTime } from "@/lib/time-entry";
-
-const BOOKING_STATUS_LABEL: Record<string, string> = {
-  pending_approval: "Scheduled",
-  awaiting_payment: "Scheduled",
-  indemnity_required: "Scheduled",
-  confirmed: "Scheduled",
-  completed: "Completed",
-  cancelled: "Cancelled",
-};
-function bookingStatusLabel(booking: { status: string; shadow_date: string }) {
-  if (booking.status === "completed") return "Completed";
-  if (booking.status === "cancelled") return "Cancelled";
-  if (booking.shadow_date === new Date().toISOString().slice(0, 10)) return "In Progress";
-  return BOOKING_STATUS_LABEL[booking.status] ?? booking.status;
-}
-function MyBookingsList({ userId }: { userId: string }) {
-  const bookings = useQuery({
-    queryKey: ["my-bookings-list", userId],
-    queryFn: async () => {
-      const result = await supabase
-        .from("bookings")
-        .select("id,career,company,company_id,shadow_date,arrival_time,collection_time,status")
-        .eq("user_id", userId)
-        .neq("status", "cancelled")
-        .order("shadow_date", { ascending: false });
-      if (result.error) throw result.error;
-      return result.data ?? [];
-    },
-  });
-  const companyIds = [...new Set((bookings.data ?? []).map((b) => b.company_id))];
-  const mentors = useQuery({
-    queryKey: ["my-bookings-mentors", companyIds],
-    enabled: companyIds.length > 0,
-    queryFn: async () => {
-      const result = await supabase
-        .from("companies")
-        .select("id,mentor_name,company")
-        .in("id", companyIds);
-      if (result.error) throw result.error;
-      return result.data ?? [];
-    },
-  });
-  const mentorFor = (companyId: number) => mentors.data?.find((c) => c.id === companyId);
-  return (
-    <div className="space-y-3 p-4">
-      <h2 className="font-display text-2xl text-teal-foreground">My Bookings</h2>
-      {bookings.isPending && <p role="status">Loading your bookings…</p>}
-      {bookings.isError && (
-        <p role="alert" className="text-sm text-destructive">
-          Your bookings could not be loaded.
-        </p>
-      )}
-      {bookings.data?.length === 0 && (
-        <p className="text-sm">
-          No bookings yet. Head to Explore Careers to request your first job shadow.
-        </p>
-      )}
-      {bookings.data?.map((b) => {
-        const mentor = mentorFor(b.company_id);
-        return (
-          <div key={b.id} className="rounded-lg border border-border bg-card p-4 text-foreground">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <p className="font-semibold">{b.career || "Career not set"}</p>
-                <p className="text-sm text-muted-foreground">
-                  With {mentor?.mentor_name || mentor?.company || b.company || "your mentor"}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {b.shadow_date}
-                  {b.arrival_time &&
-                    b.collection_time &&
-                    ` · ${displayTime(b.arrival_time)} – ${displayTime(b.collection_time)}`}
-                </p>
-              </div>
-              <span className="rounded-full bg-accent px-3 py-1 text-xs font-semibold text-accent-foreground">
-                {bookingStatusLabel(b)}
-              </span>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 type Tab = "profile" | "bookings";
 export const Route = createFileRoute("/_authenticated/profile")({
@@ -319,7 +234,7 @@ export function ScholarProfileContent({
           <div
             className={
               inWorkflow || tab === "bookings"
-                ? "mx-auto w-full max-w-7xl space-y-4 px-4 py-4 sm:px-5"
+                ? "w-full space-y-4 py-8"
                 : "mx-auto max-w-7xl space-y-4 px-5 py-8"
             }
           >
@@ -358,13 +273,9 @@ export function ScholarProfileContent({
               <TabsContent value="profile" className="mt-4 space-y-4">
                 {profileContent}
               </TabsContent>
-              <TabsContent value="bookings" className={inWorkflow ? "mt-0" : "mt-4 space-y-4"}>
+              <TabsContent value="bookings" className="mt-4 space-y-4">
                 <div className="w-full bg-teal text-teal-foreground">
-                  {inWorkflow || step ? (
-                    <AccountPanel withBookings initialStep={step} profileContent={profileContent} />
-                  ) : (
-                    user && <MyBookingsList userId={user.id} />
-                  )}
+                  <AccountPanel withBookings initialStep={step} profileContent={profileContent} />
                 </div>
               </TabsContent>
             </Tabs>

@@ -14,7 +14,6 @@ export function JourneyStepper({
   onChange,
   titleClassName,
   children,
-  hideTitle = false,
 }: {
   title: string;
   steps: JourneyStep[];
@@ -22,24 +21,21 @@ export function JourneyStepper({
   onChange: (step: string) => void;
   titleClassName?: string;
   children?: ReactNode;
-  hideTitle?: boolean;
 }) {
   const panelId = useId();
   const [closedStep, setClosedStep] = useState<string | null>(null);
   if (children !== undefined)
     return (
       <div className="min-w-0 space-y-3">
-        {!hideTitle && (
-          <div className="flex flex-wrap items-center justify-between gap-2 bg-teal px-4 py-3 text-white">
-            <h1
-              className={
-                titleClassName ? titleClassName + " text-white" : "font-display text-2xl text-white"
-              }
-            >
-              {title}
-            </h1>
-          </div>
-        )}
+        <div className="flex flex-wrap items-center justify-between gap-2 bg-teal px-4 py-3 text-white">
+          <h1
+            className={
+              titleClassName ? titleClassName + " text-white" : "font-display text-2xl text-white"
+            }
+          >
+            {title}
+          </h1>
+        </div>
         <div className="workflow-steps workflow-accordion" aria-label={title + " steps"}>
           {steps.map((step, index) => {
             const selected = active === step.id;

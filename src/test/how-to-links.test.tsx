@@ -21,6 +21,13 @@ vi.mock("@/components/HowToProgress", () => ({
   useHowToProgress: () => ({ data: { student: state.done, mentor: [], host: [] }, error: null }),
 }));
 vi.mock("@/components/YouTube", () => ({ YouTube: () => null }));
+vi.mock("@/routes/_authenticated/profile", () => ({
+  ScholarProfileContent: ({ embedded }: { embedded: boolean }) => (
+    <div role="region" aria-label="Scholar accordion journey">
+      {embedded ? "Inline profile and booking steps" : "Standalone"}
+    </div>
+  ),
+}));
 import { Route } from "@/routes/how-to";
 afterEach(() => {
   cleanup();
@@ -117,21 +124,19 @@ describe("How To links", () => {
     expect(links[7]).toHaveAttribute("href", "/auth?go=studentConfirmation");
     expect(screen.getByText("You Are Here")).toBeVisible();
   });
-  it("shows the company guide for a signed-in scholar who requests it via guide=company", () => {
+  it("shows the actual inline scholar journey without audience tabs even with a company guide URL", async () => {
     state.user = { id: "raphaela" };
     state.roles = ["user"];
     state.guide = "company";
     const Page = Route.options.component as () => React.JSX.Element;
     render(<Page />);
-    expect(screen.getByRole("button", { name: "Companies" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
-    expect(screen.getByRole("button", { name: "Scholars" })).toBeVisible();
-    expect(screen.getByRole("button", { name: "Mentors" })).toBeVisible();
     expect(
-      within(screen.getByRole("navigation", { name: "How-to steps" })).getAllByRole("link"),
-    ).toHaveLength(6);
+      await screen.findByRole("region", { name: "Scholar accordion journey" }),
+    ).toHaveTextContent("Inline profile and booking steps");
+    expect(screen.queryByRole("button", { name: "Scholars" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Mentors" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Companies" })).toBeNull();
+    expect(screen.queryByRole("navigation", { name: "How-to steps" })).toBeNull();
   });
   it("shows the mentor step frame instead when the signed-in user is a mentor", () => {
     state.user = { id: "m" };

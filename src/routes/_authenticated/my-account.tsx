@@ -46,7 +46,8 @@ export const Route = createFileRoute("/_authenticated/my-account")({
     }
     throw redirect({
       to: "/profile",
-      search: search.view === "profile" ? { tab: "profile" } : { tab: "bookings" },
+      search:
+        search.view === "profile" ? { tab: "profile" } : { tab: "bookings", entry: "workflow" },
     });
   },
 });

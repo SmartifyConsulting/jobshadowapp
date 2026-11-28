@@ -220,12 +220,6 @@ export type Database = {
           indemnity_received: boolean
           internship_notes: string | null
           internship_preapproved: boolean
-          kyc_environment: string | null
-          kyc_last_checked_at: string | null
-          kyc_session_id: string | null
-          kyc_status: string | null
-          kyc_updated_at: string | null
-          kyc_verification_url: string | null
           location: string | null
           mentor_reminders_sent: number[]
           mode: string | null
@@ -268,12 +262,6 @@ export type Database = {
           indemnity_received?: boolean
           internship_notes?: string | null
           internship_preapproved?: boolean
-          kyc_environment?: string | null
-          kyc_last_checked_at?: string | null
-          kyc_session_id?: string | null
-          kyc_status?: string | null
-          kyc_updated_at?: string | null
-          kyc_verification_url?: string | null
           location?: string | null
           mentor_reminders_sent?: number[]
           mode?: string | null
@@ -316,12 +304,6 @@ export type Database = {
           indemnity_received?: boolean
           internship_notes?: string | null
           internship_preapproved?: boolean
-          kyc_environment?: string | null
-          kyc_last_checked_at?: string | null
-          kyc_session_id?: string | null
-          kyc_status?: string | null
-          kyc_updated_at?: string | null
-          kyc_verification_url?: string | null
           location?: string | null
           mentor_reminders_sent?: number[]
           mode?: string | null

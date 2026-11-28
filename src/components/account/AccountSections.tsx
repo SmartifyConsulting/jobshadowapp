@@ -1,8 +1,3 @@
-import { useServerFn } from "@tanstack/react-start";
-import {
-  startIdentityVerification,
-  getIdentityVerificationStatus,
-} from "@/lib/forus-kyc.functions";
 import { ScholarAssessments } from "./ScholarAssessments";
 import { displayTime } from "@/lib/time-entry";
 import { ProfilePhotoPicker } from "./ProfilePhotoPicker";
@@ -14,11 +9,7 @@ import { DietaryNeedsPicker } from "./ScholarSelections";
 import { JourneyStepper, type JourneyStep } from "@/components/JourneyStepper";
 import { ROLES } from "@/lib/data";
 import { LegalFormBody } from "@/components/LegalFormBody";
-import {
-  FormAColumns,
-  ScholarGuardianSignatureColumns,
-  SignatureEntryProvider,
-} from "@/components/FormSignatureLayout";
+import { FormAColumns, ScholarGuardianSignatureColumns } from "@/components/FormSignatureLayout";
 import { isSwitchPersona, DEMO_ACCOUNTANT_PLACEMENT_ID } from "@/lib/dev-personas";
 import { phoneWithCountryCode } from "@/components/PhoneInput";
 import { PersonNameFields, joinPersonName } from "@/components/PersonNameFields";
@@ -84,82 +75,6 @@ function useUser() {
     queryKey: ["me"],
     queryFn: async () => (await supabase.auth.getUser()).data.user,
   });
-}
-
-const KYC_STATUS_LABEL: Record<string, string> = {
-  creating: "Starting your verification…",
-  creation_failed: "Your verification could not be started. Please try again.",
-  in_progress: "Verification in progress. Complete the steps in the window we opened for you.",
-  awaiting_user: "We're waiting for you to complete verification in the window we opened for you.",
-  approved: "Your identity has been verified.",
-  declined: "Your identity verification was declined. Contact Job Shadow for help.",
-  review_required: "Your verification needs a manual review. We'll be in touch.",
-  resubmission_required: "Please resubmit your documents using the link below.",
-  abandoned: "Verification was not completed. Start again when you're ready.",
-  expired: "This verification link expired. Start again below.",
-};
-const KYC_IN_FLIGHT: ReadonlySet<string> = new Set([
-  "creating",
-  "in_progress",
-  "awaiting_user",
-  "review_required",
-]);
-function IdentityVerificationStep({ bookingId }: { bookingId: string }) {
-  const qc = useQueryClient();
-  const start = useServerFn(startIdentityVerification);
-  const poll = useServerFn(getIdentityVerificationStatus);
-  const [err, setErr] = useState<string | null>(null);
-  const status = useQuery({
-    queryKey: ["identity-verification", bookingId],
-    queryFn: () => poll({ data: { bookingId } }),
-    refetchInterval: (query) =>
-      query.state.data?.status && KYC_IN_FLIGHT.has(query.state.data.status) ? 30_000 : false,
-  });
-  const begin = useMutation({
-    mutationFn: () => start({ data: { bookingId } }),
-    onSuccess: (result) => {
-      setErr(null);
-      qc.setQueryData(["identity-verification", bookingId], result);
-      if (result.verificationUrl) window.open(result.verificationUrl, "_blank", "noopener");
-    },
-    onError: (error) =>
-      setErr(error instanceof Error ? error.message : "Identity verification could not be started."),
-  });
-  const currentStatus = status.data?.status ?? null;
-  const approved = currentStatus === "approved";
-  return (
-    <div className="space-y-3">
-      {err && (
-        <p role="alert" className="text-sm text-destructive">
-          {err}
-        </p>
-      )}
-      <p role="status" className="text-sm">
-        {currentStatus
-          ? (KYC_STATUS_LABEL[currentStatus] ?? currentStatus)
-          : "Identity verification has not been started yet."}
-      </p>
-      {!approved && (
-        <Button disabled={begin.isPending} onClick={() => begin.mutate()}>
-          {begin.isPending
-            ? "Starting…"
-            : currentStatus && KYC_IN_FLIGHT.has(currentStatus)
-              ? "Re-open verification"
-              : "Start Identity Verification"}
-        </Button>
-      )}
-      {status.data?.verificationUrl && !approved && (
-        <a
-          href={status.data.verificationUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block text-sm underline"
-        >
-          Open the verification window again
-        </a>
-      )}
-    </div>
-  );
 }
 
 export function AccountPanel({
@@ -1363,7 +1278,7 @@ function StudentJourney({
       id: "identity",
       title: "Identity Verification",
       icon: ShieldCheck,
-      complete: current?.kyc_status === "approved",
+      complete: false,
       locked: !current && !showingPaymentPreview,
     },
     {
@@ -1375,7 +1290,7 @@ function StudentJourney({
     },
     {
       id: "experience",
-      title: "Attend Your Job Shadow",
+      title: "Do Your Job Shadow",
       icon: Briefcase,
       complete: current?.status === "completed",
       locked: !confirmed,
@@ -1421,7 +1336,6 @@ function StudentJourney({
       )}
       <JourneyStepper
         title="Your Job Shadow Journey"
-        hideTitle
         steps={steps}
         active={active}
         onChange={(step) => {
@@ -1579,12 +1493,8 @@ function StudentJourney({
           {active === "identity" && (
             <div className="space-y-4 rounded-lg border border-border bg-[#FFFDF5] p-4">
               <p className="font-bold">Digital KYC Verification</p>
-              <p>After the required consent forms have been signed, complete identity verification here.</p>
-              {current ? (
-                <IdentityVerificationStep bookingId={current.id} />
-              ) : (
-                <p role="status">Request a booking before completing identity verification.</p>
-              )}
+              <p>After the required consent forms have been signed, identity verification will be completed here.</p>
+              <p role="status">Identity verification is not available yet. Your identity has not been marked as verified.</p>
               <div className="flex flex-wrap justify-between gap-3">
                 <Button variant="outline" onClick={() => setActive("forms")}>Back to Complete Forms</Button>
                 <Button onClick={() => setActive("confirmation")}>Review Booking Confirmation</Button>
@@ -1736,64 +1646,57 @@ function SampleBookingForms() {
     },
   });
   return (
-    <SignatureEntryProvider role="scholar">
-      <div className="space-y-4">
-        {documents.isPending ? (
-          <p role="status">Loading forms…</p>
-        ) : documents.isError ? (
-          <p role="alert">
-            Forms could not be loaded.{" "}
-            <button type="button" className="underline" onClick={() => void documents.refetch()}>
-              Try Again
-            </button>
-          </p>
-        ) : documents.data.length ? (
-          documents.data.flatMap((doc) => {
-            const sections =
-              doc.key === "consent_forms"
-                ? doc.body.split(/(?=^##\s+Form\s+[A-Z]\s*:)/im).filter((section) => section.trim())
-                : [doc.body];
-            return sections.map((section, index) => {
-              if (doc.key === "consent_forms" && /^##\s+Form\s+C\s*:/i.test(section.trim()))
-                return null;
-              const heading =
-                doc.key === "consent_forms" ? section.match(/^##\s+([^\r\n]+)\r?\n?/) : null;
-              return (
-                <details
-                  key={`${doc.key}-${index}`}
-                  className="rounded-lg border border-border bg-[#FFFDF5] p-4"
-                >
-                  <summary className="cursor-pointer font-bold">
-                    {doc.key === "standard_indemnity_clauses"
-                      ? "Form C: Standard JobShadow Indemnity Clauses"
-                      : (heading?.[1] ?? doc.title)}
-                  </summary>
-                  <div className="mt-5">
-                    {doc.key === "consent_forms" && /^Form\s+A\s*:/i.test(heading?.[1] ?? "") ? (
-                      <FormAColumns body={section.slice(heading![0].length).trim()} />
-                    ) : (
-                      <>
-                        <LegalFormBody
-                          body={heading ? section.slice(heading[0].length).trim() : section}
-                        />
-                        {doc.key === "consent_forms" &&
-                          /^Form\s+B\s*:/i.test(heading?.[1] ?? "") && (
-                            <div className="mt-6">
-                              <ScholarGuardianSignatureColumns />
-                            </div>
-                          )}
-                      </>
-                    )}
-                  </div>
-                </details>
-              );
-            });
-          })
-        ) : (
-          <p className="text-sm">The form templates have not been added yet.</p>
-        )}
-      </div>
-    </SignatureEntryProvider>
+    <div className="space-y-4">
+      {documents.isPending ? (
+        <p role="status">Loading forms…</p>
+      ) : documents.isError ? (
+        <p role="alert">
+          Forms could not be loaded.{" "}
+          <button type="button" className="underline" onClick={() => void documents.refetch()}>
+            Try Again
+          </button>
+        </p>
+      ) : documents.data.length ? (
+        documents.data.flatMap((doc) => {
+          const sections =
+            doc.key === "consent_forms"
+              ? doc.body.split(/(?=^##\s+Form\s+[A-Z]\s*:)/im).filter((section) => section.trim())
+              : [doc.body];
+          return sections.map((section, index) => {
+            if (doc.key === "consent_forms" && /^##\s+Form\s+C\s*:/i.test(section.trim()))
+              return null;
+            const heading =
+              doc.key === "consent_forms" ? section.match(/^##\s+([^\r\n]+)\r?\n?/) : null;
+            return (
+              <details
+                key={`${doc.key}-${index}`}
+                className="rounded-lg border border-border bg-[#FFFDF5] p-4"
+              >
+                <summary className="cursor-pointer font-bold">{doc.key === "standard_indemnity_clauses" ? "Form C: Standard JobShadow Indemnity Clauses" : (heading?.[1] ?? doc.title)}</summary>
+                <div className="mt-5">
+                  {doc.key === "consent_forms" && /^Form\s+A\s*:/i.test(heading?.[1] ?? "") ? (
+                    <FormAColumns body={section.slice(heading![0].length).trim()} />
+                  ) : (
+                    <>
+                      <LegalFormBody
+                        body={heading ? section.slice(heading[0].length).trim() : section}
+                      />
+                      {doc.key === "consent_forms" && /^Form\s+B\s*:/i.test(heading?.[1] ?? "") && (
+                        <div className="mt-6">
+                          <ScholarGuardianSignatureColumns />
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </details>
+            );
+          });
+        })
+      ) : (
+        <p className="text-sm">The form templates have not been added yet.</p>
+      )}
+    </div>
   );
 }
 
@@ -1949,7 +1852,6 @@ export function NewBooking({
   const [requestingDate, setRequestingDate] = useState(false);
   const [requestedDate, setRequestedDate] = useState("");
   const [requestNote, setRequestNote] = useState("");
-  const [creatingBooking, setCreatingBooking] = useState(false);
   const [restoredSearch, setRestoredSearch] = useState(false);
   const restoredSearchKey = useRef("");
   const searchSave = useMutation({
@@ -2427,6 +2329,7 @@ export function NewBooking({
                             setDate("");
                             setConfirmDupe(false);
                             saveSearch({ placementId: host.id, date: "" });
+                            reviewDemo(host);
                           }}
                           className="mt-1"
                         />
@@ -2511,7 +2414,7 @@ export function NewBooking({
                           setPid(host.id);
                           setDate("");
                           setConfirmDupe(false);
-                          if (!initialCareer) setStep(4);
+                          if (!reviewDemo(host)) setStep(4);
                           saveSearch({ career: host.career, placementId: host.id, date: "" });
                         }}
                       >
@@ -2529,9 +2432,9 @@ export function NewBooking({
               </aside>
             </div>
           )}
-          {(step === 4 || !!initialCareer) && chosen && (
+          {step === 4 && chosen && (
             <>
-              <p className="mb-3 mt-6 text-sm font-bold">Placement Details</p>
+              <SelectedCareerBadge career={chosen.career} />
               <dl className="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
                 <div>
                   <dt className="font-semibold">Type</dt>
@@ -2553,12 +2456,9 @@ export function NewBooking({
               <HostProfileCard companyId={chosen.id} />
             </>
           )}
-          {(step === 5 || !!initialCareer) && chosen && (
+          {step === 5 && chosen && (
             <div className="space-y-3">
-              {initialCareer && <h3 className="mt-5 font-bold">Choose Your Date</h3>}
-              {!initialCareer && (
-                <SelectedCareerBadge career={chosen.career} />
-              )}
+              <SelectedCareerBadge career={chosen.career} />
               <p className="text-sm">
                 {dates.length
                   ? "Please select from the available dates below"
@@ -2707,51 +2607,7 @@ export function NewBooking({
             {initialCareer ? `Back to ${titles[step - 2]}` : `Back to Step ${step - 1}`}
           </button>
         )}
-        {initialCareer ? (
-          <Button
-            className="ml-auto"
-            type="button"
-            disabled={
-              creatingBooking ||
-              !chosen ||
-              (!canReviewDemo(chosen) &&
-                ((requestingDate
-                  ? !requestedDate
-                  : !date ||
-                    !dates.includes(date) ||
-                    !selectedHours?.from_time ||
-                    !selectedHours?.to_time) ||
-                  (!!duplicate && !confirmDupe)))
-            }
-            onClick={async () => {
-              if (chosen && canReviewDemo(chosen)) {
-                onReviewPayment!({
-                  career: chosen.career,
-                  date,
-                  location: chosen.location,
-                  from: selectedHours?.from_time ?? "",
-                  to: selectedHours?.to_time ?? "",
-                  amount: due,
-                });
-              } else {
-                setCreatingBooking(true);
-                try {
-                  await book();
-                } catch (error) {
-                  setMsg(
-                    error instanceof Error
-                      ? error.message
-                      : "Your booking could not be saved. Please try again.",
-                  );
-                } finally {
-                  setCreatingBooking(false);
-                }
-              }
-            }}
-          >
-            {creatingBooking ? "Saving Booking…" : "Continue to Make Payment"}
-          </Button>
-        ) : step < 5 ? (
+        {step < 5 ? (
           <Button
             className="ml-auto"
             type="button"
