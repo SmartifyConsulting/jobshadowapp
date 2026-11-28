@@ -7,7 +7,8 @@ import { personalContext, personalOnboardingAdmin as admin, savePersonalVerifica
 const input = z.object({ scholarId: z.string().uuid().optional() });
 export const loadPersonalOnboarding = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((data: unknown) => input.parse(data)).handler(async ({ context, data }) => {
   const c = await personalContext(context.supabase, context.userId, data.scholarId ?? context.userId);
-  return { ...c, identity: c.identity ? { status: c.identity.status, environment: c.identity.environment, verified_at: c.identity.verified_at, verification_url: c.self ? c.identity.verification_url : null } : null };
+  const registered = await admin.auth.admin.getUserById(c.scholarId);
+  return { ...c, signedUpAt: registered.data.user?.created_at ?? null, identity: c.identity ? { status: c.identity.status, environment: c.identity.environment, verified_at: c.identity.verified_at, verification_url: c.self ? c.identity.verification_url : null } : null };
 });
 export const signPersonalFormA = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((data: unknown) => input.extend({ version: z.string().regex(/^[a-f0-9]{64}$/), name: z.string().trim().min(1).max(200), accepted: z.literal(true) }).parse(data)).handler(async ({ context, data }) => {
   const c = await personalContext(context.supabase, context.userId, data.scholarId ?? context.userId);

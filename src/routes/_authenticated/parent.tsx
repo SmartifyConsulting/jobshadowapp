@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteLayout } from "@/components/SiteLayout";
-import { PersonalOnboarding } from "@/components/account/PersonalOnboarding";
+import { PersonalOnboarding, ScholarSignupDate } from "@/components/account/PersonalOnboarding";
 
 export const Route = createFileRoute("/_authenticated/parent")({
   head: () => ({
@@ -37,7 +37,7 @@ function ParentPortal() {
           {children.data?.map((c) => (
             <div key={c.scholar_user_id} className="rounded-xl border border-primary bg-card p-5 shadow-sm">
               <h2 className="text-lg font-semibold">{c.full_name}</h2>
-              <p className="text-xs text-muted-foreground">{c.school}{c.career_interests ? ` · Interested in: ${c.career_interests}` : ""}</p>
+              <ScholarSignupDate scholarId={c.scholar_user_id} />
               <div className="mt-4"><PersonalOnboarding key={c.scholar_user_id} scholarId={c.scholar_user_id} parent /></div>
               <div className="mt-4 space-y-2">
                 {c.pending_bookings.length === 0 && <p className="text-sm text-muted-foreground">No bookings yet.</p>}

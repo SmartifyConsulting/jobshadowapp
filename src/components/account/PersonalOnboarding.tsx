@@ -4,6 +4,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { loadPersonalOnboarding, signPersonalFormA, startPersonalIdentity, refreshPersonalIdentity } from "@/lib/personal-onboarding.functions";
 import { LegalFormBody } from "@/components/LegalFormBody";
 import { Button } from "@/components/ui/button";
+export function ScholarSignupDate({ scholarId }: { scholarId: string }) {
+  const load = useServerFn(loadPersonalOnboarding);
+  const state = useQuery({ queryKey: ["personal-onboarding", scholarId], queryFn: () => load({ data: { scholarId } }) });
+  const date = state.data?.signedUpAt ? new Date(state.data.signedUpAt) : null;
+  return <p className="text-xs text-muted-foreground">{state.isPending ? "Loading sign-up date…" : date && !Number.isNaN(date.getTime()) ? `Signed up ${date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "Africa/Johannesburg" })}` : "Sign-up date: Unknown"}</p>;
+}
 export function PersonalOnboarding({ scholarId, parent = false }: { scholarId: string; parent?: boolean }) {
   const qc = useQueryClient();
   const load = useServerFn(loadPersonalOnboarding);
