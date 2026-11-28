@@ -331,9 +331,9 @@ export function CareerCatalogue({
                       <button
                         onClick={() => toggleDivision(divisionKey)}
                         aria-expanded={divisionOpen}
-                        className="flex min-h-9 w-full items-center justify-between gap-3 border-y border-warm-divider bg-muted/30 px-4 py-1.5 text-left font-sans"
+                        className="flex min-h-9 w-full items-center justify-between gap-3 border-y border-warm-divider bg-muted/30 px-4 py-1.5 text-left font-display"
                       >
-                        <h3 className="font-sans text-sm font-bold normal-case tracking-wide text-muted-foreground">
+                        <h3 className="font-display text-sm font-bold normal-case tracking-wide text-muted-foreground">
                           {division} ({roles.length})
                         </h3>
                         <ChevronDown
