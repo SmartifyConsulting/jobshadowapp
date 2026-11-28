@@ -42,12 +42,30 @@ function IndemnityHistoryColumns({ receipt }: { receipt: ParentSignatureHistory 
     </section>
   </div>;
 }
+function FormAHistoryColumns({ receipt }: { receipt: ParentSignatureHistory }) {
+  const agreementBlocks = receipt.document_body.split(/\r?\n\s*\r?\n/).map(block => block.trim()).filter(Boolean);
+  const scholarBlocks = agreementBlocks.filter(block => /^(?:Scholar|Information) Accuracy Declaration:/i.test(block));
+  const parentBlocks = agreementBlocks.filter(block => /^Parent\s*\/\s*Legal Guardian Consent/i.test(block));
+  const sharedBlocks = agreementBlocks.filter(block => !scholarBlocks.includes(block) && !parentBlocks.includes(block));
+  const parentSignature = { signature_name: receipt.signature_name, signed_at: receipt.signed_at, ip_address: receipt.ip_address };
+  return <>
+    {sharedBlocks.length > 0 && <LegalFormBody body={sharedBlocks.join("\n\n")} />}
+    <div className="grid gap-4 md:grid-cols-2">
+      <section aria-label="Scholar privacy agreement" className="flex min-w-0 flex-col gap-3 rounded-lg border border-border bg-[#FFFDF5] p-4">
+        <h4 className="font-bold">Scholar</h4>
+        <LegalFormBody body={scholarBlocks.join("\n\n")} />
+        <SignatureRecordView role="Scholar / Tertiary Student" signature={receipt.scholar} boxed={false} />
+      </section>
+      <section aria-label="Parent privacy agreement" className="flex min-w-0 flex-col gap-3 rounded-lg border border-border bg-[#FFFDF5] p-4">
+        <h4 className="font-bold">Parent / Guardian</h4>
+        <LegalFormBody body={parentBlocks.join("\n\n")} />
+        <SignatureRecordView role="Parent / Guardian" signature={parentSignature} boxed={false} />
+      </section>
+    </div>
+  </>;
+}
 function HistoryDocument({ receipt }: { receipt: ParentSignatureHistory }) {
-  if (receipt.document_key === "form_a")
-    return <>
-      <LegalFormBody body={receipt.document_body} />
-      <div className="grid gap-3 md:grid-cols-2"><SignatureRecordView role="Scholar / Tertiary Student" signature={receipt.scholar} /><SignatureRecordView role="Parent / Guardian" signature={{ signature_name: receipt.signature_name, signed_at: receipt.signed_at, ip_address: receipt.ip_address }} /></div>
-    </>;
+  if (receipt.document_key === "form_a") return <FormAHistoryColumns receipt={receipt} />;
   return <IndemnityHistoryColumns receipt={receipt} />;
 }
 function BookingCard({ booking, signed }: { booking: ParentBooking; signed: boolean }) {
