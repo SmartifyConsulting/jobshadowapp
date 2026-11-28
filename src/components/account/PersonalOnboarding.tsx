@@ -24,7 +24,7 @@ export function PersonalOnboarding({ scholarId, parent = false, testPassed = fal
   const key = ["personal-onboarding", scholarId];
   const user = useQuery({ queryKey: ["me"], queryFn: async () => (await supabase.auth.getUser()).data.user });
   const canTestPass = !parent && user.data?.id === scholarId && isSwitchPersona(user.data.id, user.data.email);
-  const state = useQuery({ queryKey: key, queryFn: async () => { if (!parent) await refresh({ data: { scholarId } }); return load({ data: { scholarId } }); }, refetchInterval: query => query.state.data?.identity && query.state.data.identity.status !== "approved" && !parent ? 30_000 : false });
+  const state = useQuery({ queryKey: key, queryFn: async () => { if (!parent) await refresh({ data: { scholarId } }); return load({ data: { scholarId } }); }, refetchInterval: query => query.state.data && (!query.state.data.consentComplete || (query.state.data.identity && query.state.data.identity.status !== "approved" && !parent)) ? 30_000 : false });
   const save = useMutation({ mutationFn: () => sign({ data: { scholarId, name, accepted: true, version: state.data!.version } }), onSuccess: () => { setError(null); void qc.invalidateQueries({ queryKey: key }); }, onError: e => setError(e.message) });
   const begin = useMutation({ mutationFn: () => start({ data: { scholarId } }), onSuccess: v => { if (v.verification_url) window.open(v.verification_url, "_blank", "noopener"); void qc.invalidateQueries({ queryKey: key }); setError(null); }, onError: e => setError(e.message) });
   const check = useMutation({ mutationFn: () => refresh({ data: { scholarId } }), onSuccess: () => { void qc.invalidateQueries({ queryKey: key }); setError(null); }, onError: e => setError(e.message) });
